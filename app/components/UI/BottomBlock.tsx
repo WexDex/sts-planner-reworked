@@ -46,7 +46,7 @@ export default function BottomBlock() {
 
 
   return (
-    <div ref={ref} className="fixed bottom-0 left-[20rem] right-0 z-30 bg-slate-900 border-t border-slate-700 overflow-visible">
+    <div ref={ref} className="fixed bottom-0 left-80 right-0 z-30 bg-slate-900 border-t border-slate-700 overflow-visible">
       <div className="relative overflow-visible h-full">
         {/* Expanded content, positioned above the bar */}
         <div

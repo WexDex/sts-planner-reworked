@@ -17,9 +17,9 @@ interface TurnSummary {
 }
 
 export default function TimelineBlock() {
-  const { gameState, currentTurn, setCurrentTurn } = useGameManager();
+  const { gameState, turns, currentTurnIndex, setCurrentTurn, endTurn, continueFromTurn, resetCurrentTurn } = useGameManager();
 
-  const turns = useMemo(() => {
+  const turnsData = useMemo(() => {
     const map = new Map<number, TurnSummary>();
     const enemies = gameState?.enemies ?? [];
 
@@ -63,7 +63,7 @@ export default function TimelineBlock() {
     return Array.from(map.values()).sort((a, b) => a.turn - b.turn);
   }, [gameState?.enemies]);
 
-  const selected = turns.find((turn) => turn.turn === currentTurn) ?? turns[0];
+  const selected = turnsData.find((turn) => turn.turn === turns[currentTurnIndex]?.id) ?? turnsData[0];
 
   return (
     <div className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950/90 p-4 shadow-xl shadow-slate-950/20">
@@ -73,59 +73,69 @@ export default function TimelineBlock() {
           <h2 className="text-xl font-semibold">Turn Planner</h2>
         </div>
         <div className="rounded-full bg-slate-900 px-3 py-1 text-xs text-slate-300">
-          Turn {selected?.turn ?? 1}
+          Turn {selected?.turn ?? turns[currentTurnIndex]?.id ?? 1}
         </div>
       </div>
 
       <div className="space-y-3">
-        {turns.map((turnSummary) => (
-          <button
-            key={turnSummary.turn}
-            type="button"
-            onClick={() => setCurrentTurn(turnSummary.turn)}
-            className={`w-full rounded-3xl border p-4 text-left transition ${
-              turnSummary.turn === currentTurn
-                ? 'border-blue-500 bg-slate-900/90 shadow-lg shadow-blue-500/10'
-                : 'border-slate-800 bg-slate-950/80 hover:border-slate-600'
-            }`}
-          >
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="text-sm font-semibold">Turn {turnSummary.turn}</div>
-                <div className="text-[11px] text-slate-500">{turnSummary.enemySummaries.length} enemy intents</div>
-              </div>
-              <div className="rounded-full border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-300">
-                {turnSummary.totalDamage} dmg
-              </div>
-            </div>
-            <div className="mt-3 space-y-2 text-xs text-slate-400">
-              {turnSummary.enemySummaries.map((summary) => (
-                <div key={summary.name} className="flex items-center justify-between gap-2">
-                  <span>{summary.name}</span>
-                  <span className="text-slate-300">{summary.line || 'No intent'}</span>
+        {turnsData.map((turnSummary, index) => (
+          <div key={turnSummary.turn}>
+            <button
+              type="button"
+              onClick={() => setCurrentTurn(turnSummary.turn)}
+              className={`w-full rounded-3xl border p-4 text-left transition ${
+                turnSummary.turn === turns[currentTurnIndex]?.id
+                  ? 'border-blue-500 bg-slate-900/90 shadow-lg shadow-blue-500/10'
+                  : 'border-slate-800 bg-slate-950/80 hover:border-slate-600'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <div className="text-sm font-semibold">Turn {turnSummary.turn}</div>
+                  <div className="text-[11px] text-slate-500">{turnSummary.enemySummaries.length} enemy intents</div>
                 </div>
-              ))}
-            </div>
-          </button>
+                <div className="rounded-full border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-300">
+                  {turnSummary.totalDamage} dmg
+                </div>
+              </div>
+              <div className="mt-3 space-y-2 text-xs text-slate-400">
+                {turnSummary.enemySummaries.map((summary) => (
+                  <div key={summary.name} className="flex items-center justify-between gap-2">
+                    <span>{summary.name}</span>
+                    <span className="text-slate-300">{summary.line || 'No intent'}</span>
+                  </div>
+                ))}
+              </div>
+            </button>
+            
+            {index < turnsData.length - 1 && (
+              <button
+                type="button"
+                onClick={() => continueFromTurn(turnSummary.turn, turnsData[index + 1].turn)}
+                className="mt-2 w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
+              >
+                Continue from Turn {turnSummary.turn}
+              </button>
+            )}
+          </div>
         ))}
       </div>
 
-      {selected && (
-        <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-4 text-sm text-slate-300">
-          <div className="mb-3 flex items-center gap-2 text-slate-400">
-            <Zap className="h-4 w-4 text-red-400" />
-            <span>Turn {selected.turn} summary</span>
-          </div>
-          <div className="space-y-2">
-            {selected.enemySummaries.map((summary) => (
-              <div key={summary.name} className="flex items-center justify-between gap-2 rounded-2xl bg-slate-950/60 px-3 py-2">
-                <span className="font-semibold text-slate-100">{summary.name}</span>
-                <span className="text-xs text-slate-400">{summary.line}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      
+
+      <button
+        onClick={endTurn}
+        className="mt-4 w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 px-4 rounded-lg transition-colors"
+      >
+        End Turn
+      </button>
+
+      <button
+        onClick={resetCurrentTurn}
+        className="mt-2 w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-4 rounded-lg transition-colors"
+      >
+        Reset Data
+      </button>
     </div>
   );
 }

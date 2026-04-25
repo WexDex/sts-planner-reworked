@@ -28,7 +28,7 @@ export async function loadFromFile(filePath: string): Promise<CombatData> {
  * Save game data to localStorage
  * Note: Browser localStorage has ~5-10MB limit
  */
-export function saveToLocalStorage(key: string, data: CombatData): void {
+export function saveToLocalStorage(key: string, data: any): void {
   try {
     const serialized = JSON.stringify(data);
     localStorage.setItem(key, serialized);

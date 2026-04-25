@@ -462,3 +462,5 @@ button:disabled {
 .btn-mini.orange { @apply bg-orange-600/80 hover:bg-orange-500; }
 .btn-mini.cyan { @apply bg-cyan-600/80 hover:bg-cyan-500; }
 .btn-mini.pink { @apply bg-pink-600/80 hover:bg-pink-500; }
+.btn-mini.yellow { @apply bg-yellow-600/80 hover:bg-yellow-500; }
+.btn-mini.lime { @apply bg-lime-600/80 hover:bg-lime-500; }

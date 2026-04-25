@@ -87,9 +87,9 @@ export default function STSCard({
         toggleCardSelection(location, index);
       }}
       className={`${cardWidth} ${cardHeight} relative rounded-lg border-2 ${styles.border} ${styles.glow} shadow-xl overflow-hidden bg-gradient-to-b ${styles.gradient} backdrop-blur-sm cursor-pointer
-        hover:brightness-110 transition-all duration-300 hover:ring-2
-         hover:ring-slate-400/30 hover:-translate-y-3 hover:shadow-2xl hover:scale-105 animate-slide-in-up
-          ${card.isSelected ? "ring-4 ring-yellow-400 shadow-yellow-400/50 animate-pulse-glow scale-105 -translate-y-3" : ""} 
+        hover:brightness-110 transition-all duration-300
+        hover:-translate-y-3 hover:shadow-2xl hover:scale-105 animate-slide-in-up
+          ${card.isSelected ? "ring-4 ring-yellow-400 shadow-yellow-400/50 animate-pulse-glow scale-105 -translate-y-3" : "hover:ring-4 hover:ring-white-400/50"} 
         `}
     >
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
@@ -116,16 +116,16 @@ export default function STSCard({
             className={`${isSmall ? "text-[10px]" : "text-sm"} flex flex-col justify-center font-semibold text-white text-center leading-tight`}
           >
             <span>
-                <span
-                  className={`${card.isUpgraded ? "text-green-400 animate-pulse" : "text-white"}`}
-                >
-                  {card.name}
+              <span
+                className={`${card.isUpgraded ? "text-green-400 animate-pulse" : "text-white"}`}
+              >
+                {card.name}
+              </span>
+              {card.isUpgraded && (
+                <span className="text-xs text-green-400 ml-1 animate-pulse">
+                  +{" "}
                 </span>
-                {card.isUpgraded && (
-                  <span className="text-xs text-green-400 ml-1 animate-pulse">
-                    +{" "}
-                  </span>
-                )}
+              )}
             </span>
             {card.isChanged && (
               <span className="ml-1 rounded-full bg-yellow-400/20 px-1 text-[10px] text-yellow-200 animate-bounce-pop inline-block">

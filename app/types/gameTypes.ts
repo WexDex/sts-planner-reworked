@@ -40,9 +40,17 @@ export interface CardReference {
 
 export type DeckEntry = Card | CardReference;
 
+export interface BuffDebuff {
+  name: string;
+  stacks: number;
+  type: 'buff' | 'debuff';
+  description?: string;
+}
+
 export interface PlayerData {
   hp: number;
   maxHp: number;
+  currentBlock?: number;
   energy: {
     base: number;
     turn1Bonus: number;
@@ -62,6 +70,7 @@ export interface PlayerData {
   bonusEnergy?: number;
   bonusBlock?: number;
   intangible?: boolean;
+  buffsDebuffs?: BuffDebuff[];
 }
 
 export interface EnemyIntentAction {
@@ -80,7 +89,25 @@ export interface Enemy {
   name: string;
   hp: number;
   maxHp: number;
+  currentBlock?: number;
+  buffsDebuffs?: BuffDebuff[];
   intents: EnemyIntent[];
+}
+
+export interface ActivityLogEntry {
+  id: string;
+  timestamp: string;
+  title: string;
+  before?: string;
+  after?: string;
+  details?: string;
+  type?: 'info' | 'action' | 'state-change' | 'damage' | 'heal' | 'block' | 'block-lost' | 'energy' | 'buff' | 'debuff' | 'card-action' | 'system';
+  target?: 'player' | 'enemy';
+}
+
+export interface Turn {
+  id: number;
+  state: CombatData;
 }
 
 export interface CombatData {
@@ -91,7 +118,7 @@ export interface CombatData {
   exhaust: Card[];
   hand: Card[];
   playedCards: Card[];
-  activityLog: string[];
+  activityLog: ActivityLogEntry[];
   enemies?: Enemy[];
   [key: string]: any;
 }

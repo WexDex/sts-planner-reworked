@@ -99,6 +99,97 @@ export const STAT_COLORS_BG = {
   intangible: 'bg-teal-500/20',
 } as const;
 
+// Activity Log Type Colors
+export const ACTIVITY_LOG_COLORS = {
+  damage: {
+    text: 'text-red-400',
+    bg: 'bg-red-500/15',
+    border: 'border-red-500/30',
+    badge: 'bg-red-600/40',
+  },
+  heal: {
+    text: 'text-green-400',
+    bg: 'bg-green-500/15',
+    border: 'border-green-500/30',
+    badge: 'bg-green-600/40',
+  },
+  block: {
+    text: 'text-blue-400',
+    bg: 'bg-blue-500/15',
+    border: 'border-blue-500/30',
+    badge: 'bg-blue-600/40',
+  },
+  'block-lost': {
+    text: 'text-cyan-400',
+    bg: 'bg-cyan-500/15',
+    border: 'border-cyan-500/30',
+    badge: 'bg-cyan-600/40',
+  },
+  energy: {
+    text: 'text-yellow-400',
+    bg: 'bg-yellow-500/15',
+    border: 'border-yellow-500/30',
+    badge: 'bg-yellow-600/40',
+  },
+  buff: {
+    text: 'text-emerald-400',
+    bg: 'bg-emerald-500/15',
+    border: 'border-emerald-500/30',
+    badge: 'bg-emerald-600/40',
+  },
+  debuff: {
+    text: 'text-orange-400',
+    bg: 'bg-orange-500/15',
+    border: 'border-orange-500/30',
+    badge: 'bg-orange-600/40',
+  },
+  'card-action': {
+    text: 'text-purple-400',
+    bg: 'bg-purple-500/15',
+    border: 'border-purple-500/30',
+    badge: 'bg-purple-600/40',
+  },
+  action: {
+    text: 'text-indigo-400',
+    bg: 'bg-indigo-500/15',
+    border: 'border-indigo-500/30',
+    badge: 'bg-indigo-600/40',
+  },
+  'state-change': {
+    text: 'text-violet-400',
+    bg: 'bg-violet-500/15',
+    border: 'border-violet-500/30',
+    badge: 'bg-violet-600/40',
+  },
+  system: {
+    text: 'text-slate-400',
+    bg: 'bg-slate-500/15',
+    border: 'border-slate-500/30',
+    badge: 'bg-slate-600/40',
+  },
+  info: {
+    text: 'text-slate-300',
+    bg: 'bg-slate-500/10',
+    border: 'border-slate-500/20',
+    badge: 'bg-slate-600/30',
+  },
+} as const;
+
+export const ACTIVITY_LOG_ICONS: Record<string, string> = {
+  damage: '⚔️',
+  heal: '❤️',
+  block: '🛡️',
+  'block-lost': '💔',
+  energy: '⚡',
+  buff: '✨',
+  debuff: '💀',
+  'card-action': '🎴',
+  action: '➡️',
+  'state-change': '📊',
+  system: '⚙️',
+  info: 'ℹ️',
+} as const;
+
 // Card type colors
 export const CARD_TYPE_COLORS = {
   'Attack': 'text-red-500',

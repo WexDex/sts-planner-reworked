@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { getEffectDisplay } from "@/app/utils/effectDisplay";
 import { Shield } from "lucide-react";
 import { useGameManager } from "@/app/context/GameContext";
+import CardDBModal from "@/app/components/CardDBModal";
 
 type EnemyDisplay = {
   name: string;
@@ -12,7 +13,10 @@ type EnemyDisplay = {
 };
 
 export default function TopBarBlock() {
-  const { gameState, loadGameData, isLoading, currentTurn } = useGameManager();
+  const { gameState, loadGameData, isLoading, turns, currentTurnIndex, addCardFromDB } = useGameManager();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const currentTurn = turns[currentTurnIndex]?.id ?? 1;
 
   const playerHp = gameState?.player.hp ?? 0;
   const playerMaxHp = gameState?.player.maxHp ?? 0;
@@ -54,11 +58,13 @@ export default function TopBarBlock() {
 
   const hpEffect = getEffectDisplay("health", playerHp);
   const energyEffect = getEffectDisplay("energy", baseEnergy);
+  const blockEffect = getEffectDisplay("block", gameState?.player.currentBlock ?? 0);
   const HpIcon = hpEffect.icon;
   const EnergyIcon = energyEffect.icon;
+  const BlockIcon = blockEffect.icon;
 
   return (
-    <div className="bg-slate-900/90 border-b border-slate-800 px-4 py-3 text-slate-200">
+    <div className="bg-slate-900/90 border-b border-slate-800 px-4 py-3 text-slate-200 fixed top-0 right-80 left-80 z-50">
       <div className="mx-auto flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2 rounded-full bg-slate-950/80 px-3 py-2">
@@ -70,12 +76,22 @@ export default function TopBarBlock() {
             </span>
           </div>
 
+
           <div className="flex items-center gap-2 rounded-full bg-slate-950/80 px-3 py-2">
             <div className="rounded-full bg-slate-800 p-2 text-slate-200">
               <EnergyIcon className={`${energyEffect.color} w-5 h-5`} />
             </div>
             <span className="font-medium text-sm text-slate-100">
               Energy {currentEnergy}/{baseEnergy}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 rounded-full bg-slate-950/80 px-3 py-2">
+            <div className="rounded-full bg-slate-800 p-2 text-slate-200">
+              <BlockIcon className={`${blockEffect.color} w-5 h-5`} />
+            </div>
+            <span className="font-medium text-sm text-slate-100">
+              Block {gameState?.player.currentBlock ?? 0}
             </span>
           </div>
         </div>
@@ -106,7 +122,15 @@ export default function TopBarBlock() {
             ))}
           </div>
         )}
-
+        
+        <div className="h-12 w-px bg-slate-700" />
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-medium transition-colors text-sm"
+        >
+          Add Card
+        </button>
+{/* 
         {incomingDamage > 0 && (
           <>
             <div className="h-12 w-px bg-slate-700" />
@@ -118,13 +142,13 @@ export default function TopBarBlock() {
               </div>
             </div>
           </>
-        )}
+        )} */}
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap gap-3">
-            {enemies.map((enemy, i) => (
+            {/* {enemies.map((enemy, i) => (
               <div
                 key={i}
-                className="min-w-50 rounded-2xl bg-slate-950/90 p-3 text-xs"
+                className="min-w-40 rounded-2xl bg-slate-950/90 p-3 text-xs"
               >
                 <div className="mb-2 flex items-center justify-between text-slate-300">
                   <span>{enemy.name}</span>
@@ -137,10 +161,16 @@ export default function TopBarBlock() {
                   />
                 </div>
               </div>
-            ))}
+            ))} */}
           </div>
         </div>
       </div>
+      
+      <CardDBModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onAddCard={addCardFromDB}
+      />
     </div>
   );
 }
