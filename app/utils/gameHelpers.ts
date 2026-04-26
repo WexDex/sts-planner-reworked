@@ -210,6 +210,23 @@ export function getTotalInitialEnergy(player: PlayerData, turn: number): number 
   return total + energyBonus;
 }
 
+export const LANTERN_RELIC_NAME = "Lantern" as const;
+/** Energy from toggling Lantern on (current may exceed {@link getPlayerMaxEnergy}, e.g. 4/3). */
+export const LANTERN_ENERGY_GIFT = 1;
+
+/**
+ * Max energy for the bar / gains: base + other bonuses (Lantern is not a max increase; it only adds to current on toggle when on).
+ */
+export function getPlayerMaxEnergy(player: PlayerData): number {
+  return player.energy.base + (player.bonusEnergy ?? 0);
+}
+
+/** If Lantern is active, you cannot turn it off while current energy is below what it added (1). */
+export function canTurnOffLantern(player: PlayerData): boolean {
+  if (!player.activeRelics?.includes(LANTERN_RELIC_NAME)) return true;
+  return (player.currentEnergy ?? 0) >= LANTERN_ENERGY_GIFT;
+}
+
 /**
  * Deep clone game data
  */

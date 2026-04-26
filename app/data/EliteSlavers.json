@@ -6,9 +6,9 @@
       "base": 3,
       "turn1Bonus": 1
     },
-	"combatType": "Elite",
-	"combatName": "Slavers",
-	"floor": 23,
+    "combatType": "Elite",
+    "combatName": "Slavers",
+    "floor": 23,
     "drawPerTurn": 5,
     "modifiers": {
       "vulnerableMultiplier": 1.75,
@@ -53,322 +53,91 @@
   },
   "deck": [
     {
-      "name": "Carnage",
-      "isUpgraded": true,
-      "type": "Attack",
-      "cost": {
-        "base": 2,
-        "upgraded": 2
-      },
-      "damage": {
-        "base": 20,
-        "upgraded": 28
-      },
-      "description": "Deal [DMG] damage. Ethereal."
+      "card_ID": "Carnage",
+      "isUpgraded": true
     },
     {
-      "name": "Wild Strike",
-      "type": "Attack",
-      "cost": {
-        "base": 1
-      },
-      "damage": {
-        "base": 12 ,
-		"upgraded": 17
-      },
-      "description": "Deal [DMG] damage. Shuffle a Wound into your draw pile."
+      "card_ID": "Wild Strike"
     },
     {
-      "name": "Corruption",
-      "type": "Power",
-      "cost": {
-        "base": 3,
-        "upgraded": 2
-      },
-      "description": "Skills cost 0. Whenever you play a Skill, Exhaust it."
+      "card_ID": "Corruption"
     },
     {
-      "name": "Evolve",
-      "type": "Power",
-      "cost": {
-        "base": 1
-      },
-	  "draw" : {
-		  "base" : 1,
-		  "upgraded" : 2
-	  },
-      "description": "Whenever you draw a Status card, draw 1 card."
+      "card_ID": "Evolve"
     },
     {
-      "name": "Ascender's Bane",
-      "type": "Curse",
-      "description": "Unplayable. Ethereal."
+      "card_ID": "Ascender's Bane"
     },
     {
-      "name": "Strike",
-      "isUpgraded": true,
-      "type": "Attack",
-      "cost": {
-        "base": 1,
-        "upgraded": 1
-      },
-      "damage": {
-        "base": 6,
-        "upgraded": 9
-      },
-      "description": "Deal [DMG] damage."
+      "card_ID": "Strike",
+      "isUpgraded": true
     },
     {
-      "name": "Ghostly Armor",
-      "type": "Skill",
-      "cost": {
-        "base": 1
-      },
-      "block": {
-        "base": 10
-      },
-      "description": "Gain [BLOCK] Block. Ethereal."
+      "card_ID": "Ghostly Armor"
     },
     {
-      "name": "Defend",
-      "isUpgraded": true,
-      "type": "Skill",
-      "cost": {
-        "base": 1,
-        "upgraded": 1
-      },
-      "block": {
-        "base": 5,
-        "upgraded": 8
-      },
-      "description": "Gain [BLOCK] Block."
+      "card_ID": "Defend",
+      "isUpgraded": true
     },
     {
-      "name": "Shrug It Off",
-      "type": "Skill",
-      "cost": {
-        "base": 1
-      },
-      "block": {
-        "base": 8
-      },
-      "draw": {
-        "base": 1
-      },
-      "description": "Gain [BLOCK] Block. Draw [DRAW] card."
+      "card_ID": "Shrug It Off"
     },
     {
-      "name": "Defend",
-      "isUpgraded": true,
-      "type": "Skill",
-      "cost": {
-        "base": 1,
-        "upgraded": 1
-      },
-      "block": {
-        "base": 5,
-        "upgraded": 8
-      },
-      "description": "Gain [BLOCK] Block."
+      "card_ID": "Defend",
+      "isUpgraded": true
     },
     {
-      "name": "Bash",
-      "isUpgraded": true,
-      "type": "Attack",
-      "cost": {
-        "base": 2,
-        "upgraded": 2
-      },
-      "damage": {
-        "base": 8,
-        "upgraded": 10
-      },
-	  "vulnerable": {
-		  "base" : 2,
-		  "upgraded" : 3
-	  },
-      "description": "Deal [DMG] damage. Apply [VULN] Vulnerable."
+      "card_ID": "Bash",
+      "isUpgraded": true
     },
     {
-      "name": "Havoc",
-      "type": "Skill",
-      "cost": {
-        "base": 1,
-        "upgraded": 0
-      },
-      "description": "Play the top card of your draw pile and Exhaust it."
+      "card_ID": "Havoc"
     },
     {
-      "name": "Strike",
-      "isUpgraded": true,
-      "type": "Attack",
-      "cost": {
-        "base": 1,
-        "upgraded": 1
-      },
-      "damage": {
-        "base": 6,
-        "upgraded": 9
-      },
-      "description": "Deal [DMG] damage."
+      "card_ID": "Strike",
+      "isUpgraded": true
     },
     {
-      "name": "Defend",
-      "isUpgraded": true,
-      "type": "Skill",
-      "cost": {
-        "base": 1,
-        "upgraded": 1
-      },
-      "block": {
-        "base": 5,
-        "upgraded": 8
-      },
-      "description": "Gain [BLOCK] Block."
+      "card_ID": "Defend",
+      "isUpgraded": true
     },
     {
-      "name": "Strike",
-      "isUpgraded": true,
-      "type": "Attack",
-      "cost": {
-        "base": 1,
-        "upgraded": 1
-      },
-      "damage": {
-        "base": 6,
-        "upgraded": 9
-      },
-      "description": "Deal [DMG] damage."
+      "card_ID": "Strike",
+      "isUpgraded": true
     },
     {
-      "name": "Wound",
-      "type": "Status",
-      "description": "Unplayable."
+      "card_ID": "Wound"
     },
     {
-      "name": "Pommel Strike",
-      "type": "Attack",
-      "cost": {
-        "base": 1
-      },
-      "damage": {
-        "base": 9,
-        "upgraded": 10
-      },
-      "draw": {
-        "base": 1,
-        "upgraded": 2
-      },
-      "description": "Deal [DMG] damage. Draw [DRAW] cards."
+      "card_ID": "Pommel Strike"
     },
     {
-      "name": "Defend",
-      "isUpgraded": true,
-      "type": "Skill",
-      "cost": {
-        "base": 1,
-        "upgraded": 1
-      },
-      "block": {
-        "base": 5,
-        "upgraded": 8
-      },
-      "description": "Gain [BLOCK] Block."
+      "card_ID": "Defend",
+      "isUpgraded": true
     },
     {
-      "name": "Strike",
-      "isUpgraded": true,
-      "type": "Attack",
-      "cost": {
-        "base": 1,
-        "upgraded": 1
-      },
-      "damage": {
-        "base": 6,
-        "upgraded": 9
-      },
-      "description": "Deal [DMG] damage."
+      "card_ID": "Strike",
+      "isUpgraded": true
     },
     {
-      "name": "Armaments",
-      "isUpgraded": true,
-      "type": "Skill",
-      "cost": {
-        "base": 1,
-        "upgraded": 1
-      },
-      "block": {
-        "base": 5,
-        "upgraded": 5
-      },
-      "description": "Gain [BLOCK] Block. Upgrade all cards in your hand."
+      "card_ID": "Armaments",
+      "isUpgraded": true
     },
     {
-      "name": "Dark Embrace",
-      "type": "Power",
-      "cost": {
-        "base": 2,
-        "upgraded": 1
-      },
-      "description": "Whenever a card is Exhausted, draw 1 card."
+      "card_ID": "Dark Embrace"
     },
     {
-      "name": "Pommel Strike",
-      "type": "Attack",
-      "cost": {
-        "base": 1
-      },
-      "damage": {
-        "base": 9,
-        "upgraded": 10
-      },
-      "draw": {
-        "base": 1,
-        "upgraded": 2
-      },
-      "description": "Deal [DMG] damage. Draw [DRAW] cards."
+      "card_ID": "Pommel Strike"
     },
     {
-      "name": "Bloodletting",
-      "type": "Skill",
-      "takeDamage": {
-        "base": 3,
-        "upgraded": 3
-      },
-      "energyGain": {
-        "base": 2,
-        "upgraded": 3
-      },
-      "cost": {
-        "base": 0
-      },
-      "description": "Lose [TAKEDMG] HP. Gain [GAINE] Energy."
+      "card_ID": "Bloodletting"
     },
     {
-      "name": "Strike",
-      "isUpgraded": true,
-      "type": "Attack",
-      "cost": {
-        "base": 1,
-        "upgraded": 1
-      },
-      "damage": {
-        "base": 6,
-        "upgraded": 9
-      },
-      "description": "Deal [DMG] damage."
+      "card_ID": "Strike",
+      "isUpgraded": true
     },
     {
-      "name": "Feel No Pain",
-      "type": "Power",
-      "cost": {
-        "base": 1
-      },
-      "blockOnExhaust": {
-        "base": 3,
-        "upgraded": 4
-      },
-      "description": "Whenever a card is Exhausted, gain 3 Block."
+      "card_ID": "Feel No Pain"
     }
   ],
   "potions": [
@@ -543,7 +312,7 @@
           "actions": [
             {
               "type": "attack",
-              "value": 15
+              "value": 10
             },
             {
               "type": "status",
@@ -608,5 +377,11 @@
         }
       ]
     }
-  ]
+  ],
+  "draw": [],
+  "discard": [],
+  "exhaust": [],
+  "hand": [],
+  "playedCards": [],
+  "activityLog": []
 }

@@ -1,18 +1,20 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { CombatData, Card, CardReference, ActivityLogEntry, Turn } from '@/app/types/gameTypes';
 import {
   loadFromFile,
   cloneGameData,
   saveToLocalStorage,
   loadFromLocalStorage,
+  LANTERN_RELIC_NAME,
+  LANTERN_ENERGY_GIFT,
 } from '@/app/utils/gameHelpers';
 import {
   buildActionLogEntry,
-  buildStateDiffLogEntry,
   createActivityLogEntry,
   formatCardNames,
+  formatPileLabel,
   buildDamageLogEntry,
   buildHealLogEntry,
   buildBlockLogEntry,
@@ -21,8 +23,9 @@ import {
   buildBuffLogEntry,
   buildDebuffLogEntry,
   buildDebuffRemovedLogEntry,
+  formatPlayCardTargets,
 } from '@/app/utils/activityLogger';
-import { combatData as staticCombatData } from '@/app/data/combatData';
+import { combatData } from '@/app/data/combatData';
 import cardDB from '@/app/data/cardDB.json';
 
 interface GameContextType {
@@ -38,6 +41,7 @@ interface GameContextType {
   updateGameState: (newState: Partial<CombatData>) => void;
   resetGameState: () => void;
   loadGameData: (filePath?: string) => Promise<void>;
+  loadGameDataFromJson: (data: CombatData) => Promise<void>;
   saveGameData: (key?: string) => void;
   loadSavedGame: (key?: string) => boolean;
   toggleRelic: (relicName: string) => void;
@@ -56,6 +60,8 @@ interface GameContextType {
   setSelectedCustomCost: () => void;
   transformSelectedType: () => void;
   toggleChangedSelected: () => void;
+  /** Replace selected card(s) with a card from the database; sets isChanged. */
+  transformSelectedFromDatabase: (cardId: string, isUpgraded?: boolean) => void;
   addCardFromDB: (cardId: string, location: string, isUpgraded?: boolean) => void;
   modifyPlayerHp: (delta: number) => void;
   modifyPlayerBlock: (delta: number) => void;
@@ -66,6 +72,14 @@ interface GameContextType {
   removeBuffDebuff: (target: 'player' | 'enemy', enemyIndex: number, name: string) => void;
   reduceBuffDebuff: (target: 'player' | 'enemy', enemyIndex: number, name: string) => void;
   updateBuffDebuffStacks: (target: 'player' | 'enemy', enemyIndex: number, name: string, stacks: number) => void;
+  /** Card-play targeting (main field): enemy indices + optional self — included in "Played cards" log when set. */
+  combatTargetMode: 'single' | 'multi';
+  setCombatTargetMode: (mode: 'single' | 'multi') => void;
+  combatTargetEnemyIndices: number[];
+  toggleCombatEnemyTarget: (enemyIndex: number) => void;
+  combatTargetSelf: boolean;
+  toggleCombatTargetSelf: () => void;
+  clearCombatTargets: () => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -79,6 +93,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [initialData, setInitialData] = useState<CombatData | null>(null);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [currentTurnIndex, setCurrentTurnIndex] = useState(0);
+  const [combatTargetMode, setCombatTargetModeState] = useState<'single' | 'multi'>('single');
+  const [combatTargetEnemyIndices, setCombatTargetEnemyIndices] = useState<number[]>([]);
+  const [combatTargetSelf, setCombatTargetSelf] = useState(false);
 
   const normalizeRelicEffects = (data: CombatData): CombatData => ({
     ...data,
@@ -112,18 +129,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     deck: data.deck.map((entry) => hydrateCardEntry(entry)),
   });
 
-  const loadGameData = async (filePath?: string) => {
+  const ingestCombatPayload = async (data: CombatData) => {
     try {
       setIsLoading(true);
-      let data: CombatData;
-
-      // If filePath is provided, load from file; otherwise use static data
-      if (filePath) {
-        data = await loadFromFile(filePath);
-      } else {
-        data = staticCombatData;
-      }
-
       const normalizedData = normalizeRelicEffects(data);
       const hydratedData = hydrateCombatData(normalizedData);
       const withPiles = {
@@ -136,16 +144,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         activityLog: [],
         player: {
           ...hydratedData.player,
-          currentEnergy: hydratedData.player.energy.base + hydratedData.player.energy.turn1Bonus,
+          currentEnergy: hydratedData.player.energy.base,
         },
       };
       setInitialData(cloneGameData(withPiles));
 
-      // Initialize turns based on enemy intents
       const turnNumbers = new Set<number>();
-      withPiles.enemies?.forEach(enemy => enemy.intents?.forEach(intent => turnNumbers.add(intent.turn)));
+      withPiles.enemies?.forEach((enemy) =>
+        enemy.intents?.forEach((intent) => turnNumbers.add(intent.turn)),
+      );
       const uniqueTurns = Array.from(turnNumbers).sort((a, b) => a - b);
-      const initialTurns: Turn[] = uniqueTurns.map(id => ({ id, state: cloneGameData(withPiles) }));
+      const initialTurns: Turn[] = uniqueTurns.map((id) => ({ id, state: cloneGameData(withPiles) }));
       setTurns(initialTurns);
       setCurrentTurnIndex(0);
 
@@ -160,10 +169,59 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Load static data on mount
+  const loadGameData = async (filePath?: string) => {
+    const data = filePath
+      ? await loadFromFile(filePath)
+      : cloneGameData(combatData);
+    await ingestCombatPayload(data);
+  };
+
+  const loadGameDataFromJson = async (data: CombatData) => {
+    await ingestCombatPayload(cloneGameData(data));
+  };
+
   useEffect(() => {
     loadGameData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const n = gameState?.enemies?.length ?? 0;
+    setCombatTargetEnemyIndices((prev) => prev.filter((i) => i >= 0 && i < n));
+  }, [gameState?.enemies?.length]);
+
+  const setCombatTargetMode = useCallback((mode: 'single' | 'multi') => {
+    setCombatTargetModeState(mode);
+    setCombatTargetEnemyIndices((prev) => {
+      if (mode === 'single' && prev.length > 1) {
+        return [Math.min(...prev)];
+      }
+      return prev;
+    });
+  }, []);
+
+  const toggleCombatEnemyTarget = useCallback(
+    (index: number) => {
+      setCombatTargetEnemyIndices((prev) => {
+        if (combatTargetMode === 'single') {
+          return prev.length === 1 && prev[0] === index ? [] : [index];
+        }
+        if (prev.includes(index)) {
+          return prev.filter((i) => i !== index);
+        }
+        return [...prev, index].sort((a, b) => a - b);
+      });
+    },
+    [combatTargetMode],
+  );
+
+  const clearCombatTargets = useCallback(() => {
+    setCombatTargetEnemyIndices([]);
+    setCombatTargetSelf(false);
+  }, []);
+
+  const toggleCombatTargetSelf = useCallback(() => {
+    setCombatTargetSelf((s) => !s);
   }, []);
 
   const setCurrentTurn = (turnId: number) => {
@@ -246,9 +304,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       let bonusEnergy = prevState.player.bonusEnergy ?? 0;
       let bonusBlock = prevState.player.bonusBlock ?? 0;
       let intangible = prevState.player.intangible ?? false;
+      let currentEnergy = prevState.player.currentEnergy ?? 0;
 
-      if (relicName === 'Lantern') {
-        bonusEnergy = isActive ? Math.max(0, bonusEnergy - 1) : bonusEnergy + 1;
+      if (relicName === LANTERN_RELIC_NAME) {
+        if (isActive) {
+          if (currentEnergy < LANTERN_ENERGY_GIFT) {
+            return prevState;
+          }
+          currentEnergy -= LANTERN_ENERGY_GIFT;
+        } else {
+          currentEnergy += LANTERN_ENERGY_GIFT;
+        }
       }
       if (relicName === "Captains Wheel") {
         bonusBlock = isActive ? Math.max(0, bonusBlock - 18) : bonusBlock + 18;
@@ -265,6 +331,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           bonusEnergy,
           bonusBlock,
           intangible,
+          currentEnergy,
         },
       };
     });
@@ -325,7 +392,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const modifySelectedCards = (
     updater: (card: Card) => Card,
-    actionLabel: string,
+    actionLabel: string | ((args: { selected: { card: Card; location: string; index: number }[] }) => string),
   ) => {
     setGameState((prevState) => {
       if (!prevState) return prevState;
@@ -347,15 +414,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       });
 
       const stateWithSelectionCleared = clearSelectionState(newState);
+      const label =
+        typeof actionLabel === 'function' ? actionLabel({ selected }) : actionLabel;
       return {
         ...stateWithSelectionCleared,
-        activityLog: [...stateWithSelectionCleared.activityLog, buildActionLogEntry(actionLabel, selected)],
+        activityLog: [...stateWithSelectionCleared.activityLog, buildActionLogEntry(label, selected)],
       };
     });
   };
 
   const setSelectedCostZero = () => {
-    modifySelectedCards((card) => ({ ...card, cost: 0, isChanged: true }), 'Set cost to zero for');
+    modifySelectedCards((card) => ({ ...card, cost: 0, isChanged: true }), 'Set cost to 0');
   };
 
   const setSelectedCustomCost = () => {
@@ -363,20 +432,22 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (promptValue === null) return;
     const value = Number(promptValue);
     if (Number.isNaN(value)) return;
-    modifySelectedCards((card) => ({ ...card, cost: value, isChanged: true }), `Set cost to ${value} for`);
+    modifySelectedCards((card) => ({ ...card, cost: value, isChanged: true }), `Set cost to ${value}`);
   };
 
   const transformSelectedType = () => {
     const newType = window.prompt('Enter a new type for selected cards (Attack, Skill, Power, Status, Curse):', 'Attack');
     if (!newType) return;
-    modifySelectedCards((card) => ({ ...card, type: newType, isChanged: true }), `Transformed type to ${newType} for`);
+    modifySelectedCards((card) => ({ ...card, type: newType, isChanged: true }), `Changed type to ${newType}`);
   };
 
   const toggleChangedSelected = () => {
-    modifySelectedCards((card) => ({ ...card, isChanged: !card.isChanged }), 'Toggled changed on');
+    modifySelectedCards((card) => ({ ...card, isChanged: !card.isChanged }), 'Toggled changed flag');
   };
 
   const playSelectedCards = () => {
+    const enemyIndicesSnapshot = combatTargetEnemyIndices;
+    const targetSelfSnapshot = combatTargetSelf;
     setGameState((prevState) => {
       if (!prevState) return prevState;
       const selected = getSelectedCards(prevState);
@@ -397,10 +468,22 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         newPlayedCards.push({ ...card, isSelected: false });
       });
 
+      const playTargetsLabel = formatPlayCardTargets(
+        prevState.enemies,
+        enemyIndicesSnapshot,
+        targetSelfSnapshot,
+      );
+
       return {
         ...newState,
         playedCards: newPlayedCards,
-        activityLog: [...newState.activityLog, buildActionLogEntry(`Played ${formatCardNames(selected.map(({ card }) => card))}`, selected)],
+        activityLog: [
+          ...newState.activityLog,
+          buildActionLogEntry('Played cards', selected, {
+            context: [{ label: 'Destination', value: 'Played area' }],
+            ...(playTargetsLabel ? { playTargetsLabel } : {}),
+          }),
+        ],
       };
     });
   };
@@ -430,7 +513,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
       return {
         ...newState,
-        activityLog: [...newState.activityLog, buildActionLogEntry(`Moved to ${toLocation}`, selected)],
+        activityLog: [...newState.activityLog, buildActionLogEntry('Moved cards', selected, { toPile: toLocation })],
       };
     });
   };
@@ -458,7 +541,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
       return {
         ...newState,
-        activityLog: [...newState.activityLog, buildActionLogEntry('Removed', selected)],
+        activityLog: [...newState.activityLog, buildActionLogEntry('Removed cards', selected)],
       };
     });
   };
@@ -484,12 +567,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         },
         activityLog: [
           ...newState.activityLog,
-          buildEnergyLogEntry(
-            totalCost,
-            prevState.player.currentEnergy ?? 0,
-            newState.player.currentEnergy! - totalCost,
-            `Spent ${totalCost} energy on ${formatCardNames(selected.map(({ card }) => card))}`,
-          ),
+          buildEnergyLogEntry(prevState.player.currentEnergy ?? 0, newState.player.currentEnergy! - totalCost, {
+            reason: `Paid ${totalCost} energy for ${selected.length} card(s)`,
+            cards: selected.map(({ card }) => card),
+          }),
         ],
       };
     });
@@ -514,11 +595,19 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         hand: newHand,
         activityLog: [
           ...prevState.activityLog,
-          buildStateDiffLogEntry(
-            `Drew ${cardsToDraw.length} cards`,
+          createActivityLogEntry(
+            `Drew ${cardsToDraw.length} card${cardsToDraw.length === 1 ? '' : 's'}`,
             `Draw pile: ${prevState.draw.length} cards`,
             `Draw pile: ${remainingDraw.length} cards`,
-            `Cards: ${cardsToDraw.map((c) => c.name).join(', ')}`,
+            `Drawn: ${formatCardNames(cardsToDraw)}`,
+            'state-change',
+            {
+              cardsInvolved: cardsToDraw.map((c) => ({ name: c.name, cardType: c.type })),
+              context: [
+                { label: 'Draw pile', value: `${prevState.draw.length} → ${remainingDraw.length}` },
+                { label: 'Hand size', value: `${prevState.hand.length} → ${newHand.length}` },
+              ],
+            },
           ),
         ],
       };
@@ -617,15 +706,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const addCardFromDB = (cardId: string, location: string, isUpgraded = false) => {
+  const buildCardFromDatabase = (cardId: string, isUpgraded: boolean): Card | null => {
     const cardData = (cardDB as Record<string, any>)[cardId];
-    if (!cardData) return;
-
-    const newCard: Card = {
+    if (!cardData) return null;
+    return {
       name: cardId,
       type: cardData.type,
       isUpgraded,
-      isChanged: false,
+      isChanged: true,
       isSelected: false,
       cost: cardData.cost,
       damage: cardData.damage,
@@ -634,6 +722,24 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       description: cardData.description,
       ...cardData,
     };
+  };
+
+  const transformSelectedFromDatabase = (cardId: string, isUpgraded = false) => {
+    const template = buildCardFromDatabase(cardId, isUpgraded);
+    if (!template) return;
+    const newName = `${cardId}${isUpgraded ? '+' : ''}`;
+    modifySelectedCards(
+      (card) => ({ ...template, isSelected: card.isSelected, isChanged: true }),
+      ({ selected }) => {
+        const oldPart = selected.map(({ card }) => card.name || '—').join(', ');
+        return `Transformed : ${oldPart} → ${newName} x${selected.length}`;
+      },
+    );
+  };
+
+  const addCardFromDB = (cardId: string, location: string, isUpgraded = false) => {
+    const newCard = buildCardFromDatabase(cardId, isUpgraded);
+    if (!newCard) return;
 
     setGameState((prevState) => {
       if (!prevState) return prevState;
@@ -646,7 +752,21 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         [location]: newPile,
         activityLog: [
           ...prevState.activityLog,
-          createActivityLogEntry(`Added ${cardId}${isUpgraded ? '+' : ''} to ${location}`),
+          createActivityLogEntry(
+            `Added ${cardId}${isUpgraded ? '+' : ''}`,
+            undefined,
+            undefined,
+            undefined,
+            'info',
+            {
+              cardsInvolved: [{ name: cardId, cardType: newCard.type }],
+              context: [
+                { label: 'Pile', value: formatPileLabel(location) },
+                { label: 'Type', value: newCard.type ?? '—' },
+                { label: 'Upgraded', value: isUpgraded ? 'Yes' : 'No' },
+              ],
+            },
+          ),
         ],
       };
     });
@@ -660,9 +780,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       
       if (beforeHp === newHp) return prevState;
       
-      const logEntry = delta > 0 
-        ? buildHealLogEntry('player', delta, beforeHp, newHp)
-        : buildDamageLogEntry('player', Math.abs(delta), beforeHp, newHp);
+      const maxHp = prevState.player.maxHp;
+      const logEntry =
+        delta > 0
+          ? buildHealLogEntry('player', delta, beforeHp, newHp, undefined, maxHp)
+          : buildDamageLogEntry('player', Math.abs(delta), beforeHp, newHp, undefined, maxHp);
       
       return {
         ...prevState,
@@ -706,8 +828,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       
       if (beforeEnergy === newEnergy) return prevState;
       
-      const action = delta > 0 ? 'gained' : 'spent';
-      const logEntry = buildEnergyLogEntry(Math.abs(delta), beforeEnergy, newEnergy, action);
+      const logEntry = buildEnergyLogEntry(beforeEnergy, newEnergy);
       
       return {
         ...prevState,
@@ -732,9 +853,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (beforeHp === newHp) return prevState;
       
       const enemyName = nextEnemies[enemyIndex].name || `Enemy ${enemyIndex + 1}`;
-      const logEntry = delta > 0
-        ? buildHealLogEntry('enemy', delta, beforeHp, newHp, enemyName)
-        : buildDamageLogEntry('enemy', Math.abs(delta), beforeHp, newHp, enemyName);
+      const maxHp = nextEnemies[enemyIndex].maxHp;
+      const logEntry =
+        delta > 0
+          ? buildHealLogEntry('enemy', delta, beforeHp, newHp, enemyName, maxHp)
+          : buildDamageLogEntry('enemy', Math.abs(delta), beforeHp, newHp, enemyName, maxHp);
       
       nextEnemies[enemyIndex] = {
         ...nextEnemies[enemyIndex],
@@ -941,8 +1064,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           `${enemyName}'s ${name} was removed`,
           `Stacks: ${currentStacks}`,
           `Stacks: 0`,
-          undefined,
+          `Last stack of ${name} cleared`,
           existing.type === 'buff' ? 'buff' : 'debuff',
+          {
+            target: 'enemy',
+            context: [
+              { label: 'Effect', value: name },
+              { label: 'Stacks', value: `${currentStacks} → 0` },
+            ],
+          },
         );
       } else {
         const newStacks = currentStacks - 1;
@@ -985,6 +1115,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         updateGameState,
         resetGameState,
         loadGameData,
+        loadGameDataFromJson,
         saveGameData,
         loadSavedGame,
         toggleRelic,
@@ -1003,6 +1134,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         setSelectedCustomCost,
         transformSelectedType,
         toggleChangedSelected,
+        transformSelectedFromDatabase,
         addCardFromDB,
         modifyPlayerHp,
         modifyPlayerBlock,
@@ -1013,6 +1145,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         removeBuffDebuff,
         reduceBuffDebuff,
         updateBuffDebuffStacks,
+        combatTargetMode,
+        setCombatTargetMode,
+        combatTargetEnemyIndices,
+        toggleCombatEnemyTarget,
+        combatTargetSelf,
+        toggleCombatTargetSelf,
+        clearCombatTargets,
       }}
     >
       {children}

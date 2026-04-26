@@ -1,26 +1,81 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from "react";
 import { useGameManager } from "@/app/context/GameContext";
 import STSCard from "./Card";
 import { LOCATION } from "@/app/types/types";
-import { Grid2X2, Grid3X3 } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronUp,
+  Columns2,
+  Flame,
+  Layers,
+  LayoutGrid,
+  Library,
+  SquareStack,
+  Trash2,
+} from "lucide-react";
 
-type PileType = 'draw' | 'discard' | 'exhaust' | 'playedCards';
+type PileType = "draw" | "discard" | "exhaust" | "playedCards";
+
+const PILES: {
+  id: PileType;
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  idle: string;
+  active: string;
+}[] = [
+  {
+    id: "draw",
+    label: "Draw",
+    Icon: Library,
+    idle: "border-slate-600/80 bg-slate-800/60 text-slate-200 hover:border-blue-400/50 hover:bg-blue-950/40",
+    active: "border-blue-400/90 bg-blue-950/55 text-blue-100 shadow-[0_0_20px_rgba(59,130,246,0.25)] ring-2 ring-blue-400/40",
+  },
+  {
+    id: "discard",
+    label: "Discard",
+    Icon: Trash2,
+    idle: "border-slate-600/80 bg-slate-800/60 text-slate-200 hover:border-rose-400/50 hover:bg-rose-950/35",
+    active: "border-rose-400/90 bg-rose-950/45 text-rose-100 shadow-[0_0_20px_rgba(244,63,94,0.2)] ring-2 ring-rose-400/35",
+  },
+  {
+    id: "exhaust",
+    label: "Exhaust",
+    Icon: Flame,
+    idle: "border-slate-600/80 bg-slate-800/60 text-slate-200 hover:border-amber-400/45 hover:bg-amber-950/30",
+    active: "border-amber-400/85 bg-amber-950/40 text-amber-100 shadow-[0_0_20px_rgba(251,191,36,0.18)] ring-2 ring-amber-400/35",
+  },
+  {
+    id: "playedCards",
+    label: "Played",
+    Icon: Layers,
+    idle: "border-slate-600/80 bg-slate-800/60 text-slate-200 hover:border-violet-400/50 hover:bg-violet-950/35",
+    active: "border-violet-400/90 bg-violet-950/45 text-violet-100 shadow-[0_0_20px_rgba(167,139,250,0.22)] ring-2 ring-violet-400/35",
+  },
+];
 
 export default function BottomBlock() {
   const { gameState, drawCards } = useGameManager();
   const [expandedPile, setExpandedPile] = useState<PileType | null>(null);
   const [drawAmount, setDrawAmount] = useState(5);
-  const [show_size, setShowSize] = useState<"small" | "large">("small");
+  const [show_size, setShowSize] = useState<"small" | "medium" | "large">("small");
 
   const toggleExpand = (pile: PileType) => {
-    setExpandedPile(expandedPile === pile ? null : pile);
+    setExpandedPile((prev) => (prev === pile ? null : pile));
   };
 
   const handleDraw = () => {
     drawCards(drawAmount);
   };
+
+  const handleDrawOne = () => {
+    drawCards(1);
+  };
+
+  const DRAW_MIN = 1;
+  const DRAW_MAX = 9;
+  const clampDrawAmount = (n: number) => Math.min(Math.max(n, DRAW_MIN), DRAW_MAX);
 
   const getPileCards = (pile: PileType) => {
     return gameState?.[pile] || [];
@@ -30,105 +85,191 @@ export default function BottomBlock() {
     return getPileCards(pile).length;
   };
 
-  
   const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        setExpandedPile(null);
+    if (expandedPile == null) return;
+
+    const isInBounds = (t: EventTarget | null) => {
+      if (!(t instanceof Node)) return false;
+      if (ref.current?.contains(t)) return true;
+      if (t instanceof Element) {
+        if (t.closest?.("[data-bottom-deck-skip-outside]")) return true;
+        if (t.closest?.("aside")) return true;
+        if (t.closest?.("header")) return true;
+        if (t.closest?.('[role="dialog"]')) return true;
       }
+      return false;
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isInBounds(event.target)) return;
+      setExpandedPile(null);
+    };
 
+    // Bubble (default) so the pile / skip-zone controls handle the click first; then we close
+    // if the user actually clicked “outside” (avoids the old mousedown race with the actions bar)
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [expandedPile]);
+
+  const expandedLabel = PILES.find((p) => p.id === expandedPile)?.label ?? "Pile";
 
   return (
-    <div ref={ref} className="fixed bottom-0 left-80 right-0 z-30 bg-slate-900 border-t border-slate-700 overflow-visible">
-      <div className="relative overflow-visible h-full">
-        {/* Expanded content, positioned above the bar */}
-        <div
-          className={`z-50 absolute bottom-full left-0 right-0 bg-slate-900 border-t border-slate-700 p-4 overflow-y-auto max-h-72 transform transition-all duration-300 ease-out ${
-            expandedPile ? 'translate-y-0 opacity-100 pointer-events-auto' : 'translate-y-full opacity-0 pointer-events-none'
-          }`}
-        > 
-          <div className='flex flex-row justify-between gap-5 items-center mb-4'>
-              <h3 className="text-lg font-semibold text-white capitalize">
-                {expandedPile?.replace('Pile', ' Pile')}
+    <div
+      ref={ref}
+      className="relative border-t border-slate-700/90 bg-slate-900/95 shadow-[0_-12px_40px_rgba(0,0,0,0.45)] backdrop-blur-md"
+    >
+      {/* Expandable panel — height animates via grid template rows */}
+      <div
+        className={`grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+          expandedPile ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        }`}
+      >
+        <div className="min-h-0 overflow-hidden border-b border-slate-800/80">
+          <div className="max-h-[min(46vh,22rem)] overflow-y-auto px-4 pt-3">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <h3 className="whitespace-nowrap text-sm font-semibold tracking-tight text-white">
+                {expandedLabel}{" "}
+                <span className="font-normal text-slate-500">
+                  ({expandedPile ? getPileCount(expandedPile) : 0})
+                </span>
               </h3>
-              <button type='button' 
-              onClick={() => setShowSize(show_size === "small" ? "large" : "small")}
-               className='items-center'>
-                <div className='flex flex-row gap-3 hover:bg-slate-400/20 transition-colors px-2 py-1 rounded-lg'>
-                    <Grid3X3 className={`w-6 h-6 ${show_size === "small" ? "text-slate-400" : "text-slate-200"}`} />
-                    <Grid2X2 className={`w-6 h-6 ${show_size === "large" ? "text-slate-400" : "text-slate-200"}`} />
-                </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setShowSize((s) => (s === "small" ? "medium" : s === "medium" ? "large" : "small"))
+                }
+                className="flex items-center gap-1.5 rounded-lg border border-slate-600/70 bg-slate-800/80 px-2.5 py-1.5 text-[11px] font-medium text-slate-300 transition hover:border-slate-500 hover:bg-slate-800"
+                title="Cycle card size: small → medium → large"
+              >
+                <LayoutGrid
+                  className={`h-4 w-4 ${show_size === "small" ? "text-cyan-300" : "text-slate-500"}`}
+                  strokeWidth={2}
+                />
+                <Columns2
+                  className={`h-4 w-4 ${show_size === "medium" ? "text-cyan-300" : "text-slate-500"}`}
+                  strokeWidth={2}
+                />
+                <SquareStack
+                  className={`h-4 w-4 ${show_size === "large" ? "text-cyan-300" : "text-slate-500"}`}
+                  strokeWidth={2}
+                />
+                <span className="hidden sm:inline">Size</span>
               </button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {expandedPile && getPileCards(expandedPile).map((card, index) => (
-              <STSCard
-                key={`${expandedPile}-${index}-${card.name}`}
-                card={card}
-                index={index}
-                location={expandedPile === 'playedCards' ? LOCATION.PLAYED : LOCATION[expandedPile.toUpperCase() as keyof typeof LOCATION]}
-                size={show_size}
-              />
-            ))}
+            </div>
+            <div className="flex flex-wrap gap-2 pb-3">
+              {expandedPile &&
+                getPileCards(expandedPile).map((card, index) => (
+                  <STSCard
+                    key={`${expandedPile}-${index}-${card.name}`}
+                    card={card}
+                    index={index}
+                    location={
+                      expandedPile === "playedCards"
+                        ? LOCATION.PLAYED
+                        : LOCATION[expandedPile.toUpperCase() as keyof typeof LOCATION]
+                    }
+                    size={show_size}
+                  />
+                ))}
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Collapsed bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 p-4">
-          <div className="flex flex-wrap gap-2">
+      {/* Control bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          {PILES.map(({ id, label, Icon, idle, active }) => {
+            const isOpen = expandedPile === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => toggleExpand(id)}
+                className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm font-medium transition-all duration-200 ${
+                  isOpen ? active : idle
+                } `}
+              >
+                <Icon className="h-4 w-4 shrink-0 opacity-90" />
+                <span className="whitespace-nowrap">{label}</span>
+                <span
+                  className={`ml-0.5 min-w-[1.75rem] rounded-md px-1.5 py-0.5 text-center text-xs tabular-nums ${
+                    isOpen ? "bg-black/25" : "bg-black/20"
+                  }`}
+                >
+                  {getPileCount(id)}
+                </span>
+                <ChevronUp
+                  className={`h-4 w-4 shrink-0 opacity-70 transition-transform duration-200 ${
+                    isOpen ? "rotate-0" : "-rotate-180"
+                  }`}
+                />
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500 sm:mr-0.5">Draw</span>
+          <div
+            className="flex h-9 items-center justify-center gap-0.5 rounded-xl border border-slate-800 bg-slate-900/60 p-0.5 transition-colors focus-within:border-emerald-500/40 focus-within:ring-1 focus-within:ring-emerald-500/20"
+            role="group"
+            aria-label="Cards to draw"
+          >
             <button
-              onClick={() => toggleExpand('draw')}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white cursor-pointer"
+              type="button"
+              aria-label="Draw fewer cards"
+              disabled={drawAmount <= DRAW_MIN}
+              className="rounded-lg p-1.5 text-slate-400 transition-all duration-200 hover:bg-slate-800 hover:text-white active:scale-90 disabled:pointer-events-none disabled:opacity-30"
+              onClick={() => setDrawAmount((a) => clampDrawAmount(a - 1))}
             >
-              Draw Pile {getPileCount('draw')}
+              <ChevronDown className="h-4 w-4" strokeWidth={2} />
             </button>
-            <button
-              onClick={() => toggleExpand('discard')}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white cursor-pointer"
-            >
-              Discard Pile {getPileCount('discard')}
-            </button>
-            <button
-              onClick={() => toggleExpand('exhaust')}
-              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded text-white cursor-pointer"
-            >
-              Exhaust Pile {getPileCount('exhaust')}
-            </button>
-            <button
-              onClick={() => toggleExpand('playedCards')}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded text-white cursor-pointer"
-            >
-              Played Pile {getPileCount('playedCards')}
-            </button>
-          </div>
-          <div className="flex items-center flex-row gap-2">
+            <span className="min-w-[2rem] text-center text-sm font-mono font-bold tabular-nums text-emerald-200">
+              {drawAmount}
+            </span>
             <input
+              id="draw-amount"
               type="number"
               value={drawAmount}
               onChange={(e) => {
                 const value = parseInt(e.target.value, 10);
-                setDrawAmount(Number.isNaN(value) ? 1 : Math.min(Math.max(value, 1), 9));
+                setDrawAmount(Number.isNaN(value) ? DRAW_MIN : clampDrawAmount(value));
               }}
-              className="w-16 h-10 px-2 bg-slate-800 border border-slate-600 rounded-full text-center text-white outline-none ring-1 ring-transparent transition focus:border-blue-400 focus:ring-blue-500/30"
-              min="1"
-              max="9"
+              className="sr-only"
+              min={DRAW_MIN}
+              max={DRAW_MAX}
               inputMode="numeric"
               pattern="[0-9]*"
+              aria-label="Cards to draw (or use the arrows). Current value is shown in the group."
             />
             <button
-              onClick={handleDraw}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-white"
+              type="button"
+              aria-label="Draw more cards"
+              disabled={drawAmount >= DRAW_MAX}
+              className="rounded-lg p-1.5 text-slate-400 transition-all duration-200 hover:bg-slate-800 hover:text-white active:scale-90 disabled:pointer-events-none disabled:opacity-30"
+              onClick={() => setDrawAmount((a) => clampDrawAmount(a + 1))}
             >
-              Draw
+              <ChevronUp className="h-4 w-4" strokeWidth={2} />
             </button>
           </div>
+          <button
+            type="button"
+            onClick={handleDraw}
+            className="h-9 whitespace-nowrap rounded-lg border-2 border-emerald-500/60 bg-emerald-700/85 px-4 text-sm font-semibold text-white shadow-sm shadow-emerald-950/30 transition hover:bg-emerald-600 active:scale-[0.98]"
+          >
+            Draw {drawAmount}
+          </button>
+          <button
+            type="button"
+            onClick={handleDrawOne}
+            className="h-9 whitespace-nowrap rounded-lg border border-emerald-500/45 bg-emerald-950/50 px-3 text-sm font-semibold text-emerald-100 shadow-sm transition hover:bg-emerald-900/55 active:scale-[0.98]"
+            title="Draw a single card"
+          >
+            Draw 1
+          </button>
         </div>
       </div>
     </div>

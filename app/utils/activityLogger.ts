@@ -1,30 +1,23 @@
-import { Card } from '@/app/types/gameTypes';
+import type {
+  ActivityLogEntry,
+  ActivityLogContextLine,
+  Card,
+} from '@/app/types/gameTypes';
 import { CARD_TYPE_COLORS } from '@/app/constants/colors';
 
-export type ActivityLogType = 
-  | 'info' 
-  | 'action' 
-  | 'state-change' 
-  | 'damage' 
-  | 'heal' 
-  | 'block' 
-  | 'block-lost' 
-  | 'energy' 
-  | 'buff' 
-  | 'debuff' 
+export type ActivityLogType =
+  | 'info'
+  | 'action'
+  | 'state-change'
+  | 'damage'
+  | 'heal'
+  | 'block'
+  | 'block-lost'
+  | 'energy'
+  | 'buff'
+  | 'debuff'
   | 'card-action'
   | 'system';
-
-export interface ActivityLogEntry {
-  id: string;
-  timestamp: string;
-  title: string;
-  before?: string;
-  after?: string;
-  details?: string;
-  type?: ActivityLogType;
-  target?: 'player' | 'enemy';
-}
 
 export interface CardNameWithTypeColor {
   name: string;
@@ -32,17 +25,28 @@ export interface CardNameWithTypeColor {
   colorClass: string;
 }
 
-export const formatCardNames = (cards: Card[]) =>
-  cards.map((card) => card.name).join(', ');
+export function formatPileLabel(loc: string): string {
+  const map: Record<string, string> = {
+    draw: 'Draw pile',
+    discard: 'Discard',
+    exhaust: 'Exhaust',
+    hand: 'Hand',
+    playedCards: 'Played',
+  };
+  return map[loc] ?? loc;
+}
+
+export const formatCardNames = (cards: Card[]) => cards.map((card) => card.name).join(', ');
 
 export const formatCardNamesWithTypeColor = (cards: Card[]): CardNameWithTypeColor[] =>
   cards.map((card) => ({
     name: card.name,
     type: card.type,
     colorClass:
-      (card.type && CARD_TYPE_COLORS[card.type as keyof typeof CARD_TYPE_COLORS]) ||
-      'text-slate-300',
+      (card.type && CARD_TYPE_COLORS[card.type as keyof typeof CARD_TYPE_COLORS]) || 'text-slate-300',
   }));
+
+type LogExtras = Partial<Pick<ActivityLogEntry, 'cardsInvolved' | 'context' | 'target'>>;
 
 export const createActivityLogEntry = (
   title: string,
@@ -50,6 +54,7 @@ export const createActivityLogEntry = (
   after?: string,
   details?: string,
   type: ActivityLogType = 'info',
+  extras?: LogExtras,
 ): ActivityLogEntry => ({
   id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
   timestamp: new Date().toLocaleTimeString(),
@@ -58,16 +63,82 @@ export const createActivityLogEntry = (
   after,
   details,
   type,
+  ...extras,
 });
 
+export interface BuildActionLogExtras {
+  context?: ActivityLogContextLine[];
+  /** When set, adds a "To" context line (e.g. move destination). */
+  toPile?: string;
+  /** When set (e.g. play card with enemies / self selected), adds a "Targets" context line. */
+  playTargetsLabel?: string;
+}
+
+/** Labels for activity log when playing cards with combat targets selected. */
+export function formatPlayCardTargets(
+  enemies: { name?: string }[] | undefined,
+  indices: number[],
+  includeSelf: boolean,
+): string | null {
+  const parts: string[] = [];
+  if (includeSelf) parts.push('Self');
+  for (const i of indices) {
+    const name = enemies?.[i]?.name?.trim();
+    parts.push(name && name.length > 0 ? name : `Enemy #${i + 1}`);
+  }
+  if (parts.length === 0) return null;
+  return parts.join(' · ');
+}
 
 export const buildActionLogEntry = (
   action: string,
-  selected: { card: Card }[],
+  selected: { card: Card; location?: string }[],
+  extras?: BuildActionLogExtras,
 ): ActivityLogEntry => {
-  const names = formatCardNames(selected.map(({ card }) => card));
-  const title = `${action}`;
-  return createActivityLogEntry(title, undefined, undefined, names ? `Cards: ${names}` : undefined, 'action');
+  const cardsInvolved = selected.map(({ card }) => ({
+    name: card.name,
+    cardType: card.type,
+  }));
+
+  const context: ActivityLogContextLine[] = [...(extras?.context ?? [])];
+
+  if (selected.length && !context.some((c) => c.label === 'From')) {
+    const pileCounts = new Map<string, number>();
+    for (const s of selected) {
+      const loc = s.location ?? 'unknown';
+      pileCounts.set(loc, (pileCounts.get(loc) ?? 0) + 1);
+    }
+    const fromParts = [...pileCounts.entries()].map(([loc, n]) => `${formatPileLabel(loc)} ×${n}`);
+    context.unshift({ label: 'From', value: fromParts.join(' · ') });
+  }
+
+  if (extras?.toPile) {
+    context.push({ label: 'To', value: formatPileLabel(extras.toPile) });
+  }
+
+  if (extras?.playTargetsLabel) {
+    const fromIdx = context.findIndex((c) => c.label === 'From');
+    const row = { label: 'Targets', value: extras.playTargetsLabel };
+    if (fromIdx >= 0) {
+      context.splice(fromIdx + 1, 0, row);
+    } else {
+      context.unshift(row);
+    }
+  }
+
+  const nameList = formatCardNames(selected.map(({ card }) => card));
+
+  return createActivityLogEntry(
+    action,
+    undefined,
+    undefined,
+    nameList ? `Cards: ${nameList}` : undefined,
+    'card-action',
+    {
+      cardsInvolved: cardsInvolved.length ? cardsInvolved : undefined,
+      context: context.length ? context : undefined,
+    },
+  );
 };
 
 export const buildStateDiffLogEntry = (
@@ -75,45 +146,67 @@ export const buildStateDiffLogEntry = (
   before: string,
   after: string,
   details?: string,
-): ActivityLogEntry => createActivityLogEntry(action, before, after, details, 'state-change');
+  extras?: LogExtras,
+): ActivityLogEntry => createActivityLogEntry(action, before, after, details, 'state-change', extras);
 
-// Damage logging
 export const buildDamageLogEntry = (
   target: 'player' | 'enemy',
   damage: number,
   beforeHp: number,
   afterHp: number,
   enemyName?: string,
+  maxHp?: number,
 ): ActivityLogEntry => {
   const targetLabel = target === 'player' ? 'You' : enemyName || 'Enemy';
+  const context: ActivityLogContextLine[] = [
+    { label: 'Damage', value: String(damage) },
+    {
+      label: 'HP',
+      value:
+        maxHp != null && maxHp > 0
+          ? `${afterHp} / ${maxHp} (${Math.round((afterHp / maxHp) * 100)}%)`
+          : String(afterHp),
+    },
+  ];
   return createActivityLogEntry(
     `${targetLabel} took ${damage} damage`,
     `HP: ${beforeHp}`,
     `HP: ${afterHp}`,
-    undefined,
+    maxHp != null ? `${targetLabel} HP ${beforeHp} → ${afterHp} (max ${maxHp})` : undefined,
     'damage',
+    { target, context },
   );
 };
 
-// Heal logging
 export const buildHealLogEntry = (
   target: 'player' | 'enemy',
   healAmount: number,
   beforeHp: number,
   afterHp: number,
   enemyName?: string,
+  maxHp?: number,
 ): ActivityLogEntry => {
   const targetLabel = target === 'player' ? 'You' : enemyName || 'Enemy';
+  const context: ActivityLogContextLine[] = [
+    { label: 'Healing', value: `+${healAmount}` },
+    {
+      label: 'HP',
+      value:
+        maxHp != null && maxHp > 0
+          ? `${afterHp} / ${maxHp} (${Math.round((afterHp / maxHp) * 100)}%)`
+          : String(afterHp),
+    },
+  ];
   return createActivityLogEntry(
     `${targetLabel} gained ${healAmount} HP`,
     `HP: ${beforeHp}`,
     `HP: ${afterHp}`,
-    undefined,
+    maxHp != null ? `${targetLabel} HP ${beforeHp} → ${afterHp} (max ${maxHp})` : undefined,
     'heal',
+    { target, context },
   );
 };
 
-// Block logging
 export const buildBlockLogEntry = (
   target: 'player' | 'enemy',
   blockAmount: number,
@@ -126,12 +219,18 @@ export const buildBlockLogEntry = (
     `${targetLabel} gained ${blockAmount} block`,
     `Block: ${beforeBlock}`,
     `Block: ${afterBlock}`,
-    undefined,
+    `Block ${beforeBlock} → ${afterBlock} (+${blockAmount})`,
     'block',
+    {
+      target,
+      context: [
+        { label: 'Block gained', value: String(blockAmount) },
+        { label: 'Block total', value: `${beforeBlock} → ${afterBlock}` },
+      ],
+    },
   );
 };
 
-// Block lost logging
 export const buildBlockLostLogEntry = (
   target: 'player' | 'enemy',
   blockAmount: number,
@@ -144,26 +243,56 @@ export const buildBlockLostLogEntry = (
     `${targetLabel} block reduced by ${blockAmount}`,
     `Block: ${beforeBlock}`,
     `Block: ${afterBlock}`,
-    undefined,
+    `Block ${beforeBlock} → ${afterBlock} (−${blockAmount})`,
     'block-lost',
+    {
+      target,
+      context: [
+        { label: 'Block lost', value: String(blockAmount) },
+        { label: 'Block total', value: `${beforeBlock} → ${afterBlock}` },
+      ],
+    },
   );
 };
 
-// Energy logging
 export const buildEnergyLogEntry = (
-  energyAmount: number,
   beforeEnergy: number,
   afterEnergy: number,
-  action: string = 'energy changed',
-): ActivityLogEntry => createActivityLogEntry(
-  `Energy: ${action}`,
-  `Energy: ${beforeEnergy}`,
-  `Energy: ${afterEnergy}`,
-  undefined,
-  'energy',
-);
+  options?: {
+    /** Overrides auto-generated title when set. */
+    summary?: string;
+    cards?: Card[];
+    reason?: string;
+  },
+): ActivityLogEntry => {
+  const delta = afterEnergy - beforeEnergy;
+  const amt = Math.abs(delta);
+  const title =
+    options?.summary ??
+    (delta > 0
+      ? `Energy +${amt} (${beforeEnergy} → ${afterEnergy})`
+      : delta < 0
+        ? `Energy −${amt} (${beforeEnergy} → ${afterEnergy})`
+        : `Energy unchanged (${beforeEnergy})`);
 
-// Buff logging
+  const context: ActivityLogContextLine[] = [{ label: 'Energy', value: `${beforeEnergy} → ${afterEnergy}` }];
+  if (options?.reason) context.push({ label: 'Reason', value: options.reason });
+
+  const cards = options?.cards;
+
+  return createActivityLogEntry(
+    title,
+    `Energy: ${beforeEnergy}`,
+    `Energy: ${afterEnergy}`,
+    cards?.length ? `Cards: ${formatCardNames(cards)}` : undefined,
+    'energy',
+    {
+      cardsInvolved: cards?.length ? cards.map((c) => ({ name: c.name, cardType: c.type })) : undefined,
+      context,
+    },
+  );
+};
+
 export const buildBuffLogEntry = (
   buffName: string,
   stacks: number,
@@ -172,18 +301,30 @@ export const buildBuffLogEntry = (
   previousStacks?: number,
 ): ActivityLogEntry => {
   const targetLabel = target === 'player' ? 'You' : enemyName || 'Enemy';
-  const action = previousStacks ? 'updated' : 'gained';
-  const details = previousStacks ? `${previousStacks} → ${stacks} stacks` : `${targetLabel} Gained ${stacks} stacks of ${buffName}`;
+  const action = previousStacks !== undefined ? 'updated' : 'gained';
+  const details =
+    previousStacks !== undefined
+      ? `${previousStacks} → ${stacks} stacks`
+      : `${targetLabel} gained ${stacks} stack(s) of ${buffName}`;
   return createActivityLogEntry(
     `${targetLabel} ${action} ${buffName}`,
-    previousStacks ? `Stacks: ${previousStacks}` : undefined,
+    previousStacks !== undefined ? `Stacks: ${previousStacks}` : undefined,
     `Stacks: ${stacks}`,
     details,
     'buff',
+    {
+      target,
+      context: [
+        { label: 'Effect', value: buffName },
+        {
+          label: 'Stacks',
+          value: previousStacks !== undefined ? `${previousStacks} → ${stacks}` : String(stacks),
+        },
+      ],
+    },
   );
 };
 
-// Debuff logging
 export const buildDebuffLogEntry = (
   debuffName: string,
   stacks: number,
@@ -192,18 +333,30 @@ export const buildDebuffLogEntry = (
   previousStacks?: number,
 ): ActivityLogEntry => {
   const targetLabel = target === 'player' ? 'You' : enemyName || 'Enemy';
-  const action = previousStacks ? 'updated' : 'gained';
-  const details = previousStacks ? `${previousStacks} → ${stacks} stacks` : `${targetLabel} Gained ${stacks} stacks of ${debuffName}`;
+  const action = previousStacks !== undefined ? 'updated' : 'gained';
+  const details =
+    previousStacks !== undefined
+      ? `${previousStacks} → ${stacks} stacks`
+      : `${targetLabel} gained ${stacks} stack(s) of ${debuffName}`;
   return createActivityLogEntry(
     `${targetLabel} ${action} ${debuffName}`,
-    previousStacks ? `Stacks: ${previousStacks}` : undefined,
+    previousStacks !== undefined ? `Stacks: ${previousStacks}` : undefined,
     `Stacks: ${stacks}`,
     details,
     'debuff',
+    {
+      target,
+      context: [
+        { label: 'Effect', value: debuffName },
+        {
+          label: 'Stacks',
+          value: previousStacks !== undefined ? `${previousStacks} → ${stacks}` : String(stacks),
+        },
+      ],
+    },
   );
 };
 
-// Debuff removal logging
 export const buildDebuffRemovedLogEntry = (
   debuffName: string,
   target: 'player' | 'enemy',
@@ -211,10 +364,14 @@ export const buildDebuffRemovedLogEntry = (
 ): ActivityLogEntry => {
   const targetLabel = target === 'player' ? 'Your' : (enemyName || 'Enemy') + "'s";
   return createActivityLogEntry(
-    `${targetLabel} ${debuffName} was removed`,
+    `${targetLabel} ${debuffName} removed`,
     undefined,
     undefined,
     undefined,
     'debuff',
+    {
+      target,
+      context: [{ label: 'Removed', value: debuffName }],
+    },
   );
 };

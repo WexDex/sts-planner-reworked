@@ -40,6 +40,10 @@ export const combatData: CombatData = {
     ],
     relicEffects: [
       {
+        turn: 1,
+        effect: 'Gain 1 Energy',
+      },
+      {
         turn: 3,
         effect: 'Gain 18 Block',
       },

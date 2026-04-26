@@ -1,10 +1,74 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useGameManager } from '@/app/context/GameContext';
-import { Enemy, BuffDebuff } from '@/app/types/gameTypes';
-import { Minus } from 'lucide-react';
+import {
+  LANTERN_RELIC_NAME,
+  canTurnOffLantern,
+  getPlayerMaxEnergy,
+} from '@/app/utils/gameHelpers';
+import type { Enemy } from '@/app/types/gameTypes';
 import BuffDebuffItem from '@/app/components/UI/BuffDebuffItem';
+import {
+  Activity,
+  ChevronDown,
+  ChevronUp,
+  Heart,
+  Layers,
+  Shield,
+  Sparkles,
+  Swords,
+  User,
+  Zap,
+} from 'lucide-react';
+
+const BUFF_COMPOSER_ZONE =
+  'animate-sts-panel-in rounded-2xl border-2 border-amber-500/25 bg-linear-to-b from-amber-950/40 via-slate-950 to-slate-950 p-4 shadow-[inset_0_1px_0_0_rgba(251,251,113,0.08)] shadow-lg shadow-amber-950/30 ring-1 ring-amber-400/10 transition-all duration-300';
+
+  const RELICS_ZONE =
+  'animate-sts-panel-in rounded-2xl border-2 border-lime-500/25 bg-linear-to-b from-lime-950/40 via-slate-950 to-slate-950 p-4 shadow-lg shadow-lime-950/30 ring-1 ring-lime-400/10 transition-all duration-300';
+
+/** Visually separated “combatants” zone vs generic tool panels */
+const PLAYER_ZONE =
+  'animate-sts-panel-in rounded-2xl border-2 border-blue-500/25 bg-linear-to-b from-blue-950/40 via-slate-950 to-slate-950 p-4 shadow-[inset_0_1px_0_0_rgba(113,113,251,0.08)] shadow-lg shadow-blue-950/30 ring-1 ring-blue-400/10 transition-all duration-300';
+const ENEMIES_ZONE =
+  'animate-sts-panel-in rounded-2xl border-2 border-rose-500/25 bg-linear-to-b from-rose-950/40 via-slate-950 to-slate-950 p-4 shadow-[inset_0_1px_0_0_rgba(251,113,133,0.08)] shadow-lg shadow-rose-950/30 ring-1 ring-rose-400/10 transition-all duration-300';
+
+const QUICK_DEBUFFS = ['Vulnerable', 'Weak', 'Poison', 'Frail'] as const;
+const QUICK_BUFFS = ['Strength', 'Dexterity', 'Focus', 'Artifact'] as const;
+
+type BtnTone = 'rose' | 'sky' | 'amber' | 'slate' | 'emerald' | 'violet';
+
+const toneRing: Record<BtnTone, string> = {
+  rose: 'border-rose-500/40 bg-rose-950/35 hover:bg-rose-900/45 text-rose-100',
+  sky: 'border-sky-500/40 bg-sky-950/35 hover:bg-sky-900/45 text-sky-100',
+  amber: 'border-amber-500/40 bg-amber-950/35 hover:bg-amber-900/45 text-amber-100',
+  slate: 'border-slate-600 bg-slate-800/80 hover:bg-slate-800 text-slate-200',
+  emerald: 'border-emerald-500/40 bg-emerald-950/30 hover:bg-emerald-900/40 text-emerald-100',
+  violet: 'border-violet-500/40 bg-violet-950/35 hover:bg-violet-900/45 text-violet-100',
+};
+
+function StepBtn({
+  children,
+  onClick,
+  tone = 'slate',
+  className = '',
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  tone?: BtnTone;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`min-w-[2.25rem] rounded-lg border px-2 py-1.5 text-center text-[11px] font-semibold tabular-nums transition-all duration-150 active:scale-95 hover:brightness-110 ${toneRing[tone]} ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
 
 export default function RightBlock() {
   const {
@@ -17,6 +81,7 @@ export default function RightBlock() {
     addBuffDebuff,
     removeBuffDebuff,
     reduceBuffDebuff,
+    toggleRelic,
   } = useGameManager();
 
   const [buffName, setBuffName] = useState('');
@@ -24,509 +89,604 @@ export default function RightBlock() {
   const [buffDescription, setBuffDescription] = useState('');
   const [buffTarget, setBuffTarget] = useState<'player' | 'enemy'>('player');
   const [selectedEnemyIdx, setSelectedEnemyIdx] = useState(0);
-  const [inputs, setInputs] = useState<{ [key: string]: string }>({
-    playerDamage: '0',
-    playerBlock: '0',
-    playerEnergy: '0',
-  });
+  const [playerHpAmt, setPlayerHpAmt] = useState('');
+  const [playerBlkAmt, setPlayerBlkAmt] = useState('');
+  const [playerNrgAmt, setPlayerNrgAmt] = useState('');
+  const [enemyHpAmt, setEnemyHpAmt] = useState<Record<number, string>>({});
+  const [enemyBlkAmt, setEnemyBlkAmt] = useState<Record<number, string>>({});
+  const [buffAdvancedOpen, setBuffAdvancedOpen] = useState(false);
 
-  const handleInputChange = (key: string, value: string) => {
-    setInputs(prev => ({ ...prev, [key]: value }));
-  };
+  const enemies = gameState?.enemies;
 
-  if (!gameState) {
-    return (
-      <div className="fixed right-0 top-0 bottom-28 w-80 bg-linear-to-b from-gray-900 to-gray-950 border-l-2 border-amber-600 overflow-y-auto">
-        <div className="sticky top-0 bg-gray-800 border-b-2 border-amber-600 p-4">
-          <h2 className="text-lg font-bold text-amber-300">Combat Panel</h2>
-        </div>
-        <div className="p-4 text-gray-400 text-center">Loading...</div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!enemies?.length) return;
+    setSelectedEnemyIdx((i) => Math.min(Math.max(0, i), enemies.length - 1));
+  }, [enemies?.length]);
 
-  const player = gameState.player;
-  const enemies = gameState.enemies;
+  const activeRelics = gameState?.player.activeRelics ?? [];
 
   const handleAddBuff = (type: 'buff' | 'debuff') => {
     if (!buffName.trim()) return;
-
     if (buffTarget === 'player') {
-      addBuffDebuff('player', 0, buffName, type, buffStacks, buffDescription || undefined);
+      addBuffDebuff('player', 0, buffName.trim(), type, buffStacks, buffDescription.trim() || undefined);
     } else {
-      addBuffDebuff('enemy', selectedEnemyIdx, buffName, type, buffStacks, buffDescription || undefined);
+      addBuffDebuff('enemy', selectedEnemyIdx, buffName.trim(), type, buffStacks, buffDescription.trim() || undefined);
     }
-    
     setBuffName('');
     setBuffStacks(1);
     setBuffDescription('');
   };
 
-  const handleReduceBuff = (target: 'player' | 'enemy', enemyIndex: number, name: string) => {
-    reduceBuffDebuff(target, enemyIndex, name);
-  };
-
-  const handleRemoveBuff = (target: 'player' | 'enemy', enemyIndex: number, name: string) => {
-    removeBuffDebuff(target, enemyIndex, name);
-  };
-
-  const applyPlayerDamage = () => {
-    const damage = Math.abs(parseInt(inputs.playerDamage) || 0);
-    if (damage > 0) {
-      modifyPlayerHp(-damage);
-      handleInputChange('playerDamage', '0');
+  const quickAdd = (name: string, type: 'buff' | 'debuff') => {
+    const stacks = Math.max(1, buffStacks);
+    if (buffTarget === 'player') {
+      addBuffDebuff('player', 0, name, type, stacks);
+    } else {
+      addBuffDebuff('enemy', selectedEnemyIdx, name, type, stacks);
     }
   };
 
-  const applyPlayerBlock = () => {
-    const block = Math.abs(parseInt(inputs.playerBlock) || 0);
-    if (block > 0) {
-      modifyPlayerBlock(block);
-      handleInputChange('playerBlock', '0');
-    }
-  };
+  const enemyHpKey = (idx: number) => enemyHpAmt[idx] ?? '';
+  const enemyBlkKey = (idx: number) => enemyBlkAmt[idx] ?? '';
 
-  const applyPlayerEnergy = () => {
-    const energy = parseInt(inputs.playerEnergy) || 0;
-    if (energy !== 0) {
-      modifyPlayerEnergy(energy);
-      handleInputChange('playerEnergy', '0');
-    }
-  };
+  if (!gameState) {
+    return (
+      <div className="flex h-full min-h-0 w-full flex-col overflow-y-auto border-l border-slate-800 bg-linear-to-b from-slate-950 to-slate-900">
+        <header className="sticky top-0 z-10 shrink-0 border-b border-slate-800 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
+          <h2 className="text-sm font-semibold tracking-tight text-slate-100">Combat tools</h2>
+          <p className="text-[11px] text-slate-500">Load combat data to use this panel.</p>
+        </header>
+        <div className="flex flex-1 items-center justify-center p-6 text-sm text-slate-500">Loading…</div>
+      </div>
+    );
+  }
 
-  const applyEnemyDamage = (enemyIdx: number) => {
-    const key = `enemyDamage${enemyIdx}`;
-    const damage = Math.abs(parseInt(inputs[key]) || 0);
-    if (damage > 0) {
-      modifyEnemyHp(enemyIdx, -damage);
-      handleInputChange(key, '0');
-    }
-  };
+  const player = gameState.player;
+  const hpPct = player.maxHp > 0 ? Math.min(100, Math.max(0, (player.hp / player.maxHp) * 100)) : 0;
+  const energyCap = getPlayerMaxEnergy(player);
 
-  const applyEnemyBlock = (enemyIdx: number) => {
-    const key = `enemyBlock${enemyIdx}`;
-    const block = Math.abs(parseInt(inputs[key]) || 0);
-    if (block > 0) {
-      modifyEnemyBlock(enemyIdx, block);
-      handleInputChange(key, '0');
-    }
-  };
+  const parseUnsigned = (s: string) => Math.max(0, parseInt(s, 10) || 0);
+  const parseSigned = (s: string) => parseInt(s, 10) || 0;
 
   return (
-    <div className="fixed right-0 top-0 bottom-28 w-80 bg-linear-to-b from-gray-900 to-gray-950 border-l-2 border-amber-600 overflow-y-auto">
-      {/* Header */}
-      <div className="sticky top-0 bg-gray-800 border-b-2 border-amber-600 p-4">
-        <h2 className="text-lg font-bold text-amber-300">Combat Panel</h2>
-      </div>
+    <div className="flex h-full min-h-0 w-full flex-col overflow-y-auto border-l border-slate-800/90 bg-linear-to-b from-slate-950 via-slate-950 to-slate-900 [scrollbar-width:thin]">
+      <header className="sticky top-0 z-10 shrink-0 border-b border-slate-800 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
+        <div className="flex items-center gap-2 text-slate-100">
+          <Swords className="h-4 w-4 shrink-0 text-cyan-500/90" />
+          <div className="min-w-0">
+            <h2 className="truncate text-sm font-semibold tracking-tight">Combat tools</h2>
+            <p className="truncate text-[11px] text-slate-500">
+              {player.combatName} · {player.combatType} · Fl {player.floor}
+            </p>
+          </div>
+        </div>
+      </header>
 
-      <div className="p-4 space-y-6">
-        {/* Player Stats Section */}
-        <div className="bg-gray-800 rounded-lg border border-amber-500 p-4">
-          <h3 className="text-amber-300 font-bold mb-3">Player Stats</h3>
+      <div className="flex flex-col gap-3 p-3">
+        {/* Relics — toggles match encounter relics */}
+        {player.relics?.length ? (
+          <div className={RELICS_ZONE}>
+            <p className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              <Sparkles className="h-3 w-3" /> Relics (tap to toggle bonus)
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {player.relics.map((r) => {
+                const on = activeRelics.includes(r.name);
+                const lanternLockedOff =
+                  r.name === LANTERN_RELIC_NAME && on && !canTurnOffLantern(player);
+                return (
+                  <button
+                    key={r.name}
+                    type="button"
+                    title={
+                      lanternLockedOff
+                        ? `Need at least 1 energy to turn off. ${r.description ?? ''}`.trim()
+                        : (r.description ?? undefined)
+                    }
+                    disabled={lanternLockedOff}
+                    onClick={() => toggleRelic(r.name)}
+                    className={`max-w-full truncate rounded-lg border px-2.5 py-1.5 text-left text-[11px] font-medium transition ${on
+                        ? 'border-cyan-500/60 bg-cyan-950/50 text-cyan-100 shadow-sm shadow-cyan-950/30'
+                        : 'border-slate-700 bg-slate-900/60 text-slate-400 hover:border-slate-600 hover:text-slate-200'
+                      } ${lanternLockedOff ? 'cursor-not-allowed opacity-60' : ''}`}
+                  >
+                    {r.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
 
-          {/* HP */}
-          <div className="mb-3">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs text-gray-400">HP</span>
-              <span className="text-sm font-bold text-red-400">
+        {/* Player */}
+        <div className={PLAYER_ZONE}>
+          <h3 className="mb-3 flex items-center gap-2 text-xs font-semibold text-slate-200">
+            <User className="h-3.5 w-3.5 text-slate-400" />
+            You
+          </h3>
+
+          <div className="mb-4">
+            <div className="mb-1 flex justify-between text-[10px] text-slate-500">
+              <span className="flex items-center gap-1">
+                <Heart className="h-3 w-3 text-rose-400/90" /> HP
+              </span>
+              <span className="font-mono tabular-nums text-rose-200">
                 {player.hp} / {player.maxHp}
               </span>
             </div>
-            <div className="flex gap-1 mb-2">
-              <button
-                onClick={() => modifyPlayerHp(-10)}
-                className="flex-1 bg-red-700 hover:bg-red-600 text-white text-xs py-1 rounded"
-              >
-                -10
-              </button>
-              <button
-                onClick={() => modifyPlayerHp(-1)}
-                className="flex-1 bg-red-600 hover:bg-red-500 text-white text-xs py-1 rounded"
-              >
-                -1
-              </button>
-              <button
-                onClick={() => modifyPlayerHp(1)}
-                className="flex-1 bg-green-600 hover:bg-green-500 text-white text-xs py-1 rounded"
-              >
-                +1
-              </button>
-              <button
-                onClick={() => modifyPlayerHp(10)}
-                className="flex-1 bg-green-700 hover:bg-green-600 text-white text-xs py-1 rounded"
-              >
-                +10
-              </button>
+            <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-slate-800">
+              <div className="h-full rounded-full bg-gradient-to-r from-rose-700 to-rose-500" style={{ width: `${hpPct}%` }} />
+            </div>
+            <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">Quick</p>
+            <div className="mb-2 flex flex-wrap gap-1">
+              <StepBtn tone="rose" onClick={() => modifyPlayerHp(-10)}>-10</StepBtn>
+              <StepBtn tone="rose" onClick={() => modifyPlayerHp(-5)}>-5</StepBtn>
+              <StepBtn tone="rose" onClick={() => modifyPlayerHp(-1)}>-1</StepBtn>
+              <StepBtn tone="emerald" onClick={() => modifyPlayerHp(1)}>+1</StepBtn>
+              <StepBtn tone="emerald" onClick={() => modifyPlayerHp(5)}>+5</StepBtn>
+              <StepBtn tone="emerald" onClick={() => modifyPlayerHp(10)}>+10</StepBtn>
             </div>
             <div className="flex gap-2">
               <input
                 type="number"
-                value={inputs.playerDamage}
-                onChange={(e) => handleInputChange('playerDamage', e.target.value)}
-                placeholder="Damage"
-                className="flex-1 bg-gray-700 text-white text-xs p-2 rounded border border-gray-600"
+                min={0}
+                value={playerHpAmt}
+                onChange={(e) => setPlayerHpAmt(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const n = parseUnsigned(playerHpAmt);
+                    if (n) {
+                      modifyPlayerHp(-n);
+                      setPlayerHpAmt('');
+                    }
+                  }
+                }}
+                placeholder="Amount…"
+                className="min-w-0 flex-1 rounded-xl border border-slate-700 bg-slate-900/80 px-2.5 py-2 text-xs text-white outline-none focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/25"
               />
               <button
-                onClick={applyPlayerDamage}
-                className="bg-red-600 hover:bg-red-500 text-white text-xs font-bold py-2 px-3 rounded"
+                type="button"
+                className="rounded-xl border border-rose-600/50 bg-rose-900/40 px-3 text-[11px] font-semibold text-rose-100 hover:bg-rose-900/60"
+                onClick={() => {
+                  const n = parseUnsigned(playerHpAmt);
+                  if (n) {
+                    modifyPlayerHp(-n);
+                    setPlayerHpAmt('');
+                  }
+                }}
               >
                 Dmg
               </button>
+              <button
+                type="button"
+                className="rounded-xl border border-emerald-600/50 bg-emerald-900/35 px-3 text-[11px] font-semibold text-emerald-100 hover:bg-emerald-900/55"
+                onClick={() => {
+                  const n = parseUnsigned(playerHpAmt);
+                  if (n) {
+                    modifyPlayerHp(n);
+                    setPlayerHpAmt('');
+                  }
+                }}
+              >
+                Heal
+              </button>
             </div>
           </div>
 
-          {/* Block */}
-          <div className="mb-3">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs text-gray-400">Block</span>
-              <span className="text-sm font-bold text-blue-400">
-                {player.currentBlock ?? 0}
+          <div className="mb-4 border-t border-slate-800/80 pt-4">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="flex items-center gap-1 text-[10px] text-slate-500">
+                <Shield className="h-3 w-3 text-sky-400/90" /> Block
               </span>
-            </div>
-            <div className="flex gap-1 mb-2">
-              <button
-                onClick={() => modifyPlayerBlock(-10)}
-                className="flex-1 bg-blue-700 hover:bg-blue-600 text-white text-xs py-1 rounded"
-              >
-                -10
-              </button>
-              <button
-                onClick={() => modifyPlayerBlock(-1)}
-                className="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-xs py-1 rounded"
-              >
-                -1
-              </button>
-              <button
-                onClick={() => modifyPlayerBlock(1)}
-                className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white text-xs py-1 rounded"
-              >
-                +1
-              </button>
-              <button
-                onClick={() => modifyPlayerBlock(10)}
-                className="flex-1 bg-cyan-700 hover:bg-cyan-600 text-white text-xs py-1 rounded"
-              >
-                +10
-              </button>
-            </div>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                value={inputs.playerBlock}
-                onChange={(e) => handleInputChange('playerBlock', e.target.value)}
-                placeholder="Block"
-                className="flex-1 bg-gray-700 text-white text-xs p-2 rounded border border-gray-600"
-              />
-              <button
-                onClick={applyPlayerBlock}
-                className="bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold py-2 px-3 rounded"
-              >
-                Blk
-              </button>
-            </div>
-          </div>
-
-          {/* Energy */}
-          <div className="mb-3">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs text-gray-400">Energy</span>
-              <span className="text-sm font-bold text-yellow-400">
-                {player.currentEnergy ?? 0} / {player.energy.base + (player.bonusEnergy ?? 0)}
-              </span>
-            </div>
-            <div className="flex gap-1 mb-2">
-              <button
-                onClick={() => modifyPlayerEnergy(-3)}
-                className="flex-1 bg-yellow-700 hover:bg-yellow-600 text-white text-xs py-1 rounded"
-              >
-                -3
-              </button>
-              <button
-                onClick={() => modifyPlayerEnergy(-2)}
-                className="flex-1 bg-yellow-600 hover:bg-yellow-500 text-white text-xs py-1 rounded"
-              >
-                -2
-              </button>
-              <button
-                onClick={() => modifyPlayerEnergy(-1)}
-                className="flex-1 bg-yellow-600 hover:bg-yellow-500 text-white text-xs py-1 rounded"
-              >
-                -1
-              </button>
-              <button
-                onClick={() => modifyPlayerEnergy(1)}
-                className="flex-1 bg-yellow-500 hover:bg-yellow-400 text-white text-xs py-1 rounded"
-              >
-                +1
-              </button>
-              <button
-                onClick={() => modifyPlayerEnergy(2)}
-                className="flex-1 bg-yellow-600 hover:bg-yellow-500 text-white text-xs py-1 rounded"
-              >
-                +2
-              </button>
-              <button
-                onClick={() => modifyPlayerEnergy(3)}
-                className="flex-1 bg-yellow-600 hover:bg-yellow-500 text-white text-xs py-1 rounded"
-              >
-                +3
-              </button>
-            </div>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                value={inputs.playerEnergy}
-                onChange={(e) => handleInputChange('playerEnergy', e.target.value)}
-                placeholder="Energy ±"
-                className="flex-1 bg-gray-700 text-white text-xs p-2 rounded border border-gray-600"
-              />
-              <button
-                onClick={applyPlayerEnergy}
-                className="bg-yellow-500 hover:bg-yellow-400 text-white text-xs font-bold py-2 px-3 rounded"
-              >
-                ±
-              </button>
-            </div>
-          </div>
-
-          {/* Bonus Block */}
-          {(player.bonusBlock ?? 0) > 0 && (
-            <div className="mb-3">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-xs text-gray-400">Bonus Block</span>
-                <span className="text-sm font-bold text-green-400">{player.bonusBlock}</span>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs font-semibold tabular-nums text-sky-200">{player.currentBlock ?? 0}</span>
+                <button
+                  type="button"
+                  onClick={() => modifyPlayerBlock(-(player.currentBlock ?? 0))}
+                  className="text-[10px] font-medium text-slate-500 underline-offset-2 hover:text-slate-300 hover:underline"
+                >
+                  Clear
+                </button>
               </div>
             </div>
-          )}
-
-          {/* Intangible */}
-          {player.intangible && (
-            <div className="mb-3 p-2 bg-purple-900/50 rounded border border-purple-600 text-xs text-purple-300">
-              Status: Intangible
+            <div className="mb-2 flex flex-wrap gap-1">
+              <StepBtn tone="sky" onClick={() => modifyPlayerBlock(-10)}>-10</StepBtn>
+              <StepBtn tone="sky" onClick={() => modifyPlayerBlock(-5)}>-5</StepBtn>
+              <StepBtn tone="sky" onClick={() => modifyPlayerBlock(5)}>+5</StepBtn>
+              <StepBtn tone="sky" onClick={() => modifyPlayerBlock(10)}>+10</StepBtn>
             </div>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={playerBlkAmt}
+                onChange={(e) => setPlayerBlkAmt(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const n = parseSigned(playerBlkAmt);
+                    if (n) {
+                      modifyPlayerBlock(n);
+                      setPlayerBlkAmt('');
+                    }
+                  }
+                }}
+                placeholder="± block"
+                className="min-w-0 flex-1 rounded-xl border border-slate-700 bg-slate-900/80 px-2.5 py-2 text-xs outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/25"
+              />
+              <button
+                type="button"
+                className="rounded-xl border border-sky-600/50 bg-sky-900/40 px-3 text-[11px] font-semibold text-sky-100 hover:bg-sky-900/60"
+                onClick={() => {
+                  const n = parseSigned(playerBlkAmt);
+                  if (n) {
+                    modifyPlayerBlock(n);
+                    setPlayerBlkAmt('');
+                  }
+                }}
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-800/80 pt-4">
+            <div className="mb-2 flex justify-between text-[10px] text-slate-500">
+              <span className="flex items-center gap-1">
+                <Zap className="h-3 w-3 text-amber-400/90" /> Energy
+              </span>
+              <span className="font-mono tabular-nums text-amber-200">
+                {player.currentEnergy ?? 0} / {energyCap}
+              </span>
+            </div>
+            <div className="mb-2 flex flex-wrap gap-1">
+              <StepBtn tone="amber" onClick={() => modifyPlayerEnergy(-3)}>-3</StepBtn>
+              <StepBtn tone="amber" onClick={() => modifyPlayerEnergy(-1)}>-1</StepBtn>
+              <StepBtn tone="amber" onClick={() => modifyPlayerEnergy(1)}>+1</StepBtn>
+              <StepBtn tone="amber" onClick={() => modifyPlayerEnergy(3)}>+3</StepBtn>
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={playerNrgAmt}
+                onChange={(e) => setPlayerNrgAmt(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const n = parseSigned(playerNrgAmt);
+                    if (n) {
+                      modifyPlayerEnergy(n);
+                      setPlayerNrgAmt('');
+                    }
+                  }
+                }}
+                placeholder="± energy"
+                className="min-w-0 flex-1 rounded-xl border border-slate-700 bg-slate-900/80 px-2.5 py-2 text-xs outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/25"
+              />
+              <button
+                type="button"
+                className="rounded-xl border border-amber-600/50 bg-amber-900/35 px-3 text-[11px] font-semibold text-amber-100 hover:bg-amber-900/55"
+                onClick={() => {
+                  const n = parseSigned(playerNrgAmt);
+                  if (n) {
+                    modifyPlayerEnergy(n);
+                    setPlayerNrgAmt('');
+                  }
+                }}
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+
+          {(player.bonusBlock ?? 0) > 0 && (
+            <p className="mt-3 text-[11px] text-emerald-400/90">Bonus block: {player.bonusBlock}</p>
+          )}
+          {player.intangible && (
+            <p className="mt-2 rounded-lg border border-violet-500/40 bg-violet-950/40 px-2 py-1.5 text-[11px] text-violet-200">Intangible</p>
           )}
 
-          {/* Buffs/Debuffs for Player */}
-          {(player.buffsDebuffs && player.buffsDebuffs.length > 0) && (
-            <div className="mt-4 space-y-1">
-              <div className="text-xs text-gray-400 font-semibold mb-2">Buffs & Debuffs</div>
+          {player.buffsDebuffs && player.buffsDebuffs.length > 0 && (
+            <div className="mt-4 space-y-1.5 border-t border-slate-800/80 pt-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Your buffs</p>
               {player.buffsDebuffs.map((bd, idx) => (
                 <BuffDebuffItem
-                  key={idx}
+                  key={`${bd.name}-${idx}`}
                   bd={bd}
-                  onReduce={() => handleReduceBuff('player', 0, bd.name)}
-                  onRemove={() => handleRemoveBuff('player', 0, bd.name)}
+                  onReduce={() => reduceBuffDebuff('player', 0, bd.name)}
+                  onRemove={() => removeBuffDebuff('player', 0, bd.name)}
                 />
               ))}
             </div>
           )}
         </div>
 
-        {/* Enemies Stats Section */}
-        {enemies?.map((enemy: Enemy, idx: number) => (
-          <div key={idx} className="bg-gray-800 rounded-lg border border-red-600 p-4">
-            <h3 className="text-red-400 font-bold mb-3">{enemy.name}</h3>
-
-            {/* Enemy HP */}
-            <div className="mb-3">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-xs text-gray-400">HP</span>
-                <span className="text-sm font-bold text-red-400">
-                  {enemy.hp} / {enemy.maxHp}
+        {/* Enemies — all visible; zone styled separately from tool panels */}
+        {enemies && enemies.length > 0 && (
+          <div className={ENEMIES_ZONE}>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-rose-500/15 pb-3">
+              <h3 className="flex items-center gap-2 text-xs font-semibold text-rose-100/95">
+                <Layers className="h-3.5 w-3.5 text-rose-400" />
+                Enemies
+                <span className="rounded-md border border-rose-500/30 bg-rose-950/50 px-1.5 py-0.5 font-mono text-[10px] font-normal tabular-nums text-rose-200/90">
+                  {enemies.length}
                 </span>
-              </div>
-              <div className="flex gap-1 mb-2">
-                <button
-                  onClick={() => modifyEnemyHp(idx, -10)}
-                  className="flex-1 bg-red-700 hover:bg-red-600 text-white text-xs py-1 rounded"
-                >
-                  -10
-                </button>
-                <button
-                  onClick={() => modifyEnemyHp(idx, -5)}
-                  className="flex-1 bg-red-600 hover:bg-red-500 text-white text-xs py-1 rounded"
-                >
-                  -5
-                </button>
-                <button
-                  onClick={() => modifyEnemyHp(idx, 5)}
-                  className="flex-1 bg-green-600 hover:bg-green-500 text-white text-xs py-1 rounded"
-                >
-                  +5
-                </button>
-                <button
-                  onClick={() => modifyEnemyHp(idx, 10)}
-                  className="flex-1 bg-green-700 hover:bg-green-600 text-white text-xs py-1 rounded"
-                >
-                  +10
-                </button>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  value={inputs[`enemyDamage${idx}`] || '0'}
-                  onChange={(e) => handleInputChange(`enemyDamage${idx}`, e.target.value)}
-                  placeholder="Damage"
-                  className="flex-1 bg-gray-700 text-white text-xs p-2 rounded border border-gray-600"
-                />
-                <button
-                  onClick={() => applyEnemyDamage(idx)}
-                  className="bg-red-600 hover:bg-red-500 text-white text-xs font-bold py-2 px-3 rounded"
-                >
-                  Dmg
-                </button>
-              </div>
+              </h3>
+              <p className="text-[10px] text-rose-200/50">Each row is one combatant</p>
             </div>
 
-            {/* Enemy Block */}
-            <div className="mb-3">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-xs text-gray-400">Block</span>
-                <span className="text-sm font-bold text-blue-400">
-                  {enemy.currentBlock ?? 0}
-                </span>
-              </div>
-              <div className="flex gap-1 mb-2">
-                <button
-                  onClick={() => modifyEnemyBlock(idx, -10)}
-                  className="flex-1 bg-blue-700 hover:bg-blue-600 text-white text-xs py-1 rounded"
-                >
-                  -10
-                </button>
-                <button
-                  onClick={() => modifyEnemyBlock(idx, -1)}
-                  className="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-xs py-1 rounded"
-                >
-                  -1
-                </button>
-                <button
-                  onClick={() => modifyEnemyBlock(idx, 1)}
-                  className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white text-xs py-1 rounded"
-                >
-                  +1
-                </button>
-                <button
-                  onClick={() => modifyEnemyBlock(idx, 10)}
-                  className="flex-1 bg-cyan-700 hover:bg-cyan-600 text-white text-xs py-1 rounded"
-                >
-                  +10
-                </button>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  value={inputs[`enemyBlock${idx}`] || '0'}
-                  onChange={(e) => handleInputChange(`enemyBlock${idx}`, e.target.value)}
-                  placeholder="Block"
-                  className="flex-1 bg-gray-700 text-white text-xs p-2 rounded border border-gray-600"
-                />
-                <button
-                  onClick={() => applyEnemyBlock(idx)}
-                  className="bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold py-2 px-3 rounded"
-                >
-                  Blk
-                </button>
-              </div>
-            </div>
+            <div className="flex flex-col gap-3">
+              {enemies.map((enemy: Enemy, idx: number) => {
+                const eHpPct = enemy.maxHp > 0 ? Math.min(100, Math.max(0, (enemy.hp / enemy.maxHp) * 100)) : 0;
+                const isBuffFocus = buffTarget === 'enemy' && selectedEnemyIdx === idx;
+                return (
+                  <div
+                    key={`${enemy.name}-${idx}`}
+                    className={`rounded-xl border bg-slate-900/55 p-3 transition-all duration-200 ${isBuffFocus
+                        ? 'border-rose-400/55 shadow-md shadow-rose-950/25 ring-1 ring-rose-400/25'
+                        : 'border-slate-700/80 hover:border-slate-600'
+                      }`}
+                  >
+                    <div className="mb-2 flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-slate-50">{enemy.name}</p>
+                        {isBuffFocus ? (
+                          <p className="mt-0.5 text-[10px] font-medium text-rose-300/80">Status target</p>
+                        ) : null}
+                      </div>
+                      <span className="shrink-0 rounded-md border border-slate-600/80 bg-slate-950/70 px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-slate-400">
+                        #{idx + 1}
+                      </span>
+                    </div>
+                    <div className="mb-1 flex justify-between text-[10px] text-slate-500">
+                      <span>HP</span>
+                      <span className="font-mono tabular-nums text-rose-200">
+                        {enemy.hp} / {enemy.maxHp}
+                      </span>
+                    </div>
+                    <div className="mb-2 h-1 overflow-hidden rounded-full bg-slate-800">
+                      <div className="h-full bg-rose-600" style={{ width: `${eHpPct}%` }} />
+                    </div>
+                    <div className="mb-2 flex flex-wrap gap-1">
+                      <StepBtn tone="rose" onClick={() => modifyEnemyHp(idx, -10)}>-10</StepBtn>
+                      <StepBtn tone="rose" onClick={() => modifyEnemyHp(idx, -5)}>-5</StepBtn>
+                      <StepBtn tone="emerald" onClick={() => modifyEnemyHp(idx, 5)}>+5</StepBtn>
+                      <StepBtn tone="emerald" onClick={() => modifyEnemyHp(idx, 10)}>+10</StepBtn>
+                    </div>
+                    <div className="mb-4 flex gap-2">
+                      <input
+                        type="number"
+                        value={enemyHpKey(idx)}
+                        onChange={(e) => setEnemyHpAmt((m) => ({ ...m, [idx]: e.target.value }))}
+                        placeholder="Amount…"
+                        className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-950/60 px-2 py-1.5 text-xs"
+                      />
+                      <button
+                        type="button"
+                        className="rounded-lg bg-rose-700/80 px-2.5 text-[11px] font-semibold hover:bg-rose-600"
+                        onClick={() => {
+                          const n = parseUnsigned(enemyHpKey(idx));
+                          if (n) {
+                            modifyEnemyHp(idx, -n);
+                            setEnemyHpAmt((m) => ({ ...m, [idx]: '' }));
+                          }
+                        }}
+                      >
+                        Dmg
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-lg bg-emerald-800/80 px-2.5 text-[11px] font-semibold hover:bg-emerald-700"
+                        onClick={() => {
+                          const n = parseUnsigned(enemyHpKey(idx));
+                          if (n) {
+                            modifyEnemyHp(idx, n);
+                            setEnemyHpAmt((m) => ({ ...m, [idx]: '' }));
+                          }
+                        }}
+                      >
+                        Heal
+                      </button>
+                    </div>
 
-            {/* Enemy Buffs/Debuffs */}
-            {(enemy.buffsDebuffs && enemy.buffsDebuffs.length > 0) && (
-              <div className="mt-4 space-y-1">
-                <div className="text-xs text-gray-400 font-semibold mb-2">Buffs & Debuffs</div>
-                {enemy.buffsDebuffs.map((bd, buffIdx) => (
-                  <BuffDebuffItem
-                    key={buffIdx}
-                    bd={bd}
-                    onReduce={() => handleReduceBuff('enemy', idx, bd.name)}
-                    onRemove={() => handleRemoveBuff('enemy', idx, bd.name)}
-                  />
-                ))}
-              </div>
-            )}
+                    <div className="mb-2 flex items-center justify-between text-[10px] text-slate-500">
+                      <span>Block</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sky-200">{enemy.currentBlock ?? 0}</span>
+                        <button
+                          type="button"
+                          onClick={() => modifyEnemyBlock(idx, -(enemy.currentBlock ?? 0))}
+                          className="text-[10px] text-slate-500 hover:text-slate-300 hover:underline"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mb-2 flex flex-wrap gap-1">
+                      <StepBtn tone="sky" onClick={() => modifyEnemyBlock(idx, -10)}>-10</StepBtn>
+                      <StepBtn tone="sky" onClick={() => modifyEnemyBlock(idx, 5)}>+5</StepBtn>
+                      <StepBtn tone="sky" onClick={() => modifyEnemyBlock(idx, 10)}>+10</StepBtn>
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        value={enemyBlkKey(idx)}
+                        onChange={(e) => setEnemyBlkAmt((m) => ({ ...m, [idx]: e.target.value }))}
+                        placeholder="± block"
+                        className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-950/60 px-2 py-1.5 text-xs"
+                      />
+                      <button
+                        type="button"
+                        className="rounded-lg border border-sky-600/50 bg-sky-900/40 px-3 text-[11px] font-semibold text-sky-100"
+                        onClick={() => {
+                          const n = parseSigned(enemyBlkKey(idx));
+                          if (n) {
+                            modifyEnemyBlock(idx, n);
+                            setEnemyBlkAmt((m) => ({ ...m, [idx]: '' }));
+                          }
+                        }}
+                      >
+                        Apply
+                      </button>
+                    </div>
+
+                    {enemy.buffsDebuffs && enemy.buffsDebuffs.length > 0 && (
+                      <div className="mt-3 space-y-1 border-t border-slate-800/80 pt-3">
+                        {enemy.buffsDebuffs.map((bd, buffIdx) => (
+                          <BuffDebuffItem
+                            key={`${bd.name}-${buffIdx}`}
+                            bd={bd}
+                            onReduce={() => reduceBuffDebuff('enemy', idx, bd.name)}
+                            onRemove={() => removeBuffDebuff('enemy', idx, bd.name)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        ))}
+        )}
 
-        {/* Add Custom Buff/Debuff Section */}
-        <div className="bg-gray-800 rounded-lg border border-purple-600 p-4">
-          <h3 className="text-white font-bold mb-3">Add Custom Buff/Debuff</h3>
+        {/* Buff composer */}
+        <div className={BUFF_COMPOSER_ZONE}>
+          <h3 className="mb-3 flex items-center gap-2 text-xs font-semibold text-slate-200">
+            <Activity className="h-3.5 w-3.5 text-violet-400/90" />
+            Status
+          </h3>
 
-          {/* Target Selection */}
-          <div className="mb-3">
-            <select
-              value={buffTarget === 'player' ? 'player' : `enemy-${selectedEnemyIdx}`}
-              onChange={(e) => {
-                if (e.target.value === 'player') {
-                  setBuffTarget('player');
-                } else {
-                  setBuffTarget('enemy');
-                  setSelectedEnemyIdx(parseInt(e.target.value.split('-')[1]));
-                }
-              }}
-              className="w-full bg-gray-700 text-white text-xs p-2 rounded border border-gray-600"
+          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">Target</p>
+          <div className="mb-3 flex flex-wrap gap-1.5 rounded-xl border border-slate-800 bg-slate-900/50 p-1">
+            <button
+              type="button"
+              onClick={() => setBuffTarget('player')}
+              className={`rounded-lg px-3 py-1.5 text-[11px] font-medium transition ${buffTarget === 'player'
+                  ? 'bg-violet-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                }`}
             >
-              <option value="player">Player</option>
-              {enemies?.map((enemy: Enemy, idx: number) => (
-                <option key={idx} value={`enemy-${idx}`}>
-                  {enemy.name}
-                </option>
-              ))}
-            </select>
+              You
+            </button>
+            {enemies?.map((enemy: Enemy, idx: number) => (
+              <button
+                key={`bt-${idx}`}
+                type="button"
+                onClick={() => {
+                  setBuffTarget('enemy');
+                  setSelectedEnemyIdx(idx);
+                }}
+                className={`max-w-[10rem] truncate rounded-lg px-3 py-1.5 text-[11px] font-medium transition ${buffTarget === 'enemy' && selectedEnemyIdx === idx
+                    ? 'bg-rose-600/90 text-white shadow-sm'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                  }`}
+              >
+                {enemy.name}
+              </button>
+            ))}
           </div>
 
-          {/* Buff Name */}
-          <div className="mb-3">
+          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+            Stacks <span className="font-normal normal-case text-slate-600">(quick + custom)</span>
+          </p>
+          <div className="mb-3 flex items-center justify-center gap-1 rounded-xl border border-slate-800 bg-slate-900/60 p-1 transition-colors duration-300 focus-within:border-violet-500/35 focus-within:ring-1 focus-within:ring-violet-500/20">
+            <button
+              type="button"
+              aria-label="Fewer stacks"
+              className="rounded-lg p-2 text-slate-400 transition-all duration-200 hover:bg-slate-800 hover:text-white active:scale-90"
+              onClick={() => setBuffStacks((s) => Math.max(1, s - 1))}
+            >
+              <ChevronDown className="h-4 w-4" />
+            </button>
+            <span className="min-w-[2rem] text-center text-sm font-mono font-bold tabular-nums text-violet-200 transition-transform duration-200">
+              {buffStacks}
+            </span>
+            <button
+              type="button"
+              aria-label="More stacks"
+              className="rounded-lg p-2 text-slate-400 transition-all duration-200 hover:bg-slate-800 hover:text-white active:scale-90"
+              onClick={() => setBuffStacks((s) => s + 1)}
+            >
+              <ChevronUp className="h-4 w-4" />
+            </button>
+          </div>
+
+          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">Quick add</p>
+          <div className="mb-3 flex flex-wrap gap-1.5">
+            {QUICK_DEBUFFS.map((name) => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => quickAdd(name, 'debuff')}
+                className="rounded-lg border border-amber-900/50 bg-amber-950/40 px-2.5 py-1.5 text-[10px] font-medium text-amber-200/90 shadow-sm transition-all duration-200 hover:bg-amber-950/65 hover:shadow-md active:scale-95"
+              >
+                + {name}
+              </button>
+            ))}
+            {QUICK_BUFFS.map((name) => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => quickAdd(name, 'buff')}
+                className="rounded-lg border border-emerald-900/50 bg-emerald-950/35 px-2.5 py-1.5 text-[10px] font-medium text-emerald-200/90 shadow-sm transition-all duration-200 hover:bg-emerald-950/55 hover:shadow-md active:scale-95"
+              >
+                + {name}
+              </button>
+            ))}
+          </div>
+
+          <div className="mb-2">
             <input
               type="text"
               value={buffName}
               onChange={(e) => setBuffName(e.target.value)}
-              placeholder="Buff/Debuff name"
-              className="w-full bg-gray-700 text-white text-xs p-2 rounded border border-gray-600 placeholder-gray-500"
+              placeholder="Custom name…"
+              className="w-full rounded-xl border border-slate-700 bg-slate-900/80 px-2.5 py-2 text-xs outline-none transition-all duration-200 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/15"
             />
           </div>
 
-          {/* Stacks */}
-          <div className="mb-3">
-            <input
-              type="number"
-              value={buffStacks}
-              onChange={(e) => setBuffStacks(Math.max(1, parseInt(e.target.value) || 1))}
-              min="1"
-              className="w-full bg-gray-700 text-white text-xs p-2 rounded border border-gray-600"
-            />
+          <button
+            type="button"
+            onClick={() => setBuffAdvancedOpen((o) => !o)}
+            className="mb-2 flex w-full items-center justify-between rounded-lg border border-slate-800 bg-slate-900/40 px-2 py-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 transition-all duration-200 hover:border-slate-700 hover:bg-slate-900/70 active:scale-[0.99]"
+          >
+            Notes (optional)
+            <span className={`transition-transform duration-200 ${buffAdvancedOpen ? 'rotate-180' : ''}`}>
+              <ChevronDown className="h-3 w-3" />
+            </span>
+          </button>
+          <div
+            className={`grid transition-[grid-template-rows] duration-300 ease-out ${buffAdvancedOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
+          >
+            <div className="min-h-0 overflow-hidden">
+              <input
+                type="text"
+                value={buffDescription}
+                onChange={(e) => setBuffDescription(e.target.value)}
+                placeholder="Tooltip / description"
+                className="mb-3 w-full rounded-xl border border-slate-700 bg-slate-900/80 px-2.5 py-2 text-xs transition-all duration-200 focus:border-violet-500/40"
+              />
+            </div>
           </div>
 
-          {/* Description */}
-          <div className="mb-3">
-            <input
-              type="text"
-              value={buffDescription}
-              onChange={(e) => setBuffDescription(e.target.value)}
-              placeholder="Description (optional)"
-              className="w-full bg-gray-700 text-white text-xs p-2 rounded border border-gray-600 placeholder-gray-500"
-            />
-          </div>
-
-          {/* Add Buff/Debuff Buttons */}
           <div className="flex gap-2">
             <button
-              onClick={() => {
-                handleAddBuff('buff');
-              }}
+              type="button"
               disabled={!buffName.trim()}
-              className="flex-1 bg-green-600 hover:bg-green-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-xs py-2 rounded font-bold"
+              onClick={() => handleAddBuff('buff')}
+              className="flex-1 rounded-xl border border-emerald-600/50 bg-emerald-800/50 py-2 text-[11px] font-semibold text-emerald-100 transition-all duration-200 hover:bg-emerald-800/70 hover:shadow-lg hover:shadow-emerald-950/20 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Add Buff
+              Add buff
             </button>
             <button
-              onClick={() => {
-                handleAddBuff('debuff');
-              }}
+              type="button"
               disabled={!buffName.trim()}
-              className="flex-1 bg-orange-600 hover:bg-orange-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-xs py-2 rounded font-bold"
+              onClick={() => handleAddBuff('debuff')}
+              className="flex-1 rounded-xl border border-amber-600/50 bg-amber-900/45 py-2 text-[11px] font-semibold text-amber-100 transition-all duration-200 hover:bg-amber-900/65 hover:shadow-lg hover:shadow-amber-950/20 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Add Debuff
+              Add debuff
             </button>
           </div>
+          <p className="mt-2 text-[10px] text-slate-600">
+            Quick chips use the stacks value above. Custom add uses the same stacks and needs a name.
+          </p>
         </div>
       </div>
     </div>

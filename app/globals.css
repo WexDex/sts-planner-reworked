@@ -93,6 +93,53 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Buff list & combat panel motion */
+@keyframes sts-buff-in {
+  from {
+    opacity: 0;
+    transform: translateX(14px) scale(0.97);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes sts-buff-glow {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes sts-panel-soft-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-sts-buff-in {
+  animation: sts-buff-in 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-sts-buff-accent {
+  animation: sts-buff-glow 2.2s ease-in-out infinite;
+}
+
+.animate-sts-panel-in {
+  animation: sts-panel-soft-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 .battle-page {
   min-height: 100vh;
   padding: 16px;

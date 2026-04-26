@@ -94,6 +94,18 @@ export interface Enemy {
   intents: EnemyIntent[];
 }
 
+/** Card references for rich log rendering (colors by card type). */
+export interface ActivityLogCardRef {
+  name: string;
+  cardType?: string;
+}
+
+/** Structured key/value lines shown under a log entry (sources, piles, reasons). */
+export interface ActivityLogContextLine {
+  label: string;
+  value: string;
+}
+
 export interface ActivityLogEntry {
   id: string;
   timestamp: string;
@@ -103,6 +115,10 @@ export interface ActivityLogEntry {
   details?: string;
   type?: 'info' | 'action' | 'state-change' | 'damage' | 'heal' | 'block' | 'block-lost' | 'energy' | 'buff' | 'debuff' | 'card-action' | 'system';
   target?: 'player' | 'enemy';
+  /** Cards involved in this event (colored by type in the UI). */
+  cardsInvolved?: ActivityLogCardRef[];
+  /** Extra structured context (pile, hand size, reason, etc.). */
+  context?: ActivityLogContextLine[];
 }
 
 export interface Turn {
