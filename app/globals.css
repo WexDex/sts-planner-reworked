@@ -140,6 +140,28 @@ body {
   animation: sts-panel-soft-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Mobile bottom sheets (combat layout) */
+@keyframes sts-mobile-sheet {
+  from {
+    opacity: 0.88;
+    transform: translate3d(0, 0.6rem, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-sts-mobile-sheet {
+  animation: sts-mobile-sheet 0.22s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-sts-mobile-sheet {
+    animation: none;
+  }
+}
+
 .battle-page {
   min-height: 100vh;
   padding: 16px;

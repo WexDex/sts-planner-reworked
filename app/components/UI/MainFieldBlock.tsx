@@ -522,7 +522,7 @@ export default function MainFieldBlock() {
   }, [setCombatTargetMode]);
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-4">
+    <div id="sts-battle-focus" className="mx-auto w-full max-w-6xl scroll-mt-2 space-y-4">
       {/* Targets */}
       <section className={`${SHELL} border-cyan-500/15 ring-1 ring-cyan-500/5`}>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

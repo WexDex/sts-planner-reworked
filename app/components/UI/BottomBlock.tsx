@@ -117,8 +117,9 @@ export default function BottomBlock() {
 
   return (
     <div
+      id="sts-deck-zone"
       ref={ref}
-      className="relative border-t border-slate-700/90 bg-slate-900/95 shadow-[0_-12px_40px_rgba(0,0,0,0.45)] backdrop-blur-md"
+      className="relative scroll-mt-2 border-t border-slate-700/90 bg-slate-900/95 shadow-[0_-12px_40px_rgba(0,0,0,0.45)] backdrop-blur-md"
     >
       {/* Expandable panel — height animates via grid template rows */}
       <div
