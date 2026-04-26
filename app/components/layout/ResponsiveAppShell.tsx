@@ -114,7 +114,7 @@ export default function ResponsiveAppShell() {
               : "flex min-h-0 min-w-0 flex-1 flex-col md:ring-1 md:ring-cyan-500/[0.07] md:ring-inset"
           }
         >
-          <header className="z-40 shrink-0 border-b border-slate-800/80 bg-slate-950/80 shadow-md shadow-black/30 backdrop-blur-md supports-[backdrop-filter]:bg-slate-950/70">
+          <header className="z-40 shrink-0 border-b border-slate-800/80 bg-slate-950/80 shadow-md shadow-black/30 backdrop-blur-md supports-[backdrop-filter]:bg-slate-950/70 max-md:shadow-md max-md:shadow-cyan-950/20 max-md:backdrop-blur-md">
             <TopBarBlock />
           </header>
 
@@ -122,7 +122,7 @@ export default function ResponsiveAppShell() {
             <MainFieldBlock />
           </div>
 
-          <div className="flex shrink-0 flex-col" data-bottom-deck-skip-outside>
+          <div className="flex min-h-0 shrink-0 flex-col" data-bottom-deck-skip-outside>
             <ActionsBar />
             <div className="relative z-30 shrink-0">
               <ToastStack />
@@ -145,51 +145,56 @@ export default function ResponsiveAppShell() {
 
       {showTimelineSheet || showToolsSheet ? (
         <div
-          className="fixed inset-0 z-50 flex flex-col justify-end md:hidden"
+          className="fixed inset-0 z-50 flex h-[100dvh] max-h-[100dvh] flex-col md:hidden"
           role="dialog"
           aria-modal="true"
           aria-labelledby={sheetTitleId}
         >
-          <button
-            type="button"
-            className="absolute inset-0 bg-slate-950/75 backdrop-blur-[2px] transition-opacity"
-            aria-label="Close panel"
-            onClick={closePanel}
-          />
           <div
-            className="animate-sts-mobile-sheet relative flex max-h-[min(88dvh,32rem)] flex-col rounded-t-2xl border border-slate-700/80 border-b-0 bg-slate-900 shadow-[0_-8px_40px_rgba(0,0,0,0.5)]"
-            style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+            className={`animate-sts-mobile-sheet flex min-h-0 w-full flex-1 flex-col border-x border-t-2 bg-slate-900 shadow-[0_0_0_1px_rgba(0,0,0,0.3)] ${
+              showTimelineSheet
+                ? "border-cyan-500/50 shadow-[0_0_48px_-8px_rgba(34,211,238,0.25),inset_0_1px_0_0_rgba(34,211,238,0.2)]"
+                : "border-amber-500/50 shadow-[0_0_48px_-8px_rgba(245,158,11,0.2),inset_0_1px_0_0_rgba(245,158,11,0.2)]"
+            }`}
+            style={{
+              paddingTop: "max(0.5rem, env(safe-area-inset-top, 0px))",
+              paddingBottom: "env(safe-area-inset-bottom, 0px)",
+            }}
           >
-            <div className="shrink-0 border-b border-slate-800/90 px-3 pb-2.5 pt-2">
-              <div className="mb-2 flex justify-center" aria-hidden>
-                <span className="h-1 w-10 rounded-full bg-slate-600/80" />
+            <div
+              className={`shrink-0 border-b px-3 pb-2.5 pt-1 ${
+                showTimelineSheet ? "border-cyan-600/40 bg-cyan-950/50" : "border-amber-600/40 bg-amber-950/40"
+              }`}
+            >
+              <div className="mb-1.5 flex justify-center" aria-hidden>
+                <span className="h-1 w-10 rounded-full bg-white/20" />
               </div>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                   {showTimelineSheet ? (
-                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-cyan-500/40 bg-cyan-950/50 text-cyan-400">
-                      <GitBranch className="h-4 w-4" strokeWidth={2} />
+                    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-cyan-400/50 bg-cyan-950/70 text-cyan-300 shadow-lg shadow-cyan-950/40">
+                      <GitBranch className="h-5 w-5" strokeWidth={2} />
                     </span>
                   ) : (
-                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-amber-500/40 bg-amber-950/50 text-amber-400">
-                      <Swords className="h-4 w-4" strokeWidth={2} />
+                    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-amber-400/50 bg-amber-950/70 text-amber-300 shadow-lg shadow-amber-950/40">
+                      <Swords className="h-5 w-5" strokeWidth={2} />
                     </span>
                   )}
-                  <h2 id={sheetTitleId} className="min-w-0 truncate text-sm font-semibold text-slate-100">
+                  <h2 id={sheetTitleId} className="min-w-0 truncate text-base font-semibold text-slate-50">
                     {showTimelineSheet ? "Turn timeline" : "Combat tools"}
                   </h2>
                 </div>
                 <button
                   type="button"
                   onClick={closePanel}
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-600 bg-slate-800/80 text-slate-300 active:scale-95"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-2 border-slate-500/60 bg-slate-800 text-slate-100 shadow-md active:scale-95"
                   aria-label="Close"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:thin]">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-950/90 [scrollbar-width:thin]">
               {showTimelineSheet ? <TimelineBlock /> : <RightBlock />}
             </div>
           </div>
@@ -198,7 +203,7 @@ export default function ResponsiveAppShell() {
 
       {showMobileBar ? (
         <nav
-          className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-800/90 bg-slate-950/95 shadow-[0_-4px_24px_rgba(0,0,0,0.4)] backdrop-blur-lg"
+          className="fixed bottom-0 left-0 right-0 z-40 border-t-2 border-cyan-500/35 bg-gradient-to-t from-slate-950 via-slate-900 to-cyan-950/40 shadow-[0_-6px_28px_rgba(34,211,238,0.12)] backdrop-blur-md md:shadow-none"
           style={{ paddingBottom: "max(0.35rem, env(safe-area-inset-bottom, 0px))" }}
           aria-label="Quick navigation"
         >
@@ -208,7 +213,9 @@ export default function ResponsiveAppShell() {
                 type="button"
                 onClick={openTimeline}
                 className={`flex w-full touch-manipulation flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-semibold transition-colors ${
-                  panel === "timeline" ? "bg-cyan-950/50 text-cyan-200" : "text-slate-400 active:bg-slate-800/80"
+                  panel === "timeline"
+                    ? "bg-cyan-500/25 text-cyan-100 ring-1 ring-cyan-400/50 shadow-[0_0_12px_rgba(34,211,238,0.25)]"
+                    : "text-cyan-100/60 active:bg-cyan-950/40"
                 }`}
               >
                 <GitBranch className="h-5 w-5 shrink-0" strokeWidth={2} />
@@ -219,7 +226,7 @@ export default function ResponsiveAppShell() {
               <button
                 type="button"
                 onClick={goBoard}
-                className="flex w-full touch-manipulation flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-semibold text-slate-400 transition-colors active:bg-slate-800/80"
+                className="flex w-full touch-manipulation flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-semibold text-cyan-100/60 transition-colors active:bg-cyan-950/40"
               >
                 <LayoutDashboard className="h-5 w-5 shrink-0" strokeWidth={2} />
                 <span className="truncate">Board</span>
@@ -229,7 +236,7 @@ export default function ResponsiveAppShell() {
               <button
                 type="button"
                 onClick={goDeck}
-                className="flex w-full touch-manipulation flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-semibold text-slate-400 transition-colors active:bg-slate-800/80"
+                className="flex w-full touch-manipulation flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-semibold text-cyan-100/60 transition-colors active:bg-cyan-950/40"
               >
                 <Hand className="h-5 w-5 shrink-0" strokeWidth={2} />
                 <span className="truncate">Deck</span>
@@ -240,7 +247,9 @@ export default function ResponsiveAppShell() {
                 type="button"
                 onClick={openTools}
                 className={`flex w-full touch-manipulation flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-semibold transition-colors ${
-                  panel === "tools" ? "bg-amber-950/50 text-amber-200" : "text-slate-400 active:bg-slate-800/80"
+                  panel === "tools"
+                    ? "bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/50 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+                    : "text-amber-100/60 active:bg-amber-950/40"
                 }`}
               >
                 <Swords className="h-5 w-5 shrink-0" strokeWidth={2} />

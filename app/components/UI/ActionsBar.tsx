@@ -80,9 +80,9 @@ export default function ActionsBar() {
 
   if (collapsed) {
     return (
-      <div className="shrink-0 border-t-2 border-amber-500/25 bg-gradient-to-b from-amber-950/25 to-slate-950/95 px-4 py-2 shadow-[0_-6px_30px_rgba(0,0,0,0.45)] backdrop-blur-md">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
+      <div className="shrink-0 border-t-2 border-amber-500/25 bg-gradient-to-b from-amber-950/25 to-slate-950/95 px-4 py-2 shadow-[0_-6px_30px_rgba(0,0,0,0.45)] backdrop-blur-md max-md:min-h-0 max-md:overflow-x-auto max-md:overscroll-x-contain max-md:touch-pan-x">
+        <div className="mx-auto flex w-full max-w-6xl min-w-0 flex-wrap items-center justify-between gap-2 max-md:flex-nowrap max-md:gap-1.5">
+          <div className="flex min-w-0 shrink items-center gap-2">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-500/35 bg-amber-950/40 text-amber-200">
               <Layers className="h-4 w-4" strokeWidth={2} />
             </div>
@@ -95,11 +95,11 @@ export default function ActionsBar() {
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-1.5">
+          <div className="flex min-w-0 shrink-0 flex-nowrap items-center justify-end gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:thin] max-md:max-w-[55vw]">
             <button
               type="button"
               onClick={playSelectedCards}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-500/50 bg-cyan-950/50 px-3 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-900/50"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-cyan-500/50 bg-cyan-950/50 px-3 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-900/50"
             >
               <Play className="h-3.5 w-3.5" strokeWidth={2} />
               Play
@@ -107,7 +107,7 @@ export default function ActionsBar() {
             <button
               type="button"
               onClick={deselectAllCards}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-600 bg-slate-800/80 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-slate-700"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-600 bg-slate-800/80 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-slate-700"
             >
               <X className="h-3.5 w-3.5" strokeWidth={2} />
               Clear
@@ -115,10 +115,10 @@ export default function ActionsBar() {
             <button
               type="button"
               onClick={() => setCollapsed(false)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-900/30 px-3 py-2 text-xs font-semibold text-amber-100 transition hover:bg-amber-800/30"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-900/30 px-3 py-2 text-xs font-semibold text-amber-100 transition hover:bg-amber-800/30"
             >
               <ChevronsUp className="h-3.5 w-3.5" strokeWidth={2} />
-              All actions
+              All
             </button>
           </div>
         </div>
@@ -127,8 +127,9 @@ export default function ActionsBar() {
   }
 
   return (
-    <div className="pointer-events-auto relative z-20 shrink-0 border-t-2 border-amber-500/30 bg-gradient-to-b from-amber-950/30 via-slate-950/98 to-slate-950 px-4 py-2.5 shadow-[0_-8px_32px_rgba(0,0,0,0.5)] backdrop-blur-md">
-      <div className="mx-auto w-full max-w-6xl space-y-2.5">
+    <div className="pointer-events-auto relative z-20 min-h-0 max-md:max-h-[min(52dvh,28rem)] max-md:overflow-y-auto max-md:overscroll-y-contain max-md:touch-pan-y shrink-0 border-t-2 border-amber-500/30 bg-gradient-to-b from-amber-950/30 via-slate-950/98 to-slate-950 px-4 py-2.5 shadow-[0_-8px_32px_rgba(0,0,0,0.5)] backdrop-blur-md max-md:pb-2">
+      <div className="mx-auto w-full min-h-0 max-w-6xl space-y-2.5">
+        <div className="max-md:sticky max-md:top-0 z-[2] -mx-1 max-md:rounded-b-lg max-md:border-b max-md:border-amber-500/20 max-md:bg-gradient-to-b max-md:from-amber-950/90 max-md:via-amber-950/75 max-md:to-slate-950/95 max-md:px-1 max-md:pb-2 max-md:pt-0.5 max-md:backdrop-blur">
         <div className="flex flex-wrap items-start justify-between gap-2 sm:items-center">
           <div className="flex min-w-0 items-center gap-2.5">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-amber-500/30 bg-amber-950/40 text-amber-200 shadow-sm shadow-amber-950/30">
@@ -161,8 +162,9 @@ export default function ActionsBar() {
             Minimize
           </button>
         </div>
+        </div>
 
-        <div className="grid grid-cols-1 gap-3 min-[500px]:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+        <div className="grid min-h-0 grid-cols-1 gap-3 min-[500px]:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
           <section className={SECT}>
             <p className={SECT_LBL}>
               <Play className="h-3 w-3 text-cyan-400" strokeWidth={2} />

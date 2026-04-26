@@ -119,7 +119,7 @@ export default function BottomBlock() {
     <div
       id="sts-deck-zone"
       ref={ref}
-      className="relative scroll-mt-2 border-t border-slate-700/90 bg-slate-900/95 shadow-[0_-12px_40px_rgba(0,0,0,0.45)] backdrop-blur-md"
+      className="relative scroll-mt-2 border-t border-slate-700/90 bg-slate-900/95 shadow-[0_-12px_40px_rgba(0,0,0,0.45)] backdrop-blur-md max-md:border-t-2 max-md:border-emerald-500/30 max-md:bg-gradient-to-b max-md:from-emerald-950/20 max-md:via-slate-900/95 max-md:to-slate-900/95 max-md:shadow-[0_-8px_32px_rgba(16,185,129,0.08)]"
     >
       {/* Expandable panel — height animates via grid template rows */}
       <div
@@ -179,9 +179,9 @@ export default function BottomBlock() {
         </div>
       </div>
 
-      {/* Control bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5">
-        <div className="flex flex-wrap items-center gap-2">
+      {/* Control bar: mobile = 2 rows (2×2 piles + one draw row); md+ = original wrap layout */}
+      <div className="flex flex-col gap-1.5 px-2 py-2 md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-3 md:px-3 md:py-2.5">
+        <div className="grid w-full max-md:max-w-full max-md:grid-cols-2 max-md:gap-1.5 md:flex md:w-auto md:flex-wrap md:items-center md:gap-2">
           {PILES.map(({ id, label, Icon, idle, active }) => {
             const isOpen = expandedPile === id;
             return (
@@ -189,31 +189,36 @@ export default function BottomBlock() {
                 key={id}
                 type="button"
                 onClick={() => toggleExpand(id)}
-                className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm font-medium transition-all duration-200 ${
+                className={`flex min-h-[2.5rem] items-center justify-between gap-1 rounded-xl border px-2 py-1.5 text-left text-xs font-medium transition-all duration-200 max-md:min-w-0 max-md:pr-1.5 md:gap-2 md:px-3 md:py-2 md:text-sm ${
                   isOpen ? active : idle
                 } `}
               >
-                <Icon className="h-4 w-4 shrink-0 opacity-90" />
-                <span className="whitespace-nowrap">{label}</span>
-                <span
-                  className={`ml-0.5 min-w-[1.75rem] rounded-md px-1.5 py-0.5 text-center text-xs tabular-nums ${
-                    isOpen ? "bg-black/25" : "bg-black/20"
-                  }`}
-                >
-                  {getPileCount(id)}
-                </span>
-                <ChevronUp
-                  className={`h-4 w-4 shrink-0 opacity-70 transition-transform duration-200 ${
-                    isOpen ? "rotate-0" : "-rotate-180"
-                  }`}
-                />
+                <div className="flex min-w-0 items-center gap-1.5 md:gap-2">
+                  <Icon className="h-3.5 w-3.5 shrink-0 opacity-90 md:h-4 md:w-4" />
+                  <span className="min-w-0 truncate max-md:max-w-[4.2rem] md:whitespace-nowrap">{label}</span>
+                </div>
+                <div className="flex shrink-0 items-center gap-0.5">
+                  <span
+                    className={`min-w-[1.5rem] rounded-md px-1 py-0.5 text-center text-[10px] tabular-nums md:min-w-[1.75rem] md:px-1.5 md:text-xs ${
+                      isOpen ? "bg-black/25" : "bg-black/20"
+                    }`}
+                  >
+                    {getPileCount(id)}
+                  </span>
+                  <ChevronUp
+                    className={`h-3.5 w-3.5 shrink-0 opacity-70 transition-transform duration-200 md:h-4 md:w-4 ${
+                      isOpen ? "rotate-0" : "-rotate-180"
+                    }`}
+                  />
+                </div>
               </button>
             );
           })}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500 sm:mr-0.5">Draw</span>
+        <div className="flex w-full min-w-0 max-md:max-w-full max-md:flex-nowrap max-md:items-center max-md:justify-between max-md:gap-1.5 max-md:overflow-x-auto max-md:pb-0.5 md:w-auto md:flex-wrap md:items-center md:gap-2 md:overflow-visible">
+          <span className="hidden text-[10px] font-medium uppercase tracking-wide text-slate-500 sm:mr-0.5 md:inline">Draw</span>
+          <span className="shrink-0 text-[9px] font-bold uppercase tracking-wide text-slate-500 md:hidden">Dr</span>
           <div
             className="flex h-9 items-center justify-center gap-0.5 rounded-xl border border-slate-800 bg-slate-900/60 p-0.5 transition-colors focus-within:border-emerald-500/40 focus-within:ring-1 focus-within:ring-emerald-500/20"
             role="group"
