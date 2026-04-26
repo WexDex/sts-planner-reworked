@@ -27,12 +27,15 @@ import {
 } from '@/app/utils/activityLogger';
 import { combatData } from '@/app/data/combatData';
 import cardDB from '@/app/data/cardDB.json';
+import { toast } from '@/app/utils/toast';
 
 interface GameContextType {
   gameState: CombatData | null;
   turns: Turn[];
   currentTurnIndex: number;
   setCurrentTurn: (turnId: number) => void;
+  /** Persist live {@link gameState} into {@link turns}[{@link currentTurnIndex}] (e.g. before opening modals). */
+  saveCurrentTurn: () => void;
   endTurn: () => void;
   continueFromTurn: (fromTurnId: number, toTurnId: number) => void;
   resetCurrentTurn: () => void;
@@ -224,6 +227,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setCombatTargetSelf((s) => !s);
   }, []);
 
+  const saveCurrentTurn = useCallback(() => {
+    if (!gameState) return;
+    if (currentTurnIndex < 0 || currentTurnIndex >= turns.length) return;
+    setTurns((prev) =>
+      prev.map((turn, idx) =>
+        idx === currentTurnIndex ? { ...turn, state: cloneGameData(gameState) } : turn,
+      ),
+    );
+    toast('Turn saved', 'success');
+  }, [gameState, currentTurnIndex, turns.length]);
+
   const setCurrentTurn = (turnId: number) => {
     const index = turns.findIndex(turn => turn.id === turnId);
     if (index !== -1 && index !== currentTurnIndex) {
@@ -231,6 +245,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setTurns(prev => prev.map((turn, idx) => idx === currentTurnIndex ? { ...turn, state: cloneGameData(gameState!) } : turn));
       setCurrentTurnIndex(index);
       setGameState(cloneGameData(turns[index].state));
+      toast('Turn switched', 'success');
     }
   };
 
@@ -775,16 +790,20 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const modifyPlayerHp = (delta: number) => {
     setGameState((prevState) => {
       if (!prevState) return prevState;
+      const appliedDelta =
+        delta < 0 && (prevState.player.intangible ?? false)
+          ? -Math.min(Math.abs(delta), 1)
+          : delta;
       const beforeHp = prevState.player.hp ?? 0;
-      const newHp = Math.max(0, beforeHp + delta);
+      const newHp = Math.max(0, beforeHp + appliedDelta);
       
       if (beforeHp === newHp) return prevState;
       
       const maxHp = prevState.player.maxHp;
       const logEntry =
-        delta > 0
-          ? buildHealLogEntry('player', delta, beforeHp, newHp, undefined, maxHp)
-          : buildDamageLogEntry('player', Math.abs(delta), beforeHp, newHp, undefined, maxHp);
+        appliedDelta > 0
+          ? buildHealLogEntry('player', appliedDelta, beforeHp, newHp, undefined, maxHp)
+          : buildDamageLogEntry('player', Math.abs(appliedDelta), beforeHp, newHp, undefined, maxHp);
       
       return {
         ...prevState,
@@ -1107,6 +1126,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         turns,
         currentTurnIndex,
         setCurrentTurn,
+        saveCurrentTurn,
         endTurn,
         continueFromTurn,
         resetCurrentTurn,

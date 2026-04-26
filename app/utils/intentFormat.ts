@@ -8,6 +8,8 @@ const INCOMING_ATTACKER_WEAK_MULT = 0.75;
 export interface IncomingDamageContext {
   playerVulnerable: boolean;
   enemyWeak: boolean;
+  /** Each attack / hit deals at most 1 (0-damage hits stay 0). */
+  playerIntangible: boolean;
 }
 
 export function playerHasVulnerableForIncoming(player: PlayerData | undefined | null): boolean {
@@ -29,6 +31,7 @@ export function buildIncomingDamageContext(
   return {
     playerVulnerable: playerHasVulnerableForIncoming(player),
     enemyWeak: enemyHasWeakForIncoming(enemy),
+    playerIntangible: player?.intangible ?? false,
   };
 }
 
@@ -45,6 +48,7 @@ export function applyIncomingEnemyAttackDamage(
   let d = baseDamage;
   if (ctx.enemyWeak) d *= INCOMING_ATTACKER_WEAK_MULT;
   if (ctx.playerVulnerable) d *= INCOMING_VULNERABLE_MULT;
+  if (ctx.playerIntangible) d = Math.min(d, 1);
   return Math.floor(d);
 }
 
@@ -52,6 +56,7 @@ export function describeIncomingModifiers(ctx: IncomingDamageContext): string {
   const bits: string[] = [];
   if (ctx.playerVulnerable) bits.push("You: Vulnerable (+50% damage taken)");
   if (ctx.enemyWeak) bits.push("Attacker: Weak (−25% damage dealt)");
+  if (ctx.playerIntangible) bits.push("You: Intangible (all damage is reduced to 1)");
   return bits.join(" · ");
 }
 

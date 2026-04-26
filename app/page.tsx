@@ -4,6 +4,7 @@ import MainFieldBlock from "./components/UI/MainFieldBlock";
 import BottomBlock from "./components/UI/BottomBlock";
 import ActionsBar from "./components/UI/ActionsBar";
 import RightBlock from "./components/UI/RightBlock";
+import { ToastStack } from "./components/UI/NotificationProvider";
 
 export default function Home() {
   return (
@@ -28,7 +29,8 @@ export default function Home() {
         {/* Deck + selection strip: in-bounds for pile "click outside" (don’t close when using Actions bar, etc.) */}
         <div className="flex shrink-0 flex-col" data-bottom-deck-skip-outside>
           <ActionsBar />
-          <div className="z-30 shrink-0">
+          <div className="relative z-30 shrink-0">
+            <ToastStack />
             <BottomBlock />
           </div>
         </div>

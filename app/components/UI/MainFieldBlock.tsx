@@ -38,6 +38,7 @@ import {
   User,
   X,
 } from "lucide-react";
+import { toast } from "@/app/utils/toast";
 
 type TargetMode = "single" | "multi";
 type ActivityLogInlineDensity = "minimal" | "detailed";
@@ -402,6 +403,7 @@ export default function MainFieldBlock() {
     gameState,
     turns,
     currentTurnIndex,
+    saveCurrentTurn,
     combatTargetMode: targetMode,
     setCombatTargetMode,
     combatTargetEnemyIndices: selectedEnemyIndices,
@@ -815,6 +817,7 @@ export default function MainFieldBlock() {
             <button
               type="button"
               onClick={() => {
+                saveCurrentTurn();
                 setActivityLogModalTurnIndex(currentTurnIndex);
                 setActivityLogOpen(true);
               }}

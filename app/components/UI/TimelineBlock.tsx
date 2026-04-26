@@ -23,6 +23,7 @@ import {
   SkipForward,
   Swords,
 } from "lucide-react";
+import { toast } from "@/app/utils/toast";
 
 interface EnemyIntentSummary {
   name: string;
@@ -182,6 +183,7 @@ export default function TimelineBlock() {
   const handleReset = useCallback(() => {
     if (typeof window !== "undefined" && !window.confirm("Reset this turn to the initial combat snapshot?")) return;
     resetCurrentTurn();
+    toast('Turn reset', 'warning');
   }, [resetCurrentTurn]);
 
   if (!gameState) {

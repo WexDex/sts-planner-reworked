@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
 import { GameProvider } from "@/app/context/GameContext";
+import { NotificationProvider } from "@/app/components/UI/NotificationProvider";
 
 export const metadata = {
   title: "Slay the Spire Combat Planner Reworked",
@@ -20,7 +21,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.className} bg-indigo-50`}>
       <body>
-        <GameProvider>{children}</GameProvider>
+        <NotificationProvider>
+          <GameProvider>{children}</GameProvider>
+        </NotificationProvider>
       </body>
     </html>
   );
