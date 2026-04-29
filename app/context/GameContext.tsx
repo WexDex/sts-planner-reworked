@@ -1,7 +1,14 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { CombatData, Card, CardReference, ActivityLogEntry, Turn } from '@/app/types/gameTypes';
+import {
+  CombatData,
+  Card,
+  CardReference,
+  ActivityLogEntry,
+  Turn,
+  CombatTurnPhase,
+} from '@/app/types/gameTypes';
 import {
   loadFromFile,
   cloneGameData,
@@ -38,10 +45,17 @@ interface GameContextType {
   gameState: CombatData | null;
   turns: Turn[];
   currentTurnIndex: number;
+  /** Start → main (play cards) → enemy within the active planner round. */
+  turnPhase: CombatTurnPhase;
   setCurrentTurn: (turnId: number) => void;
   /** Persist live {@link gameState} into {@link turns}[{@link currentTurnIndex}] (e.g. before opening modals). */
   saveCurrentTurn: () => void;
-  endTurn: () => void;
+  /** Player finished their turn: logs, saves, switches to enemy phase (same planner round). */
+  endPlayerTurn: () => void;
+  /** Log start-of-turn (relic / draw / ST) and enter main phase. */
+  beginTurn: () => void;
+  /** Enemy phase finished: logs, saves, advances to next planner round (start phase). */
+  endEnemyTurn: () => void;
   continueFromTurn: (fromTurnId: number, toTurnId: number) => void;
   resetCurrentTurn: () => void;
   isLoading: boolean;
@@ -101,6 +115,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [initialData, setInitialData] = useState<CombatData | null>(null);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [currentTurnIndex, setCurrentTurnIndex] = useState(0);
+  const [turnPhase, setTurnPhase] = useState<CombatTurnPhase>('start');
   const [combatTargetMode, setCombatTargetModeState] = useState<'single' | 'multi'>('single');
   const [combatTargetEnemyIndices, setCombatTargetEnemyIndices] = useState<number[]>([]);
   const [combatTargetSelf, setCombatTargetSelf] = useState(false);
@@ -172,6 +187,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       const initialTurns: Turn[] = uniqueTurns.map((id) => ({ id, state: cloneGameData(withPiles) }));
       setTurns(initialTurns);
       setCurrentTurnIndex(0);
+      setTurnPhase('start');
 
       setGameState(cloneGameData(withPiles));
       setError(null);
@@ -257,36 +273,129 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setTurns(prev => prev.map((turn, idx) => idx === currentTurnIndex ? { ...turn, state: cloneGameData(gameState!) } : turn));
       setCurrentTurnIndex(index);
       setGameState(cloneGameData(turns[index].state));
+      setTurnPhase('start');
       toast('Turn switched', 'success');
     }
   };
 
-  const endTurn = () => {
-    // Save current state to current turn
-    setTurns(prev => prev.map((turn, idx) => idx === currentTurnIndex ? { ...turn, state: cloneGameData(gameState!) } : turn));
+  const endPlayerTurn = () => {
+    if (!gameState || turnPhase !== 'player') return;
+    const roundId = turns[currentTurnIndex]?.id ?? currentTurnIndex + 1;
+    const logEntry = createActivityLogEntry(
+      `Player ended main phase — round ${roundId}`,
+      undefined,
+      undefined,
+      'Enemy phase: resolve intents and damage, then end enemy turn.',
+      'system',
+      { context: [{ label: 'Phase', value: 'Main → Enemy' }] },
+    );
+    const stateAfterLog: CombatData = {
+      ...gameState,
+      activityLog: [...gameState.activityLog, logEntry],
+    };
+    setGameState(stateAfterLog);
+    setTurns((prev) =>
+      prev.map((turn, idx) =>
+        idx === currentTurnIndex ? { ...turn, state: cloneGameData(stateAfterLog) } : turn,
+      ),
+    );
+    setTurnPhase('enemy');
+    toast('Enemy turn', 'info');
+  };
+
+  const endEnemyTurn = () => {
+    if (!gameState || !initialData || turnPhase !== 'enemy') return;
+    const roundId = turns[currentTurnIndex]?.id ?? currentTurnIndex + 1;
+    const logEntry = createActivityLogEntry(
+      `Enemy turn ended — round ${roundId}`,
+      undefined,
+      undefined,
+      'Advancing to the next planner round. Use Start turn for relic / draw / ST, then Main.',
+      'system',
+      { context: [{ label: 'Phase', value: 'Enemy → Start (next round)' }] },
+    );
+    const stateAfterLog: CombatData = {
+      ...gameState,
+      activityLog: [...gameState.activityLog, logEntry],
+    };
+    setTurns((prev) => {
+      const withSaved = prev.map((turn, idx) =>
+        idx === currentTurnIndex ? { ...turn, state: cloneGameData(stateAfterLog) } : turn,
+      );
+      const nextIndex = currentTurnIndex + 1;
+      if (nextIndex >= withSaved.length) {
+        const newTurn: Turn = {
+          id: withSaved.length > 0 ? Math.max(...withSaved.map((t) => t.id)) + 1 : 1,
+          state: cloneGameData(initialData),
+        };
+        return [...withSaved, newTurn];
+      }
+      return withSaved;
+    });
     const nextIndex = currentTurnIndex + 1;
     if (nextIndex >= turns.length) {
-      // Create new turn with initial/default data
-      const newTurn: Turn = { id: turns.length + 1, state: cloneGameData(initialData!) };
-      setTurns(prev => [...prev, newTurn]);
       setCurrentTurnIndex(nextIndex);
-      setGameState(cloneGameData(initialData!));
+      setGameState(cloneGameData(initialData));
     } else {
       setCurrentTurnIndex(nextIndex);
       setGameState(cloneGameData(turns[nextIndex].state));
     }
+    setTurnPhase('start');
+    toast('Next round', 'success');
+  };
+
+  const beginTurn = () => {
+    if (!gameState || turnPhase !== 'start') return;
+    const roundId = turns[currentTurnIndex]?.id ?? currentTurnIndex + 1;
+    const logEntry = createActivityLogEntry(
+      `Turn started — round ${roundId}`,
+      undefined,
+      undefined,
+      'Resolve start-of-turn relics, passive powers, and draw before playing cards (Main phase).',
+      'system',
+      {
+        context: [
+          { label: 'Phase track', value: 'Start (Draw · Standby · relics) → Main' },
+          {
+            label: 'Reminds',
+            value: 'Similar to YGO: finish start-of-turn triggers, then act in Main; End player turn enters Enemy.',
+          },
+        ],
+      },
+    );
+    const stateAfterLog: CombatData = {
+      ...gameState,
+      activityLog: [...gameState.activityLog, logEntry],
+    };
+    setGameState(stateAfterLog);
+    setTurns((prev) =>
+      prev.map((turn, idx) =>
+        idx === currentTurnIndex ? { ...turn, state: cloneGameData(stateAfterLog) } : turn,
+      ),
+    );
+    setTurnPhase('player');
+    toast('Main phase', 'info');
   };
 
   const continueFromTurn = (fromTurnId: number, toTurnId: number) => {
     const fromTurnIndex = turns.findIndex(turn => turn.id === fromTurnId);
     const toTurnIndex = turns.findIndex(turn => turn.id === toTurnId);
-    
+
     if (fromTurnIndex === -1 || toTurnIndex === -1) return;
-    
-    // Copy data from source turn to target turn
-    const sourceState = cloneGameData(turns[fromTurnIndex].state);
-    setTurns(prev => prev.map((turn, idx) => idx === toTurnIndex ? { ...turn, state: sourceState } : turn));
+
+    const fromCurrentPlanner = fromTurnIndex === currentTurnIndex;
+    /** During enemy phase, live {@link gameState} diverges from the slot; use the saved slot (player-end) so enemy resolutions are not copied. */
+    const sourceState =
+      fromCurrentPlanner && turnPhase !== 'enemy' && gameState
+        ? cloneGameData(gameState)
+        : cloneGameData(turns[fromTurnIndex].state);
+
+    setTurns((prev) =>
+      prev.map((turn, idx) => (idx === toTurnIndex ? { ...turn, state: sourceState } : turn)),
+    );
     setCurrentTurnIndex(toTurnIndex);
+    setGameState(cloneGameData(sourceState));
+    setTurnPhase('start');
   };
 
   const resetCurrentTurn = () => {
@@ -294,6 +403,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const resetState = cloneGameData(initialData);
     setGameState(resetState);
     setTurns(prev => prev.map((turn, idx) => idx === currentTurnIndex ? { ...turn, state: resetState } : turn));
+    setTurnPhase('start');
   };
 
   const updateGameState = (newState: Partial<CombatData>) => {
@@ -309,12 +419,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const resetGameState = () => {
     if (initialData) {
       setGameState(cloneGameData(initialData));
+      setTurnPhase('start');
     }
   };
 
   const saveGameData = (key: string = DEFAULT_SAVE_KEY) => {
     if (turns.length > 0) {
-      saveToLocalStorage(key, { turns, currentTurnIndex });
+      saveToLocalStorage(key, { turns, currentTurnIndex, turnPhase });
     }
   };
 
@@ -370,6 +481,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setTurns(saved.turns);
       setCurrentTurnIndex(saved.currentTurnIndex || 0);
       setGameState(cloneGameData(saved.turns[saved.currentTurnIndex || 0]?.state || null));
+      const phase = saved.turnPhase as CombatTurnPhase | undefined;
+      setTurnPhase(
+        phase === 'start' || phase === 'player' || phase === 'enemy' ? phase : 'start',
+      );
       return true;
     }
     return false;
@@ -1139,9 +1254,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         gameState,
         turns,
         currentTurnIndex,
+        turnPhase,
         setCurrentTurn,
         saveCurrentTurn,
-        endTurn,
+        endPlayerTurn,
+        beginTurn,
+        endEnemyTurn,
         continueFromTurn,
         resetCurrentTurn,
         isLoading,

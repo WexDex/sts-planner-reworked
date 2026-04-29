@@ -28,6 +28,7 @@ export function GalleryCardPreview({
         location={LOCATION.HAND}
         size={displaySize}
         interactive={false}
+        legendHover={false}
         variant={variant}
         galleryChromeStyle={getGalleryCharacterChromeStyle(row.card)}
         galleryEffectGlyphs={glyphs.length > 0 ? glyphs : undefined}

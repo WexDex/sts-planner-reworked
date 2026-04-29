@@ -533,7 +533,6 @@ __turbopack_context__.s([
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$alert$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__AlertCircle$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/circle-alert.mjs [app-ssr] (ecmascript) <export default as AlertCircle>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$arrow$2d$down$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ArrowDown$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/arrow-down.mjs [app-ssr] (ecmascript) <export default as ArrowDown>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chart$2d$column$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__BarChart3$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/chart-column.mjs [app-ssr] (ecmascript) <export default as BarChart3>");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$battery$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Battery$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/battery.mjs [app-ssr] (ecmascript) <export default as Battery>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$dumbbell$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Dumbbell$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/dumbbell.mjs [app-ssr] (ecmascript) <export default as Dumbbell>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$droplets$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Droplets$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/droplets.mjs [app-ssr] (ecmascript) <export default as Droplets>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$file$2d$text$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__FileText$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/file-text.mjs [app-ssr] (ecmascript) <export default as FileText>");
@@ -547,6 +546,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$sparkles$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Sparkles$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/sparkles.mjs [app-ssr] (ecmascript) <export default as Sparkles>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trending$2d$up$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__TrendingUp$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/trending-up.mjs [app-ssr] (ecmascript) <export default as TrendingUp>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$zap$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Zap$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/zap.mjs [app-ssr] (ecmascript) <export default as Zap>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$orbit$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Orbit$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/orbit.mjs [app-ssr] (ecmascript) <export default as Orbit>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$constants$2f$colors$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/app/constants/colors.ts [app-ssr] (ecmascript)");
 ;
 ;
@@ -561,7 +561,7 @@ const ICONS = {
     strength_buff: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trending$2d$up$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__TrendingUp$3e$__["TrendingUp"],
     entangle: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$link$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Link$3e$__["Link"],
     takedamage: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$heart$2d$crack$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__HeartCrack$3e$__["HeartCrack"],
-    energygain: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$battery$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Battery$3e$__["Battery"],
+    energygain: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$orbit$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Orbit$3e$__["Orbit"],
     draw: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$file$2d$text$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__FileText$3e$__["FileText"],
     intangible: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$ghost$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Ghost$3e$__["Ghost"],
     hp: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$heart$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Heart$3e$__["Heart"],
@@ -1088,6 +1088,8 @@ __turbopack_context__.s([
     ()=>energyGainNode,
     "galleryBlockRowIsConditional",
     ()=>galleryBlockRowIsConditional,
+    "galleryDamageIsConditional",
+    ()=>galleryDamageIsConditional,
     "galleryDamageRowIsAoE",
     ()=>galleryDamageRowIsAoE,
     "galleryDrawIsConditional",
@@ -1096,14 +1098,19 @@ __turbopack_context__.s([
     ()=>galleryGlyphsInsideCardOnly,
     "galleryTierNumber",
     ()=>galleryTierNumber,
+    "galleryTieredBoolActive",
+    ()=>galleryTieredBoolActive,
     "inferCardGalleryGlyphs",
     ()=>inferCardGalleryGlyphs,
     "inferGalleryCardEffects",
     ()=>inferGalleryCardEffects,
+    "orbInteractionEntries",
+    ()=>orbInteractionEntries,
     "readStsIconCatalog",
-    ()=>readStsIconCatalog
+    ()=>readStsIconCatalog,
+    "resolveOrbCatalogKey",
+    ()=>resolveOrbCatalogKey
 ]);
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$battery$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Battery$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/battery.mjs [app-ssr] (ecmascript) <export default as Battery>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$bookmark$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Bookmark$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/bookmark.mjs [app-ssr] (ecmascript) <export default as Bookmark>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevrons$2d$up$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronsUp$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/chevrons-up.mjs [app-ssr] (ecmascript) <export default as ChevronsUp>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$dot$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__CircleDot$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/circle-dot.mjs [app-ssr] (ecmascript) <export default as CircleDot>");
@@ -1128,6 +1135,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$zap$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Zap$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/zap.mjs [app-ssr] (ecmascript) <export default as Zap>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$flame$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Flame$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/flame.mjs [app-ssr] (ecmascript) <export default as Flame>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$swords$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Swords$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/swords.mjs [app-ssr] (ecmascript) <export default as Swords>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$orbit$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Orbit$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/orbit.mjs [app-ssr] (ecmascript) <export default as Orbit>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/app/utils/effectDisplay.ts [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$data$2f$STS_CARDS_DB$2e$json$2e5b$json$5d2e$cjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/app/data/STS_CARDS_DB.json.[json].cjs [app-ssr] (ecmascript)");
 ;
@@ -1250,7 +1258,7 @@ const STS_ICON_GLYPH = {
         shortLabel: "HP cost"
     },
     GAIN_ENERGY_ICON: {
-        Icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$battery$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Battery$3e$__["Battery"],
+        Icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$orbit$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Orbit$3e$__["Orbit"],
         iconClass: "text-yellow-300",
         shortLabel: "Gain energy"
     }
@@ -1311,7 +1319,7 @@ function damageTargetIsAllEnemies(card) {
 function damageRowIsAoE(card) {
     return card.type === "Attack" && card.damage != undefined && (damageTargetIsAllEnemies(card) || /\ball enemies\b/i.test(fullDesc(card)));
 }
-function damageIsConditional(card) {
+function galleryDamageIsConditional(card) {
     return card.damage != undefined && isConditionedField(card.damage);
 }
 function blockIsConditional(card) {
@@ -1401,7 +1409,7 @@ function galleryNumericField(card, field) {
 /** Legacy damage row: optional conditional + AoE markers before the damage icon. */ function buildDamageLegacyGlyph(card) {
     if (card.damage === undefined) return null;
     const dmgD = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getEffectDisplay"])("damage");
-    const hasSub = damageIsConditional(card) || damageRowIsAoE(card);
+    const hasSub = galleryDamageIsConditional(card) || damageRowIsAoE(card);
     const dRaw = card.damage && typeof card.damage === "object" && !Array.isArray(card.damage) ? card.damage : undefined;
     const trigger = typeof dRaw?.trigger === "string" ? String(dRaw.trigger) : undefined;
     if (!hasSub) {
@@ -1413,10 +1421,10 @@ function galleryNumericField(card, field) {
         };
     }
     const segments = [];
-    if (damageIsConditional(card)) segments.push(segmentConditional());
+    if (galleryDamageIsConditional(card)) segments.push(segmentConditional());
     if (damageRowIsAoE(card)) segments.push(segmentAoe());
     const labelParts = [];
-    if (damageIsConditional(card)) labelParts.push("Conditional");
+    if (galleryDamageIsConditional(card)) labelParts.push("Conditional");
     if (damageRowIsAoE(card)) labelParts.push("AoE");
     labelParts.push("Damage");
     return {
@@ -1442,7 +1450,7 @@ function clusterShellField(field) {
     }
 }
 const MULTIHIT_TEXT_CLS = "text-[0.65em] font-semibold leading-none text-slate-400 opacity-90 mx-px";
-function tieredBoolActive(card, node) {
+function galleryTieredBoolActive(card, node) {
     if (node === true) return true;
     if (node === false || node == null) return false;
     if (typeof node === "object" && !Array.isArray(node)) {
@@ -1458,7 +1466,7 @@ function buildKeywordGlyphs(card) {
     const innate = c.innate ?? c.Innate;
     const ethereal = c.ethereal ?? c.Ethereal;
     const retainField = c.retain ?? c.Retain;
-    if (tieredBoolActive(card, innate)) {
+    if (galleryTieredBoolActive(card, innate)) {
         const m = STS_ICON_GLYPH.KEY_INNATE;
         out.push({
             id: "kw-innate",
@@ -1467,7 +1475,7 @@ function buildKeywordGlyphs(card) {
             iconClass: m.iconClass
         });
     }
-    if (tieredBoolActive(card, ethereal)) {
+    if (galleryTieredBoolActive(card, ethereal)) {
         const m = STS_ICON_GLYPH.KEY_ETHEREAL;
         out.push({
             id: "kw-ethereal",
@@ -1476,7 +1484,7 @@ function buildKeywordGlyphs(card) {
             iconClass: m.iconClass
         });
     }
-    if (tieredBoolActive(card, retainField)) {
+    if (galleryTieredBoolActive(card, retainField)) {
         const m = STS_ICON_GLYPH.KEY_RETAIN;
         out.push({
             id: "kw-retain",
@@ -1554,7 +1562,7 @@ function mergeKeywordGlyphsFirst(card, glyphs) {
     if (multiCount != null && card.damage !== undefined) {
         const hits = galleryTierNumber(card, multiCount);
         const mhSegments = [];
-        if (damageIsConditional(card)) mhSegments.push(segmentConditional());
+        if (galleryDamageIsConditional(card)) mhSegments.push(segmentConditional());
         if (damageRowIsAoE(card)) mhSegments.push(segmentAoe());
         mhSegments.push({
             text: "×",
@@ -1599,7 +1607,7 @@ function mergeKeywordGlyphsFirst(card, glyphs) {
         const dRaw = card.draw && typeof card.draw === "object" && !Array.isArray(card.draw) ? card.draw : undefined;
         const trigger = typeof dRaw?.trigger === "string" ? String(dRaw.trigger) : egNode !== null && typeof egNode === "object" && typeof egNode.trigger === "string" ? String(egNode.trigger) : undefined;
         const dmgSegs = [];
-        if (damageIsConditional(card)) dmgSegs.push(segmentConditional());
+        if (galleryDamageIsConditional(card)) dmgSegs.push(segmentConditional());
         if (damageRowIsAoE(card)) dmgSegs.push(segmentAoe());
         const glyphs = [];
         if (dmgSegs.length > 0) {
@@ -1663,7 +1671,7 @@ function mergeKeywordGlyphsFirst(card, glyphs) {
         const dis = STS_ICON_GLYPH.DISCARD_ICON;
         const dCount = galleryDiscardDisplayCount(card);
         const aoeDmgSegs = [];
-        if (damageIsConditional(card)) aoeDmgSegs.push(segmentConditional());
+        if (galleryDamageIsConditional(card)) aoeDmgSegs.push(segmentConditional());
         aoeDmgSegs.push({
             Icon: aoe.Icon,
             iconClass: aoe.iconClass
@@ -2224,7 +2232,7 @@ function inferLegacyCardGalleryGlyphs(card) {
     const hasMulti = multi != null && typeof multi === "object" && !Array.isArray(multi) && Object.keys(multi).length > 0;
     if (hasMulti && card.damage != undefined && !("multiHitCount" in multi)) {
         const mhSegs = [];
-        if (damageIsConditional(card)) mhSegs.push(segmentConditional());
+        if (galleryDamageIsConditional(card)) mhSegs.push(segmentConditional());
         if (damageRowIsAoE(card)) mhSegs.push(segmentAoe());
         const mhIcon = STS_ICON_GLYPH.AOE_DAMAGE;
         mhSegs.push({

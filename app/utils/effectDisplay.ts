@@ -17,6 +17,7 @@ import {
   TrendingUp,
   Zap,
   type LucideIcon,
+  Orbit,
 } from 'lucide-react';
 import { EFFECT_COLORS, STAT_COLORS } from '@/app/constants/colors';
 
@@ -62,7 +63,7 @@ const ICONS: Record<EffectType, LucideIcon> = {
   strength_buff: TrendingUp,
   entangle: Link,
   takedamage: HeartCrack,
-  energygain: Battery,
+  energygain: Orbit,
   draw: FileText,
   intangible: Ghost,
   hp: Heart,

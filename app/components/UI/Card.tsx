@@ -8,6 +8,7 @@ import {
   getFormattedDescription,
 } from "@/app/utils/utils";
 import { useGameManager } from "@/app/context/GameContext";
+import { useLegendHighlight } from "@/app/context/LegendHighlightContext";
 import {
   DEFAULT_CARD_VISUAL_VARIANT,
   type CardTypeStyle,
@@ -30,6 +31,8 @@ interface GameCardProps {
   location: LOCATION;
   /** When false, no selection toggle and no hover “play” motion (for galleries / previews). */
   interactive?: boolean;
+  /** When true (default), hovering syncs the top-bar symbol legend to this card. */
+  legendHover?: boolean;
   /** Visual chrome preset; default matches the original glossy gradient look. */
   variant?: CardVisualVariant;
   /**
@@ -153,12 +156,14 @@ export default function STSCard({
   location,
   size = "large",
   interactive = true,
+  legendHover = true,
   variant = DEFAULT_CARD_VISUAL_VARIANT,
   galleryEffectGlyphs,
   gallerySuppressStats,
   galleryChromeStyle,
 }: GameCardProps) {
   const { toggleCardSelection } = useGameManager();
+  const { setHoveredLegendCard } = useLegendHighlight();
   const inferredGallery = useMemo(() => inferGalleryCardEffects(card), [card]);
   const mergedEffectGlyphs =
     galleryEffectGlyphs ??
@@ -274,6 +279,21 @@ export default function STSCard({
 
   return (
     <div
+      data-sts-card=""
+      onMouseEnter={
+        legendHover
+          ? () => {
+              setHoveredLegendCard(card);
+            }
+          : undefined
+      }
+      onMouseLeave={
+        legendHover
+          ? () => {
+              setHoveredLegendCard(null);
+            }
+          : undefined
+      }
       onClick={
         interactive
           ? (e) => {

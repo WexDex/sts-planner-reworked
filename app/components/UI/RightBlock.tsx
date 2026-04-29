@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useGameManager } from '@/app/context/GameContext';
 import {
   LANTERN_RELIC_NAME,
@@ -73,6 +73,8 @@ function StepBtn({
 export default function RightBlock() {
   const {
     gameState,
+    turns,
+    currentTurnIndex,
     modifyPlayerHp,
     modifyPlayerBlock,
     modifyPlayerEnergy,
@@ -104,6 +106,22 @@ export default function RightBlock() {
   }, [enemies?.length]);
 
   const activeRelics = gameState?.player.activeRelics ?? [];
+
+  const currentTurn = Number(turns[currentTurnIndex]?.id ?? 1);
+
+  const relicTooltips = useMemo(() => {
+    if (!gameState) return [];
+    const turnEffects =
+      gameState.player.relicEffects?.filter(
+        (effect) => effect.enabled !== false && Number(effect.turn) === currentTurn,
+      ) ?? [];
+
+    return turnEffects.map((effect, i) => ({
+      key: `relic-effect-${currentTurn}-${i}-${effect.effect}`,
+      label: effect.effect,
+      tooltip: effect.effect,
+    }));
+  }, [currentTurn, gameState]);
 
   const handleAddBuff = (type: 'buff' | 'debuff') => {
     if (!buffName.trim()) return;
@@ -204,6 +222,27 @@ export default function RightBlock() {
             <User className="h-3.5 w-3.5 text-slate-400" />
             You
           </h3>
+
+          {relicTooltips.length > 0 ? (
+            <div className="mb-4 rounded-xl border border-violet-500/35 bg-violet-950/30 px-2.5 py-2 ring-1 ring-violet-500/10">
+              <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-violet-300/90">
+                <Sparkles className="h-3 w-3 shrink-0" />
+                This turn (relic effects)
+              </p>
+              <p className="mb-1.5 text-[9px] text-violet-200/55">Round {currentTurn} — encounter relic timing from combat JSON</p>
+              <div className="flex flex-wrap gap-1.5">
+                {relicTooltips.map((entry) => (
+                  <div
+                    key={entry.key}
+                    className="max-w-full truncate rounded-md border border-violet-500/45 bg-violet-950/55 px-2 py-1 text-[10px] font-medium text-violet-100"
+                    title={entry.tooltip}
+                  >
+                    {entry.label}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <div className="mb-4">
             <div className="mb-1 flex justify-between text-[10px] text-slate-500">

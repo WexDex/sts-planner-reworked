@@ -21,7 +21,10 @@ import {
   History,
   RotateCcw,
   SkipForward,
+  Sparkles,
   Swords,
+  User,
+  Skull,
 } from "lucide-react";
 import { toast } from "@/app/utils/toast";
 
@@ -59,18 +62,21 @@ function ActionBtn({
   tone = "slate",
   icon: Icon,
   className = "",
+  disabled = false,
 }: {
   children: ReactNode;
   onClick: () => void;
   tone?: BtnTone;
   icon?: LucideIcon;
   className?: string;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={onClick}
-      className={`flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-all duration-150 active:scale-[0.98] hover:brightness-110 ${actionTone[tone]} ${className}`}
+      className={`flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-all duration-150 active:scale-[0.98] hover:brightness-110 ${actionTone[tone]} ${disabled ? "pointer-events-none cursor-not-allowed opacity-45" : ""} ${className}`}
     >
       {Icon ? <Icon className="h-3.5 w-3.5 shrink-0 opacity-90" strokeWidth={2} /> : null}
       {children}
@@ -96,7 +102,7 @@ function snapshotForIntentTurn(
 }
 
 export default function TimelineBlock() {
-  const { gameState, turns, currentTurnIndex, setCurrentTurn, endTurn, continueFromTurn, resetCurrentTurn } =
+  const { gameState, turns, currentTurnIndex, turnPhase, setCurrentTurn, beginTurn, endPlayerTurn, endEnemyTurn, continueFromTurn, resetCurrentTurn } =
     useGameManager();
 
   const activeTurnRef = useRef<HTMLDivElement | null>(null);
@@ -213,10 +219,90 @@ export default function TimelineBlock() {
             </p>
           </div>
         </div>
+        <div className="mt-3 rounded-xl border-2 border-slate-600/50 bg-slate-950/80 p-1.5 shadow-inner shadow-black/20">
+          <p className="mb-1.5 px-1 text-center text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+            Phase track
+          </p>
+          <div className="grid grid-cols-3 gap-1">
+            <div
+              className={`flex flex-col items-center justify-center gap-0.5 rounded-lg border-2 px-2 py-2 transition-colors ${
+                turnPhase === "start"
+                  ? "border-amber-500/60 bg-amber-950/40 shadow-md shadow-amber-950/25"
+                  : "border-transparent bg-slate-900/40 opacity-60"
+              }`}
+              title="Draw, Standby, start-of-turn relics & powers (YGO-style opening)"
+            >
+              <Sparkles
+                className={`h-4 w-4 ${turnPhase === "start" ? "text-amber-200" : "text-slate-500"}`}
+                strokeWidth={2}
+              />
+              <span className="text-center text-[9px] font-bold uppercase tracking-wide text-slate-200">Start</span>
+              <span className="text-center text-[8px] leading-tight text-slate-500">Draw · ST</span>
+              {turnPhase === "start" ? (
+                <span className="rounded bg-amber-500/25 px-1 py-px text-[8px] font-semibold text-amber-100">
+                  Active
+                </span>
+              ) : null}
+            </div>
+            <div
+              className={`flex flex-col items-center justify-center gap-0.5 rounded-lg border-2 px-2 py-2 transition-colors ${
+                turnPhase === "player"
+                  ? "border-emerald-500/60 bg-emerald-950/45 shadow-md shadow-emerald-950/20"
+                  : "border-transparent bg-slate-900/40 opacity-60"
+              }`}
+              title="Main phase — play cards, spend energy"
+            >
+              <User
+                className={`h-4 w-4 ${turnPhase === "player" ? "text-emerald-300" : "text-slate-500"}`}
+                strokeWidth={2}
+              />
+              <span className="text-center text-[9px] font-bold uppercase tracking-wide text-slate-200">Main</span>
+              <span className="text-center text-[8px] leading-tight text-slate-500">Play cards</span>
+              {turnPhase === "player" ? (
+                <span className="rounded bg-emerald-500/25 px-1 py-px text-[8px] font-semibold text-emerald-200">
+                  Active
+                </span>
+              ) : null}
+            </div>
+            <div
+              className={`flex flex-col items-center justify-center gap-0.5 rounded-lg border-2 px-2 py-2 transition-colors ${
+                turnPhase === "enemy"
+                  ? "border-rose-500/55 bg-rose-950/40 shadow-md shadow-rose-950/25"
+                  : "border-transparent bg-slate-900/40 opacity-60"
+              }`}
+              title="Enemy phase — resolve intents"
+            >
+              <Skull
+                className={`h-4 w-4 ${turnPhase === "enemy" ? "text-rose-300" : "text-slate-500"}`}
+                strokeWidth={2}
+              />
+              <span className="text-center text-[9px] font-bold uppercase tracking-wide text-slate-200">Enemy</span>
+              <span className="text-center text-[8px] leading-tight text-slate-500">Resolve</span>
+              {turnPhase === "enemy" ? (
+                <span className="rounded bg-rose-500/25 px-1 py-px text-[8px] font-semibold text-rose-200">
+                  Active
+                </span>
+              ) : null}
+            </div>
+          </div>
+          <div className="mt-1.5 flex items-center justify-center gap-0.5 px-1 text-[8px] text-slate-600">
+            <span>Start</span>
+            <ChevronRight className="h-3 w-3 shrink-0 opacity-70" strokeWidth={2} />
+            <span>Main</span>
+            <ChevronRight className="h-3 w-3 shrink-0 opacity-70" strokeWidth={2} />
+            <span>Enemy</span>
+            <span className="ml-1 text-slate-500">· similar to YGO flow</span>
+          </div>
+        </div>
         <div className="mt-2 flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-950/20 px-2.5 py-1.5">
           <Clock className="h-3.5 w-3.5 shrink-0 text-cyan-300/80" strokeWidth={2} />
           <span className="text-[11px] font-medium tabular-nums text-cyan-100/95">
-            Active: Turn {currentTurnId}
+            Round {currentTurnId} ·{" "}
+            {turnPhase === "start"
+              ? "Start (relics / draw / ST)"
+              : turnPhase === "player"
+                ? "Main phase"
+                : "Enemy phase"}
             {selected?.totalDamage != null && selected.totalDamage > 0 ? (
               <span className="font-normal text-slate-500"> · {selected.totalDamage} incoming atk</span>
             ) : null}
@@ -361,16 +447,38 @@ export default function TimelineBlock() {
         <div className={ACTIONS_ZONE}>
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Quick actions</p>
           <div className="flex flex-col gap-2">
-            <ActionBtn tone="amber" icon={SkipForward} onClick={endTurn}>
-              End turn
+            <ActionBtn
+              tone="cyan"
+              icon={Sparkles}
+              onClick={beginTurn}
+              disabled={turnPhase !== "start"}
+            >
+              Start turn
             </ActionBtn>
-            <ActionBtn tone="rose" icon={RotateCcw} onClick={handleReset}>
+            <ActionBtn
+              tone="amber"
+              icon={SkipForward}
+              onClick={endPlayerTurn}
+              disabled={turnPhase !== "player"}
+            >
+              End main phase
+            </ActionBtn>
+            <ActionBtn
+              tone="rose"
+              icon={Swords}
+              onClick={endEnemyTurn}
+              disabled={turnPhase !== "enemy"}
+            >
+              End enemy turn
+            </ActionBtn>
+            <ActionBtn tone="slate" icon={RotateCcw} onClick={handleReset}>
               Reset turn data
             </ActionBtn>
           </div>
           <p className="mt-2 text-[10px] leading-relaxed text-slate-600">
-            Tip: “Copy state” pre-fills the next turn from the current one. Reset restores the initial snapshot for this
-            turn.
+            Tip: Each round begins in Start — click Start turn to log and enter Main (play cards). End main phase →
+            Enemy. End enemy turn → next round (Start again). “Copy state” uses the player-end snapshot during Enemy.
+            Reset restores the initial snapshot.
           </p>
         </div>
       </div>

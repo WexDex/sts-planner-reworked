@@ -1,6 +1,5 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  Battery,
   Bookmark,
   ChevronsUp,
   CircleDot,
@@ -25,6 +24,7 @@ import {
   Zap,
   Flame,
   Swords,
+  Orbit,
 } from "lucide-react";
 import type { Card } from "@/app/types/gameTypes";
 import { getEffectDisplay } from "@/app/utils/effectDisplay";
@@ -92,7 +92,7 @@ export const STS_ICON_GLYPH: Record<
   UPGRADE_CARD: { Icon: ChevronsUp, iconClass: "text-violet-300", shortLabel: "Upgrade" },
   ADD_CARD: { Icon: SquarePlus, iconClass: "text-cyan-300", shortLabel: "Add card" },
   HP_COST: { Icon: Droplets, iconClass: "text-rose-400", shortLabel: "HP cost" },
-  GAIN_ENERGY_ICON: { Icon: Battery, iconClass: "text-yellow-300", shortLabel: "Gain energy" },
+  GAIN_ENERGY_ICON: { Icon: Orbit, iconClass: "text-yellow-300", shortLabel: "Gain energy" },
 };
 
 const FALLBACK_ICON_CATALOG: Record<string, string> = {
@@ -173,7 +173,7 @@ function damageRowIsAoE(card: Card): boolean {
   );
 }
 
-function damageIsConditional(card: Card): boolean {
+export function galleryDamageIsConditional(card: Card): boolean {
   return card.damage != undefined && isConditionedField(card.damage);
 }
 
@@ -282,7 +282,7 @@ function galleryDiscardDisplayCount(card: Card): number {
 function buildDamageLegacyGlyph(card: Card): GalleryGlyph | null {
   if (card.damage === undefined) return null;
   const dmgD = getEffectDisplay("damage");
-  const hasSub = damageIsConditional(card) || damageRowIsAoE(card);
+  const hasSub = galleryDamageIsConditional(card) || damageRowIsAoE(card);
   const dRaw =
     card.damage && typeof card.damage === "object" && !Array.isArray(card.damage)
       ? (card.damage as Record<string, unknown>)
@@ -299,10 +299,10 @@ function buildDamageLegacyGlyph(card: Card): GalleryGlyph | null {
   }
 
   const segments: GalleryGlyphSegment[] = [];
-  if (damageIsConditional(card)) segments.push(segmentConditional());
+  if (galleryDamageIsConditional(card)) segments.push(segmentConditional());
   if (damageRowIsAoE(card)) segments.push(segmentAoe());
   const labelParts: string[] = [];
-  if (damageIsConditional(card)) labelParts.push("Conditional");
+  if (galleryDamageIsConditional(card)) labelParts.push("Conditional");
   if (damageRowIsAoE(card)) labelParts.push("AoE");
   labelParts.push("Damage");
   return {
@@ -334,7 +334,7 @@ function clusterShellField(field: GalleryClusterField): string {
 const MULTIHIT_TEXT_CLS =
   "text-[0.65em] font-semibold leading-none text-slate-400 opacity-90 mx-px";
 
-function tieredBoolActive(card: Card, node: unknown): boolean {
+export function galleryTieredBoolActive(card: Card, node: unknown): boolean {
   if (node === true) return true;
   if (node === false || node == null) return false;
   if (typeof node === "object" && !Array.isArray(node)) {
@@ -351,7 +351,7 @@ function buildKeywordGlyphs(card: Card): GalleryGlyph[] {
   const innate = c.innate ?? c.Innate;
   const ethereal = c.ethereal ?? c.Ethereal;
   const retainField = c.retain ?? c.Retain;
-  if (tieredBoolActive(card, innate)) {
+  if (galleryTieredBoolActive(card, innate)) {
     const m = STS_ICON_GLYPH.KEY_INNATE;
     out.push({
       id: "kw-innate",
@@ -360,7 +360,7 @@ function buildKeywordGlyphs(card: Card): GalleryGlyph[] {
       iconClass: m.iconClass,
     });
   }
-  if (tieredBoolActive(card, ethereal)) {
+  if (galleryTieredBoolActive(card, ethereal)) {
     const m = STS_ICON_GLYPH.KEY_ETHEREAL;
     out.push({
       id: "kw-ethereal",
@@ -369,7 +369,7 @@ function buildKeywordGlyphs(card: Card): GalleryGlyph[] {
       iconClass: m.iconClass,
     });
   }
-  if (tieredBoolActive(card, retainField)) {
+  if (galleryTieredBoolActive(card, retainField)) {
     const m = STS_ICON_GLYPH.KEY_RETAIN;
     out.push({
       id: "kw-retain",
@@ -388,14 +388,14 @@ const ORB_TYPE_TO_CATALOG: Record<string, string> = {
   plasma: "PLASMA_ORB",
 };
 
-function orbInteractionEntries(root: Record<string, unknown>): Record<string, unknown>[] {
+export function orbInteractionEntries(root: Record<string, unknown>): Record<string, unknown>[] {
   const o = root.orbInteractions;
   if (Array.isArray(o)) return o as Record<string, unknown>[];
   if (o && typeof o === "object" && !Array.isArray(o)) return [o as Record<string, unknown>];
   return [];
 }
 
-function resolveOrbCatalogKey(e: Record<string, unknown>, verbRaw: string): string {
+export function resolveOrbCatalogKey(e: Record<string, unknown>, verbRaw: string): string {
   if (typeof e.usesIcon === "string") return e.usesIcon;
   if (typeof e.orbIcon === "string") return e.orbIcon;
   const ot = e.orbtype ?? e.orbType;
@@ -470,7 +470,7 @@ function tryStructuredGalleryGlyphs(
   if (multiCount != null && card.damage !== undefined) {
     const hits = galleryTierNumber(card, multiCount);
     const mhSegments: GalleryGlyphSegment[] = [];
-    if (damageIsConditional(card)) mhSegments.push(segmentConditional());
+    if (galleryDamageIsConditional(card)) mhSegments.push(segmentConditional());
     if (damageRowIsAoE(card)) mhSegments.push(segmentAoe());
     mhSegments.push(
       {
@@ -535,7 +535,7 @@ function tryStructuredGalleryGlyphs(
           : undefined;
 
     const dmgSegs: GalleryGlyphSegment[] = [];
-    if (damageIsConditional(card)) dmgSegs.push(segmentConditional());
+    if (galleryDamageIsConditional(card)) dmgSegs.push(segmentConditional());
     if (damageRowIsAoE(card)) dmgSegs.push(segmentAoe());
     const glyphs: GalleryGlyph[] = [];
     if (dmgSegs.length > 0) {
@@ -594,7 +594,7 @@ function tryStructuredGalleryGlyphs(
     const dis = STS_ICON_GLYPH.DISCARD_ICON;
     const dCount = galleryDiscardDisplayCount(card);
     const aoeDmgSegs: GalleryGlyphSegment[] = [];
-    if (damageIsConditional(card)) aoeDmgSegs.push(segmentConditional());
+    if (galleryDamageIsConditional(card)) aoeDmgSegs.push(segmentConditional());
     aoeDmgSegs.push({ Icon: aoe.Icon, iconClass: aoe.iconClass });
     const rndDiscSegs: GalleryGlyphSegment[] = [];
     if (discard.conditioned === true) rndDiscSegs.push(segmentConditional());
@@ -948,6 +948,7 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
     if (sn != null) {
       push({
         id: "scry-n",
+        catalogKey: "SCRY_ICON",
         label: `Scry ${sn}`,
         clusterClass: clusterShellField("neutral"),
         segments: [
@@ -961,6 +962,7 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
     } else {
       push({
         id: "scry",
+        catalogKey: "SCRY_ICON",
         label: "Scry",
         Icon: sc.Icon,
         iconClass: sc.iconClass,
@@ -975,6 +977,7 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
     if (hn != null) {
       push({
         id: "hp-cost-n",
+        catalogKey: "HP_COST",
         label: `HP cost ${hn}`,
         clusterClass: clusterShellField("neutral"),
         segments: [
@@ -988,6 +991,7 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
     } else {
       push({
         id: "hp-cost",
+        catalogKey: "HP_COST",
         label: "HP cost",
         Icon: hpMeta.Icon,
         iconClass: hpMeta.iconClass,
@@ -999,6 +1003,7 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
     const cm = STS_ICON_GLYPH.COST_MANIP;
     push({
       id: "cost-manip",
+      catalogKey: "COST_MANIP",
       label: "Cost manipulation",
       Icon: cm.Icon,
       iconClass: cm.iconClass,
@@ -1009,6 +1014,7 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
     const up = STS_ICON_GLYPH.UPGRADE_CARD;
     push({
       id: "upgrade-cards",
+      catalogKey: "UPGRADE_CARD",
       label: "Upgrade cards",
       Icon: up.Icon,
       iconClass: up.iconClass,
@@ -1048,6 +1054,7 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
     }
     push({
       id: "add-card",
+      catalogKey: "ADD_CARD",
       label: attr ? `Add card (${attr})` : "Add card",
       clusterClass: clusterShellField("neutral"),
       segments: segs,
@@ -1068,6 +1075,7 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
         if (stacks != null) {
           push({
             id: "debuff-losestrength",
+            catalogKey: "LOSE_STRENGTH",
             label,
             clusterClass: clusterShellField("neutral"),
             segments: [
@@ -1081,6 +1089,7 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
         } else {
           push({
             id: "debuff-losestrength",
+            catalogKey: "LOSE_STRENGTH",
             label,
             Icon: m.Icon,
             iconClass: m.iconClass,
@@ -1129,6 +1138,7 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
               : "Poison";
         push({
           id: "debuff-poison",
+          catalogKey: "POISON_STAT",
           label,
           clusterClass: clusterShellField("neutral"),
           segments,
@@ -1174,7 +1184,7 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
 
   if (hasMulti && card.damage != undefined && !("multiHitCount" in (multi as object))) {
     const mhSegs: GalleryGlyphSegment[] = [];
-    if (damageIsConditional(card)) mhSegs.push(segmentConditional());
+    if (galleryDamageIsConditional(card)) mhSegs.push(segmentConditional());
     if (damageRowIsAoE(card)) mhSegs.push(segmentAoe());
     const mhIcon = STS_ICON_GLYPH.AOE_DAMAGE;
     mhSegs.push({ Icon: mhIcon.Icon, iconClass: "text-fuchsia-300" });

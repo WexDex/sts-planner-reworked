@@ -9,7 +9,6 @@ __turbopack_context__.s([
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$alert$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__AlertCircle$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/circle-alert.mjs [app-client] (ecmascript) <export default as AlertCircle>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$arrow$2d$down$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ArrowDown$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/arrow-down.mjs [app-client] (ecmascript) <export default as ArrowDown>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chart$2d$column$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__BarChart3$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/chart-column.mjs [app-client] (ecmascript) <export default as BarChart3>");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$battery$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Battery$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/battery.mjs [app-client] (ecmascript) <export default as Battery>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$dumbbell$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Dumbbell$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/dumbbell.mjs [app-client] (ecmascript) <export default as Dumbbell>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$droplets$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Droplets$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/droplets.mjs [app-client] (ecmascript) <export default as Droplets>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$file$2d$text$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__FileText$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/file-text.mjs [app-client] (ecmascript) <export default as FileText>");
@@ -23,6 +22,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$sparkles$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Sparkles$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/sparkles.mjs [app-client] (ecmascript) <export default as Sparkles>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trending$2d$up$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__TrendingUp$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/trending-up.mjs [app-client] (ecmascript) <export default as TrendingUp>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$zap$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Zap$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/zap.mjs [app-client] (ecmascript) <export default as Zap>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$orbit$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Orbit$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/orbit.mjs [app-client] (ecmascript) <export default as Orbit>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$constants$2f$colors$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/app/constants/colors.ts [app-client] (ecmascript)");
 ;
 ;
@@ -37,7 +37,7 @@ const ICONS = {
     strength_buff: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trending$2d$up$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__TrendingUp$3e$__["TrendingUp"],
     entangle: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$link$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Link$3e$__["Link"],
     takedamage: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$heart$2d$crack$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__HeartCrack$3e$__["HeartCrack"],
-    energygain: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$battery$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Battery$3e$__["Battery"],
+    energygain: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$orbit$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Orbit$3e$__["Orbit"],
     draw: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$file$2d$text$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__FileText$3e$__["FileText"],
     intangible: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$ghost$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Ghost$3e$__["Ghost"],
     hp: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$heart$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Heart$3e$__["Heart"],
@@ -583,6 +583,8 @@ __turbopack_context__.s([
     ()=>energyGainNode,
     "galleryBlockRowIsConditional",
     ()=>galleryBlockRowIsConditional,
+    "galleryDamageIsConditional",
+    ()=>galleryDamageIsConditional,
     "galleryDamageRowIsAoE",
     ()=>galleryDamageRowIsAoE,
     "galleryDrawIsConditional",
@@ -591,14 +593,19 @@ __turbopack_context__.s([
     ()=>galleryGlyphsInsideCardOnly,
     "galleryTierNumber",
     ()=>galleryTierNumber,
+    "galleryTieredBoolActive",
+    ()=>galleryTieredBoolActive,
     "inferCardGalleryGlyphs",
     ()=>inferCardGalleryGlyphs,
     "inferGalleryCardEffects",
     ()=>inferGalleryCardEffects,
+    "orbInteractionEntries",
+    ()=>orbInteractionEntries,
     "readStsIconCatalog",
-    ()=>readStsIconCatalog
+    ()=>readStsIconCatalog,
+    "resolveOrbCatalogKey",
+    ()=>resolveOrbCatalogKey
 ]);
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$battery$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Battery$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/battery.mjs [app-client] (ecmascript) <export default as Battery>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$bookmark$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Bookmark$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/bookmark.mjs [app-client] (ecmascript) <export default as Bookmark>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevrons$2d$up$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronsUp$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/chevrons-up.mjs [app-client] (ecmascript) <export default as ChevronsUp>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$dot$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__CircleDot$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/circle-dot.mjs [app-client] (ecmascript) <export default as CircleDot>");
@@ -623,6 +630,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$zap$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Zap$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/zap.mjs [app-client] (ecmascript) <export default as Zap>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$flame$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Flame$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/flame.mjs [app-client] (ecmascript) <export default as Flame>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$swords$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Swords$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/swords.mjs [app-client] (ecmascript) <export default as Swords>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$orbit$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Orbit$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/orbit.mjs [app-client] (ecmascript) <export default as Orbit>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/app/utils/effectDisplay.ts [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$data$2f$STS_CARDS_DB$2e$json$2e5b$json$5d2e$cjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/app/data/STS_CARDS_DB.json.[json].cjs [app-client] (ecmascript)");
 ;
@@ -745,7 +753,7 @@ const STS_ICON_GLYPH = {
         shortLabel: "HP cost"
     },
     GAIN_ENERGY_ICON: {
-        Icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$battery$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Battery$3e$__["Battery"],
+        Icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$orbit$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Orbit$3e$__["Orbit"],
         iconClass: "text-yellow-300",
         shortLabel: "Gain energy"
     }
@@ -806,7 +814,7 @@ function damageTargetIsAllEnemies(card) {
 function damageRowIsAoE(card) {
     return card.type === "Attack" && card.damage != undefined && (damageTargetIsAllEnemies(card) || /\ball enemies\b/i.test(fullDesc(card)));
 }
-function damageIsConditional(card) {
+function galleryDamageIsConditional(card) {
     return card.damage != undefined && isConditionedField(card.damage);
 }
 function blockIsConditional(card) {
@@ -896,7 +904,7 @@ function galleryNumericField(card, field) {
 /** Legacy damage row: optional conditional + AoE markers before the damage icon. */ function buildDamageLegacyGlyph(card) {
     if (card.damage === undefined) return null;
     const dmgD = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("damage");
-    const hasSub = damageIsConditional(card) || damageRowIsAoE(card);
+    const hasSub = galleryDamageIsConditional(card) || damageRowIsAoE(card);
     const dRaw = card.damage && typeof card.damage === "object" && !Array.isArray(card.damage) ? card.damage : undefined;
     const trigger = typeof dRaw?.trigger === "string" ? String(dRaw.trigger) : undefined;
     if (!hasSub) {
@@ -908,10 +916,10 @@ function galleryNumericField(card, field) {
         };
     }
     const segments = [];
-    if (damageIsConditional(card)) segments.push(segmentConditional());
+    if (galleryDamageIsConditional(card)) segments.push(segmentConditional());
     if (damageRowIsAoE(card)) segments.push(segmentAoe());
     const labelParts = [];
-    if (damageIsConditional(card)) labelParts.push("Conditional");
+    if (galleryDamageIsConditional(card)) labelParts.push("Conditional");
     if (damageRowIsAoE(card)) labelParts.push("AoE");
     labelParts.push("Damage");
     return {
@@ -937,7 +945,7 @@ function clusterShellField(field) {
     }
 }
 const MULTIHIT_TEXT_CLS = "text-[0.65em] font-semibold leading-none text-slate-400 opacity-90 mx-px";
-function tieredBoolActive(card, node) {
+function galleryTieredBoolActive(card, node) {
     if (node === true) return true;
     if (node === false || node == null) return false;
     if (typeof node === "object" && !Array.isArray(node)) {
@@ -953,7 +961,7 @@ function buildKeywordGlyphs(card) {
     const innate = c.innate ?? c.Innate;
     const ethereal = c.ethereal ?? c.Ethereal;
     const retainField = c.retain ?? c.Retain;
-    if (tieredBoolActive(card, innate)) {
+    if (galleryTieredBoolActive(card, innate)) {
         const m = STS_ICON_GLYPH.KEY_INNATE;
         out.push({
             id: "kw-innate",
@@ -962,7 +970,7 @@ function buildKeywordGlyphs(card) {
             iconClass: m.iconClass
         });
     }
-    if (tieredBoolActive(card, ethereal)) {
+    if (galleryTieredBoolActive(card, ethereal)) {
         const m = STS_ICON_GLYPH.KEY_ETHEREAL;
         out.push({
             id: "kw-ethereal",
@@ -971,7 +979,7 @@ function buildKeywordGlyphs(card) {
             iconClass: m.iconClass
         });
     }
-    if (tieredBoolActive(card, retainField)) {
+    if (galleryTieredBoolActive(card, retainField)) {
         const m = STS_ICON_GLYPH.KEY_RETAIN;
         out.push({
             id: "kw-retain",
@@ -1049,7 +1057,7 @@ function mergeKeywordGlyphsFirst(card, glyphs) {
     if (multiCount != null && card.damage !== undefined) {
         const hits = galleryTierNumber(card, multiCount);
         const mhSegments = [];
-        if (damageIsConditional(card)) mhSegments.push(segmentConditional());
+        if (galleryDamageIsConditional(card)) mhSegments.push(segmentConditional());
         if (damageRowIsAoE(card)) mhSegments.push(segmentAoe());
         mhSegments.push({
             text: "×",
@@ -1094,7 +1102,7 @@ function mergeKeywordGlyphsFirst(card, glyphs) {
         const dRaw = card.draw && typeof card.draw === "object" && !Array.isArray(card.draw) ? card.draw : undefined;
         const trigger = typeof dRaw?.trigger === "string" ? String(dRaw.trigger) : egNode !== null && typeof egNode === "object" && typeof egNode.trigger === "string" ? String(egNode.trigger) : undefined;
         const dmgSegs = [];
-        if (damageIsConditional(card)) dmgSegs.push(segmentConditional());
+        if (galleryDamageIsConditional(card)) dmgSegs.push(segmentConditional());
         if (damageRowIsAoE(card)) dmgSegs.push(segmentAoe());
         const glyphs = [];
         if (dmgSegs.length > 0) {
@@ -1158,7 +1166,7 @@ function mergeKeywordGlyphsFirst(card, glyphs) {
         const dis = STS_ICON_GLYPH.DISCARD_ICON;
         const dCount = galleryDiscardDisplayCount(card);
         const aoeDmgSegs = [];
-        if (damageIsConditional(card)) aoeDmgSegs.push(segmentConditional());
+        if (galleryDamageIsConditional(card)) aoeDmgSegs.push(segmentConditional());
         aoeDmgSegs.push({
             Icon: aoe.Icon,
             iconClass: aoe.iconClass
@@ -1719,7 +1727,7 @@ function inferLegacyCardGalleryGlyphs(card) {
     const hasMulti = multi != null && typeof multi === "object" && !Array.isArray(multi) && Object.keys(multi).length > 0;
     if (hasMulti && card.damage != undefined && !("multiHitCount" in multi)) {
         const mhSegs = [];
-        if (damageIsConditional(card)) mhSegs.push(segmentConditional());
+        if (galleryDamageIsConditional(card)) mhSegs.push(segmentConditional());
         if (damageRowIsAoE(card)) mhSegs.push(segmentAoe());
         const mhIcon = STS_ICON_GLYPH.AOE_DAMAGE;
         mhSegs.push({
@@ -3328,6 +3336,9 @@ const STAT_KEYS = [
     "FROST_ORB",
     "DARK_ORB",
     "PLASMA_ORB",
+    "KEY_INNATE",
+    "KEY_ETHEREAL",
+    "KEY_RETAIN",
     "DISCARD_ICON",
     "EVOKE_ICON",
     "CONDITIONAL_MARKER",
@@ -3400,12 +3411,11 @@ function clampPct(n) {
 }
 function TopBarBlock() {
     _s();
-    const { gameState, turns, currentTurnIndex, addCardFromDB, loadGameDataFromJson, isLoading, error } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$context$2f$GameContext$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useGameManager"])();
+    const { gameState, addCardFromDB, loadGameDataFromJson, isLoading, error } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$context$2f$GameContext$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useGameManager"])();
     const [isModalOpen, setIsModalOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [fileError, setFileError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [mobileVitalsOpen, setMobileVitalsOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const fileInputRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
-    const currentTurn = Number(turns[currentTurnIndex]?.id ?? 1);
     const playerHp = gameState?.player.hp ?? 0;
     const playerMaxHp = gameState?.player.maxHp ?? 0;
     const baseEnergy = gameState?.player.energy.base ?? 0;
@@ -3417,23 +3427,6 @@ function TopBarBlock() {
     const lowHp = playerMaxHp > 0 && (playerHp === 0 || playerHp > 0 && hpPct < 30);
     const energyPct = energyMax > 0 ? clampPct(currentEnergy / energyMax * 100) : 0;
     const showEnergyPips = energyMax > 0 && energyMax <= 9;
-    const relicTooltips = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useMemo"])({
-        "TopBarBlock.useMemo[relicTooltips]": ()=>{
-            const turnEffects = gameState?.player.relicEffects?.filter({
-                "TopBarBlock.useMemo[relicTooltips]": (effect)=>effect.enabled !== false && Number(effect.turn) === currentTurn
-            }["TopBarBlock.useMemo[relicTooltips]"]) ?? [];
-            return turnEffects.map({
-                "TopBarBlock.useMemo[relicTooltips]": (effect, i)=>({
-                        key: `relic-effect-${currentTurn}-${i}-${effect.effect}`,
-                        label: effect.effect,
-                        tooltip: effect.effect
-                    })
-            }["TopBarBlock.useMemo[relicTooltips]"]);
-        }
-    }["TopBarBlock.useMemo[relicTooltips]"], [
-        currentTurn,
-        gameState?.player.relicEffects
-    ]);
     const hpEffect = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("health", playerHp);
     const energyEffect = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("energy", baseEnergy);
     const blockEffect = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("block", currentBlock);
@@ -3467,7 +3460,7 @@ function TopBarBlock() {
                 "aria-label": "Load combat JSON file"
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                lineNumber: 91,
+                lineNumber: 74,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3487,14 +3480,14 @@ function TopBarBlock() {
                                             "aria-hidden": true
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 111,
+                                            lineNumber: 94,
                                             columnNumber: 13
                                         }, this),
                                         "Player"
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                    lineNumber: 110,
+                                    lineNumber: 93,
                                     columnNumber: 11
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3516,12 +3509,12 @@ function TopBarBlock() {
                                                                         className: `${hpEffect.color} h-4 w-4`
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                        lineNumber: 131,
+                                                                        lineNumber: 114,
                                                                         columnNumber: 21
                                                                     }, this)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 125,
+                                                                    lineNumber: 108,
                                                                     columnNumber: 19
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3532,7 +3525,7 @@ function TopBarBlock() {
                                                                             children: "Health"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                            lineNumber: 134,
+                                                                            lineNumber: 117,
                                                                             columnNumber: 21
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3540,19 +3533,19 @@ function TopBarBlock() {
                                                                             children: "Pool"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                            lineNumber: 135,
+                                                                            lineNumber: 118,
                                                                             columnNumber: 21
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 133,
+                                                                    lineNumber: 116,
                                                                     columnNumber: 19
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 124,
+                                                            lineNumber: 107,
                                                             columnNumber: 17
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3563,7 +3556,7 @@ function TopBarBlock() {
                                                                     children: playerHp
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 139,
+                                                                    lineNumber: 122,
                                                                     columnNumber: 19
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -3574,19 +3567,19 @@ function TopBarBlock() {
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 140,
+                                                                    lineNumber: 123,
                                                                     columnNumber: 19
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 138,
+                                                            lineNumber: 121,
                                                             columnNumber: 17
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 123,
+                                                    lineNumber: 106,
                                                     columnNumber: 15
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3603,18 +3596,18 @@ function TopBarBlock() {
                                                         }
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 151,
+                                                        lineNumber: 134,
                                                         columnNumber: 17
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 143,
+                                                    lineNumber: 126,
                                                     columnNumber: 15
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 116,
+                                            lineNumber: 99,
                                             columnNumber: 13
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3633,12 +3626,12 @@ function TopBarBlock() {
                                                                         className: `${energyEffect.color} h-4 w-4`
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                        lineNumber: 168,
+                                                                        lineNumber: 151,
                                                                         columnNumber: 21
                                                                     }, this)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 164,
+                                                                    lineNumber: 147,
                                                                     columnNumber: 19
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3649,7 +3642,7 @@ function TopBarBlock() {
                                                                             children: "Energy"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                            lineNumber: 171,
+                                                                            lineNumber: 154,
                                                                             columnNumber: 21
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3657,19 +3650,19 @@ function TopBarBlock() {
                                                                             children: "This turn"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                            lineNumber: 172,
+                                                                            lineNumber: 155,
                                                                             columnNumber: 21
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 170,
+                                                                    lineNumber: 153,
                                                                     columnNumber: 19
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 163,
+                                                            lineNumber: 146,
                                                             columnNumber: 17
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3680,7 +3673,7 @@ function TopBarBlock() {
                                                                     children: currentEnergy
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 176,
+                                                                    lineNumber: 159,
                                                                     columnNumber: 19
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -3691,19 +3684,19 @@ function TopBarBlock() {
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 179,
+                                                                    lineNumber: 162,
                                                                     columnNumber: 19
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 175,
+                                                            lineNumber: 158,
                                                             columnNumber: 17
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 162,
+                                                    lineNumber: 145,
                                                     columnNumber: 15
                                                 }, this),
                                                 energyMax > 0 ? showEnergyPips ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3715,12 +3708,12 @@ function TopBarBlock() {
                                                             className: `h-2.5 w-2.5 rounded-sm border-2 ${i < currentEnergy ? "border-amber-300 bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.5)]" : "border-amber-700/50 bg-amber-950/60"}`
                                                         }, i, false, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 186,
+                                                            lineNumber: 169,
                                                             columnNumber: 23
                                                         }, this))
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 184,
+                                                    lineNumber: 167,
                                                     columnNumber: 19
                                                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                     className: "h-2.5 w-full overflow-hidden rounded-full border border-amber-900/50 bg-amber-950/80",
@@ -3736,25 +3729,25 @@ function TopBarBlock() {
                                                         }
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 205,
+                                                        lineNumber: 188,
                                                         columnNumber: 21
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 197,
+                                                    lineNumber: 180,
                                                     columnNumber: 19
                                                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                     className: "text-center text-[10px] text-amber-200/40",
                                                     children: "—"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 212,
+                                                    lineNumber: 195,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 161,
+                                            lineNumber: 144,
                                             columnNumber: 13
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3773,12 +3766,12 @@ function TopBarBlock() {
                                                                         className: `${blockEffect.color} h-4 w-4`
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                        lineNumber: 234,
+                                                                        lineNumber: 217,
                                                                         columnNumber: 21
                                                                     }, this)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 226,
+                                                                    lineNumber: 209,
                                                                     columnNumber: 19
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3789,7 +3782,7 @@ function TopBarBlock() {
                                                                             children: "Block"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                            lineNumber: 237,
+                                                                            lineNumber: 220,
                                                                             columnNumber: 21
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3797,19 +3790,19 @@ function TopBarBlock() {
                                                                             children: "Defense"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                            lineNumber: 244,
+                                                                            lineNumber: 227,
                                                                             columnNumber: 21
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 236,
+                                                                    lineNumber: 219,
                                                                     columnNumber: 19
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 225,
+                                                            lineNumber: 208,
                                                             columnNumber: 17
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3817,13 +3810,13 @@ function TopBarBlock() {
                                                             children: currentBlock
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 247,
+                                                            lineNumber: 230,
                                                             columnNumber: 17
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 224,
+                                                    lineNumber: 207,
                                                     columnNumber: 15
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3833,40 +3826,40 @@ function TopBarBlock() {
                                                         className: "h-full w-full min-w-[20%] rounded-full bg-gradient-to-r from-sky-700 to-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.35)]"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 264,
+                                                        lineNumber: 247,
                                                         columnNumber: 19
                                                     }, this) : null
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 255,
+                                                    lineNumber: 238,
                                                     columnNumber: 15
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 217,
+                                            lineNumber: 200,
                                             columnNumber: 13
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                    lineNumber: 114,
+                                    lineNumber: 97,
                                     columnNumber: 11
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                            lineNumber: 103,
+                            lineNumber: 86,
                             columnNumber: 9
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            className: "flex w-full min-w-0 flex-1 flex-col gap-2 min-[1000px]:min-w-[20rem] lg:max-w-none",
+                            className: "flex w-full min-w-0 flex-1 flex-col gap-2 lg:max-w-none",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "flex min-w-0 flex-col items-stretch gap-2 min-[1000px]:flex-row min-[1000px]:items-center min-[1000px]:gap-2",
+                                    className: "flex min-w-0 flex-col items-stretch gap-2 min-[1000px]:flex-row min-[1000px]:items-stretch min-[1000px]:gap-3",
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                            className: "min-w-0 flex-1 rounded-2xl border border-cyan-500/30 bg-cyan-950/25 p-2.5 ring-1 ring-cyan-500/10 sm:p-2.5",
+                                            className: "min-w-0 flex-1 rounded-2xl border border-cyan-500/30 bg-cyan-950/25 p-2.5 ring-1 ring-cyan-500/10 sm:p-3",
                                             role: "region",
                                             "aria-label": "Card effect icons legend",
                                             children: [
@@ -3879,18 +3872,18 @@ function TopBarBlock() {
                                                             "aria-hidden": true
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 282,
+                                                            lineNumber: 265,
                                                             columnNumber: 17
                                                         }, this),
-                                                        "Card icons"
+                                                        "Symbols legend"
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 281,
+                                                    lineNumber: 264,
                                                     columnNumber: 15
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                    className: "flex max-h-[4.5rem] min-h-0 flex-wrap content-start gap-1.5 overflow-y-auto pr-0.5 [scrollbar-width:thin] sm:max-h-[3.75rem]",
+                                                    className: "flex min-h-[4rem] max-h-[9rem] flex-wrap content-start gap-1.5 overflow-y-auto pr-0.5 [scrollbar-width:thin] sm:max-h-[10rem] md:max-h-[11rem]",
                                                     children: CARD_EFFECT_LEGEND.map((item)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                             title: item.label,
                                                             className: "inline-flex items-center gap-1 rounded-md border border-slate-600/45 bg-slate-900/55 px-1.5 py-0.5 shadow-sm shadow-black/20",
@@ -3901,62 +3894,36 @@ function TopBarBlock() {
                                                                     "aria-hidden": true
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 292,
+                                                                    lineNumber: 275,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                                    className: "max-w-[7rem] truncate text-[9px] font-medium leading-none text-slate-300/95",
+                                                                    className: "max-w-[8.5rem] truncate text-[9px] font-medium leading-none text-slate-300/95 sm:max-w-[10rem]",
                                                                     children: item.label
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 293,
+                                                                    lineNumber: 276,
                                                                     columnNumber: 21
                                                                 }, this)
                                                             ]
                                                         }, item.id, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 287,
+                                                            lineNumber: 270,
                                                             columnNumber: 19
                                                         }, this))
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 285,
+                                                    lineNumber: 268,
                                                     columnNumber: 15
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 276,
+                                            lineNumber: 259,
                                             columnNumber: 13
                                         }, this),
-                                        relicTooltips.length > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                            className: "flex min-w-0 max-w-full flex-1 flex-wrap content-center items-center gap-1.5 overflow-x-auto rounded-xl border border-violet-500/25 bg-violet-950/20 px-2 py-1.5 [scrollbar-width:thin] min-[1000px]:max-w-md min-[1000px]:px-2.5 min-[1000px]:py-2",
-                                            children: [
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                    className: "w-full text-[9px] font-bold uppercase tracking-widest text-violet-300/80 min-[1000px]:w-auto min-[1000px]:shrink-0",
-                                                    children: "This turn"
-                                                }, void 0, false, {
-                                                    fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 302,
-                                                    columnNumber: 17
-                                                }, this),
-                                                relicTooltips.map((entry)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                        className: "max-w-[11rem] shrink-0 truncate rounded-md border border-violet-500/40 bg-violet-950/50 px-2 py-1 text-[10px] font-medium text-violet-200",
-                                                        title: entry.tooltip,
-                                                        children: entry.label
-                                                    }, entry.key, false, {
-                                                        fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 306,
-                                                        columnNumber: 19
-                                                    }, this))
-                                            ]
-                                        }, void 0, true, {
-                                            fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 301,
-                                            columnNumber: 15
-                                        }, this) : null,
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                            className: "ml-auto flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-2 min-[1000px]:ms-0 min-[1000px]:w-auto min-[1000px]:pl-0",
+                                            className: "flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-2 min-[1000px]:flex-col min-[1000px]:items-stretch min-[1000px]:justify-center min-[1000px]:self-center",
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                                     type: "button",
@@ -3967,7 +3934,7 @@ function TopBarBlock() {
                                                     children: isLoading ? "Loading…" : "Load data"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 317,
+                                                    lineNumber: 284,
                                                     columnNumber: 15
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -3978,19 +3945,19 @@ function TopBarBlock() {
                                                     children: "Add Card"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 326,
+                                                    lineNumber: 293,
                                                     columnNumber: 15
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 316,
+                                            lineNumber: 283,
                                             columnNumber: 13
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                    lineNumber: 275,
+                                    lineNumber: 258,
                                     columnNumber: 11
                                 }, this),
                                 loadError ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3999,24 +3966,24 @@ function TopBarBlock() {
                                     children: loadError
                                 }, void 0, false, {
                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                    lineNumber: 337,
+                                    lineNumber: 304,
                                     columnNumber: 13
                                 }, this) : null
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                            lineNumber: 274,
+                            lineNumber: 257,
                             columnNumber: 9
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                    lineNumber: 101,
+                    lineNumber: 84,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                lineNumber: 100,
+                lineNumber: 83,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4039,14 +4006,14 @@ function TopBarBlock() {
                                                     "aria-hidden": true
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 351,
+                                                    lineNumber: 318,
                                                     columnNumber: 17
                                                 }, this),
                                                 "Player"
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 350,
+                                            lineNumber: 317,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -4061,7 +4028,7 @@ function TopBarBlock() {
                                                         children: "Less"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 363,
+                                                        lineNumber: 330,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$up$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronUp$3e$__["ChevronUp"], {
@@ -4069,7 +4036,7 @@ function TopBarBlock() {
                                                         strokeWidth: 2.5
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 364,
+                                                        lineNumber: 331,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
@@ -4079,7 +4046,7 @@ function TopBarBlock() {
                                                         children: "Details"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 368,
+                                                        lineNumber: 335,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$down$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronDown$3e$__["ChevronDown"], {
@@ -4087,20 +4054,20 @@ function TopBarBlock() {
                                                         strokeWidth: 2.5
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 369,
+                                                        lineNumber: 336,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true)
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 354,
+                                            lineNumber: 321,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                    lineNumber: 349,
+                                    lineNumber: 316,
                                     columnNumber: 13
                                 }, this),
                                 !mobileVitalsOpen ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4114,7 +4081,7 @@ function TopBarBlock() {
                                                     children: "HP"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 382,
+                                                    lineNumber: 349,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4129,13 +4096,13 @@ function TopBarBlock() {
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 385,
+                                                            lineNumber: 352,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 383,
+                                                    lineNumber: 350,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4149,18 +4116,18 @@ function TopBarBlock() {
                                                         }
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 392,
+                                                        lineNumber: 359,
                                                         columnNumber: 21
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 387,
+                                                    lineNumber: 354,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 377,
+                                            lineNumber: 344,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4171,7 +4138,7 @@ function TopBarBlock() {
                                                     children: "NRG"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 399,
+                                                    lineNumber: 366,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4186,13 +4153,13 @@ function TopBarBlock() {
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 402,
+                                                            lineNumber: 369,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 400,
+                                                    lineNumber: 367,
                                                     columnNumber: 19
                                                 }, this),
                                                 showEnergyPips && energyMax > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4203,18 +4170,18 @@ function TopBarBlock() {
                                                             className: `h-1.5 w-1.5 rounded-sm border ${i < currentEnergy ? "border-amber-300 bg-amber-400" : "border-amber-800/50 bg-amber-950/60"}`
                                                         }, i, false, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 407,
+                                                            lineNumber: 374,
                                                             columnNumber: 25
                                                         }, this))
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 405,
+                                                    lineNumber: 372,
                                                     columnNumber: 21
                                                 }, this) : null
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 398,
+                                            lineNumber: 365,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4225,7 +4192,7 @@ function TopBarBlock() {
                                                     children: "Blk"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 424,
+                                                    lineNumber: 391,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4233,19 +4200,19 @@ function TopBarBlock() {
                                                     children: currentBlock
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 431,
+                                                    lineNumber: 398,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 419,
+                                            lineNumber: 386,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                    lineNumber: 376,
+                                    lineNumber: 343,
                                     columnNumber: 15
                                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                     className: "max-h-[70vh] space-y-2 overflow-y-auto p-2 [scrollbar-width:thin]",
@@ -4265,12 +4232,12 @@ function TopBarBlock() {
                                                                         className: `${hpEffect.color} h-3.5 w-3.5`
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                        lineNumber: 456,
+                                                                        lineNumber: 423,
                                                                         columnNumber: 25
                                                                     }, this)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 451,
+                                                                    lineNumber: 418,
                                                                     columnNumber: 23
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4278,13 +4245,13 @@ function TopBarBlock() {
                                                                     children: "Health"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 458,
+                                                                    lineNumber: 425,
                                                                     columnNumber: 23
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 450,
+                                                            lineNumber: 417,
                                                             columnNumber: 21
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4296,13 +4263,13 @@ function TopBarBlock() {
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 460,
+                                                            lineNumber: 427,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 449,
+                                                    lineNumber: 416,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4314,18 +4281,18 @@ function TopBarBlock() {
                                                         }
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 465,
+                                                        lineNumber: 432,
                                                         columnNumber: 21
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 464,
+                                                    lineNumber: 431,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 442,
+                                            lineNumber: 409,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4343,12 +4310,12 @@ function TopBarBlock() {
                                                                         className: `${energyEffect.color} h-3.5 w-3.5`
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                        lineNumber: 472,
+                                                                        lineNumber: 439,
                                                                         columnNumber: 25
                                                                     }, this)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 471,
+                                                                    lineNumber: 438,
                                                                     columnNumber: 23
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4356,13 +4323,13 @@ function TopBarBlock() {
                                                                     children: "Energy"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 474,
+                                                                    lineNumber: 441,
                                                                     columnNumber: 23
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 470,
+                                                            lineNumber: 437,
                                                             columnNumber: 21
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4374,13 +4341,13 @@ function TopBarBlock() {
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 476,
+                                                            lineNumber: 443,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 469,
+                                                    lineNumber: 436,
                                                     columnNumber: 19
                                                 }, this),
                                                 energyMax > 0 && showEnergyPips ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4391,18 +4358,18 @@ function TopBarBlock() {
                                                             className: `h-2 w-2 rounded-sm border-2 ${i < currentEnergy ? "border-amber-300 bg-amber-400" : "border-amber-700/50 bg-amber-950/60"}`
                                                         }, i, false, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 483,
+                                                            lineNumber: 450,
                                                             columnNumber: 25
                                                         }, this))
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 481,
+                                                    lineNumber: 448,
                                                     columnNumber: 21
                                                 }, this) : null
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 468,
+                                            lineNumber: 435,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4419,12 +4386,12 @@ function TopBarBlock() {
                                                                     className: `${blockEffect.color} h-3.5 w-3.5`
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 511,
+                                                                    lineNumber: 478,
                                                                     columnNumber: 25
                                                                 }, this)
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                lineNumber: 504,
+                                                                lineNumber: 471,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4432,13 +4399,13 @@ function TopBarBlock() {
                                                                 children: "Block"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                lineNumber: 513,
+                                                                lineNumber: 480,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 503,
+                                                        lineNumber: 470,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4446,30 +4413,30 @@ function TopBarBlock() {
                                                         children: currentBlock
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 515,
+                                                        lineNumber: 482,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                lineNumber: 502,
+                                                lineNumber: 469,
                                                 columnNumber: 19
                                             }, this)
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 495,
+                                            lineNumber: 462,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                    lineNumber: 441,
+                                    lineNumber: 408,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                            lineNumber: 348,
+                            lineNumber: 315,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4489,18 +4456,18 @@ function TopBarBlock() {
                                                     "aria-hidden": true
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 535,
+                                                    lineNumber: 502,
                                                     columnNumber: 17
                                                 }, this),
-                                                "Icons"
+                                                "Symbols"
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 534,
+                                            lineNumber: 501,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                            className: "flex max-h-32 flex-wrap gap-1 overflow-y-auto [scrollbar-width:thin]",
+                                            className: "flex max-h-40 flex-wrap gap-1 overflow-y-auto [scrollbar-width:thin]",
                                             children: CARD_EFFECT_LEGEND.map((item)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                     title: item.label,
                                                     className: "inline-flex items-center gap-0.5 rounded-md border border-slate-600/50 bg-slate-900/55 px-1 py-0.5",
@@ -4511,7 +4478,7 @@ function TopBarBlock() {
                                                             "aria-hidden": true
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 545,
+                                                            lineNumber: 512,
                                                             columnNumber: 21
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -4519,59 +4486,26 @@ function TopBarBlock() {
                                                             children: item.label
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 546,
+                                                            lineNumber: 513,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, item.id, true, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 540,
+                                                    lineNumber: 507,
                                                     columnNumber: 19
                                                 }, this))
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 538,
+                                            lineNumber: 505,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                    lineNumber: 529,
+                                    lineNumber: 496,
                                     columnNumber: 13
                                 }, this),
-                                relicTooltips.length > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "flex flex-col gap-1 rounded-lg border border-violet-500/30 bg-violet-950/25 px-2 py-1.5",
-                                    children: [
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                            className: "text-[8px] font-bold uppercase tracking-widest text-violet-300/80",
-                                            children: "This turn (relics)"
-                                        }, void 0, false, {
-                                            fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 553,
-                                            columnNumber: 17
-                                        }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                            className: "flex flex-wrap gap-1",
-                                            children: relicTooltips.map((entry)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                    className: "max-w-full truncate rounded-md border border-violet-500/40 bg-violet-950/50 px-2 py-0.5 text-[9px] font-medium text-violet-200",
-                                                    title: entry.tooltip,
-                                                    children: entry.label
-                                                }, entry.key, false, {
-                                                    fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 556,
-                                                    columnNumber: 21
-                                                }, this))
-                                        }, void 0, false, {
-                                            fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 554,
-                                            columnNumber: 17
-                                        }, this)
-                                    ]
-                                }, void 0, true, {
-                                    fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                    lineNumber: 552,
-                                    columnNumber: 15
-                                }, this) : null,
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                     className: "flex items-stretch gap-2",
                                     children: [
@@ -4583,7 +4517,7 @@ function TopBarBlock() {
                                             children: isLoading ? "…" : "Load data"
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 568,
+                                            lineNumber: 519,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -4594,19 +4528,19 @@ function TopBarBlock() {
                                             children: "Add card"
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 576,
+                                            lineNumber: 527,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                    lineNumber: 567,
+                                    lineNumber: 518,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                            lineNumber: 528,
+                            lineNumber: 495,
                             columnNumber: 11
                         }, this),
                         loadError ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4615,18 +4549,18 @@ function TopBarBlock() {
                             children: loadError
                         }, void 0, false, {
                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                            lineNumber: 588,
+                            lineNumber: 539,
                             columnNumber: 13
                         }, this) : null
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                    lineNumber: 347,
+                    lineNumber: 314,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                lineNumber: 346,
+                lineNumber: 313,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$CardDBModal$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -4635,17 +4569,17 @@ function TopBarBlock() {
                 onAddCard: addCardFromDB
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                lineNumber: 595,
+                lineNumber: 546,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-        lineNumber: 90,
+        lineNumber: 73,
         columnNumber: 5
     }, this);
 }
-_s(TopBarBlock, "xG/Eg7RGTjeqXB3b0KdznbuRH8I=", false, function() {
+_s(TopBarBlock, "kwR9y/5Js3LJ0Z0SQnBPymgF6lY=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$context$2f$GameContext$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useGameManager"]
     ];
@@ -4794,7 +4728,10 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$history$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__History$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/history.mjs [app-client] (ecmascript) <export default as History>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$rotate$2d$ccw$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__RotateCcw$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/rotate-ccw.mjs [app-client] (ecmascript) <export default as RotateCcw>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$skip$2d$forward$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__SkipForward$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/skip-forward.mjs [app-client] (ecmascript) <export default as SkipForward>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$sparkles$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Sparkles$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/sparkles.mjs [app-client] (ecmascript) <export default as Sparkles>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$swords$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Swords$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/swords.mjs [app-client] (ecmascript) <export default as Swords>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$user$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__User$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/user.mjs [app-client] (ecmascript) <export default as User>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$skull$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Skull$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/skull.mjs [app-client] (ecmascript) <export default as Skull>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/app/utils/toast.ts [app-client] (ecmascript)");
 ;
 var _s = __turbopack_context__.k.signature();
@@ -4812,25 +4749,26 @@ const actionTone = {
     rose: "border-rose-500/45 bg-rose-950/40 hover:bg-rose-900/45 text-rose-100 shadow-sm shadow-rose-950/20",
     slate: "border-slate-600 bg-slate-800/85 hover:bg-slate-800 text-slate-200"
 };
-function ActionBtn({ children, onClick, tone = "slate", icon: Icon, className = "" }) {
+function ActionBtn({ children, onClick, tone = "slate", icon: Icon, className = "", disabled = false }) {
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
         type: "button",
+        disabled: disabled,
         onClick: onClick,
-        className: `flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-all duration-150 active:scale-[0.98] hover:brightness-110 ${actionTone[tone]} ${className}`,
+        className: `flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-all duration-150 active:scale-[0.98] hover:brightness-110 ${actionTone[tone]} ${disabled ? "pointer-events-none cursor-not-allowed opacity-45" : ""} ${className}`,
         children: [
             Icon ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(Icon, {
                 className: "h-3.5 w-3.5 shrink-0 opacity-90",
                 strokeWidth: 2
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                lineNumber: 75,
+                lineNumber: 81,
                 columnNumber: 15
             }, this) : null,
             children
         ]
     }, void 0, true, {
         fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-        lineNumber: 70,
+        lineNumber: 75,
         columnNumber: 5
     }, this);
 }
@@ -4846,7 +4784,7 @@ const INTENT_PREVIEW_MAX = 4;
 }
 function TimelineBlock() {
     _s();
-    const { gameState, turns, currentTurnIndex, setCurrentTurn, endTurn, continueFromTurn, resetCurrentTurn } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$context$2f$GameContext$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useGameManager"])();
+    const { gameState, turns, currentTurnIndex, turnPhase, setCurrentTurn, beginTurn, endPlayerTurn, endEnemyTurn, continueFromTurn, resetCurrentTurn } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$context$2f$GameContext$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useGameManager"])();
     const activeTurnRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
     const [expandedTurns, setExpandedTurns] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])({});
     const turnsData = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useMemo"])({
@@ -4973,7 +4911,7 @@ function TimelineBlock() {
                             children: "Turn timeline"
                         }, void 0, false, {
                             fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                            lineNumber: 193,
+                            lineNumber: 199,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4981,13 +4919,13 @@ function TimelineBlock() {
                             children: "Load combat data to plan turns."
                         }, void 0, false, {
                             fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                            lineNumber: 194,
+                            lineNumber: 200,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                    lineNumber: 192,
+                    lineNumber: 198,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4995,13 +4933,13 @@ function TimelineBlock() {
                     children: "Loading…"
                 }, void 0, false, {
                     fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                    lineNumber: 196,
+                    lineNumber: 202,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-            lineNumber: 191,
+            lineNumber: 197,
             columnNumber: 7
         }, this);
     }
@@ -5020,7 +4958,7 @@ function TimelineBlock() {
                                 strokeWidth: 2
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                lineNumber: 207,
+                                lineNumber: 213,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5031,7 +4969,7 @@ function TimelineBlock() {
                                         children: "Turn timeline"
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                        lineNumber: 209,
+                                        lineNumber: 215,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -5048,19 +4986,225 @@ function TimelineBlock() {
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                        lineNumber: 210,
+                                        lineNumber: 216,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                lineNumber: 208,
+                                lineNumber: 214,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                        lineNumber: 206,
+                        lineNumber: 212,
+                        columnNumber: 9
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "mt-3 rounded-xl border-2 border-slate-600/50 bg-slate-950/80 p-1.5 shadow-inner shadow-black/20",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                className: "mb-1.5 px-1 text-center text-[9px] font-semibold uppercase tracking-wider text-slate-500",
+                                children: "Phase track"
+                            }, void 0, false, {
+                                fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                lineNumber: 223,
+                                columnNumber: 11
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "grid grid-cols-3 gap-1",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: `flex flex-col items-center justify-center gap-0.5 rounded-lg border-2 px-2 py-2 transition-colors ${turnPhase === "start" ? "border-amber-500/60 bg-amber-950/40 shadow-md shadow-amber-950/25" : "border-transparent bg-slate-900/40 opacity-60"}`,
+                                        title: "Draw, Standby, start-of-turn relics & powers (YGO-style opening)",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$sparkles$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Sparkles$3e$__["Sparkles"], {
+                                                className: `h-4 w-4 ${turnPhase === "start" ? "text-amber-200" : "text-slate-500"}`,
+                                                strokeWidth: 2
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                                lineNumber: 235,
+                                                columnNumber: 15
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: "text-center text-[9px] font-bold uppercase tracking-wide text-slate-200",
+                                                children: "Start"
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                                lineNumber: 239,
+                                                columnNumber: 15
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: "text-center text-[8px] leading-tight text-slate-500",
+                                                children: "Draw · ST"
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                                lineNumber: 240,
+                                                columnNumber: 15
+                                            }, this),
+                                            turnPhase === "start" ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: "rounded bg-amber-500/25 px-1 py-px text-[8px] font-semibold text-amber-100",
+                                                children: "Active"
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                                lineNumber: 242,
+                                                columnNumber: 17
+                                            }, this) : null
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                        lineNumber: 227,
+                                        columnNumber: 13
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: `flex flex-col items-center justify-center gap-0.5 rounded-lg border-2 px-2 py-2 transition-colors ${turnPhase === "player" ? "border-emerald-500/60 bg-emerald-950/45 shadow-md shadow-emerald-950/20" : "border-transparent bg-slate-900/40 opacity-60"}`,
+                                        title: "Main phase — play cards, spend energy",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$user$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__User$3e$__["User"], {
+                                                className: `h-4 w-4 ${turnPhase === "player" ? "text-emerald-300" : "text-slate-500"}`,
+                                                strokeWidth: 2
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                                lineNumber: 255,
+                                                columnNumber: 15
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: "text-center text-[9px] font-bold uppercase tracking-wide text-slate-200",
+                                                children: "Main"
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                                lineNumber: 259,
+                                                columnNumber: 15
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: "text-center text-[8px] leading-tight text-slate-500",
+                                                children: "Play cards"
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                                lineNumber: 260,
+                                                columnNumber: 15
+                                            }, this),
+                                            turnPhase === "player" ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: "rounded bg-emerald-500/25 px-1 py-px text-[8px] font-semibold text-emerald-200",
+                                                children: "Active"
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                                lineNumber: 262,
+                                                columnNumber: 17
+                                            }, this) : null
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                        lineNumber: 247,
+                                        columnNumber: 13
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: `flex flex-col items-center justify-center gap-0.5 rounded-lg border-2 px-2 py-2 transition-colors ${turnPhase === "enemy" ? "border-rose-500/55 bg-rose-950/40 shadow-md shadow-rose-950/25" : "border-transparent bg-slate-900/40 opacity-60"}`,
+                                        title: "Enemy phase — resolve intents",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$skull$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Skull$3e$__["Skull"], {
+                                                className: `h-4 w-4 ${turnPhase === "enemy" ? "text-rose-300" : "text-slate-500"}`,
+                                                strokeWidth: 2
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                                lineNumber: 275,
+                                                columnNumber: 15
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: "text-center text-[9px] font-bold uppercase tracking-wide text-slate-200",
+                                                children: "Enemy"
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                                lineNumber: 279,
+                                                columnNumber: 15
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: "text-center text-[8px] leading-tight text-slate-500",
+                                                children: "Resolve"
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                                lineNumber: 280,
+                                                columnNumber: 15
+                                            }, this),
+                                            turnPhase === "enemy" ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: "rounded bg-rose-500/25 px-1 py-px text-[8px] font-semibold text-rose-200",
+                                                children: "Active"
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                                lineNumber: 282,
+                                                columnNumber: 17
+                                            }, this) : null
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                        lineNumber: 267,
+                                        columnNumber: 13
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                lineNumber: 226,
+                                columnNumber: 11
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "mt-1.5 flex items-center justify-center gap-0.5 px-1 text-[8px] text-slate-600",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        children: "Start"
+                                    }, void 0, false, {
+                                        fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                        lineNumber: 289,
+                                        columnNumber: 13
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$right$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronRight$3e$__["ChevronRight"], {
+                                        className: "h-3 w-3 shrink-0 opacity-70",
+                                        strokeWidth: 2
+                                    }, void 0, false, {
+                                        fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                        lineNumber: 290,
+                                        columnNumber: 13
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        children: "Main"
+                                    }, void 0, false, {
+                                        fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                        lineNumber: 291,
+                                        columnNumber: 13
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$right$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronRight$3e$__["ChevronRight"], {
+                                        className: "h-3 w-3 shrink-0 opacity-70",
+                                        strokeWidth: 2
+                                    }, void 0, false, {
+                                        fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                        lineNumber: 292,
+                                        columnNumber: 13
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        children: "Enemy"
+                                    }, void 0, false, {
+                                        fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                        lineNumber: 293,
+                                        columnNumber: 13
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        className: "ml-1 text-slate-500",
+                                        children: "· similar to YGO flow"
+                                    }, void 0, false, {
+                                        fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                        lineNumber: 294,
+                                        columnNumber: 13
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                lineNumber: 288,
+                                columnNumber: 11
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                        lineNumber: 222,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5071,14 +5215,17 @@ function TimelineBlock() {
                                 strokeWidth: 2
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                lineNumber: 217,
+                                lineNumber: 298,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                 className: "text-[11px] font-medium tabular-nums text-cyan-100/95",
                                 children: [
-                                    "Active: Turn ",
+                                    "Round ",
                                     currentTurnId,
+                                    " ·",
+                                    " ",
+                                    turnPhase === "start" ? "Start (relics / draw / ST)" : turnPhase === "player" ? "Main phase" : "Enemy phase",
                                     selected?.totalDamage != null && selected.totalDamage > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                         className: "font-normal text-slate-500",
                                         children: [
@@ -5088,25 +5235,25 @@ function TimelineBlock() {
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                        lineNumber: 221,
+                                        lineNumber: 307,
                                         columnNumber: 15
                                     }, this) : null
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                lineNumber: 218,
+                                lineNumber: 299,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                        lineNumber: 216,
+                        lineNumber: 297,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                lineNumber: 205,
+                lineNumber: 211,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5123,14 +5270,14 @@ function TimelineBlock() {
                                         strokeWidth: 2
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                        lineNumber: 230,
+                                        lineNumber: 316,
                                         columnNumber: 13
                                     }, this),
                                     "Intent preview by turn"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                lineNumber: 229,
+                                lineNumber: 315,
                                 columnNumber: 11
                             }, this),
                             plannerRows.length === 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -5138,7 +5285,7 @@ function TimelineBlock() {
                                 children: "No turns loaded yet."
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                lineNumber: 235,
+                                lineNumber: 321,
                                 columnNumber: 13
                             }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 className: "flex flex-col gap-2",
@@ -5172,7 +5319,7 @@ function TimelineBlock() {
                                                                                 strokeWidth: 2
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                                                lineNumber: 262,
+                                                                                lineNumber: 348,
                                                                                 columnNumber: 29
                                                                             }, this),
                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -5183,7 +5330,7 @@ function TimelineBlock() {
                                                                                 ]
                                                                             }, void 0, true, {
                                                                                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                                                lineNumber: 266,
+                                                                                lineNumber: 352,
                                                                                 columnNumber: 29
                                                                             }, this),
                                                                             isActive ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -5191,13 +5338,13 @@ function TimelineBlock() {
                                                                                 children: "Active"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                                                lineNumber: 268,
+                                                                                lineNumber: 354,
                                                                                 columnNumber: 31
                                                                             }, this) : null
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                                        lineNumber: 261,
+                                                                        lineNumber: 347,
                                                                         columnNumber: 27
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -5205,13 +5352,13 @@ function TimelineBlock() {
                                                                         children: summary ? `${summary.enemySummaries.length} intent line${summary.enemySummaries.length === 1 ? "" : "s"}` : "No intents in data for this turn"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                                        lineNumber: 273,
+                                                                        lineNumber: 359,
                                                                         columnNumber: 27
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                                lineNumber: 260,
+                                                                lineNumber: 346,
                                                                 columnNumber: 25
                                                             }, this),
                                                             summary && summary.totalDamage > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5222,13 +5369,13 @@ function TimelineBlock() {
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                                lineNumber: 280,
+                                                                lineNumber: 366,
                                                                 columnNumber: 27
                                                             }, this) : null
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                        lineNumber: 259,
+                                                        lineNumber: 345,
                                                         columnNumber: 23
                                                     }, this),
                                                     lines.length > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5246,7 +5393,7 @@ function TimelineBlock() {
                                                                                     children: s.name
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                                                    lineNumber: 298,
+                                                                                    lineNumber: 384,
                                                                                     columnNumber: 33
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -5254,13 +5401,13 @@ function TimelineBlock() {
                                                                                     children: s.line || "—"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                                                    lineNumber: 299,
+                                                                                    lineNumber: 385,
                                                                                     columnNumber: 33
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                                            lineNumber: 290,
+                                                                            lineNumber: 376,
                                                                             columnNumber: 31
                                                                         }, this),
                                                                         s.modifierHint ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -5268,13 +5415,13 @@ function TimelineBlock() {
                                                                             children: s.modifierHint
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                                            lineNumber: 302,
+                                                                            lineNumber: 388,
                                                                             columnNumber: 33
                                                                         }, this) : null
                                                                     ]
                                                                 }, `${row.id}-${s.name}-${s.line}`, true, {
                                                                     fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                                    lineNumber: 289,
+                                                                    lineNumber: 375,
                                                                     columnNumber: 29
                                                                 }, this)),
                                                             hiddenCount > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -5291,7 +5438,7 @@ function TimelineBlock() {
                                                                             strokeWidth: 2
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                                            lineNumber: 317,
+                                                                            lineNumber: 403,
                                                                             columnNumber: 35
                                                                         }, this),
                                                                         "Show less"
@@ -5303,7 +5450,7 @@ function TimelineBlock() {
                                                                             strokeWidth: 2
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                                            lineNumber: 322,
+                                                                            lineNumber: 408,
                                                                             columnNumber: 35
                                                                         }, this),
                                                                         "+",
@@ -5313,7 +5460,7 @@ function TimelineBlock() {
                                                                 }, void 0, true)
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                                lineNumber: 307,
+                                                                lineNumber: 393,
                                                                 columnNumber: 29
                                                             }, this) : lines.length > INTENT_PREVIEW_MAX ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                                                 type: "button",
@@ -5328,26 +5475,26 @@ function TimelineBlock() {
                                                                         strokeWidth: 2
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                                        lineNumber: 336,
+                                                                        lineNumber: 422,
                                                                         columnNumber: 31
                                                                     }, this),
                                                                     "Collapse"
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                                lineNumber: 328,
+                                                                lineNumber: 414,
                                                                 columnNumber: 29
                                                             }, this) : null
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                        lineNumber: 287,
+                                                        lineNumber: 373,
                                                         columnNumber: 25
                                                     }, this) : null
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                lineNumber: 250,
+                                                lineNumber: 336,
                                                 columnNumber: 21
                                             }, this),
                                             index < plannerRows.length - 1 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -5360,7 +5507,7 @@ function TimelineBlock() {
                                                         strokeWidth: 2
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                        lineNumber: 350,
+                                                        lineNumber: 436,
                                                         columnNumber: 25
                                                     }, this),
                                                     "Copy state → Turn ",
@@ -5368,25 +5515,25 @@ function TimelineBlock() {
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                                lineNumber: 345,
+                                                lineNumber: 431,
                                                 columnNumber: 23
                                             }, this) : null
                                         ]
                                     }, row.id, true, {
                                         fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                        lineNumber: 249,
+                                        lineNumber: 335,
                                         columnNumber: 19
                                     }, this);
                                 })
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                lineNumber: 239,
+                                lineNumber: 325,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                        lineNumber: 228,
+                        lineNumber: 314,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5397,66 +5544,89 @@ function TimelineBlock() {
                                 children: "Quick actions"
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                lineNumber: 362,
+                                lineNumber: 448,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 className: "flex flex-col gap-2",
                                 children: [
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(ActionBtn, {
-                                        tone: "amber",
-                                        icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$skip$2d$forward$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__SkipForward$3e$__["SkipForward"],
-                                        onClick: endTurn,
-                                        children: "End turn"
+                                        tone: "cyan",
+                                        icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$sparkles$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Sparkles$3e$__["Sparkles"],
+                                        onClick: beginTurn,
+                                        disabled: turnPhase !== "start",
+                                        children: "Start turn"
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                        lineNumber: 364,
+                                        lineNumber: 450,
+                                        columnNumber: 13
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(ActionBtn, {
+                                        tone: "amber",
+                                        icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$skip$2d$forward$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__SkipForward$3e$__["SkipForward"],
+                                        onClick: endPlayerTurn,
+                                        disabled: turnPhase !== "player",
+                                        children: "End main phase"
+                                    }, void 0, false, {
+                                        fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                        lineNumber: 458,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(ActionBtn, {
                                         tone: "rose",
+                                        icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$swords$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Swords$3e$__["Swords"],
+                                        onClick: endEnemyTurn,
+                                        disabled: turnPhase !== "enemy",
+                                        children: "End enemy turn"
+                                    }, void 0, false, {
+                                        fileName: "[project]/app/components/UI/TimelineBlock.tsx",
+                                        lineNumber: 466,
+                                        columnNumber: 13
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(ActionBtn, {
+                                        tone: "slate",
                                         icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$rotate$2d$ccw$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__RotateCcw$3e$__["RotateCcw"],
                                         onClick: handleReset,
                                         children: "Reset turn data"
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                        lineNumber: 367,
+                                        lineNumber: 474,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                lineNumber: 363,
+                                lineNumber: 449,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                 className: "mt-2 text-[10px] leading-relaxed text-slate-600",
-                                children: "Tip: “Copy state” pre-fills the next turn from the current one. Reset restores the initial snapshot for this turn."
+                                children: "Tip: Each round begins in Start — click Start turn to log and enter Main (play cards). End main phase → Enemy. End enemy turn → next round (Start again). “Copy state” uses the player-end snapshot during Enemy. Reset restores the initial snapshot."
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                                lineNumber: 371,
+                                lineNumber: 478,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                        lineNumber: 361,
+                        lineNumber: 447,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-                lineNumber: 227,
+                lineNumber: 313,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/app/components/UI/TimelineBlock.tsx",
-        lineNumber: 204,
+        lineNumber: 210,
         columnNumber: 5
     }, this);
 }
-_s(TimelineBlock, "sg0Akd+fYbniLWF4xkQ0eZHGsDI=", false, function() {
+_s(TimelineBlock, "Hxt/LKx9paDW+tBXo/O2aafYPsk=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$context$2f$GameContext$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useGameManager"]
     ];
@@ -9132,7 +9302,7 @@ function StepBtn({ children, onClick, tone = 'slate', className = '' }) {
 _c = StepBtn;
 function RightBlock() {
     _s();
-    const { gameState, modifyPlayerHp, modifyPlayerBlock, modifyPlayerEnergy, modifyEnemyHp, modifyEnemyBlock, addBuffDebuff, removeBuffDebuff, reduceBuffDebuff, toggleRelic } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$context$2f$GameContext$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useGameManager"])();
+    const { gameState, turns, currentTurnIndex, modifyPlayerHp, modifyPlayerBlock, modifyPlayerEnergy, modifyEnemyHp, modifyEnemyBlock, addBuffDebuff, removeBuffDebuff, reduceBuffDebuff, toggleRelic } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$context$2f$GameContext$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useGameManager"])();
     const [buffName, setBuffName] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])('');
     const [buffStacks, setBuffStacks] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(1);
     const [buffDescription, setBuffDescription] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])('');
@@ -9156,6 +9326,25 @@ function RightBlock() {
         enemies?.length
     ]);
     const activeRelics = gameState?.player.activeRelics ?? [];
+    const currentTurn = Number(turns[currentTurnIndex]?.id ?? 1);
+    const relicTooltips = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useMemo"])({
+        "RightBlock.useMemo[relicTooltips]": ()=>{
+            if (!gameState) return [];
+            const turnEffects = gameState.player.relicEffects?.filter({
+                "RightBlock.useMemo[relicTooltips]": (effect)=>effect.enabled !== false && Number(effect.turn) === currentTurn
+            }["RightBlock.useMemo[relicTooltips]"]) ?? [];
+            return turnEffects.map({
+                "RightBlock.useMemo[relicTooltips]": (effect, i)=>({
+                        key: `relic-effect-${currentTurn}-${i}-${effect.effect}`,
+                        label: effect.effect,
+                        tooltip: effect.effect
+                    })
+            }["RightBlock.useMemo[relicTooltips]"]);
+        }
+    }["RightBlock.useMemo[relicTooltips]"], [
+        currentTurn,
+        gameState
+    ]);
     const handleAddBuff = (type)=>{
         if (!buffName.trim()) return;
         if (buffTarget === 'player') {
@@ -9189,7 +9378,7 @@ function RightBlock() {
                             children: "Combat tools"
                         }, void 0, false, {
                             fileName: "[project]/app/components/UI/RightBlock.tsx",
-                            lineNumber: 136,
+                            lineNumber: 154,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -9197,13 +9386,13 @@ function RightBlock() {
                             children: "Load combat data to use this panel."
                         }, void 0, false, {
                             fileName: "[project]/app/components/UI/RightBlock.tsx",
-                            lineNumber: 137,
+                            lineNumber: 155,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/components/UI/RightBlock.tsx",
-                    lineNumber: 135,
+                    lineNumber: 153,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -9211,13 +9400,13 @@ function RightBlock() {
                     children: "Loading…"
                 }, void 0, false, {
                     fileName: "[project]/app/components/UI/RightBlock.tsx",
-                    lineNumber: 139,
+                    lineNumber: 157,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/app/components/UI/RightBlock.tsx",
-            lineNumber: 134,
+            lineNumber: 152,
             columnNumber: 7
         }, this);
     }
@@ -9238,7 +9427,7 @@ function RightBlock() {
                             className: "h-4 w-4 shrink-0 text-cyan-500/90"
                         }, void 0, false, {
                             fileName: "[project]/app/components/UI/RightBlock.tsx",
-                            lineNumber: 155,
+                            lineNumber: 173,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -9249,7 +9438,7 @@ function RightBlock() {
                                     children: "Combat tools"
                                 }, void 0, false, {
                                     fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                    lineNumber: 157,
+                                    lineNumber: 175,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -9263,24 +9452,24 @@ function RightBlock() {
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                    lineNumber: 158,
+                                    lineNumber: 176,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/components/UI/RightBlock.tsx",
-                            lineNumber: 156,
+                            lineNumber: 174,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/components/UI/RightBlock.tsx",
-                    lineNumber: 154,
+                    lineNumber: 172,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                lineNumber: 153,
+                lineNumber: 171,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -9296,14 +9485,14 @@ function RightBlock() {
                                         className: "h-3 w-3"
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 170,
+                                        lineNumber: 188,
                                         columnNumber: 15
                                     }, this),
                                     " Relics (tap to toggle bonus)"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 169,
+                                lineNumber: 187,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -9320,19 +9509,19 @@ function RightBlock() {
                                         children: r.name
                                     }, r.name, false, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 178,
+                                        lineNumber: 196,
                                         columnNumber: 19
                                     }, this);
                                 })
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 172,
+                                lineNumber: 190,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                        lineNumber: 168,
+                        lineNumber: 186,
                         columnNumber: 11
                     }, this) : null,
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -9345,16 +9534,70 @@ function RightBlock() {
                                         className: "h-3.5 w-3.5 text-slate-400"
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 204,
+                                        lineNumber: 222,
                                         columnNumber: 13
                                     }, this),
                                     "You"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 203,
+                                lineNumber: 221,
                                 columnNumber: 11
                             }, this),
+                            relicTooltips.length > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "mb-4 rounded-xl border border-violet-500/35 bg-violet-950/30 px-2.5 py-2 ring-1 ring-violet-500/10",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                        className: "mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-violet-300/90",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$sparkles$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Sparkles$3e$__["Sparkles"], {
+                                                className: "h-3 w-3 shrink-0"
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/RightBlock.tsx",
+                                                lineNumber: 229,
+                                                columnNumber: 17
+                                            }, this),
+                                            "This turn (relic effects)"
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/app/components/UI/RightBlock.tsx",
+                                        lineNumber: 228,
+                                        columnNumber: 15
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                        className: "mb-1.5 text-[9px] text-violet-200/55",
+                                        children: [
+                                            "Round ",
+                                            currentTurn,
+                                            " — encounter relic timing from combat JSON"
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/app/components/UI/RightBlock.tsx",
+                                        lineNumber: 232,
+                                        columnNumber: 15
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "flex flex-wrap gap-1.5",
+                                        children: relicTooltips.map((entry)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                className: "max-w-full truncate rounded-md border border-violet-500/45 bg-violet-950/55 px-2 py-1 text-[10px] font-medium text-violet-100",
+                                                title: entry.tooltip,
+                                                children: entry.label
+                                            }, entry.key, false, {
+                                                fileName: "[project]/app/components/UI/RightBlock.tsx",
+                                                lineNumber: 235,
+                                                columnNumber: 19
+                                            }, this))
+                                    }, void 0, false, {
+                                        fileName: "[project]/app/components/UI/RightBlock.tsx",
+                                        lineNumber: 233,
+                                        columnNumber: 15
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/app/components/UI/RightBlock.tsx",
+                                lineNumber: 227,
+                                columnNumber: 13
+                            }, this) : null,
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 className: "mb-4",
                                 children: [
@@ -9368,14 +9611,14 @@ function RightBlock() {
                                                         className: "h-3 w-3 text-rose-400/90"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 211,
+                                                        lineNumber: 250,
                                                         columnNumber: 17
                                                     }, this),
                                                     " HP"
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 210,
+                                                lineNumber: 249,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -9387,13 +9630,13 @@ function RightBlock() {
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 213,
+                                                lineNumber: 252,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 209,
+                                        lineNumber: 248,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -9405,12 +9648,12 @@ function RightBlock() {
                                             }
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                            lineNumber: 218,
+                                            lineNumber: 257,
                                             columnNumber: 15
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 217,
+                                        lineNumber: 256,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -9418,7 +9661,7 @@ function RightBlock() {
                                         children: "Quick"
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 220,
+                                        lineNumber: 259,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -9430,7 +9673,7 @@ function RightBlock() {
                                                 children: "-10"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 222,
+                                                lineNumber: 261,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StepBtn, {
@@ -9439,7 +9682,7 @@ function RightBlock() {
                                                 children: "-5"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 223,
+                                                lineNumber: 262,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StepBtn, {
@@ -9448,7 +9691,7 @@ function RightBlock() {
                                                 children: "-1"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 224,
+                                                lineNumber: 263,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StepBtn, {
@@ -9457,7 +9700,7 @@ function RightBlock() {
                                                 children: "+1"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 225,
+                                                lineNumber: 264,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StepBtn, {
@@ -9466,7 +9709,7 @@ function RightBlock() {
                                                 children: "+5"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 226,
+                                                lineNumber: 265,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StepBtn, {
@@ -9475,13 +9718,13 @@ function RightBlock() {
                                                 children: "+10"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 227,
+                                                lineNumber: 266,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 221,
+                                        lineNumber: 260,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -9505,7 +9748,7 @@ function RightBlock() {
                                                 className: "min-w-0 flex-1 rounded-xl border border-slate-700 bg-slate-900/80 px-2.5 py-2 text-xs text-white outline-none focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/25"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 230,
+                                                lineNumber: 269,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -9521,7 +9764,7 @@ function RightBlock() {
                                                 children: "Dmg"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 247,
+                                                lineNumber: 286,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -9537,19 +9780,19 @@ function RightBlock() {
                                                 children: "Heal"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 260,
+                                                lineNumber: 299,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 229,
+                                        lineNumber: 268,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 208,
+                                lineNumber: 247,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -9565,14 +9808,14 @@ function RightBlock() {
                                                         className: "h-3 w-3 text-sky-400/90"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 279,
+                                                        lineNumber: 318,
                                                         columnNumber: 17
                                                     }, this),
                                                     " Block"
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 278,
+                                                lineNumber: 317,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -9583,7 +9826,7 @@ function RightBlock() {
                                                         children: player.currentBlock ?? 0
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 282,
+                                                        lineNumber: 321,
                                                         columnNumber: 17
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -9593,19 +9836,19 @@ function RightBlock() {
                                                         children: "Clear"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 283,
+                                                        lineNumber: 322,
                                                         columnNumber: 17
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 281,
+                                                lineNumber: 320,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 277,
+                                        lineNumber: 316,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -9617,7 +9860,7 @@ function RightBlock() {
                                                 children: "-10"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 293,
+                                                lineNumber: 332,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StepBtn, {
@@ -9626,7 +9869,7 @@ function RightBlock() {
                                                 children: "-5"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 294,
+                                                lineNumber: 333,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StepBtn, {
@@ -9635,7 +9878,7 @@ function RightBlock() {
                                                 children: "+5"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 295,
+                                                lineNumber: 334,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StepBtn, {
@@ -9644,13 +9887,13 @@ function RightBlock() {
                                                 children: "+10"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 296,
+                                                lineNumber: 335,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 292,
+                                        lineNumber: 331,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -9673,7 +9916,7 @@ function RightBlock() {
                                                 className: "min-w-0 flex-1 rounded-xl border border-slate-700 bg-slate-900/80 px-2.5 py-2 text-xs outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/25"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 299,
+                                                lineNumber: 338,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -9689,19 +9932,19 @@ function RightBlock() {
                                                 children: "Apply"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 315,
+                                                lineNumber: 354,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 298,
+                                        lineNumber: 337,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 276,
+                                lineNumber: 315,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -9717,14 +9960,14 @@ function RightBlock() {
                                                         className: "h-3 w-3 text-amber-400/90"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 334,
+                                                        lineNumber: 373,
                                                         columnNumber: 17
                                                     }, this),
                                                     " Energy"
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 333,
+                                                lineNumber: 372,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -9736,13 +9979,13 @@ function RightBlock() {
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 336,
+                                                lineNumber: 375,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 332,
+                                        lineNumber: 371,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -9754,7 +9997,7 @@ function RightBlock() {
                                                 children: "-3"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 341,
+                                                lineNumber: 380,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StepBtn, {
@@ -9763,7 +10006,7 @@ function RightBlock() {
                                                 children: "-1"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 342,
+                                                lineNumber: 381,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StepBtn, {
@@ -9772,7 +10015,7 @@ function RightBlock() {
                                                 children: "+1"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 343,
+                                                lineNumber: 382,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StepBtn, {
@@ -9781,13 +10024,13 @@ function RightBlock() {
                                                 children: "+3"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 344,
+                                                lineNumber: 383,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 340,
+                                        lineNumber: 379,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -9810,7 +10053,7 @@ function RightBlock() {
                                                 className: "min-w-0 flex-1 rounded-xl border border-slate-700 bg-slate-900/80 px-2.5 py-2 text-xs outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/25"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 347,
+                                                lineNumber: 386,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -9826,19 +10069,19 @@ function RightBlock() {
                                                 children: "Apply"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 363,
+                                                lineNumber: 402,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 346,
+                                        lineNumber: 385,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 331,
+                                lineNumber: 370,
                                 columnNumber: 11
                             }, this),
                             (player.bonusBlock ?? 0) > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -9849,7 +10092,7 @@ function RightBlock() {
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 380,
+                                lineNumber: 419,
                                 columnNumber: 13
                             }, this),
                             player.intangible && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -9857,7 +10100,7 @@ function RightBlock() {
                                 children: "Intangible"
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 383,
+                                lineNumber: 422,
                                 columnNumber: 13
                             }, this),
                             player.buffsDebuffs && player.buffsDebuffs.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -9868,7 +10111,7 @@ function RightBlock() {
                                         children: "Your buffs"
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 388,
+                                        lineNumber: 427,
                                         columnNumber: 15
                                     }, this),
                                     player.buffsDebuffs.map((bd, idx)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$UI$2f$BuffDebuffItem$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -9877,19 +10120,19 @@ function RightBlock() {
                                             onRemove: ()=>removeBuffDebuff('player', 0, bd.name)
                                         }, `${bd.name}-${idx}`, false, {
                                             fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                            lineNumber: 390,
+                                            lineNumber: 429,
                                             columnNumber: 17
                                         }, this))
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 387,
+                                lineNumber: 426,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                        lineNumber: 202,
+                        lineNumber: 220,
                         columnNumber: 9
                     }, this),
                     enemies && enemies.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -9905,7 +10148,7 @@ function RightBlock() {
                                                 className: "h-3.5 w-3.5 text-rose-400"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 406,
+                                                lineNumber: 445,
                                                 columnNumber: 17
                                             }, this),
                                             "Enemies",
@@ -9914,13 +10157,13 @@ function RightBlock() {
                                                 children: enemies.length
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 408,
+                                                lineNumber: 447,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 405,
+                                        lineNumber: 444,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -9928,13 +10171,13 @@ function RightBlock() {
                                         children: "Each row is one combatant"
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 412,
+                                        lineNumber: 451,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 404,
+                                lineNumber: 443,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -9956,7 +10199,7 @@ function RightBlock() {
                                                                 children: enemy.name
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                                lineNumber: 429,
+                                                                lineNumber: 468,
                                                                 columnNumber: 25
                                                             }, this),
                                                             isBuffFocus ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -9964,13 +10207,13 @@ function RightBlock() {
                                                                 children: "Status target"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                                lineNumber: 431,
+                                                                lineNumber: 470,
                                                                 columnNumber: 27
                                                             }, this) : null
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 428,
+                                                        lineNumber: 467,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -9981,13 +10224,13 @@ function RightBlock() {
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 434,
+                                                        lineNumber: 473,
                                                         columnNumber: 23
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 427,
+                                                lineNumber: 466,
                                                 columnNumber: 21
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -9997,7 +10240,7 @@ function RightBlock() {
                                                         children: "HP"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 439,
+                                                        lineNumber: 478,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -10009,13 +10252,13 @@ function RightBlock() {
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 440,
+                                                        lineNumber: 479,
                                                         columnNumber: 23
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 438,
+                                                lineNumber: 477,
                                                 columnNumber: 21
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -10027,12 +10270,12 @@ function RightBlock() {
                                                     }
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                    lineNumber: 445,
+                                                    lineNumber: 484,
                                                     columnNumber: 23
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 444,
+                                                lineNumber: 483,
                                                 columnNumber: 21
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -10044,7 +10287,7 @@ function RightBlock() {
                                                         children: "-10"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 448,
+                                                        lineNumber: 487,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StepBtn, {
@@ -10053,7 +10296,7 @@ function RightBlock() {
                                                         children: "-5"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 449,
+                                                        lineNumber: 488,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StepBtn, {
@@ -10062,7 +10305,7 @@ function RightBlock() {
                                                         children: "+5"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 450,
+                                                        lineNumber: 489,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StepBtn, {
@@ -10071,13 +10314,13 @@ function RightBlock() {
                                                         children: "+10"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 451,
+                                                        lineNumber: 490,
                                                         columnNumber: 23
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 447,
+                                                lineNumber: 486,
                                                 columnNumber: 21
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -10094,7 +10337,7 @@ function RightBlock() {
                                                         className: "min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-950/60 px-2 py-1.5 text-xs"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 454,
+                                                        lineNumber: 493,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -10113,7 +10356,7 @@ function RightBlock() {
                                                         children: "Dmg"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 461,
+                                                        lineNumber: 500,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -10132,13 +10375,13 @@ function RightBlock() {
                                                         children: "Heal"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 474,
+                                                        lineNumber: 513,
                                                         columnNumber: 23
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 453,
+                                                lineNumber: 492,
                                                 columnNumber: 21
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -10148,7 +10391,7 @@ function RightBlock() {
                                                         children: "Block"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 490,
+                                                        lineNumber: 529,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -10159,7 +10402,7 @@ function RightBlock() {
                                                                 children: enemy.currentBlock ?? 0
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                                lineNumber: 492,
+                                                                lineNumber: 531,
                                                                 columnNumber: 25
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -10169,19 +10412,19 @@ function RightBlock() {
                                                                 children: "Clear"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                                lineNumber: 493,
+                                                                lineNumber: 532,
                                                                 columnNumber: 25
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 491,
+                                                        lineNumber: 530,
                                                         columnNumber: 23
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 489,
+                                                lineNumber: 528,
                                                 columnNumber: 21
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -10193,7 +10436,7 @@ function RightBlock() {
                                                         children: "-10"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 503,
+                                                        lineNumber: 542,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StepBtn, {
@@ -10202,7 +10445,7 @@ function RightBlock() {
                                                         children: "+5"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 504,
+                                                        lineNumber: 543,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StepBtn, {
@@ -10211,13 +10454,13 @@ function RightBlock() {
                                                         children: "+10"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 505,
+                                                        lineNumber: 544,
                                                         columnNumber: 23
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 502,
+                                                lineNumber: 541,
                                                 columnNumber: 21
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -10234,7 +10477,7 @@ function RightBlock() {
                                                         className: "min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-950/60 px-2 py-1.5 text-xs"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 508,
+                                                        lineNumber: 547,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -10253,13 +10496,13 @@ function RightBlock() {
                                                         children: "Apply"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 515,
+                                                        lineNumber: 554,
                                                         columnNumber: 23
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 507,
+                                                lineNumber: 546,
                                                 columnNumber: 21
                                             }, this),
                                             enemy.buffsDebuffs && enemy.buffsDebuffs.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -10270,30 +10513,30 @@ function RightBlock() {
                                                         onRemove: ()=>removeBuffDebuff('enemy', idx, bd.name)
                                                     }, `${bd.name}-${buffIdx}`, false, {
                                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                        lineNumber: 533,
+                                                        lineNumber: 572,
                                                         columnNumber: 27
                                                     }, this))
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                                lineNumber: 531,
+                                                lineNumber: 570,
                                                 columnNumber: 23
                                             }, this)
                                         ]
                                     }, `${enemy.name}-${idx}`, true, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 420,
+                                        lineNumber: 459,
                                         columnNumber: 19
                                     }, this);
                                 })
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 415,
+                                lineNumber: 454,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                        lineNumber: 403,
+                        lineNumber: 442,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -10306,14 +10549,14 @@ function RightBlock() {
                                         className: "h-3.5 w-3.5 text-violet-400/90"
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 552,
+                                        lineNumber: 591,
                                         columnNumber: 13
                                     }, this),
                                     "Status"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 551,
+                                lineNumber: 590,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -10321,7 +10564,7 @@ function RightBlock() {
                                 children: "Target"
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 556,
+                                lineNumber: 595,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -10334,7 +10577,7 @@ function RightBlock() {
                                         children: "You"
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 558,
+                                        lineNumber: 597,
                                         columnNumber: 13
                                     }, this),
                                     enemies?.map((enemy, idx)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -10347,13 +10590,13 @@ function RightBlock() {
                                             children: enemy.name
                                         }, `bt-${idx}`, false, {
                                             fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                            lineNumber: 569,
+                                            lineNumber: 608,
                                             columnNumber: 15
                                         }, this))
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 557,
+                                lineNumber: 596,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -10365,13 +10608,13 @@ function RightBlock() {
                                         children: "(quick + custom)"
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 587,
+                                        lineNumber: 626,
                                         columnNumber: 20
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 586,
+                                lineNumber: 625,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -10386,12 +10629,12 @@ function RightBlock() {
                                             className: "h-4 w-4"
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                            lineNumber: 596,
+                                            lineNumber: 635,
                                             columnNumber: 15
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 590,
+                                        lineNumber: 629,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -10399,7 +10642,7 @@ function RightBlock() {
                                         children: buffStacks
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 598,
+                                        lineNumber: 637,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -10411,18 +10654,18 @@ function RightBlock() {
                                             className: "h-4 w-4"
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                            lineNumber: 607,
+                                            lineNumber: 646,
                                             columnNumber: 15
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 601,
+                                        lineNumber: 640,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 589,
+                                lineNumber: 628,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -10430,7 +10673,7 @@ function RightBlock() {
                                 children: "Quick add"
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 611,
+                                lineNumber: 650,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -10446,7 +10689,7 @@ function RightBlock() {
                                             ]
                                         }, name, true, {
                                             fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                            lineNumber: 614,
+                                            lineNumber: 653,
                                             columnNumber: 15
                                         }, this)),
                                     QUICK_BUFFS.map((name)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -10459,13 +10702,13 @@ function RightBlock() {
                                             ]
                                         }, name, true, {
                                             fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                            lineNumber: 624,
+                                            lineNumber: 663,
                                             columnNumber: 15
                                         }, this))
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 612,
+                                lineNumber: 651,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -10478,12 +10721,12 @@ function RightBlock() {
                                     className: "w-full rounded-xl border border-slate-700 bg-slate-900/80 px-2.5 py-2 text-xs outline-none transition-all duration-200 focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/15"
                                 }, void 0, false, {
                                     fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                    lineNumber: 636,
+                                    lineNumber: 675,
                                     columnNumber: 13
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 635,
+                                lineNumber: 674,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -10498,18 +10741,18 @@ function RightBlock() {
                                             className: "h-3 w-3"
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                            lineNumber: 652,
+                                            lineNumber: 691,
                                             columnNumber: 15
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 651,
+                                        lineNumber: 690,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 645,
+                                lineNumber: 684,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -10524,17 +10767,17 @@ function RightBlock() {
                                         className: "mb-3 w-full rounded-xl border border-slate-700 bg-slate-900/80 px-2.5 py-2 text-xs transition-all duration-200 focus:border-violet-500/40"
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 659,
+                                        lineNumber: 698,
                                         columnNumber: 15
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                    lineNumber: 658,
+                                    lineNumber: 697,
                                     columnNumber: 13
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 655,
+                                lineNumber: 694,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -10548,7 +10791,7 @@ function RightBlock() {
                                         children: "Add buff"
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 670,
+                                        lineNumber: 709,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -10559,13 +10802,13 @@ function RightBlock() {
                                         children: "Add debuff"
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                        lineNumber: 678,
+                                        lineNumber: 717,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 669,
+                                lineNumber: 708,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -10573,29 +10816,29 @@ function RightBlock() {
                                 children: "Quick chips use the stacks value above. Custom add uses the same stacks and needs a name."
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                                lineNumber: 687,
+                                lineNumber: 726,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/app/components/UI/RightBlock.tsx",
-                        lineNumber: 550,
+                        lineNumber: 589,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/app/components/UI/RightBlock.tsx",
-                lineNumber: 165,
+                lineNumber: 183,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/app/components/UI/RightBlock.tsx",
-        lineNumber: 152,
+        lineNumber: 170,
         columnNumber: 5
     }, this);
 }
-_s(RightBlock, "R0OjWa0/KbhO42ejhcgaNXsNqdo=", false, function() {
+_s(RightBlock, "zbM5hWD8tYhXTdHkv8ugWqZTrIs=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$context$2f$GameContext$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useGameManager"]
     ];

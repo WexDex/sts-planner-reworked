@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Viewport } from "next";
 import { Inter } from "next/font/google";
 import { GameProvider } from "@/app/context/GameContext";
+import { LegendHighlightProvider } from "@/app/context/LegendHighlightContext";
 import { NotificationProvider } from "@/app/components/UI/NotificationProvider";
 
 export const metadata = {
@@ -29,7 +30,9 @@ export default function RootLayout({
     <html lang="en" className={`${inter.className} bg-slate-950`}>
       <body className="min-h-dvh bg-slate-950 text-slate-100 antialiased">
         <NotificationProvider>
-          <GameProvider>{children}</GameProvider>
+          <GameProvider>
+            <LegendHighlightProvider>{children}</LegendHighlightProvider>
+          </GameProvider>
         </NotificationProvider>
       </body>
     </html>

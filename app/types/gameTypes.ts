@@ -133,6 +133,9 @@ export interface ActivityLogEntry {
   context?: ActivityLogContextLine[];
 }
 
+/** Round flow: start-of-turn hooks (relics, draw, ST) → play cards → enemy resolves. */
+export type CombatTurnPhase = "start" | "player" | "enemy";
+
 export interface Turn {
   id: number;
   state: CombatData;

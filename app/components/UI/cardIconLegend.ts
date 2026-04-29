@@ -18,7 +18,15 @@ const STAT_KEYS = [
   "focus",
   "weak",
   "vulnerable",
+  "poison",
+  "hpcost",
 ] as const;
+
+/** Short labels shown in the top-bar legend (catalog `shortLabel` is often terse). */
+const LEGEND_LABEL_OVERRIDES: Partial<Record<keyof typeof STS_ICON_GLYPH, string>> = {
+  COST_MANIP: "Cost manipulation",
+  UPGRADE_CARD: "Upgrade cards",
+};
 
 /** Stable STS catalog keys; skips DRAW_ICON (same meaning as stat “Draw”). */
 const STS_LEGEND_KEYS: (keyof typeof STS_ICON_GLYPH)[] = [
@@ -26,6 +34,9 @@ const STS_LEGEND_KEYS: (keyof typeof STS_ICON_GLYPH)[] = [
   "FROST_ORB",
   "DARK_ORB",
   "PLASMA_ORB",
+  "KEY_INNATE",
+  "KEY_ETHEREAL",
+  "KEY_RETAIN",
   "DISCARD_ICON",
   "EVOKE_ICON",
   "CONDITIONAL_MARKER",
@@ -35,6 +46,11 @@ const STS_LEGEND_KEYS: (keyof typeof STS_ICON_GLYPH)[] = [
   "EXHAUST_SELF",
   "ANY_ORB",
   "SAME_ORB_AS_EVOKED",
+  "COST_MANIP",
+  "UPGRADE_CARD",
+  "ADD_CARD",
+  "SCRY_ICON",
+  "LOSE_STRENGTH",
 ];
 
 /** Icons shown on cards / STS reference — for top-bar legend. */
@@ -45,7 +61,7 @@ export function getCardEffectLegendItems(): CardIconLegendItem[] {
       id: `stat-${k}`,
       Icon: d.icon,
       iconClass: d.color,
-      label: d.fullLabel,
+      label: k === "hpcost" ? "HP cost" : d.fullLabel,
     };
   });
 
@@ -55,7 +71,7 @@ export function getCardEffectLegendItems(): CardIconLegendItem[] {
       id: key,
       Icon: meta.Icon,
       iconClass: meta.iconClass,
-      label: meta.shortLabel,
+      label: LEGEND_LABEL_OVERRIDES[key] ?? meta.shortLabel,
     };
   });
 

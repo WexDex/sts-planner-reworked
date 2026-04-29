@@ -4,8 +4,12 @@ import { useMemo, useRef, useState } from "react";
 import { getEffectDisplay } from "@/app/utils/effectDisplay";
 import { getPlayerMaxEnergy, importGameData } from "@/app/utils/gameHelpers";
 import { useGameManager } from "@/app/context/GameContext";
+import { useLegendHighlight } from "@/app/context/LegendHighlightContext";
 import CardDBModal from "@/app/components/CardDBModal";
-import { getCardEffectLegendItems } from "@/app/components/UI/cardIconLegend";
+import {
+  getCardEffectLegendItems,
+  type CardIconLegendItem,
+} from "@/app/components/UI/cardIconLegend";
 import { Activity, BookOpen, ChevronDown, ChevronUp } from "lucide-react";
 
 const CARD_EFFECT_LEGEND = getCardEffectLegendItems();
@@ -14,22 +18,85 @@ function clampPct(n: number) {
   return Math.max(0, Math.min(100, n));
 }
 
+function TopBarLegendChip({
+  item,
+  hoverSync,
+  highlighted,
+  showAllLabels,
+  size,
+}: {
+  item: CardIconLegendItem;
+  hoverSync: boolean;
+  highlighted: boolean;
+  showAllLabels: boolean;
+  size: "desktop" | "mobile";
+}) {
+  const pinLabel = hoverSync && highlighted;
+  const labelForced = pinLabel || showAllLabels;
+  const iconSize = size === "desktop" ? "h-3.5 w-3.5" : "h-3 w-3";
+  const idleBorder = size === "mobile" ? "border-slate-600/50" : "border-slate-600/45";
+
+  const labelTextCls =
+    size === "desktop"
+      ? "truncate text-[9px] font-medium leading-none text-slate-200/95"
+      : "truncate text-[8px] font-medium text-slate-200";
+
+  const labelRevealCls =
+    size === "desktop"
+      ? labelForced
+        ? "max-w-[10rem] opacity-100"
+        : "max-w-0 opacity-0 overflow-hidden group-hover/chip:max-w-[10rem] group-hover/chip:opacity-100"
+      : labelForced
+        ? "max-w-[5.5rem] opacity-100"
+        : "max-w-0 opacity-0 overflow-hidden group-hover/chip:max-w-[5.5rem] group-hover/chip:opacity-100";
+
+  return (
+    <span
+      title={item.label}
+      aria-label={item.label}
+      className={`group/chip inline-flex items-center rounded-md border shadow-sm shadow-black/20 transition-[opacity,box-shadow,border-color,background-color,gap,padding,max-width] ${
+        labelForced
+          ? "gap-1 px-1.5 py-0.5"
+          : "justify-center p-1 group-hover/chip:gap-1 group-hover/chip:px-1.5 group-hover/chip:py-0.5"
+      } ${
+        !hoverSync
+          ? `${idleBorder} bg-slate-900/55 group-hover/chip:bg-slate-900/70`
+          : highlighted
+            ? "border-cyan-400/55 bg-cyan-950/45 ring-1 ring-cyan-400/35 shadow-[0_0_12px_rgba(34,211,238,0.14)]"
+            : "border-slate-700/35 bg-slate-950/35 opacity-45 group-hover/chip:opacity-90"
+      }`}
+    >
+      <item.Icon className={`${iconSize} shrink-0 ${item.iconClass}`} strokeWidth={2.25} aria-hidden />
+      <span className={`${labelTextCls} transition-[max-width,opacity] duration-200 ${labelRevealCls}`}>
+        {item.label}
+      </span>
+    </span>
+  );
+}
+
 export default function TopBarBlock() {
   const {
     gameState,
-    turns,
-    currentTurnIndex,
     addCardFromDB,
     loadGameDataFromJson,
     isLoading,
     error,
   } = useGameManager();
+  const { hoveredCard, highlightIds } = useLegendHighlight();
+  const sortedLegend = useMemo(() => {
+    if (!hoveredCard) return CARD_EFFECT_LEGEND;
+    const hi: CardIconLegendItem[] = [];
+    const lo: CardIconLegendItem[] = [];
+    for (const item of CARD_EFFECT_LEGEND) {
+      (highlightIds.has(item.id) ? hi : lo).push(item);
+    }
+    return [...hi, ...lo];
+  }, [hoveredCard, highlightIds]);
+  const [legendShowAllLabels, setLegendShowAllLabels] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
   const [mobileVitalsOpen, setMobileVitalsOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const currentTurn = Number(turns[currentTurnIndex]?.id ?? 1);
 
   const playerHp = gameState?.player.hp ?? 0;
   const playerMaxHp = gameState?.player.maxHp ?? 0;
@@ -49,19 +116,6 @@ export default function TopBarBlock() {
   const lowHp = playerMaxHp > 0 && (playerHp === 0 || (playerHp > 0 && hpPct < 30));
   const energyPct = energyMax > 0 ? clampPct((currentEnergy / energyMax) * 100) : 0;
   const showEnergyPips = energyMax > 0 && energyMax <= 9;
-
-  const relicTooltips = useMemo(() => {
-    const turnEffects =
-      gameState?.player.relicEffects?.filter(
-        (effect) => effect.enabled !== false && Number(effect.turn) === currentTurn,
-      ) ?? [];
-
-    return turnEffects.map((effect, i) => ({
-      key: `relic-effect-${currentTurn}-${i}-${effect.effect}`,
-      label: effect.effect,
-      tooltip: effect.effect,
-    }));
-  }, [currentTurn, gameState?.player.relicEffects]);
 
   const hpEffect = getEffectDisplay("health", playerHp);
   const energyEffect = getEffectDisplay("energy", baseEnergy);
@@ -270,50 +324,47 @@ export default function TopBarBlock() {
           </div>
         </div>
 
-        {/* Turn · encounter · floor · this-turn relics — aligned with file actions */}
-        <div className="flex w-full min-w-0 flex-1 flex-col gap-2 min-[1000px]:min-w-[20rem] lg:max-w-none">
-          <div className="flex min-w-0 flex-col items-stretch gap-2 min-[1000px]:flex-row min-[1000px]:items-center min-[1000px]:gap-2">
+        {/* Card icon legend + file actions (this-turn relics live under Combat tools → Player) */}
+        <div className="flex w-full min-w-0 flex-1 flex-col gap-2 lg:max-w-none">
+          <div className="flex min-w-0 flex-col items-stretch gap-2 min-[1000px]:flex-row min-[1000px]:items-stretch min-[1000px]:gap-3">
             <div
-              className="min-w-0 flex-1 rounded-2xl border border-cyan-500/30 bg-cyan-950/25 p-2.5 ring-1 ring-cyan-500/10 sm:p-2.5"
+              className="min-w-0 flex-1 rounded-2xl border border-cyan-500/30 bg-cyan-950/25 p-2.5 ring-1 ring-cyan-500/10 sm:p-3"
               role="region"
               aria-label="Card effect icons legend"
             >
-              <p className="mb-2 flex items-center gap-1.5 px-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-200/85">
-                <BookOpen className="h-3 w-3 shrink-0 text-cyan-400/90" strokeWidth={2.5} aria-hidden />
-                Card icons
-              </p>
-              <div className="flex max-h-[4.5rem] min-h-0 flex-wrap content-start gap-1.5 overflow-y-auto pr-0.5 [scrollbar-width:thin] sm:max-h-[3.75rem]">
-                {CARD_EFFECT_LEGEND.map((item) => (
-                  <span
-                    key={item.id}
-                    title={item.label}
-                    className="inline-flex items-center gap-1 rounded-md border border-slate-600/45 bg-slate-900/55 px-1.5 py-0.5 shadow-sm shadow-black/20"
-                  >
-                    <item.Icon className={`h-3.5 w-3.5 shrink-0 ${item.iconClass}`} strokeWidth={2.25} aria-hidden />
-                    <span className="max-w-[7rem] truncate text-[9px] font-medium leading-none text-slate-300/95">
-                      {item.label}
-                    </span>
-                  </span>
-                ))}
+              <div className="mb-2 flex items-center justify-between gap-2 px-0.5">
+                <p className="flex min-w-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-200/85">
+                  <BookOpen className="h-3 w-3 shrink-0 text-cyan-400/90" strokeWidth={2.5} aria-hidden />
+                  <span className="truncate">Symbols legend</span>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setLegendShowAllLabels((v) => !v)}
+                  aria-pressed={legendShowAllLabels}
+                  aria-label={legendShowAllLabels ? "Collapse legend to icons only" : "Expand all legend names"}
+                  className="shrink-0 rounded-md border border-cyan-500/40 bg-cyan-950/60 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-cyan-100/95 shadow-sm transition hover:border-cyan-400/55 hover:bg-cyan-900/50"
+                >
+                  {legendShowAllLabels ? "Icons only" : "Show all"}
+                </button>
+              </div>
+              <div className="flex min-h-[4rem] max-h-[9rem] flex-wrap content-start gap-1.5 overflow-y-auto pr-0.5 [scrollbar-width:thin] sm:max-h-[10rem] md:max-h-[11rem]">
+                {sortedLegend.map((item) => {
+                  const hoverSync = hoveredCard != null;
+                  const highlighted = highlightIds.has(item.id);
+                  return (
+                    <TopBarLegendChip
+                      key={item.id}
+                      item={item}
+                      hoverSync={hoverSync}
+                      highlighted={highlighted}
+                      showAllLabels={legendShowAllLabels}
+                      size="desktop"
+                    />
+                  );
+                })}
               </div>
             </div>
-            {relicTooltips.length > 0 ? (
-              <div className="flex min-w-0 max-w-full flex-1 flex-wrap content-center items-center gap-1.5 overflow-x-auto rounded-xl border border-violet-500/25 bg-violet-950/20 px-2 py-1.5 [scrollbar-width:thin] min-[1000px]:max-w-md min-[1000px]:px-2.5 min-[1000px]:py-2">
-                <span className="w-full text-[9px] font-bold uppercase tracking-widest text-violet-300/80 min-[1000px]:w-auto min-[1000px]:shrink-0">
-                  This turn
-                </span>
-                {relicTooltips.map((entry) => (
-                  <div
-                    key={entry.key}
-                    className="max-w-[11rem] shrink-0 truncate rounded-md border border-violet-500/40 bg-violet-950/50 px-2 py-1 text-[10px] font-medium text-violet-200"
-                    title={entry.tooltip}
-                  >
-                    {entry.label}
-                  </div>
-                ))}
-              </div>
-            ) : null}
-            <div className="ml-auto flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-2 min-[1000px]:ms-0 min-[1000px]:w-auto min-[1000px]:pl-0">
+            <div className="flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-2 min-[1000px]:flex-col min-[1000px]:items-stretch min-[1000px]:justify-center min-[1000px]:self-center">
               <button
                 type="button"
                 disabled={isLoading}
@@ -531,39 +582,38 @@ export default function TopBarBlock() {
               role="region"
               aria-label="Card effect icons legend"
             >
-              <p className="mb-1.5 flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-cyan-200/90">
-                <BookOpen className="h-3 w-3 text-cyan-400/90" strokeWidth={2.5} aria-hidden />
-                Icons
-              </p>
-              <div className="flex max-h-32 flex-wrap gap-1 overflow-y-auto [scrollbar-width:thin]">
-                {CARD_EFFECT_LEGEND.map((item) => (
-                  <span
-                    key={item.id}
-                    title={item.label}
-                    className="inline-flex items-center gap-0.5 rounded-md border border-slate-600/50 bg-slate-900/55 px-1 py-0.5"
-                  >
-                    <item.Icon className={`h-3 w-3 shrink-0 ${item.iconClass}`} strokeWidth={2.25} aria-hidden />
-                    <span className="max-w-[5.5rem] truncate text-[8px] font-medium text-slate-300">{item.label}</span>
-                  </span>
-                ))}
+              <div className="mb-1.5 flex items-center justify-between gap-1.5">
+                <p className="flex min-w-0 items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-cyan-200/90">
+                  <BookOpen className="h-3 w-3 shrink-0 text-cyan-400/90" strokeWidth={2.5} aria-hidden />
+                  <span className="truncate">Symbols</span>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setLegendShowAllLabels((v) => !v)}
+                  aria-pressed={legendShowAllLabels}
+                  aria-label={legendShowAllLabels ? "Collapse legend to icons only" : "Expand all legend names"}
+                  className="shrink-0 rounded-md border border-cyan-500/40 bg-cyan-950/55 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-cyan-100/95"
+                >
+                  {legendShowAllLabels ? "Icons" : "All"}
+                </button>
+              </div>
+              <div className="flex max-h-40 flex-wrap gap-1 overflow-y-auto [scrollbar-width:thin]">
+                {sortedLegend.map((item) => {
+                  const hoverSync = hoveredCard != null;
+                  const highlighted = highlightIds.has(item.id);
+                  return (
+                    <TopBarLegendChip
+                      key={item.id}
+                      item={item}
+                      hoverSync={hoverSync}
+                      highlighted={highlighted}
+                      showAllLabels={legendShowAllLabels}
+                      size="mobile"
+                    />
+                  );
+                })}
               </div>
             </div>
-            {relicTooltips.length > 0 ? (
-              <div className="flex flex-col gap-1 rounded-lg border border-violet-500/30 bg-violet-950/25 px-2 py-1.5">
-                <span className="text-[8px] font-bold uppercase tracking-widest text-violet-300/80">This turn (relics)</span>
-                <div className="flex flex-wrap gap-1">
-                  {relicTooltips.map((entry) => (
-                    <div
-                      key={entry.key}
-                      className="max-w-full truncate rounded-md border border-violet-500/40 bg-violet-950/50 px-2 py-0.5 text-[9px] font-medium text-violet-200"
-                      title={entry.tooltip}
-                    >
-                      {entry.label}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
             <div className="flex items-stretch gap-2">
               <button
                 type="button"
