@@ -4,6 +4,7 @@ export const combatData: CombatData = {
   player: {
     hp: 30,
     maxHp: 68,
+    characters: 'ironclad',
     energy: {
       base: 3,
       turn1Bonus: 1,
@@ -263,6 +264,7 @@ export const combatData: CombatData = {
               type: 'status',
               effect: 'Wound',
               value: 3,
+              location: 'hand',
             },
             {
               type: 'buff',
@@ -282,6 +284,7 @@ export const combatData: CombatData = {
               type: 'status',
               effect: 'Wound',
               value: 3,
+              location: 'hand',
             },
             {
               type: 'buff',
@@ -301,6 +304,7 @@ export const combatData: CombatData = {
               type: 'status',
               effect: 'Wound',
               value: 3,
+              location: 'hand',
             },
             {
               type: 'buff',
@@ -320,6 +324,7 @@ export const combatData: CombatData = {
               type: 'status',
               effect: 'Wound',
               value: 3,
+              location: 'hand',
             },
             {
               type: 'buff',

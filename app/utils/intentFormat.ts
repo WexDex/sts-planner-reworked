@@ -1,4 +1,11 @@
-import type { Enemy, EnemyIntentAction, PlayerData } from "@/app/types/gameTypes";
+import type {
+  Enemy,
+  EnemyIntentAction,
+  EnemyIntentActionStatus,
+  PlayerData,
+} from "@/app/types/gameTypes";
+import { getSingleAttackDamage } from "@/app/utils/enemyIntentActionHelpers";
+import { entityHasIntangible, findIntangibleBuff } from "@/app/utils/intangibleBuff";
 
 /** STS-style: Vulnerable on you → +50% damage taken from enemy hits. */
 const INCOMING_VULNERABLE_MULT = 1.5;
@@ -10,6 +17,8 @@ export interface IncomingDamageContext {
   enemyWeak: boolean;
   /** Each attack / hit deals at most 1 (0-damage hits stay 0). */
   playerIntangible: boolean;
+  /** Stacks on Intangible buff (turns remaining), when applicable. */
+  playerIntangibleTurns?: number;
 }
 
 export function playerHasVulnerableForIncoming(player: PlayerData | undefined | null): boolean {
@@ -28,10 +37,13 @@ export function buildIncomingDamageContext(
   player: PlayerData | undefined | null,
   enemy: Pick<Enemy, "buffsDebuffs">,
 ): IncomingDamageContext {
+  const ib = findIntangibleBuff(player?.buffsDebuffs);
+  const turns = ib && ib.stacks > 0 ? ib.stacks : undefined;
   return {
     playerVulnerable: playerHasVulnerableForIncoming(player),
     enemyWeak: enemyHasWeakForIncoming(enemy),
-    playerIntangible: player?.intangible ?? false,
+    playerIntangible: entityHasIntangible(player?.buffsDebuffs),
+    playerIntangibleTurns: turns,
   };
 }
 
@@ -56,22 +68,66 @@ export function describeIncomingModifiers(ctx: IncomingDamageContext): string {
   const bits: string[] = [];
   if (ctx.playerVulnerable) bits.push("You: Vulnerable (+50% damage taken)");
   if (ctx.enemyWeak) bits.push("Attacker: Weak (−25% damage dealt)");
-  if (ctx.playerIntangible) bits.push("You: Intangible (all damage is reduced to 1)");
+  if (ctx.playerIntangible) {
+    const n = ctx.playerIntangibleTurns ?? 1;
+    bits.push(
+      `You: Intangible (${n} turn${n !== 1 ? "s" : ""} left — damage reduced to 1 per hit)`,
+    );
+  }
   return bits.join(" · ");
 }
 
-/** Builds intent text segments using the same rules as the timeline planner (attack / debuff / status / buff). */
+function debuffStacksLabel(value: number | undefined): string {
+  const v = value ?? 1;
+  return v === 1 ? "" : ` ${v}`;
+}
+
+function statusLocationShort(loc: EnemyIntentActionStatus["location"]): string {
+  const zone = loc ?? "hand";
+  if (zone === "hand") return "hand";
+  if (zone === "draw") return "draw";
+  return "discard";
+}
+
+function pushUnknown(parts: string[], action: EnemyIntentAction) {
+  parts.push(`? ${JSON.stringify(action)}`);
+}
+
+/** Builds intent text segments using the same rules as the timeline planner. */
 export function formatIntentActionParts(actions: EnemyIntentAction[] | undefined): string[] {
   const parts: string[] = [];
   for (const action of actions ?? []) {
-    if (action.type === "attack") {
-      parts.push(`⚔️ ${action.value}`);
-    }
-    if (action.type === "debuff" || action.type === "status") {
-      parts.push(`❗ ${action.effect}${action.value ? ` ${action.value}` : ""}`);
-    }
-    if (action.type === "buff") {
-      parts.push(`📈 ${action.effect}${action.value ? ` ${action.value}` : ""}`);
+    switch (action.type) {
+      case "attack": {
+        const d = getSingleAttackDamage(action);
+        parts.push(`⚔️ ${d}`);
+        break;
+      }
+      case "multi_attack":
+        parts.push(`⚔️ ${action.dmg}×${action.count}`);
+        break;
+      case "block":
+        parts.push(`🛡️ ${action.amount}`);
+        break;
+      case "debuff":
+        parts.push(`❗ ${action.effect}${debuffStacksLabel(action.value)}`);
+        break;
+      case "status":
+        parts.push(
+          `❗ ${action.effect}×${action.value} · ${statusLocationShort(action.location)}`,
+        );
+        break;
+      case "buff":
+        parts.push(`📈 ${action.effect} ${action.value}`);
+        break;
+      case "cowardly":
+        parts.push("🏃 Escape");
+        break;
+      case "stunned":
+        parts.push(`💫 Stunned ${action.value}`);
+        break;
+      default:
+        pushUnknown(parts, action as EnemyIntentAction);
     }
   }
   return parts;
@@ -88,16 +144,45 @@ export function formatIntentActionsLineIncoming(
 ): string {
   const parts: string[] = [];
   for (const action of actions ?? []) {
-    if (action.type === "attack") {
-      const base = action.value ?? 0;
-      const mod = applyIncomingEnemyAttackDamage(base, ctx);
-      parts.push(mod !== base ? `⚔️ ${mod} (${base})` : `⚔️ ${base}`);
-    }
-    if (action.type === "debuff" || action.type === "status") {
-      parts.push(`❗ ${action.effect}${action.value ? ` ${action.value}` : ""}`);
-    }
-    if (action.type === "buff") {
-      parts.push(`📈 ${action.effect}${action.value ? ` ${action.value}` : ""}`);
+    switch (action.type) {
+      case "attack": {
+        const base = getSingleAttackDamage(action);
+        const mod = applyIncomingEnemyAttackDamage(base, ctx);
+        parts.push(mod !== base ? `⚔️ ${mod} (${base})` : `⚔️ ${base}`);
+        break;
+      }
+      case "multi_attack": {
+        const per = applyIncomingEnemyAttackDamage(action.dmg, ctx);
+        const showsDetail = per !== action.dmg;
+        parts.push(
+          showsDetail
+            ? `⚔️ ${per}×${action.count} (${action.dmg}×${action.count})`
+            : `⚔️ ${action.dmg}×${action.count}`,
+        );
+        break;
+      }
+      case "block":
+        parts.push(`🛡️ ${action.amount}`);
+        break;
+      case "debuff":
+        parts.push(`❗ ${action.effect}${debuffStacksLabel(action.value)}`);
+        break;
+      case "status":
+        parts.push(
+          `❗ ${action.effect}×${action.value} · ${statusLocationShort(action.location)}`,
+        );
+        break;
+      case "buff":
+        parts.push(`📈 ${action.effect} ${action.value}`);
+        break;
+      case "cowardly":
+        parts.push("🏃 Escape");
+        break;
+      case "stunned":
+        parts.push(`💫 Stunned ${action.value}`);
+        break;
+      default:
+        pushUnknown(parts, action as EnemyIntentAction);
     }
   }
   return parts.join(" · ");
@@ -107,7 +192,10 @@ export function sumAttackDamageFromActions(actions: EnemyIntentAction[] | undefi
   let damage = 0;
   for (const action of actions ?? []) {
     if (action.type === "attack") {
-      damage += action.value ?? 0;
+      damage += getSingleAttackDamage(action);
+    }
+    if (action.type === "multi_attack") {
+      damage += action.dmg * action.count;
     }
   }
   return damage;
@@ -121,7 +209,12 @@ export function sumIncomingAttackDamageFromActions(
   let damage = 0;
   for (const action of actions ?? []) {
     if (action.type === "attack") {
-      damage += applyIncomingEnemyAttackDamage(action.value ?? 0, ctx);
+      damage += applyIncomingEnemyAttackDamage(getSingleAttackDamage(action), ctx);
+    }
+    if (action.type === "multi_attack") {
+      for (let i = 0; i < action.count; i++) {
+        damage += applyIncomingEnemyAttackDamage(action.dmg, ctx);
+      }
     }
   }
   return damage;

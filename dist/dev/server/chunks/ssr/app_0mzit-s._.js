@@ -214,6 +214,10 @@ function getFormattedDescription(description, card) {
 "use strict";
 
 __turbopack_context__.s([
+    "formatBlockStatTitle",
+    ()=>formatBlockStatTitle,
+    "formatDamageStatTitle",
+    ()=>formatDamageStatTitle,
     "getBlockStats",
     ()=>getBlockStats,
     "getDamageStats",
@@ -239,6 +243,24 @@ function getBlockStats(block) {
         block,
         frail: Math.floor(block * frailMultiplier)
     };
+}
+function formatDamageStatTitle(baseDamage, cardType) {
+    if (baseDamage === undefined) return undefined;
+    if (cardType === "Attack") {
+        const s = getDamageStats(baseDamage);
+        if (!s) return String(baseDamage);
+        return `DMG ${s.dmg} · WEAK ${s.weak} · VULN ${s.vulnerable} · BOTH ${s.both}`;
+    }
+    return String(baseDamage);
+}
+function formatBlockStatTitle(baseBlock, cardType) {
+    if (baseBlock === undefined) return undefined;
+    if (cardType === "Attack" || cardType === "Skill") {
+        const s = getBlockStats(baseBlock);
+        if (!s) return String(baseBlock);
+        return `BLOCK ${s.block} · FRAIL ${s.frail}`;
+    }
+    return String(baseBlock);
 }
 }),
 "[project]/app/components/UI/cardVisualVariants.ts [app-ssr] (ecmascript)", ((__turbopack_context__) => {
@@ -649,7 +671,7 @@ function renderGalleryGlyphCluster(g, iconCls, textBaseCls, opts) {
                             "aria-hidden": true
                         }, void 0, false, {
                             fileName: "[project]/app/components/UI/Card.tsx",
-                            lineNumber: 123,
+                            lineNumber: 125,
                             columnNumber: 15
                         }, this) : null,
                         s.text != null && s.text !== "" ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -657,18 +679,18 @@ function renderGalleryGlyphCluster(g, iconCls, textBaseCls, opts) {
                             children: s.text
                         }, void 0, false, {
                             fileName: "[project]/app/components/UI/Card.tsx",
-                            lineNumber: 129,
+                            lineNumber: 131,
                             columnNumber: 15
                         }, this) : null
                     ]
                 }, i, true, {
                     fileName: "[project]/app/components/UI/Card.tsx",
-                    lineNumber: 121,
+                    lineNumber: 123,
                     columnNumber: 11
                 }, this))
         }, void 0, false, {
             fileName: "[project]/app/components/UI/Card.tsx",
-            lineNumber: 119,
+            lineNumber: 121,
             columnNumber: 7
         }, this);
     }
@@ -688,12 +710,12 @@ function renderGalleryGlyphCluster(g, iconCls, textBaseCls, opts) {
                 "aria-hidden": true
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/Card.tsx",
-                lineNumber: 145,
+                lineNumber: 147,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/app/components/UI/Card.tsx",
-            lineNumber: 139,
+            lineNumber: 141,
             columnNumber: 7
         }, this);
     }
@@ -776,14 +798,14 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                 className: chrome.topLine
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/Card.tsx",
-                lineNumber: 307,
+                lineNumber: 309,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: chrome.innerRim
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/Card.tsx",
-                lineNumber: 309,
+                lineNumber: 311,
                 columnNumber: 7
             }, this),
             !hideCostOrb && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -793,12 +815,12 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                     children: cardUsesXCost() ? "X" : getValue("cost")
                 }, void 0, false, {
                     fileName: "[project]/app/components/UI/Card.tsx",
-                    lineNumber: 315,
+                    lineNumber: 317,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/Card.tsx",
-                lineNumber: 312,
+                lineNumber: 314,
                 columnNumber: 9
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -816,7 +838,7 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                             children: card.name
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/Card.tsx",
-                                            lineNumber: 329,
+                                            lineNumber: 331,
                                             columnNumber: 15
                                         }, this),
                                         card.isUpgraded && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -824,13 +846,13 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                             children: "+"
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/Card.tsx",
-                                            lineNumber: 337,
+                                            lineNumber: 339,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 328,
+                                    lineNumber: 330,
                                     columnNumber: 13
                                 }, this),
                                 card.isChanged && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -838,18 +860,18 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     children: "CHANGED"
                                 }, void 0, false, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 343,
+                                    lineNumber: 345,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/components/UI/Card.tsx",
-                            lineNumber: 325,
+                            lineNumber: 327,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/app/components/UI/Card.tsx",
-                        lineNumber: 322,
+                        lineNumber: 324,
                         columnNumber: 9
                     }, this),
                     !stat && rawGalleryGlyphs.length > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -861,17 +883,17 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     children: renderGalleryGlyphCluster(g, SIZE_STYLES.small.galleryIcon, "text-[10px]")
                                 }, g.id, false, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 359,
+                                    lineNumber: 361,
                                     columnNumber: 17
                                 }, this))
                         }, void 0, false, {
                             fileName: "[project]/app/components/UI/Card.tsx",
-                            lineNumber: 357,
+                            lineNumber: 359,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/app/components/UI/Card.tsx",
-                        lineNumber: 353,
+                        lineNumber: 355,
                         columnNumber: 11
                     }, this) : null,
                     stat && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -886,10 +908,11 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                             } : undefined)
                                         }, g.id, false, {
                                             fileName: "[project]/app/components/UI/Card.tsx",
-                                            lineNumber: 374,
+                                            lineNumber: 376,
                                             columnNumber: 19
                                         }, this)),
                                     showDamageStatBlock ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        title: (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__["formatDamageStatTitle"])(getValue("damage"), card.type),
                                         className: `${stat.statMain} inline-flex items-center gap-0.5 ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getEffectDisplay"])("damage").color}`,
                                         children: [
                                             /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].createElement((0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getEffectDisplay"])("damage").icon, {
@@ -899,17 +922,18 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                        lineNumber: 384,
+                                        lineNumber: 386,
                                         columnNumber: 19
                                     }, this) : null
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 372,
+                                lineNumber: 374,
                                 columnNumber: 15
                             }, this) : null,
                             card.block !== undefined && !mergedSuppressStats?.block && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 className: blockRowGroupClass,
+                                title: (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__["formatBlockStatTitle"])(getValue("block"), card.type),
                                 children: [
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                         className: `${stat.statMain} flex items-center gap-0.5 ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getEffectDisplay"])("block").color}`,
@@ -921,7 +945,7 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                        lineNumber: 397,
+                                        lineNumber: 403,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -929,17 +953,18 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                         children: getFullBlock()?.frail
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                        lineNumber: 405,
+                                        lineNumber: 411,
                                         columnNumber: 17
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 396,
+                                lineNumber: 399,
                                 columnNumber: 15
                             }, this),
                             card.blockOnExhaust !== undefined && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 className: "flex items-center gap-1",
+                                title: (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__["formatBlockStatTitle"])(getValue("blockOnExhaust"), card.type),
                                 children: [
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                         className: `${stat.statMain} flex items-center gap-0.5 ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getEffectDisplay"])("block").color}`,
@@ -951,7 +976,7 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                        lineNumber: 414,
+                                        lineNumber: 423,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -959,13 +984,13 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                         children: getFullBlock()?.frail
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                        lineNumber: 422,
+                                        lineNumber: 431,
                                         columnNumber: 17
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 413,
+                                lineNumber: 419,
                                 columnNumber: 15
                             }, this),
                             card.draw !== undefined && !mergedSuppressStats?.draw && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -980,12 +1005,12 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 431,
+                                    lineNumber: 440,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 430,
+                                lineNumber: 439,
                                 columnNumber: 15
                             }, this),
                             card.takeDamage !== undefined && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1000,12 +1025,12 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 443,
+                                    lineNumber: 452,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 442,
+                                lineNumber: 451,
                                 columnNumber: 15
                             }, this),
                             getValue("hpcost") !== undefined && !mergedSuppressStats?.hpcost && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1020,12 +1045,12 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 455,
+                                    lineNumber: 464,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 454,
+                                lineNumber: 463,
                                 columnNumber: 15
                             }, this),
                             (card.energyGain != null || card.gainEnergy != null) && !mergedSuppressStats?.energyGain && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1040,12 +1065,12 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 469,
+                                    lineNumber: 478,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 468,
+                                lineNumber: 477,
                                 columnNumber: 15
                             }, this),
                             card.heal != null && !mergedSuppressStats?.heal && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1060,12 +1085,12 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 481,
+                                    lineNumber: 490,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 480,
+                                lineNumber: 489,
                                 columnNumber: 15
                             }, this),
                             card.focus != null && !mergedSuppressStats?.focus && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1080,12 +1105,12 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 493,
+                                    lineNumber: 502,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 492,
+                                lineNumber: 501,
                                 columnNumber: 15
                             }, this),
                             suffixGalleryGlyphs.length > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1095,18 +1120,18 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                         children: renderGalleryGlyphCluster(g, stat.galleryIcon, stat.galleryText)
                                     }, g.id, false, {
                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                        lineNumber: 509,
+                                        lineNumber: 518,
                                         columnNumber: 19
                                     }, this))
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 504,
+                                lineNumber: 513,
                                 columnNumber: 15
                             }, this) : null
                         ]
                     }, void 0, true, {
                         fileName: "[project]/app/components/UI/Card.tsx",
-                        lineNumber: 368,
+                        lineNumber: 370,
                         columnNumber: 11
                     }, this),
                     stat && card.description && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1114,7 +1139,7 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                         children: (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$descriptionPlaceholders$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getFormattedDescription"])(card.description, card)
                     }, void 0, false, {
                         fileName: "[project]/app/components/UI/Card.tsx",
-                        lineNumber: 523,
+                        lineNumber: 532,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1122,26 +1147,26 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                         children: card.type
                     }, void 0, false, {
                         fileName: "[project]/app/components/UI/Card.tsx",
-                        lineNumber: 530,
+                        lineNumber: 539,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/app/components/UI/Card.tsx",
-                lineNumber: 321,
+                lineNumber: 323,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: chrome.bottomLine
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/Card.tsx",
-                lineNumber: 537,
+                lineNumber: 546,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/app/components/UI/Card.tsx",
-        lineNumber: 281,
+        lineNumber: 283,
         columnNumber: 5
     }, this);
 }
@@ -1804,6 +1829,7 @@ const STAT_KEYS = [
     "KEY_INNATE",
     "KEY_ETHEREAL",
     "KEY_RETAIN",
+    "KEY_UNPLAYABLE",
     "DISCARD_ICON",
     "EVOKE_ICON",
     "CONDITIONAL_MARKER",
@@ -1853,6 +1879,7 @@ __turbopack_context__.s([
 ]);
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react-jsx-dev-runtime.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/client/app-dir/link.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/app/utils/effectDisplay.ts [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$gameHelpers$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/app/utils/gameHelpers.ts [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$context$2f$GameContext$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/app/context/GameContext.tsx [app-ssr] (ecmascript)");
@@ -1873,6 +1900,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 ;
 ;
 ;
+;
 const CARD_EFFECT_LEGEND = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$UI$2f$cardIconLegend$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getCardEffectLegendItems"])();
 function clampPct(n) {
     return Math.max(0, Math.min(100, n));
@@ -1882,12 +1910,50 @@ function TopBarLegendChip({ item, hoverSync, highlighted, showAllLabels, size })
     const labelForced = pinLabel || showAllLabels;
     const iconSize = size === "desktop" ? "h-3.5 w-3.5" : "h-3 w-3";
     const idleBorder = size === "mobile" ? "border-slate-600/50" : "border-slate-600/45";
-    const labelTextCls = size === "desktop" ? "truncate text-[9px] font-medium leading-none text-slate-200/95" : "truncate text-[8px] font-medium text-slate-200";
-    const labelRevealCls = size === "desktop" ? labelForced ? "max-w-[10rem] opacity-100" : "max-w-0 opacity-0 overflow-hidden group-hover/chip:max-w-[10rem] group-hover/chip:opacity-100" : labelForced ? "max-w-[5.5rem] opacity-100" : "max-w-0 opacity-0 overflow-hidden group-hover/chip:max-w-[5.5rem] group-hover/chip:opacity-100";
+    const shellCls = !hoverSync ? `${idleBorder} bg-slate-900/55 group-hover/chip:bg-slate-900/70` : highlighted ? "border-cyan-400/55 bg-cyan-950/45 ring-1 ring-cyan-400/35 shadow-[0_0_12px_rgba(34,211,238,0.14)]" : "border-slate-700/35 bg-slate-950/35 opacity-45 group-hover/chip:opacity-90";
+    const labelTextCls = size === "desktop" ? "text-[9px] font-medium leading-snug text-slate-200/95" : "text-[8px] font-medium leading-snug text-slate-200";
+    const tooltipLabelTextCls = size === "desktop" ? "text-xs font-medium leading-snug text-slate-100" : "text-[11px] font-medium leading-snug text-slate-100";
+    /** Hover-only: float label beside icon so flex row width never toggles (avoids jitter on last chip). */ if (!labelForced) {
+        return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+            className: "group/chip relative inline-flex shrink-0",
+            title: item.label,
+            "aria-label": item.label,
+            children: [
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                    className: `inline-flex items-center justify-center rounded-md border p-1 shadow-sm shadow-black/20 transition-[opacity,box-shadow,border-color,background-color] ${shellCls}`,
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(item.Icon, {
+                        className: `${iconSize} shrink-0 ${item.iconClass}`,
+                        strokeWidth: 2.25,
+                        "aria-hidden": true
+                    }, void 0, false, {
+                        fileName: "[project]/app/components/UI/TopBarBlock.tsx",
+                        lineNumber: 63,
+                        columnNumber: 11
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/app/components/UI/TopBarBlock.tsx",
+                    lineNumber: 60,
+                    columnNumber: 9
+                }, this),
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                    className: `pointer-events-none absolute left-1/2 top-full z-30 mt-1 w-max max-w-[min(14rem,calc(100vw-1.5rem))] -translate-x-1/2 whitespace-normal rounded-md border border-slate-600/70 bg-slate-900/95 px-2.5 py-1.5 text-center shadow-lg shadow-black/40 opacity-0 transition-opacity duration-150 group-hover/chip:opacity-100 ${tooltipLabelTextCls}`,
+                    children: item.label
+                }, void 0, false, {
+                    fileName: "[project]/app/components/UI/TopBarBlock.tsx",
+                    lineNumber: 65,
+                    columnNumber: 9
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/app/components/UI/TopBarBlock.tsx",
+            lineNumber: 59,
+            columnNumber: 7
+        }, this);
+    }
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
         title: item.label,
         "aria-label": item.label,
-        className: `group/chip inline-flex items-center rounded-md border shadow-sm shadow-black/20 transition-[opacity,box-shadow,border-color,background-color,gap,padding,max-width] ${labelForced ? "gap-1 px-1.5 py-0.5" : "justify-center p-1 group-hover/chip:gap-1 group-hover/chip:px-1.5 group-hover/chip:py-0.5"} ${!hoverSync ? `${idleBorder} bg-slate-900/55 group-hover/chip:bg-slate-900/70` : highlighted ? "border-cyan-400/55 bg-cyan-950/45 ring-1 ring-cyan-400/35 shadow-[0_0_12px_rgba(34,211,238,0.14)]" : "border-slate-700/35 bg-slate-950/35 opacity-45 group-hover/chip:opacity-90"}`,
+        className: `inline-flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 shadow-sm shadow-black/20 transition-[opacity,box-shadow,border-color,background-color] ${shellCls}`,
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(item.Icon, {
                 className: `${iconSize} shrink-0 ${item.iconClass}`,
@@ -1895,21 +1961,21 @@ function TopBarLegendChip({ item, hoverSync, highlighted, showAllLabels, size })
                 "aria-hidden": true
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                lineNumber: 69,
+                lineNumber: 80,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                className: `${labelTextCls} transition-[max-width,opacity] duration-200 ${labelRevealCls}`,
+                className: `truncate ${size === "mobile" ? "max-w-[5.5rem]" : "max-w-[10rem] sm:max-w-[12rem]"} ${labelTextCls}`,
                 children: item.label
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                lineNumber: 70,
+                lineNumber: 81,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-        lineNumber: 54,
+        lineNumber: 75,
         columnNumber: 5
     }, this);
 }
@@ -1980,7 +2046,7 @@ function TopBarBlock() {
                 "aria-label": "Load combat JSON file"
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                lineNumber: 145,
+                lineNumber: 158,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2000,14 +2066,14 @@ function TopBarBlock() {
                                             "aria-hidden": true
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 165,
+                                            lineNumber: 178,
                                             columnNumber: 13
                                         }, this),
                                         "Player"
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                    lineNumber: 164,
+                                    lineNumber: 177,
                                     columnNumber: 11
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2029,12 +2095,12 @@ function TopBarBlock() {
                                                                         className: `${hpEffect.color} h-4 w-4`
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                        lineNumber: 185,
+                                                                        lineNumber: 198,
                                                                         columnNumber: 21
                                                                     }, this)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 179,
+                                                                    lineNumber: 192,
                                                                     columnNumber: 19
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2045,7 +2111,7 @@ function TopBarBlock() {
                                                                             children: "Health"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                            lineNumber: 188,
+                                                                            lineNumber: 201,
                                                                             columnNumber: 21
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2053,19 +2119,19 @@ function TopBarBlock() {
                                                                             children: "Pool"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                            lineNumber: 189,
+                                                                            lineNumber: 202,
                                                                             columnNumber: 21
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 187,
+                                                                    lineNumber: 200,
                                                                     columnNumber: 19
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 178,
+                                                            lineNumber: 191,
                                                             columnNumber: 17
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2076,7 +2142,7 @@ function TopBarBlock() {
                                                                     children: playerHp
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 193,
+                                                                    lineNumber: 206,
                                                                     columnNumber: 19
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -2087,19 +2153,19 @@ function TopBarBlock() {
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 194,
+                                                                    lineNumber: 207,
                                                                     columnNumber: 19
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 192,
+                                                            lineNumber: 205,
                                                             columnNumber: 17
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 177,
+                                                    lineNumber: 190,
                                                     columnNumber: 15
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2116,18 +2182,18 @@ function TopBarBlock() {
                                                         }
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 205,
+                                                        lineNumber: 218,
                                                         columnNumber: 17
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 197,
+                                                    lineNumber: 210,
                                                     columnNumber: 15
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 170,
+                                            lineNumber: 183,
                                             columnNumber: 13
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2146,12 +2212,12 @@ function TopBarBlock() {
                                                                         className: `${energyEffect.color} h-4 w-4`
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                        lineNumber: 222,
+                                                                        lineNumber: 235,
                                                                         columnNumber: 21
                                                                     }, this)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 218,
+                                                                    lineNumber: 231,
                                                                     columnNumber: 19
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2162,7 +2228,7 @@ function TopBarBlock() {
                                                                             children: "Energy"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                            lineNumber: 225,
+                                                                            lineNumber: 238,
                                                                             columnNumber: 21
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2170,19 +2236,19 @@ function TopBarBlock() {
                                                                             children: "This turn"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                            lineNumber: 226,
+                                                                            lineNumber: 239,
                                                                             columnNumber: 21
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 224,
+                                                                    lineNumber: 237,
                                                                     columnNumber: 19
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 217,
+                                                            lineNumber: 230,
                                                             columnNumber: 17
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2193,7 +2259,7 @@ function TopBarBlock() {
                                                                     children: currentEnergy
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 230,
+                                                                    lineNumber: 243,
                                                                     columnNumber: 19
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -2204,19 +2270,19 @@ function TopBarBlock() {
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 233,
+                                                                    lineNumber: 246,
                                                                     columnNumber: 19
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 229,
+                                                            lineNumber: 242,
                                                             columnNumber: 17
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 216,
+                                                    lineNumber: 229,
                                                     columnNumber: 15
                                                 }, this),
                                                 energyMax > 0 ? showEnergyPips ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2228,12 +2294,12 @@ function TopBarBlock() {
                                                             className: `h-2.5 w-2.5 rounded-sm border-2 ${i < currentEnergy ? "border-amber-300 bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.5)]" : "border-amber-700/50 bg-amber-950/60"}`
                                                         }, i, false, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 240,
+                                                            lineNumber: 253,
                                                             columnNumber: 23
                                                         }, this))
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 238,
+                                                    lineNumber: 251,
                                                     columnNumber: 19
                                                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                     className: "h-2.5 w-full overflow-hidden rounded-full border border-amber-900/50 bg-amber-950/80",
@@ -2249,25 +2315,25 @@ function TopBarBlock() {
                                                         }
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 259,
+                                                        lineNumber: 272,
                                                         columnNumber: 21
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 251,
+                                                    lineNumber: 264,
                                                     columnNumber: 19
                                                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                     className: "text-center text-[10px] text-amber-200/40",
                                                     children: "—"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 266,
+                                                    lineNumber: 279,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 215,
+                                            lineNumber: 228,
                                             columnNumber: 13
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2286,12 +2352,12 @@ function TopBarBlock() {
                                                                         className: `${blockEffect.color} h-4 w-4`
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                        lineNumber: 288,
+                                                                        lineNumber: 301,
                                                                         columnNumber: 21
                                                                     }, this)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 280,
+                                                                    lineNumber: 293,
                                                                     columnNumber: 19
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2302,7 +2368,7 @@ function TopBarBlock() {
                                                                             children: "Block"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                            lineNumber: 291,
+                                                                            lineNumber: 304,
                                                                             columnNumber: 21
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2310,19 +2376,19 @@ function TopBarBlock() {
                                                                             children: "Defense"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                            lineNumber: 298,
+                                                                            lineNumber: 311,
                                                                             columnNumber: 21
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 290,
+                                                                    lineNumber: 303,
                                                                     columnNumber: 19
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 279,
+                                                            lineNumber: 292,
                                                             columnNumber: 17
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2330,13 +2396,13 @@ function TopBarBlock() {
                                                             children: currentBlock
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 301,
+                                                            lineNumber: 314,
                                                             columnNumber: 17
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 278,
+                                                    lineNumber: 291,
                                                     columnNumber: 15
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2346,30 +2412,30 @@ function TopBarBlock() {
                                                         className: "h-full w-full min-w-[20%] rounded-full bg-gradient-to-r from-sky-700 to-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.35)]"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 318,
+                                                        lineNumber: 331,
                                                         columnNumber: 19
                                                     }, this) : null
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 309,
+                                                    lineNumber: 322,
                                                     columnNumber: 15
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 271,
+                                            lineNumber: 284,
                                             columnNumber: 13
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                    lineNumber: 168,
+                                    lineNumber: 181,
                                     columnNumber: 11
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                            lineNumber: 157,
+                            lineNumber: 170,
                             columnNumber: 9
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2379,7 +2445,7 @@ function TopBarBlock() {
                                     className: "flex min-w-0 flex-col items-stretch gap-2 min-[1000px]:flex-row min-[1000px]:items-stretch min-[1000px]:gap-3",
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                            className: "min-w-0 flex-1 rounded-2xl border border-cyan-500/30 bg-cyan-950/25 p-2.5 ring-1 ring-cyan-500/10 sm:p-3",
+                                            className: "min-w-0 flex-1 overflow-visible rounded-2xl border border-cyan-500/30 bg-cyan-950/25 p-2.5 ring-1 ring-cyan-500/10 sm:p-3",
                                             role: "region",
                                             "aria-label": "Card effect icons legend",
                                             children: [
@@ -2395,7 +2461,7 @@ function TopBarBlock() {
                                                                     "aria-hidden": true
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 337,
+                                                                    lineNumber: 350,
                                                                     columnNumber: 19
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -2403,13 +2469,13 @@ function TopBarBlock() {
                                                                     children: "Symbols legend"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 338,
+                                                                    lineNumber: 351,
                                                                     columnNumber: 19
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 336,
+                                                            lineNumber: 349,
                                                             columnNumber: 17
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2421,17 +2487,17 @@ function TopBarBlock() {
                                                             children: legendShowAllLabels ? "Icons only" : "Show all"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 340,
+                                                            lineNumber: 353,
                                                             columnNumber: 17
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 335,
+                                                    lineNumber: 348,
                                                     columnNumber: 15
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                    className: "flex min-h-[4rem] max-h-[9rem] flex-wrap content-start gap-1.5 overflow-y-auto pr-0.5 [scrollbar-width:thin] sm:max-h-[10rem] md:max-h-[11rem]",
+                                                    className: "flex min-h-[4rem] min-w-0 flex-wrap content-start gap-1.5 px-0.5 pb-1",
                                                     children: sortedLegend.map((item)=>{
                                                         const hoverSync = hoveredCard != null;
                                                         const highlighted = highlightIds.has(item.id);
@@ -2443,19 +2509,19 @@ function TopBarBlock() {
                                                             size: "desktop"
                                                         }, item.id, false, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 355,
+                                                            lineNumber: 368,
                                                             columnNumber: 21
                                                         }, this);
                                                     })
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 350,
+                                                    lineNumber: 363,
                                                     columnNumber: 15
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 330,
+                                            lineNumber: 343,
                                             columnNumber: 13
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2470,7 +2536,17 @@ function TopBarBlock() {
                                                     children: isLoading ? "Loading…" : "Load data"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 368,
+                                                    lineNumber: 381,
+                                                    columnNumber: 15
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
+                                                    href: "/decision-timeline",
+                                                    className: "rounded-xl border border-cyan-500/45 bg-cyan-950/50 px-3.5 py-2 text-center text-xs font-semibold text-cyan-100 shadow-sm transition hover:bg-cyan-900/55",
+                                                    title: "Branching decision tree for this combat",
+                                                    children: "Timeline"
+                                                }, void 0, false, {
+                                                    fileName: "[project]/app/components/UI/TopBarBlock.tsx",
+                                                    lineNumber: 390,
                                                     columnNumber: 15
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2481,19 +2557,19 @@ function TopBarBlock() {
                                                     children: "Add Card"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 377,
+                                                    lineNumber: 397,
                                                     columnNumber: 15
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 367,
+                                            lineNumber: 380,
                                             columnNumber: 13
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                    lineNumber: 329,
+                                    lineNumber: 342,
                                     columnNumber: 11
                                 }, this),
                                 loadError ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2502,24 +2578,24 @@ function TopBarBlock() {
                                     children: loadError
                                 }, void 0, false, {
                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                    lineNumber: 388,
+                                    lineNumber: 408,
                                     columnNumber: 13
                                 }, this) : null
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                            lineNumber: 328,
+                            lineNumber: 341,
                             columnNumber: 9
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                    lineNumber: 155,
+                    lineNumber: 168,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                lineNumber: 154,
+                lineNumber: 167,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2542,14 +2618,14 @@ function TopBarBlock() {
                                                     "aria-hidden": true
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 402,
+                                                    lineNumber: 422,
                                                     columnNumber: 17
                                                 }, this),
                                                 "Player"
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 401,
+                                            lineNumber: 421,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2564,7 +2640,7 @@ function TopBarBlock() {
                                                         children: "Less"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 414,
+                                                        lineNumber: 434,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$up$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronUp$3e$__["ChevronUp"], {
@@ -2572,7 +2648,7 @@ function TopBarBlock() {
                                                         strokeWidth: 2.5
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 415,
+                                                        lineNumber: 435,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
@@ -2582,7 +2658,7 @@ function TopBarBlock() {
                                                         children: "Details"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 419,
+                                                        lineNumber: 439,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$down$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronDown$3e$__["ChevronDown"], {
@@ -2590,20 +2666,20 @@ function TopBarBlock() {
                                                         strokeWidth: 2.5
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 420,
+                                                        lineNumber: 440,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true)
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 405,
+                                            lineNumber: 425,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                    lineNumber: 400,
+                                    lineNumber: 420,
                                     columnNumber: 13
                                 }, this),
                                 !mobileVitalsOpen ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2617,7 +2693,7 @@ function TopBarBlock() {
                                                     children: "HP"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 433,
+                                                    lineNumber: 453,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2632,13 +2708,13 @@ function TopBarBlock() {
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 436,
+                                                            lineNumber: 456,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 434,
+                                                    lineNumber: 454,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2652,18 +2728,18 @@ function TopBarBlock() {
                                                         }
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 443,
+                                                        lineNumber: 463,
                                                         columnNumber: 21
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 438,
+                                                    lineNumber: 458,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 428,
+                                            lineNumber: 448,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2674,7 +2750,7 @@ function TopBarBlock() {
                                                     children: "NRG"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 450,
+                                                    lineNumber: 470,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2689,13 +2765,13 @@ function TopBarBlock() {
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 453,
+                                                            lineNumber: 473,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 451,
+                                                    lineNumber: 471,
                                                     columnNumber: 19
                                                 }, this),
                                                 showEnergyPips && energyMax > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2706,18 +2782,18 @@ function TopBarBlock() {
                                                             className: `h-1.5 w-1.5 rounded-sm border ${i < currentEnergy ? "border-amber-300 bg-amber-400" : "border-amber-800/50 bg-amber-950/60"}`
                                                         }, i, false, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 458,
+                                                            lineNumber: 478,
                                                             columnNumber: 25
                                                         }, this))
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 456,
+                                                    lineNumber: 476,
                                                     columnNumber: 21
                                                 }, this) : null
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 449,
+                                            lineNumber: 469,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2728,7 +2804,7 @@ function TopBarBlock() {
                                                     children: "Blk"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 475,
+                                                    lineNumber: 495,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2736,19 +2812,19 @@ function TopBarBlock() {
                                                     children: currentBlock
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 482,
+                                                    lineNumber: 502,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 470,
+                                            lineNumber: 490,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                    lineNumber: 427,
+                                    lineNumber: 447,
                                     columnNumber: 15
                                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                     className: "max-h-[70vh] space-y-2 overflow-y-auto p-2 [scrollbar-width:thin]",
@@ -2768,12 +2844,12 @@ function TopBarBlock() {
                                                                         className: `${hpEffect.color} h-3.5 w-3.5`
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                        lineNumber: 507,
+                                                                        lineNumber: 527,
                                                                         columnNumber: 25
                                                                     }, this)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 502,
+                                                                    lineNumber: 522,
                                                                     columnNumber: 23
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2781,13 +2857,13 @@ function TopBarBlock() {
                                                                     children: "Health"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 509,
+                                                                    lineNumber: 529,
                                                                     columnNumber: 23
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 501,
+                                                            lineNumber: 521,
                                                             columnNumber: 21
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2799,13 +2875,13 @@ function TopBarBlock() {
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 511,
+                                                            lineNumber: 531,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 500,
+                                                    lineNumber: 520,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2817,18 +2893,18 @@ function TopBarBlock() {
                                                         }
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 516,
+                                                        lineNumber: 536,
                                                         columnNumber: 21
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 515,
+                                                    lineNumber: 535,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 493,
+                                            lineNumber: 513,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2846,12 +2922,12 @@ function TopBarBlock() {
                                                                         className: `${energyEffect.color} h-3.5 w-3.5`
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                        lineNumber: 523,
+                                                                        lineNumber: 543,
                                                                         columnNumber: 25
                                                                     }, this)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 522,
+                                                                    lineNumber: 542,
                                                                     columnNumber: 23
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2859,13 +2935,13 @@ function TopBarBlock() {
                                                                     children: "Energy"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 525,
+                                                                    lineNumber: 545,
                                                                     columnNumber: 23
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 521,
+                                                            lineNumber: 541,
                                                             columnNumber: 21
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2877,13 +2953,13 @@ function TopBarBlock() {
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 527,
+                                                            lineNumber: 547,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 520,
+                                                    lineNumber: 540,
                                                     columnNumber: 19
                                                 }, this),
                                                 energyMax > 0 && showEnergyPips ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2894,18 +2970,18 @@ function TopBarBlock() {
                                                             className: `h-2 w-2 rounded-sm border-2 ${i < currentEnergy ? "border-amber-300 bg-amber-400" : "border-amber-700/50 bg-amber-950/60"}`
                                                         }, i, false, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 534,
+                                                            lineNumber: 554,
                                                             columnNumber: 25
                                                         }, this))
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 532,
+                                                    lineNumber: 552,
                                                     columnNumber: 21
                                                 }, this) : null
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 519,
+                                            lineNumber: 539,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2922,12 +2998,12 @@ function TopBarBlock() {
                                                                     className: `${blockEffect.color} h-3.5 w-3.5`
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                    lineNumber: 562,
+                                                                    lineNumber: 582,
                                                                     columnNumber: 25
                                                                 }, this)
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                lineNumber: 555,
+                                                                lineNumber: 575,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2935,13 +3011,13 @@ function TopBarBlock() {
                                                                 children: "Block"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                                lineNumber: 564,
+                                                                lineNumber: 584,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 554,
+                                                        lineNumber: 574,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2949,37 +3025,37 @@ function TopBarBlock() {
                                                         children: currentBlock
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                        lineNumber: 566,
+                                                        lineNumber: 586,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                lineNumber: 553,
+                                                lineNumber: 573,
                                                 columnNumber: 19
                                             }, this)
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 546,
+                                            lineNumber: 566,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                    lineNumber: 492,
+                                    lineNumber: 512,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                            lineNumber: 399,
+                            lineNumber: 419,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                             className: "space-y-2",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "rounded-xl border border-cyan-500/40 bg-cyan-950/30 p-2.5 ring-1 ring-cyan-500/15",
+                                    className: "min-w-0 overflow-visible rounded-xl border border-cyan-500/40 bg-cyan-950/30 p-2.5 ring-1 ring-cyan-500/15",
                                     role: "region",
                                     "aria-label": "Card effect icons legend",
                                     children: [
@@ -2995,7 +3071,7 @@ function TopBarBlock() {
                                                             "aria-hidden": true
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 587,
+                                                            lineNumber: 607,
                                                             columnNumber: 19
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -3003,13 +3079,13 @@ function TopBarBlock() {
                                                             children: "Symbols"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                            lineNumber: 588,
+                                                            lineNumber: 608,
                                                             columnNumber: 19
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 586,
+                                                    lineNumber: 606,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -3021,17 +3097,17 @@ function TopBarBlock() {
                                                     children: legendShowAllLabels ? "Icons" : "All"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 590,
+                                                    lineNumber: 610,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 585,
+                                            lineNumber: 605,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                            className: "flex max-h-40 flex-wrap gap-1 overflow-y-auto [scrollbar-width:thin]",
+                                            className: "flex min-w-0 flex-wrap gap-1 px-0.5 pb-1",
                                             children: sortedLegend.map((item)=>{
                                                 const hoverSync = hoveredCard != null;
                                                 const highlighted = highlightIds.has(item.id);
@@ -3043,19 +3119,19 @@ function TopBarBlock() {
                                                     size: "mobile"
                                                 }, item.id, false, {
                                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                                    lineNumber: 605,
+                                                    lineNumber: 625,
                                                     columnNumber: 21
                                                 }, this);
                                             })
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 600,
+                                            lineNumber: 620,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                    lineNumber: 580,
+                                    lineNumber: 600,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3069,7 +3145,16 @@ function TopBarBlock() {
                                             children: isLoading ? "…" : "Load data"
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 618,
+                                            lineNumber: 638,
+                                            columnNumber: 15
+                                        }, this),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
+                                            href: "/decision-timeline",
+                                            className: "min-w-0 flex-1 rounded-lg border border-cyan-500/45 bg-cyan-950/55 py-2.5 text-center text-[11px] font-semibold text-cyan-100 active:scale-[0.99]",
+                                            children: "Timeline"
+                                        }, void 0, false, {
+                                            fileName: "[project]/app/components/UI/TopBarBlock.tsx",
+                                            lineNumber: 646,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -3080,19 +3165,19 @@ function TopBarBlock() {
                                             children: "Add card"
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                            lineNumber: 626,
+                                            lineNumber: 652,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                                    lineNumber: 617,
+                                    lineNumber: 637,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                            lineNumber: 579,
+                            lineNumber: 599,
                             columnNumber: 11
                         }, this),
                         loadError ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3101,18 +3186,18 @@ function TopBarBlock() {
                             children: loadError
                         }, void 0, false, {
                             fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                            lineNumber: 638,
+                            lineNumber: 664,
                             columnNumber: 13
                         }, this) : null
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                    lineNumber: 398,
+                    lineNumber: 418,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                lineNumber: 397,
+                lineNumber: 417,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$CardDBModal$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -3121,13 +3206,13 @@ function TopBarBlock() {
                 onAddCard: addCardFromDB
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-                lineNumber: 645,
+                lineNumber: 671,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/app/components/UI/TopBarBlock.tsx",
-        lineNumber: 144,
+        lineNumber: 157,
         columnNumber: 5
     }, this);
 }

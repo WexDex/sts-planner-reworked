@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { getEffectDisplay } from "@/app/utils/effectDisplay";
 import { getPlayerMaxEnergy, importGameData } from "@/app/utils/gameHelpers";
 import { useGameManager } from "@/app/context/GameContext";
@@ -36,38 +37,50 @@ function TopBarLegendChip({
   const iconSize = size === "desktop" ? "h-3.5 w-3.5" : "h-3 w-3";
   const idleBorder = size === "mobile" ? "border-slate-600/50" : "border-slate-600/45";
 
+  const shellCls =
+    !hoverSync
+      ? `${idleBorder} bg-slate-900/55 group-hover/chip:bg-slate-900/70`
+      : highlighted
+        ? "border-cyan-400/55 bg-cyan-950/45 ring-1 ring-cyan-400/35 shadow-[0_0_12px_rgba(34,211,238,0.14)]"
+        : "border-slate-700/35 bg-slate-950/35 opacity-45 group-hover/chip:opacity-90";
+
   const labelTextCls =
     size === "desktop"
-      ? "truncate text-[9px] font-medium leading-none text-slate-200/95"
-      : "truncate text-[8px] font-medium text-slate-200";
-
-  const labelRevealCls =
+      ? "text-[9px] font-medium leading-snug text-slate-200/95"
+      : "text-[8px] font-medium leading-snug text-slate-200";
+  const tooltipLabelTextCls =
     size === "desktop"
-      ? labelForced
-        ? "max-w-[10rem] opacity-100"
-        : "max-w-0 opacity-0 overflow-hidden group-hover/chip:max-w-[10rem] group-hover/chip:opacity-100"
-      : labelForced
-        ? "max-w-[5.5rem] opacity-100"
-        : "max-w-0 opacity-0 overflow-hidden group-hover/chip:max-w-[5.5rem] group-hover/chip:opacity-100";
+      ? "text-xs font-medium leading-snug text-slate-100"
+      : "text-[11px] font-medium leading-snug text-slate-100";
+
+  /** Hover-only: float label beside icon so flex row width never toggles (avoids jitter on last chip). */
+  if (!labelForced) {
+    return (
+      <span className="group/chip relative inline-flex shrink-0" title={item.label} aria-label={item.label}>
+        <span
+          className={`inline-flex items-center justify-center rounded-md border p-1 shadow-sm shadow-black/20 transition-[opacity,box-shadow,border-color,background-color] ${shellCls}`}
+        >
+          <item.Icon className={`${iconSize} shrink-0 ${item.iconClass}`} strokeWidth={2.25} aria-hidden />
+        </span>
+        <span
+          className={`pointer-events-none absolute left-1/2 top-full z-30 mt-1 w-max max-w-[min(14rem,calc(100vw-1.5rem))] -translate-x-1/2 whitespace-normal rounded-md border border-slate-600/70 bg-slate-900/95 px-2.5 py-1.5 text-center shadow-lg shadow-black/40 opacity-0 transition-opacity duration-150 group-hover/chip:opacity-100 ${tooltipLabelTextCls}`}
+        >
+          {item.label}
+        </span>
+      </span>
+    );
+  }
 
   return (
     <span
       title={item.label}
       aria-label={item.label}
-      className={`group/chip inline-flex items-center rounded-md border shadow-sm shadow-black/20 transition-[opacity,box-shadow,border-color,background-color,gap,padding,max-width] ${
-        labelForced
-          ? "gap-1 px-1.5 py-0.5"
-          : "justify-center p-1 group-hover/chip:gap-1 group-hover/chip:px-1.5 group-hover/chip:py-0.5"
-      } ${
-        !hoverSync
-          ? `${idleBorder} bg-slate-900/55 group-hover/chip:bg-slate-900/70`
-          : highlighted
-            ? "border-cyan-400/55 bg-cyan-950/45 ring-1 ring-cyan-400/35 shadow-[0_0_12px_rgba(34,211,238,0.14)]"
-            : "border-slate-700/35 bg-slate-950/35 opacity-45 group-hover/chip:opacity-90"
-      }`}
+      className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 shadow-sm shadow-black/20 transition-[opacity,box-shadow,border-color,background-color] ${shellCls}`}
     >
       <item.Icon className={`${iconSize} shrink-0 ${item.iconClass}`} strokeWidth={2.25} aria-hidden />
-      <span className={`${labelTextCls} transition-[max-width,opacity] duration-200 ${labelRevealCls}`}>
+      <span
+        className={`truncate ${size === "mobile" ? "max-w-[5.5rem]" : "max-w-[10rem] sm:max-w-[12rem]"} ${labelTextCls}`}
+      >
         {item.label}
       </span>
     </span>
@@ -328,7 +341,7 @@ export default function TopBarBlock() {
         <div className="flex w-full min-w-0 flex-1 flex-col gap-2 lg:max-w-none">
           <div className="flex min-w-0 flex-col items-stretch gap-2 min-[1000px]:flex-row min-[1000px]:items-stretch min-[1000px]:gap-3">
             <div
-              className="min-w-0 flex-1 rounded-2xl border border-cyan-500/30 bg-cyan-950/25 p-2.5 ring-1 ring-cyan-500/10 sm:p-3"
+              className="min-w-0 flex-1 overflow-visible rounded-2xl border border-cyan-500/30 bg-cyan-950/25 p-2.5 ring-1 ring-cyan-500/10 sm:p-3"
               role="region"
               aria-label="Card effect icons legend"
             >
@@ -347,7 +360,7 @@ export default function TopBarBlock() {
                   {legendShowAllLabels ? "Icons only" : "Show all"}
                 </button>
               </div>
-              <div className="flex min-h-[4rem] max-h-[9rem] flex-wrap content-start gap-1.5 overflow-y-auto pr-0.5 [scrollbar-width:thin] sm:max-h-[10rem] md:max-h-[11rem]">
+              <div className="flex min-h-[4rem] min-w-0 flex-wrap content-start gap-1.5 px-0.5 pb-1">
                 {sortedLegend.map((item) => {
                   const hoverSync = hoveredCard != null;
                   const highlighted = highlightIds.has(item.id);
@@ -374,6 +387,20 @@ export default function TopBarBlock() {
               >
                 {isLoading ? "Loading…" : "Load data"}
               </button>
+              <Link
+                href="/turn-maker"
+                className="rounded-xl border border-amber-500/40 bg-amber-950/40 px-3 py-2 text-center text-xs font-semibold text-amber-100 shadow-sm transition hover:bg-amber-900/50"
+                title="Edit enemy turn intents"
+              >
+                Turns
+              </Link>
+              <Link
+                href="/decision-timeline"
+                className="rounded-xl border border-cyan-500/45 bg-cyan-950/50 px-3.5 py-2 text-center text-xs font-semibold text-cyan-100 shadow-sm transition hover:bg-cyan-900/55"
+                title="Branching decision tree for this combat"
+              >
+                Timeline
+              </Link>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(true)}
@@ -578,7 +605,7 @@ export default function TopBarBlock() {
 
           <div className="space-y-2">
             <div
-              className="rounded-xl border border-cyan-500/40 bg-cyan-950/30 p-2.5 ring-1 ring-cyan-500/15"
+              className="min-w-0 overflow-visible rounded-xl border border-cyan-500/40 bg-cyan-950/30 p-2.5 ring-1 ring-cyan-500/15"
               role="region"
               aria-label="Card effect icons legend"
             >
@@ -597,7 +624,7 @@ export default function TopBarBlock() {
                   {legendShowAllLabels ? "Icons" : "All"}
                 </button>
               </div>
-              <div className="flex max-h-40 flex-wrap gap-1 overflow-y-auto [scrollbar-width:thin]">
+              <div className="flex min-w-0 flex-wrap gap-1 px-0.5 pb-1">
                 {sortedLegend.map((item) => {
                   const hoverSync = hoveredCard != null;
                   const highlighted = highlightIds.has(item.id);
@@ -623,6 +650,18 @@ export default function TopBarBlock() {
               >
                 {isLoading ? "…" : "Load data"}
               </button>
+              <Link
+                href="/turn-maker"
+                className="min-w-0 flex-1 rounded-lg border border-amber-500/40 bg-amber-950/45 py-2.5 text-center text-[11px] font-semibold text-amber-100 active:scale-[0.99]"
+              >
+                Turns
+              </Link>
+              <Link
+                href="/decision-timeline"
+                className="min-w-0 flex-1 rounded-lg border border-cyan-500/45 bg-cyan-950/55 py-2.5 text-center text-[11px] font-semibold text-cyan-100 active:scale-[0.99]"
+              >
+                Timeline
+              </Link>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(true)}

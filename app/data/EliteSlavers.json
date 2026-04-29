@@ -6,6 +6,7 @@
       "base": 3,
       "turn1Bonus": 1
     },
+    "characters": "ironclad",
     "combatType": "Elite",
     "combatName": "Slavers",
     "floor": 23,
@@ -202,7 +203,7 @@
           "actions": [
             {
               "type": "attack",
-              "value": 8
+              "dmg": 8
             },
             {
               "type": "debuff",
@@ -216,7 +217,7 @@
           "actions": [
             {
               "type": "attack",
-              "value": 13
+              "dmg": 13
             }
           ]
         },
@@ -225,7 +226,7 @@
           "actions": [
             {
               "type": "attack",
-              "value": 8
+              "dmg": 8
             },
             {
               "type": "debuff",
@@ -239,7 +240,7 @@
           "actions": [
             {
               "type": "attack",
-              "value": 13
+              "dmg": 13
             }
           ]
         }
@@ -255,12 +256,13 @@
           "actions": [
             {
               "type": "attack",
-              "value": 7
+              "dmg": 7
             },
             {
               "type": "status",
               "effect": "Wound",
-              "value": 3
+              "value": 3,
+              "location": "discard"
             },
             {
               "type": "buff",
@@ -274,12 +276,13 @@
           "actions": [
             {
               "type": "attack",
-              "value": 8
+              "dmg": 8
             },
             {
               "type": "status",
               "effect": "Wound",
-              "value": 3
+              "value": 3,
+              "location": "discard"
             },
             {
               "type": "buff",
@@ -293,12 +296,13 @@
           "actions": [
             {
               "type": "attack",
-              "value": 9
+              "dmg": 9
             },
             {
               "type": "status",
               "effect": "Wound",
-              "value": 3
+              "value": 3,
+              "location": "discard"
             },
             {
               "type": "buff",
@@ -312,12 +316,13 @@
           "actions": [
             {
               "type": "attack",
-              "value": 10
+              "dmg": 10
             },
             {
               "type": "status",
               "effect": "Wound",
-              "value": 3
+              "value": 3,
+              "location": "discard"
             },
             {
               "type": "buff",
@@ -338,7 +343,7 @@
           "actions": [
             {
               "type": "attack",
-              "value": 14
+              "dmg": 14
             }
           ]
         },
@@ -357,7 +362,7 @@
           "actions": [
             {
               "type": "attack",
-              "value": 9
+              "dmg": 9
             },
             {
               "type": "debuff",
@@ -371,7 +376,7 @@
           "actions": [
             {
               "type": "attack",
-              "value": 14
+              "dmg": 14
             }
           ]
         }

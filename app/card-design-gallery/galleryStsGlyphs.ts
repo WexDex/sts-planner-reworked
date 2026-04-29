@@ -11,6 +11,7 @@ import {
   Ghost,
   HelpCircle,
   Layers,
+  Library,
   Moon,
   Plus,
   ScanSearch,
@@ -21,6 +22,7 @@ import {
   Star,
   Trash2,
   TrendingDown,
+  Ban,
   Zap,
   Flame,
   Swords,
@@ -88,9 +90,11 @@ export const STS_ICON_GLYPH: Record<
   KEY_INNATE: { Icon: Star, iconClass: "text-amber-200", shortLabel: "Innate" },
   KEY_ETHEREAL: { Icon: Ghost, iconClass: "text-slate-400", shortLabel: "Ethereal" },
   KEY_RETAIN: { Icon: Bookmark, iconClass: "text-lime-200", shortLabel: "Retain" },
+  KEY_UNPLAYABLE: { Icon: Ban, iconClass: "text-slate-500", shortLabel: "Unplayable" },
   COST_MANIP: { Icon: Coins, iconClass: "text-amber-300", shortLabel: "Cost" },
   UPGRADE_CARD: { Icon: ChevronsUp, iconClass: "text-violet-300", shortLabel: "Upgrade" },
   ADD_CARD: { Icon: SquarePlus, iconClass: "text-cyan-300", shortLabel: "Add card" },
+  CAN_ADD_CARDS: { Icon: Library, iconClass: "text-teal-300", shortLabel: "Adds cards" },
   HP_COST: { Icon: Droplets, iconClass: "text-rose-400", shortLabel: "HP cost" },
   GAIN_ENERGY_ICON: { Icon: Orbit, iconClass: "text-yellow-300", shortLabel: "Gain energy" },
 };
@@ -109,6 +113,7 @@ const FALLBACK_ICON_CATALOG: Record<string, string> = {
   SAME_ORB_AS_EVOKED: "Echo orb type from prior evoke",
   AOE_ICON: "All-enemies attack marker — grouped with the damage stat row (rose tint in gallery)",
   RANDOM_ICON: "Random choice (e.g. discard target, random hit)",
+  CAN_ADD_CARDS: "Adds cards into hand — flagged on card data (spawn / generated cards)",
 };
 
 export function readStsIconCatalog(): { key: string; description: string }[] {
@@ -331,8 +336,49 @@ function clusterShellField(field: GalleryClusterField): string {
   }
 }
 
-const MULTIHIT_TEXT_CLS =
-  "text-[0.65em] font-semibold leading-none text-slate-400 opacity-90 mx-px";
+/** Same shell as damage-field gallery glyphs (multi-hit, conditional damage row, etc.). */
+export const galleryDamageClusterShellClass = clusterShellField("damage");
+
+/** Small "×" before multihit count when inlined after the damage number. */
+export const MULTIHIT_INLINE_TIMES_CLASS =
+  "text-[0.75em] font-semibold leading-none text-slate-400 opacity-90 mx-px";
+
+export const MULTIHIT_INLINE_COUNT_CLASS =
+  "text-[0.9em] font-bold tabular-nums leading-none text-indigo-300";
+
+function cardUsesXCostOrbLocal(card: Card): boolean {
+  const v = (card as Record<string, unknown>).xCost;
+  if (v === undefined || v === null || v === false) return false;
+  if (typeof v === "number" && v === 0) return false;
+  if (typeof v === "string" && v.trim() === "") return false;
+  return true;
+}
+
+/**
+ * Multihit hit-count label for inlining after damage (`×2`, `×5`, `×X`), or null if not a DB multihit attack.
+ */
+export function damageMultihitInlineHitLabel(card: Card): string | null {
+  if (card.damage === undefined || card.type !== "Attack") return null;
+  const c = card as Record<string, unknown>;
+  const multi = c.multiHit;
+  if (multi == null || typeof multi !== "object" || Array.isArray(multi)) return null;
+  const m = multi as Record<string, unknown>;
+  if (m.multiHitEnergyScaling === true && cardUsesXCostOrbLocal(card)) {
+    return "X";
+  }
+  if (!("multiHitCount" in m)) return null;
+  const n = galleryTierNumber(card, m.multiHitCount);
+  return n != null ? String(n) : null;
+}
+
+/** Conditional + AoE icons placed before damage inside the unified multihit damage cluster. */
+export function multihitDamageRowLeadingSegments(card: Card): GalleryGlyphSegment[] {
+  if (damageMultihitInlineHitLabel(card) == null) return [];
+  const segs: GalleryGlyphSegment[] = [];
+  if (galleryDamageIsConditional(card)) segs.push(segmentConditional());
+  if (damageRowIsAoE(card)) segs.push(segmentAoe());
+  return segs;
+}
 
 export function galleryTieredBoolActive(card: Card, node: unknown): boolean {
   if (node === true) return true;
@@ -373,7 +419,18 @@ function buildKeywordGlyphs(card: Card): GalleryGlyph[] {
     const m = STS_ICON_GLYPH.KEY_RETAIN;
     out.push({
       id: "kw-retain",
+      catalogKey: "KEY_RETAIN",
       label: "Retain",
+      Icon: m.Icon,
+      iconClass: m.iconClass,
+    });
+  }
+  if (galleryTieredBoolActive(card, c.unplayable ?? c.Unplayable)) {
+    const m = STS_ICON_GLYPH.KEY_UNPLAYABLE;
+    out.push({
+      id: "kw-unplayable",
+      catalogKey: "KEY_UNPLAYABLE",
+      label: "Unplayable",
       Icon: m.Icon,
       iconClass: m.iconClass,
     });
@@ -416,18 +473,87 @@ function plusSegment(): GalleryGlyphSegment {
 
 const EXHAUST_GLYPH_IDS = new Set(["exhaust-self", "structured-exhaust"]);
 
-function moveExhaustGlyphsLast(glyphs: GalleryGlyph[]): GalleryGlyph[] {
-  const tail: GalleryGlyph[] = [];
-  const head: GalleryGlyph[] = [];
-  for (const g of glyphs) {
-    if (EXHAUST_GLYPH_IDS.has(g.id)) tail.push(g);
-    else head.push(g);
-  }
-  return [...head, ...tail];
+/** Keyword chips shown first on the card (order). Strip duplicates from the inferred list. */
+const KEYWORD_PREFIX_IDS = new Set([
+  "kw-innate",
+  "kw-ethereal",
+  "kw-retain",
+  "kw-unplayable",
+]);
+
+/**
+ * Medium/large `Card` stat strip renders numeric rows (block, draw, …) in JSX before the
+ * suffix glyph list; peel keyword glyphs so they can be painted first and match
+ * {@link finalizeGlyphDisplayOrder}.
+ */
+export function galleryStatStripKeywordLeadingAndRest(glyphs: GalleryGlyph[]): {
+  keywordLeading: GalleryGlyph[];
+  rest: GalleryGlyph[];
+} {
+  const keywordLeading = glyphs.filter((g) => KEYWORD_PREFIX_IDS.has(g.id));
+  const rest = glyphs.filter((g) => !KEYWORD_PREFIX_IDS.has(g.id));
+  return { keywordLeading, rest };
 }
 
-function mergeKeywordGlyphsFirst(card: Card, glyphs: GalleryGlyph[]): GalleryGlyph[] {
-  return [...buildKeywordGlyphs(card), ...glyphs];
+/**
+ * Row order: lower = further left / earlier.
+ * Keywords 1–4, effect glyphs between keywords and exhaust, exhaust last (9999).
+ */
+const GLYPH_DISPLAY_PRIORITY_EXHAUST = 9999;
+
+function glyphDisplayPriority(glyphId: string): number {
+  if (EXHAUST_GLYPH_IDS.has(glyphId)) return GLYPH_DISPLAY_PRIORITY_EXHAUST;
+  switch (glyphId) {
+    case "kw-innate":
+      return 1;
+    case "kw-ethereal":
+      return 2;
+    case "kw-retain":
+      return 3;
+    case "kw-unplayable":
+      return 4;
+    default:
+      return 500;
+  }
+}
+
+/**
+ * Innate → Ethereal → Retain → Unplayable (only those present), then other glyphs (stable
+ * inference order), then self-exhaust glyphs ({@link EXHAUST_GLYPH_IDS}).
+ */
+function finalizeGlyphDisplayOrder(card: Card, glyphs: GalleryGlyph[]): GalleryGlyph[] {
+  const prefix = buildKeywordGlyphs(card);
+  const middle: GalleryGlyph[] = [];
+  const exhaust: GalleryGlyph[] = [];
+  for (const g of glyphs) {
+    if (EXHAUST_GLYPH_IDS.has(g.id)) exhaust.push(g);
+    else if (!KEYWORD_PREFIX_IDS.has(g.id)) middle.push(g);
+  }
+  const combined = [...prefix, ...middle, ...exhaust];
+  combined.sort(
+    (a, b) => glyphDisplayPriority(a.id) - glyphDisplayPriority(b.id),
+  );
+  // #region agent log
+  if (card.name === "Boot Sequence") {
+    fetch("http://127.0.0.1:7283/ingest/08b9d505-d660-4eb9-b23f-47e9eb90cb11", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "2826d0",
+      },
+      body: JSON.stringify({
+        sessionId: "2826d0",
+        runId: "post-fix",
+        hypothesisId: "B",
+        location: "galleryStsGlyphs.ts:finalizeGlyphDisplayOrder",
+        message: "finalized glyph order",
+        data: { name: card.name, ids: combined.map((g) => g.id) },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+  }
+  // #endregion
+  return combined;
 }
 
 /**
@@ -466,33 +592,9 @@ function tryStructuredGalleryGlyphs(
       ? (mhRaw as { base?: number; upgraded?: number })
       : null;
 
-  // Pummel-style: multi-hit count + damage
+  // Pummel-style multihit: hit count is inlined in `Card` after damage (same shell). Optional exhaust glyph only.
   if (multiCount != null && card.damage !== undefined) {
-    const hits = galleryTierNumber(card, multiCount);
-    const mhSegments: GalleryGlyphSegment[] = [];
-    if (galleryDamageIsConditional(card)) mhSegments.push(segmentConditional());
-    if (damageRowIsAoE(card)) mhSegments.push(segmentAoe());
-    mhSegments.push(
-      {
-        text: "×",
-        textClass:
-          "text-[0.65em] font-semibold leading-none text-slate-400 opacity-90 mx-px",
-      },
-      {
-        text: hits != null ? String(hits) : "?",
-        textClass:
-          "text-[0.72em] font-bold tabular-nums leading-none text-indigo-300",
-      },
-    );
-    const glyphs: GalleryGlyph[] = [
-      {
-        id: "structured-multihit",
-        label: `Hits ×${hits ?? "?"}`,
-        clusterClass: clusterShellField("damage"),
-        segments: mhSegments,
-        prefixDamageRow: true,
-      },
-    ];
+    const glyphs: GalleryGlyph[] = [];
     if (cardSelfExhaustsOnPlay(card)) {
       const ex = STS_ICON_GLYPH.EXHAUST_SELF;
       glyphs.push({
@@ -515,9 +617,8 @@ function tryStructuredGalleryGlyphs(
     egNode != null &&
     isConditionedField(egNode)
   ) {
-    const dKey = drawUsesCatalogKey(card);
-    const drawMeta = STS_ICON_GLYPH[dKey] ?? STS_ICON_GLYPH.DRAW_ICON;
     const condMeta = STS_ICON_GLYPH.CONDITIONAL_MARKER;
+    const drawVis = getEffectDisplay("draw");
     const enD = getEffectDisplay("energygain");
     const drawN = galleryNumericField(card, "draw");
     const enN = galleryNumericField(card, "energyGain");
@@ -554,10 +655,10 @@ function tryStructuredGalleryGlyphs(
         clusterClass: clusterShellField("draw"),
         segments: [
           { Icon: condMeta.Icon, iconClass: condMeta.iconClass },
-          { Icon: drawMeta.Icon, iconClass: drawMeta.iconClass },
+          { Icon: drawVis.icon, iconClass: drawVis.color },
           {
             text: drawN != null ? String(drawN) : "?",
-            textClass: `${drawMeta.iconClass} font-bold tabular-nums leading-none`,
+            textClass: `${drawVis.color} font-bold tabular-nums leading-none`,
           },
         ],
       },
@@ -634,24 +735,10 @@ function tryStructuredGalleryGlyphs(
     !discardIsRandom(discard) &&
     discard.fromHand === true
   ) {
-    const drawMeta = STS_ICON_GLYPH[drawUsesCatalogKey(card)] ?? STS_ICON_GLYPH.DRAW_ICON;
     const dis = STS_ICON_GLYPH.DISCARD_ICON;
-    const drawN = galleryNumericField(card, "draw");
     const dCount = galleryDiscardDisplayCount(card);
     return {
       glyphs: [
-        {
-          id: "structured-draw-n",
-          label: "Draw",
-          clusterClass: clusterShellField("draw"),
-          segments: [
-            { Icon: drawMeta.Icon, iconClass: drawMeta.iconClass },
-            {
-              text: drawN != null ? String(drawN) : "?",
-              textClass: `${drawMeta.iconClass} font-bold tabular-nums leading-none`,
-            },
-          ],
-        },
         {
           id: "structured-discard-n",
           label: "Discard",
@@ -666,7 +753,7 @@ function tryStructuredGalleryGlyphs(
           ],
         },
       ],
-      suppressStats: { draw: true },
+      suppressStats: {},
     };
   }
 
@@ -689,62 +776,49 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
 
   if (card.draw != undefined) {
     const key = drawUsesCatalogKey(card);
-    const drawMeta = STS_ICON_GLYPH[key] ?? {
-      Icon: getEffectDisplay("draw").icon,
-      iconClass: getEffectDisplay("draw").color,
-      shortLabel: "Draw",
-    };
     const dRaw =
       card.draw && typeof card.draw === "object" && !Array.isArray(card.draw)
         ? (card.draw as Record<string, unknown>)
         : undefined;
     const trigger = typeof dRaw?.trigger === "string" ? dRaw.trigger : undefined;
-    const drawN = galleryNumericField(card, "draw");
 
     if (drawCond) {
       const condM = STS_ICON_GLYPH.CONDITIONAL_MARKER;
-      const segs: GalleryGlyphSegment[] = [
-        { Icon: condM.Icon, iconClass: condM.iconClass },
-        { Icon: drawMeta.Icon, iconClass: drawMeta.iconClass },
-      ];
-      if (drawN != null) {
-        segs.push({
-          text: String(drawN),
-          textClass: `${drawMeta.iconClass} font-bold tabular-nums leading-none`,
-        });
-      }
+      const drawVis = getEffectDisplay("draw");
+      const drawN = galleryNumericField(card, "draw");
       push({
-        id: "draw-cond-draw",
+        id: "draw-conditional-combo",
         label: trigger ? `Draw — ${trigger}` : "Draw (conditional)",
         clusterClass: clusterShellField("draw"),
-        segments: segs,
+        segments: [
+          { Icon: condM.Icon, iconClass: condM.iconClass },
+          { Icon: drawVis.icon, iconClass: drawVis.color },
+          {
+            text: drawN != null ? String(drawN) : "?",
+            textClass: `${drawVis.color} font-bold tabular-nums leading-none`,
+          },
+        ],
       });
     } else {
-      push(
+      const dm =
         glyphFromStsKey("draw-main", key, "Draw") ?? {
           id: "draw-main",
           label: "Draw",
           Icon: getEffectDisplay("draw").icon,
           iconClass: getEffectDisplay("draw").color,
-        },
-      );
+        };
+      push(dm);
     }
   } else if (legacyDraw) {
-    const key =
-      typeof c.drawUsesIcon === "string" ? String(c.drawUsesIcon) : "DRAW_ICON";
-    const drawMeta = STS_ICON_GLYPH[key] ?? {
-      Icon: getEffectDisplay("draw").icon,
-      iconClass: getEffectDisplay("draw").color,
-      shortLabel: "Draw",
-    };
     const condM = STS_ICON_GLYPH.CONDITIONAL_MARKER;
+    const drawVis = getEffectDisplay("draw");
     push({
-      id: "draw-cond-draw",
+      id: "draw-conditional-marker-legacy",
       label: "Draw (conditional)",
       clusterClass: clusterShellField("draw"),
       segments: [
         { Icon: condM.Icon, iconClass: condM.iconClass },
-        { Icon: drawMeta.Icon, iconClass: drawMeta.iconClass },
+        { Icon: drawVis.icon, iconClass: drawVis.color },
       ],
     });
   }
@@ -1021,6 +1095,17 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
     });
   }
 
+  if (galleryTieredBoolActive(card, c.canAddCards)) {
+    const ac = STS_ICON_GLYPH.CAN_ADD_CARDS;
+    push({
+      id: "can-add-cards",
+      catalogKey: "CAN_ADD_CARDS",
+      label: "Adds cards",
+      Icon: ac.Icon,
+      iconClass: ac.iconClass,
+    });
+  }
+
   const addCardRaw = c.addCard;
   if (addCardRaw && typeof addCardRaw === "object" && !Array.isArray(addCardRaw)) {
     const ac = addCardRaw as Record<string, unknown>;
@@ -1116,7 +1201,7 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
         const mult = hits ?? stacks;
         if (mult != null) {
           segments.push(
-            { text: "×", textClass: MULTIHIT_TEXT_CLS },
+            { text: "×", textClass: MULTIHIT_INLINE_TIMES_CLASS },
             {
               text: String(mult),
               textClass: `${p.color} font-bold tabular-nums leading-none`,
@@ -1200,6 +1285,47 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
     if (dmgG) push(dmgG);
   }
 
+  const bonusRaw = c.bonusDamage;
+  if (bonusRaw != null) {
+    const dmgVis = getEffectDisplay("damage");
+    if (typeof bonusRaw === "number" && !Number.isNaN(bonusRaw)) {
+      push({
+        id: "bonus-damage",
+        label: "Bonus damage",
+        clusterClass: clusterShellField("damage"),
+        segments: [
+          { Icon: dmgVis.icon, iconClass: dmgVis.color },
+          {
+            text: String(bonusRaw),
+            textClass: `${dmgVis.color} font-bold tabular-nums leading-none`,
+          },
+        ],
+      });
+    } else if (typeof bonusRaw === "object" && !Array.isArray(bonusRaw)) {
+      const bn = galleryTierNumber(card, bonusRaw);
+      const condBonus = isConditionedField(bonusRaw);
+      const bTrig =
+        typeof (bonusRaw as Record<string, unknown>).trigger === "string"
+          ? String((bonusRaw as Record<string, unknown>).trigger)
+          : undefined;
+      const segs: GalleryGlyphSegment[] = [];
+      if (condBonus) segs.push(segmentConditional());
+      segs.push(
+        { Icon: dmgVis.icon, iconClass: dmgVis.color },
+        {
+          text: bn != null ? String(bn) : "?",
+          textClass: `${dmgVis.color} font-bold tabular-nums leading-none`,
+        },
+      );
+      push({
+        id: "bonus-damage",
+        label: bTrig ? `Bonus damage — ${bTrig}` : "Bonus damage",
+        clusterClass: clusterShellField("damage"),
+        segments: segs,
+      });
+    }
+  }
+
   if (card.block != undefined) {
     const blk = getEffectDisplay("block");
     if (blockIsConditional(card)) {
@@ -1242,9 +1368,6 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
 /** Stat rows to hide when legacy glyphs already show the same numbers in a cluster. */
 function legacyGallerySuppressStats(card: Card): GallerySuppressedStats {
   const out: GallerySuppressedStats = {};
-  if (card.draw !== undefined && galleryDrawIsConditional(card)) {
-    out.draw = true;
-  }
   const eg = energyGainNode(card);
   if (
     eg !== null &&
@@ -1281,13 +1404,13 @@ export function inferGalleryCardEffects(card: Card): {
   const structured = tryStructuredGalleryGlyphs(card);
   if (structured) {
     return {
-      glyphs: moveExhaustGlyphsLast(mergeKeywordGlyphsFirst(card, structured.glyphs)),
+      glyphs: finalizeGlyphDisplayOrder(card, structured.glyphs),
       suppressStats: structured.suppressStats,
     };
   }
   const legacyGlyphs = inferLegacyCardGalleryGlyphs(card);
   const insideOnly = galleryGlyphsInsideCardOnly(card, legacyGlyphs);
-  const glyphs = moveExhaustGlyphsLast(mergeKeywordGlyphsFirst(card, insideOnly));
+  const glyphs = finalizeGlyphDisplayOrder(card, insideOnly);
   const suppressStats: GallerySuppressedStats = { ...legacyGallerySuppressStats(card) };
   if (
     glyphs.some(
@@ -1302,6 +1425,12 @@ export function inferGalleryCardEffects(card: Card): {
     )
   ) {
     suppressStats.hpcost = true;
+  }
+  if (glyphs.some((g) => g.id === "block-combo")) {
+    suppressStats.block = true;
+  }
+  if (glyphs.some((g) => g.id === "draw-conditional-combo")) {
+    suppressStats.draw = true;
   }
   return { glyphs, suppressStats };
 }

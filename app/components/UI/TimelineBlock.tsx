@@ -297,7 +297,7 @@ export default function TimelineBlock() {
         <div className="mt-2 flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-950/20 px-2.5 py-1.5">
           <Clock className="h-3.5 w-3.5 shrink-0 text-cyan-300/80" strokeWidth={2} />
           <span className="text-[11px] font-medium tabular-nums text-cyan-100/95">
-            Round {currentTurnId} ·{" "}
+            Planner turn {currentTurnId} ·{" "}
             {turnPhase === "start"
               ? "Start (relics / draw / ST)"
               : turnPhase === "player"
@@ -476,8 +476,8 @@ export default function TimelineBlock() {
             </ActionBtn>
           </div>
           <p className="mt-2 text-[10px] leading-relaxed text-slate-600">
-            Tip: Each round begins in Start — click Start turn to log and enter Main (play cards). End main phase →
-            Enemy. End enemy turn → next round (Start again). “Copy state” uses the player-end snapshot during Enemy.
+            Tip: Each planner turn begins in Start — click Start turn to log and enter Main (play cards). End main phase →
+            Enemy. End enemy turn → next planner turn (Start again). “Copy state” uses the player-end snapshot during Enemy.
             Reset restores the initial snapshot.
           </p>
         </div>

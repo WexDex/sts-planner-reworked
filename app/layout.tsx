@@ -27,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.className} bg-slate-950`}>
+    <html lang="en" className={`${inter.className} bg-slate-950 dark`}>
       <body className="min-h-dvh bg-slate-950 text-slate-100 antialiased">
         <NotificationProvider>
           <GameProvider>

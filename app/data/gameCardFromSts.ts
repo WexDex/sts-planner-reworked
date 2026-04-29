@@ -1,5 +1,51 @@
-import type { Card } from "@/app/types/gameTypes";
+import type { Card, PlayerData } from "@/app/types/gameTypes";
 import { getStsCardsRecord } from "@/app/card-design-gallery/stsRecord";
+
+/** STS basic attack/block cards: Ironclad=R, Silent=G, Defect=B, Watcher=P (case-insensitive character slug). */
+const VARIANT_SUFFIX_BY_PLAYABLE_CHARACTER: Record<string, "R" | "G" | "B" | "P"> = {
+  ironclad: "R",
+  silent: "G",
+  defect: "B",
+  watcher: "P",
+};
+
+function capitalizeStsCardWord(word: string): string {
+  const t = word.trim();
+  if (!t) return t;
+  const lower = t.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+}
+
+/**
+ * Maps deck `card_ID` `Strike` / `Defend` to `Strike_R`, `Defend_G`, etc. from {@link PlayerData.characters}.
+ * Normalizes existing `strike_r`-style IDs to STS DB keys. Unknown character defaults to `_R`.
+ */
+export function resolveStrikeDefendDatabaseId(
+  cardId: string,
+  playerCharacters?: string,
+): string {
+  const trimmed = cardId.trim();
+  const variantMatch = trimmed.match(/^(strike|defend)_([RGBP])$/i);
+  if (variantMatch) {
+    const base = capitalizeStsCardWord(variantMatch[1]);
+    return `${base}_${variantMatch[2].toUpperCase()}`;
+  }
+
+  const plain = trimmed.toLowerCase();
+  if (plain !== "strike" && plain !== "defend") return trimmed;
+
+  const ch = playerCharacters?.trim().toLowerCase() ?? "";
+  const suffix = VARIANT_SUFFIX_BY_PLAYABLE_CHARACTER[ch] ?? "R";
+  return `${capitalizeStsCardWord(trimmed)}_${suffix}`;
+}
+
+export function playableCharacterSlug(player: PlayerData): string | undefined {
+  if (typeof player.characters === "string" && player.characters.trim() !== "") {
+    return player.characters;
+  }
+  const legacy = (player as unknown as { character?: unknown }).character;
+  return typeof legacy === "string" ? legacy : undefined;
+}
 
 /** Fields stored on STS records that are not copied onto {@link Card} (handled separately). */
 const OMIT_FROM_CARD = new Set([

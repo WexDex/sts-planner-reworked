@@ -6,9 +6,10 @@
       "base": 3,
       "turn1Bonus": 1
     },
-	"combatType": "Elite",
-	"combatName": "Slavers",
-	"floor": 23,
+    "characters": "ironclad",
+    "combatType": "Elite",
+    "combatName": "Slavers",
+    "floor": 23,
     "drawPerTurn": 5,
     "modifiers": {
       "vulnerableMultiplier": 1.75,
@@ -73,8 +74,8 @@
         "base": 1
       },
       "damage": {
-        "base": 12 ,
-		"upgraded": 17
+        "base": 12,
+        "upgraded": 17
       },
       "description": "Deal [DMG] damage. Shuffle a Wound into your draw pile."
     },
@@ -93,10 +94,10 @@
       "cost": {
         "base": 1
       },
-	  "draw" : {
-		  "base" : 1,
-		  "upgraded" : 2
-	  },
+      "draw": {
+        "base": 1,
+        "upgraded": 2
+      },
       "description": "Whenever you draw a Status card, draw 1 card."
     },
     {
@@ -183,10 +184,10 @@
         "base": 8,
         "upgraded": 10
       },
-	  "vulnerable": {
-		  "base" : 2,
-		  "upgraded" : 3
-	  },
+      "vulnerable": {
+        "base": 2,
+        "upgraded": 3
+      },
       "description": "Deal [DMG] damage. Apply [VULN] Vulnerable."
     },
     {
@@ -491,7 +492,8 @@
             {
               "type": "status",
               "effect": "Wound",
-              "value": 3
+              "value": 3,
+              "location": "hand"
             },
             {
               "type": "buff",
@@ -510,7 +512,8 @@
             {
               "type": "status",
               "effect": "Wound",
-              "value": 3
+              "value": 3,
+              "location": "hand"
             },
             {
               "type": "buff",
@@ -529,7 +532,8 @@
             {
               "type": "status",
               "effect": "Wound",
-              "value": 3
+              "value": 3,
+              "location": "hand"
             },
             {
               "type": "buff",
@@ -548,7 +552,8 @@
             {
               "type": "status",
               "effect": "Wound",
-              "value": 3
+              "value": 3,
+              "location": "hand"
             },
             {
               "type": "buff",

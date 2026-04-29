@@ -3,8 +3,10 @@ import { Card } from "@/app/types/gameTypes";
 import { LOCATION } from "@/app/types/types";
 import { getEffectDisplay } from "@/app/utils/effectDisplay";
 import {
-  getDamageStats,
+  formatBlockStatTitle,
+  formatDamageStatTitle,
   getBlockStats,
+  getDamageStats,
   getFormattedDescription,
 } from "@/app/utils/utils";
 import { useGameManager } from "@/app/context/GameContext";
@@ -16,10 +18,17 @@ import {
   getCardVariantChrome,
 } from "@/app/components/UI/cardVisualVariants";
 import {
-  galleryBlockRowIsConditional,
+  MULTIHIT_INLINE_COUNT_CLASS,
+  MULTIHIT_INLINE_TIMES_CLASS,
+  damageMultihitInlineHitLabel,
+  galleryDamageClusterShellClass,
   galleryDamageRowIsAoE,
+  galleryTierNumber,
+  galleryStatStripKeywordLeadingAndRest,
   inferGalleryCardEffects,
+  multihitDamageRowLeadingSegments,
   type GalleryGlyph,
+  type GalleryGlyphSegment,
   type GallerySuppressedStats,
 } from "@/app/card-design-gallery/galleryStsGlyphs";
 import { resolveGameCardChromeStyle } from "@/app/card-design-gallery/galleryCharacterCardStyles";
@@ -44,6 +53,51 @@ interface GameCardProps {
   gallerySuppressStats?: GallerySuppressedStats;
   /** Card-design-gallery only: use character-based chrome instead of `card.type` colors. */
   galleryChromeStyle?: CardTypeStyle;
+}
+
+function usesEnergyScalingDamageMultihit(card: Card): boolean {
+  const mh = (card as Record<string, unknown>).multiHit;
+  return (
+    mh != null &&
+    typeof mh === "object" &&
+    !Array.isArray(mh) &&
+    (mh as Record<string, unknown>).multiHitEnergyScaling === true
+  );
+}
+
+function cardUsesXCostOrb(card: Card): boolean {
+  const v = (card as Record<string, unknown>).xCost;
+  if (v === undefined || v === null || v === false) return false;
+  if (typeof v === "number" && v === 0) return false;
+  if (typeof v === "string" && v.trim() === "") return false;
+  return true;
+}
+
+function renderLeadingGlyphSegments(
+  segments: GalleryGlyphSegment[],
+  iconCls: string,
+): React.ReactNode {
+  return segments.map((s, i) => (
+    <React.Fragment key={i}>
+      {s.Icon ? (
+        <s.Icon className={`${iconCls} shrink-0 ${s.iconClass ?? ""}`} aria-hidden />
+      ) : null}
+      {s.text != null && s.text !== "" ? (
+        <span className={s.textClass ?? ""}>{s.text}</span>
+      ) : null}
+    </React.Fragment>
+  ));
+}
+
+/** Tier-resolved damage number only (multihit count is shown separately after the icon). */
+function attackDamageStatDisplay(card: Card): string | undefined {
+  const n = galleryTierNumber(card, card.damage);
+  if (n != null) {
+    return String(n);
+  }
+  const raw = card.damage;
+  if (typeof raw === "number" && !Number.isNaN(raw)) return String(raw);
+  return undefined;
 }
 
 const SIZE_STYLES = {
@@ -98,6 +152,10 @@ const SIZE_STYLES = {
     galleryText: "text-[15px] font-bold",
   },
 } as const;
+
+/** Block + optional frail tier: dark clustered chip (aligned with gallery glyph fallback shell). */
+const BLOCK_FRAIL_CLUSTER_CLASS =
+  "inline-flex flex-wrap items-center justify-center gap-1 rounded-md border border-white/15 bg-black/20 px-1 py-0.5 shadow-sm";
 
 function renderGalleryGlyphCluster(
   g: GalleryGlyph,
@@ -224,22 +282,9 @@ export default function STSCard({
     return undefined;
   }
 
-  function getFullDamage() {
-    if (card.damage === undefined) return undefined;
-    return getDamageStats(getValue("damage"));
-  }
   function getFullBlock() {
     if (card.block === undefined) return undefined;
     return getBlockStats(getValue("block"));
-  }
-
-  /** Root `xCost` takes priority over numeric `cost` for the orb (Slay-the-Spire-style X cards). */
-  function cardUsesXCost(): boolean {
-    const v = (card as Record<string, unknown>).xCost;
-    if (v === undefined || v === null || v === false) return false;
-    if (typeof v === "number" && v === 0) return false;
-    if (typeof v === "string" && v.trim() === "") return false;
-    return true;
   }
 
   /** Hide cost orb for curse / status / STS `unplayable` (Necronomicurse, etc.). */
@@ -259,23 +304,79 @@ export default function STSCard({
   const prefixDamageGlyphs = stat
     ? rawGalleryGlyphs.filter((g) => g.prefixDamageRow)
     : [];
+  const prefixDamageGlyphsFiltered = prefixDamageGlyphs.filter(
+    (g) =>
+      !(
+        g.id === "multi-hit" &&
+        usesEnergyScalingDamageMultihit(card) &&
+        cardUsesXCostOrb(card)
+      ),
+  );
   const suffixGalleryGlyphs = stat
     ? rawGalleryGlyphs.filter((g) => !g.prefixDamageRow)
     : rawGalleryGlyphs;
 
+  const statStripLeadingAndRest =
+    stat == null
+      ? { keywordLeading: [] as GalleryGlyph[], rest: [] as GalleryGlyph[] }
+      : galleryStatStripKeywordLeadingAndRest(suffixGalleryGlyphs);
+
+  // #region agent log
+  if (stat && card.name === "Boot Sequence") {
+    fetch("http://127.0.0.1:7283/ingest/08b9d505-d660-4eb9-b23f-47e9eb90cb11", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "2826d0",
+      },
+      body: JSON.stringify({
+        sessionId: "2826d0",
+        runId: "post-fix",
+        hypothesisId: "A",
+        location: "Card.tsx:statStripPartition",
+        message: "keywordLeading before stats; rest after",
+        data: {
+          keywordLeadingIds: statStripLeadingAndRest.keywordLeading.map((g) => g.id),
+          restIds: statStripLeadingAndRest.rest.map((g) => g.id),
+          hasBlockStatJsxAfterKeywords: card.block !== undefined,
+          statSize: size,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+  }
+  // #endregion
+
+  const damageStatLabel = attackDamageStatDisplay(card);
+  const damageFormulaBase = galleryTierNumber(card, card.damage);
+  const attackDamageBreakdown =
+    card.type === "Attack" && typeof damageFormulaBase === "number"
+      ? getDamageStats(damageFormulaBase)
+      : null;
+
+  const damageStatTooltip =
+    (() => {
+      const formula = formatDamageStatTitle(
+        typeof damageFormulaBase === "number" ? damageFormulaBase : undefined,
+        card.type,
+      );
+      if (damageStatLabel && formula) return `${damageStatLabel} — ${formula}`;
+      if (formula) return formula;
+      return damageStatLabel ? `Damage ${damageStatLabel}` : undefined;
+    })();
+
+  const multihitHitLabel = stat ? damageMultihitInlineHitLabel(card) : null;
+  const multihitLeadSegs =
+    multihitHitLabel != null ? multihitDamageRowLeadingSegments(card) : [];
+
   const showDamageStatBlock =
     card.damage !== undefined && !mergedSuppressStats?.damage;
-  const showDamageRow = showDamageStatBlock || prefixDamageGlyphs.length > 0;
+  const showDamageRow =
+    showDamageStatBlock || prefixDamageGlyphsFiltered.length > 0;
   const unifiedDamageAoE = galleryDamageRowIsAoE(card) && showDamageRow;
   const damageAoEGroupClass = unifiedDamageAoE
     ? "inline-flex flex-wrap items-center justify-center gap-1 rounded-md border border-rose-400/25 bg-rose-950/45 px-1.5 py-1 shadow-sm"
     : "flex flex-wrap items-center justify-center gap-1";
-
-  const blockConditionalShell =
-    galleryBlockRowIsConditional(card) && card.block !== undefined;
-  const blockRowGroupClass = blockConditionalShell
-    ? "inline-flex flex-wrap items-center justify-center gap-1 rounded-md border border-blue-400/25 bg-blue-950/40 px-1.5 py-1 shadow-sm"
-    : "flex items-center gap-1";
 
   return (
     <div
@@ -313,7 +414,7 @@ export default function STSCard({
           className={`absolute z-10 flex items-center justify-center rounded-full border-2 border-slate-950 ${sz.costOrb} ${styles.costBg} ${styles.costGlow} shadow-lg ${chrome.costOrbExtra}`}
         >
           <span className={`${sz.costText} text-white drop-shadow-md`}>
-            {cardUsesXCost() ? "X" : getValue("cost")}
+            {cardUsesXCostOrb(card) ? "X" : getValue("cost")}
           </span>
         </div>
       )}
@@ -366,11 +467,21 @@ export default function STSCard({
 
         {stat && (
           <div
-            className={`flex flex-1 flex-col items-center justify-center ${stat.midGap}`}
+            className={`flex flex-1 flex-wrap items-center justify-center content-center gap-x-2 gap-y-1 ${stat.midGap}`}
+            aria-label="Card stats"
           >
+            {statStripLeadingAndRest.keywordLeading.map((g) => (
+              <React.Fragment key={g.id}>
+                {renderGalleryGlyphCluster(
+                  g,
+                  stat.galleryIcon,
+                  stat.galleryText,
+                )}
+              </React.Fragment>
+            ))}
             {showDamageRow ? (
               <div className={damageAoEGroupClass}>
-                {prefixDamageGlyphs.map((g) => (
+                {prefixDamageGlyphsFiltered.map((g) => (
                   <React.Fragment key={g.id}>
                     {renderGalleryGlyphCluster(
                       g,
@@ -381,19 +492,109 @@ export default function STSCard({
                   </React.Fragment>
                 ))}
                 {showDamageStatBlock ? (
-                  <span
-                    className={`${stat.statMain} inline-flex items-center gap-0.5 ${getEffectDisplay("damage").color}`}
-                  >
-                    {React.createElement(getEffectDisplay("damage").icon, {
-                      className: `${stat.statIcon} inline`,
-                    })}
-                    {getFullDamage()?.dmg}
-                  </span>
+                  multihitHitLabel != null ? (
+                    attackDamageBreakdown ? (
+                      <span
+                        className={`${galleryDamageClusterShellClass} inline-flex max-w-full flex-row items-center gap-x-0.5 ${stat.statMain}`}
+                        title={damageStatTooltip}
+                      >
+                        {renderLeadingGlyphSegments(multihitLeadSegs, stat.galleryIcon)}
+                        <span
+                          className={`inline-flex items-center gap-0.5 text-lg ${getEffectDisplay("damage").color}`}
+                        >
+                          {React.createElement(getEffectDisplay("damage").icon, {
+                            className: `${stat.statIcon} inline shrink-0`,
+                          })}
+                          {damageStatLabel ?? "?"}
+                        </span>
+                        <span
+                          className="flex flex-col items-center justify-center leading-none text-sm font-semibold tabular-nums tracking-tight"
+                          title="Weak (top) · Vulnerable (bottom)"
+                        >
+                          <span className={getEffectDisplay("weak").color}>
+                            {attackDamageBreakdown.weak}
+                          </span>
+                          <span className={getEffectDisplay("vulnerable").color}>
+                            {attackDamageBreakdown.vulnerable}
+                          </span>
+                        </span>
+                        <span
+                          className="text-slate-200/95 tabular-nums text-lg"
+                          title="Weak + Vulnerable"
+                        >
+                          {attackDamageBreakdown.both}
+                        </span>
+                        <span className={MULTIHIT_INLINE_TIMES_CLASS}>×</span>
+                        <span className={MULTIHIT_INLINE_COUNT_CLASS}>{multihitHitLabel}</span>
+                      </span>
+                    ) : (
+                      <span
+                        className={`${galleryDamageClusterShellClass} inline-flex max-w-full flex-row items-center gap-x-0.5 ${stat.statMain}`}
+                        title={damageStatTooltip}
+                      >
+                        {renderLeadingGlyphSegments(multihitLeadSegs, stat.galleryIcon)}
+                        <span
+                          className={`inline-flex items-center gap-0.5 text-lg ${getEffectDisplay("damage").color}`}
+                        >
+                          {React.createElement(getEffectDisplay("damage").icon, {
+                            className: `${stat.statIcon} inline shrink-0`,
+                          })}
+                          {damageStatLabel ?? "?"}
+                        </span>
+                        <span className={MULTIHIT_INLINE_TIMES_CLASS}>×</span>
+                        <span className={MULTIHIT_INLINE_COUNT_CLASS}>{multihitHitLabel}</span>
+                      </span>
+                    )
+                  ) : attackDamageBreakdown ? (
+                    <span
+                      className={`${galleryDamageClusterShellClass} inline-flex max-w-full flex-row items-center gap-x-0.5 ${stat.statMain}`}
+                      title={damageStatTooltip}
+                    >
+                      <span
+                        className={`inline-flex items-center gap-0.5 text-lg ${getEffectDisplay("damage").color}`}
+                      >
+                        {React.createElement(getEffectDisplay("damage").icon, {
+                          className: `${stat.statIcon} inline shrink-0`,
+                        })}
+                        {damageStatLabel ?? "?"}
+                      </span>
+                      <span
+                        className="flex flex-col items-center justify-center leading-none text-sm font-semibold tabular-nums tracking-tight"
+                        title="Weak (top) · Vulnerable (bottom)"
+                      >
+                        <span className={getEffectDisplay("weak").color}>
+                          {attackDamageBreakdown.weak}
+                        </span>
+                        <span className={getEffectDisplay("vulnerable").color}>
+                          {attackDamageBreakdown.vulnerable}
+                        </span>
+                      </span>
+                      <span
+                        className="text-slate-200/95 tabular-nums text-lg"
+                        title="Weak + Vulnerable"
+                      >
+                        {attackDamageBreakdown.both}
+                      </span>
+                    </span>
+                  ) : (
+                    <span
+                      title={damageStatTooltip}
+                      className={`${stat.statMain} inline-flex items-center gap-0.5 ${getEffectDisplay("damage").color}`}
+                    >
+                      {React.createElement(getEffectDisplay("damage").icon, {
+                        className: `${stat.statIcon} inline`,
+                      })}
+                      {damageStatLabel ?? "?"}
+                    </span>
+                  )
                 ) : null}
               </div>
             ) : null}
             {card.block !== undefined && !mergedSuppressStats?.block && (
-              <div className={blockRowGroupClass}>
+              <div
+                className={BLOCK_FRAIL_CLUSTER_CLASS}
+                title={formatBlockStatTitle(getValue("block"), card.type)}
+              >
                 <span
                   className={`${stat.statMain} flex items-center gap-0.5 ${getEffectDisplay("block").color}`}
                 >
@@ -410,7 +611,10 @@ export default function STSCard({
               </div>
             )}
             {card.blockOnExhaust !== undefined && (
-              <div className="flex items-center gap-1">
+              <div
+                className={BLOCK_FRAIL_CLUSTER_CLASS}
+                title={formatBlockStatTitle(getValue("blockOnExhaust"), card.type)}
+              >
                 <span
                   className={`${stat.statMain} flex items-center gap-0.5 ${getEffectDisplay("block").color}`}
                 >
@@ -427,7 +631,7 @@ export default function STSCard({
               </div>
             )}
             {card.draw !== undefined && !mergedSuppressStats?.draw && (
-              <div className="flex items-center gap-1">
+              <div className="inline-flex flex-wrap items-center gap-1">
                 <span
                   className={`${stat.statMain} flex items-center gap-0.5 ${getEffectDisplay("draw").color}`}
                 >
@@ -439,7 +643,7 @@ export default function STSCard({
               </div>
             )}
             {card.takeDamage !== undefined && (
-              <div className="flex items-center gap-1">
+              <div className="inline-flex flex-wrap items-center gap-1">
                 <span
                   className={`${stat.statMain} flex items-center gap-0.5 ${styles.statColor}`}
                 >
@@ -451,7 +655,7 @@ export default function STSCard({
               </div>
             )}
             {getValue("hpcost") !== undefined && !mergedSuppressStats?.hpcost && (
-              <div className="flex items-center gap-1">
+              <div className="inline-flex flex-wrap items-center gap-1">
                 <span
                   className={`${stat.statMain} flex items-center gap-0.5 ${getEffectDisplay("hpcost").color}`}
                 >
@@ -465,7 +669,7 @@ export default function STSCard({
             {(card.energyGain != null ||
               (card as Record<string, unknown>).gainEnergy != null) &&
               !mergedSuppressStats?.energyGain && (
-              <div className="flex items-center gap-1">
+              <div className="inline-flex flex-wrap items-center gap-1">
                 <span
                   className={`${stat.statMain} flex items-center gap-0.5 ${styles.statColor}`}
                 >
@@ -477,7 +681,7 @@ export default function STSCard({
               </div>
             )}
             {(card as Record<string, unknown>).heal != null && !mergedSuppressStats?.heal && (
-              <div className="flex items-center gap-1">
+              <div className="inline-flex flex-wrap items-center gap-1">
                 <span
                   className={`${stat.statMain} flex items-center gap-0.5 ${getEffectDisplay("heal").color}`}
                 >
@@ -489,7 +693,7 @@ export default function STSCard({
               </div>
             )}
             {(card as Record<string, unknown>).focus != null && !mergedSuppressStats?.focus && (
-              <div className="flex items-center gap-1">
+              <div className="inline-flex flex-wrap items-center gap-1">
                 <span
                   className={`${stat.statMain} flex items-center gap-0.5 ${getEffectDisplay("focus").color}`}
                 >
@@ -500,22 +704,15 @@ export default function STSCard({
                 </span>
               </div>
             )}
-            {suffixGalleryGlyphs.length > 0 ? (
-              <div
-                className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1"
-                aria-label="Extra effects"
-              >
-                {suffixGalleryGlyphs.map((g) => (
-                  <React.Fragment key={g.id}>
-                    {renderGalleryGlyphCluster(
-                      g,
-                      stat.galleryIcon,
-                      stat.galleryText,
-                    )}
-                  </React.Fragment>
-                ))}
-              </div>
-            ) : null}
+            {statStripLeadingAndRest.rest.map((g) => (
+              <React.Fragment key={g.id}>
+                {renderGalleryGlyphCluster(
+                  g,
+                  stat.galleryIcon,
+                  stat.galleryText,
+                )}
+              </React.Fragment>
+            ))}
           </div>
         )}
 

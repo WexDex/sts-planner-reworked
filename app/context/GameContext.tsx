@@ -8,6 +8,8 @@ import {
   ActivityLogEntry,
   Turn,
   CombatTurnPhase,
+  DecisionNode,
+  Enemy,
 } from '@/app/types/gameTypes';
 import {
   loadFromFile,
@@ -36,31 +38,47 @@ import { combatData } from '@/app/data/combatData';
 import {
   buildGameCardFromStsRaw,
   gameCardFromDatabaseId,
+  playableCharacterSlug,
+  resolveStrikeDefendDatabaseId,
   stsTierDescriptionPatch,
 } from '@/app/data/gameCardFromSts';
 import { getStsCardsRecord } from '@/app/card-design-gallery/stsRecord';
 import { toast } from '@/app/utils/toast';
+import { collectSubtreeIds } from '@/app/utils/decisionTreeHelpers';
+import {
+  decrementIntangibleStacks,
+  entityHasIntangible,
+  INTANGIBLE_BUFF_DESCRIPTION,
+  INTANGIBLE_BUFF_NAME,
+  migrateLegacyIntangibleFields,
+} from '@/app/utils/intangibleBuff';
+
+function cloneEnemyArrayDeep(enemies: Enemy[]): Enemy[] {
+  return JSON.parse(JSON.stringify(enemies)) as Enemy[];
+}
 
 interface GameContextType {
   gameState: CombatData | null;
   turns: Turn[];
   currentTurnIndex: number;
-  /** Start → main (play cards) → enemy within the active planner round. */
+  /** Start → main (play cards) → enemy within the active planner turn. */
   turnPhase: CombatTurnPhase;
   setCurrentTurn: (turnId: number) => void;
   /** Persist live {@link gameState} into {@link turns}[{@link currentTurnIndex}] (e.g. before opening modals). */
   saveCurrentTurn: () => void;
-  /** Player finished their turn: logs, saves, switches to enemy phase (same planner round). */
+  /** Player finished their turn: logs, saves, switches to enemy phase (same planner turn). */
   endPlayerTurn: () => void;
   /** Log start-of-turn (relic / draw / ST) and enter main phase. */
   beginTurn: () => void;
-  /** Enemy phase finished: logs, saves, advances to next planner round (start phase). */
+  /** Enemy phase finished: logs, saves, advances to the next planner turn (start phase). */
   endEnemyTurn: () => void;
   continueFromTurn: (fromTurnId: number, toTurnId: number) => void;
   resetCurrentTurn: () => void;
   isLoading: boolean;
   error: string | null;
   updateGameState: (newState: Partial<CombatData>) => void;
+  /** Push enemy intent scripts to live combat and every planner-slot / decision snapshot (Turn Maker). */
+  syncEnemyIntentsGlobally: (enemies: Enemy[]) => void;
   resetGameState: () => void;
   loadGameData: (filePath?: string) => Promise<void>;
   loadGameDataFromJson: (data: CombatData) => Promise<void>;
@@ -102,6 +120,17 @@ interface GameContextType {
   combatTargetSelf: boolean;
   toggleCombatTargetSelf: () => void;
   clearCombatTargets: () => void;
+
+  /** Branching decision overlay (full snapshots per node). */
+  decisionNodes: DecisionNode[];
+  activeDecisionNodeId: string | null;
+  /** Save live state into the active node, then add a child copy (divergent branch). */
+  forkDecisionBranch: (label?: string) => void;
+  /** Restore combat + planner slot from a node’s snapshot (autosaves prior active node). */
+  jumpToDecisionNode: (nodeId: string) => void;
+  /** Remove a node and all descendants (cannot delete root). */
+  deleteDecisionBranch: (nodeId: string) => void;
+  updateDecisionNodeLabel: (nodeId: string, label: string) => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -116,6 +145,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [currentTurnIndex, setCurrentTurnIndex] = useState(0);
   const [turnPhase, setTurnPhase] = useState<CombatTurnPhase>('start');
+  const [decisionNodes, setDecisionNodes] = useState<DecisionNode[]>([]);
+  const [activeDecisionNodeId, setActiveDecisionNodeId] = useState<string | null>(null);
   const [combatTargetMode, setCombatTargetModeState] = useState<'single' | 'multi'>('single');
   const [combatTargetEnemyIndices, setCombatTargetEnemyIndices] = useState<number[]>([]);
   const [combatTargetSelf, setCombatTargetSelf] = useState(false);
@@ -138,26 +169,35 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     isSelected: card.isSelected ?? false,
   });
 
-  const hydrateCardEntry = (entry: Card | CardReference): Card => {
+  const hydrateCardEntry = (
+    entry: Card | CardReference,
+    playerCharacters?: string,
+  ): Card => {
     if ('card_ID' in entry) {
       const { card_ID, ...referenceFields } = entry;
       const ref = referenceFields as CardReference;
-      const raw = getStsCardsRecord()[card_ID];
+      const resolvedId = resolveStrikeDefendDatabaseId(card_ID, playerCharacters);
+      const raw =
+        getStsCardsRecord()[resolvedId] ?? getStsCardsRecord()[card_ID];
       if (!raw) {
-        return Object.assign({ name: card_ID }, referenceFields as Card);
+        return Object.assign({ name: resolvedId }, referenceFields as Card);
       }
-      const baseCard = buildGameCardFromStsRaw(card_ID, raw as Record<string, unknown>, {
+      const baseCard = buildGameCardFromStsRaw(resolvedId, raw as Record<string, unknown>, {
         isUpgraded: ref.isUpgraded ?? false,
       });
-      return Object.assign(baseCard, referenceFields as Card, { name: card_ID });
+      return Object.assign(baseCard, referenceFields as Card, { name: resolvedId });
     }
     return entry;
   };
 
-  const hydrateCombatData = (data: CombatData): CombatData => ({
-    ...data,
-    deck: data.deck.map((entry) => hydrateCardEntry(entry)),
-  });
+  const hydrateCombatData = (data: CombatData): CombatData => {
+    const migrated = migrateLegacyIntangibleFields(data);
+    const playerCharacters = playableCharacterSlug(migrated.player);
+    return {
+      ...migrated,
+      deck: migrated.deck.map((entry) => hydrateCardEntry(entry, playerCharacters)),
+    };
+  };
 
   const ingestCombatPayload = async (data: CombatData) => {
     try {
@@ -188,6 +228,20 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setTurns(initialTurns);
       setCurrentTurnIndex(0);
       setTurnPhase('start');
+
+      const firstTurnId = uniqueTurns[0] ?? 1;
+      const rootId = crypto.randomUUID();
+      const rootNode: DecisionNode = {
+        id: rootId,
+        parentId: null,
+        label: 'Start',
+        snapshot: cloneGameData(withPiles),
+        plannerTurnSlotId: firstTurnId,
+        turnPhase: 'start',
+        createdAt: new Date().toISOString(),
+      };
+      setDecisionNodes([rootNode]);
+      setActiveDecisionNodeId(rootId);
 
       setGameState(cloneGameData(withPiles));
       setError(null);
@@ -280,9 +334,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const endPlayerTurn = () => {
     if (!gameState || turnPhase !== 'player') return;
-    const roundId = turns[currentTurnIndex]?.id ?? currentTurnIndex + 1;
+    const plannerTurnSlotId = turns[currentTurnIndex]?.id ?? currentTurnIndex + 1;
+    const stateAfterIntangibleTick: CombatData = {
+      ...gameState,
+      player: {
+        ...gameState.player,
+        buffsDebuffs: decrementIntangibleStacks(gameState.player.buffsDebuffs),
+      },
+    };
     const logEntry = createActivityLogEntry(
-      `Player ended main phase — round ${roundId}`,
+      `Player ended main phase — planner turn ${plannerTurnSlotId}`,
       undefined,
       undefined,
       'Enemy phase: resolve intents and damage, then end enemy turn.',
@@ -290,8 +351,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       { context: [{ label: 'Phase', value: 'Main → Enemy' }] },
     );
     const stateAfterLog: CombatData = {
-      ...gameState,
-      activityLog: [...gameState.activityLog, logEntry],
+      ...stateAfterIntangibleTick,
+      activityLog: [...stateAfterIntangibleTick.activityLog, logEntry],
     };
     setGameState(stateAfterLog);
     setTurns((prev) =>
@@ -305,18 +366,26 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const endEnemyTurn = () => {
     if (!gameState || !initialData || turnPhase !== 'enemy') return;
-    const roundId = turns[currentTurnIndex]?.id ?? currentTurnIndex + 1;
+    const plannerTurnSlotId = turns[currentTurnIndex]?.id ?? currentTurnIndex + 1;
+    const enemiesTicked = gameState.enemies?.map((e) => ({
+      ...e,
+      buffsDebuffs: decrementIntangibleStacks(e.buffsDebuffs),
+    }));
+    const stateAfterIntangibleTick: CombatData = {
+      ...gameState,
+      ...(enemiesTicked ? { enemies: enemiesTicked } : {}),
+    };
     const logEntry = createActivityLogEntry(
-      `Enemy turn ended — round ${roundId}`,
+      `Enemy phase ended — planner turn ${plannerTurnSlotId}`,
       undefined,
       undefined,
-      'Advancing to the next planner round. Use Start turn for relic / draw / ST, then Main.',
+      'Advancing to the next planner turn. Use Start turn for relic / draw / ST, then Main.',
       'system',
-      { context: [{ label: 'Phase', value: 'Enemy → Start (next round)' }] },
+      { context: [{ label: 'Phase', value: 'Enemy → Start (next planner turn)' }] },
     );
     const stateAfterLog: CombatData = {
-      ...gameState,
-      activityLog: [...gameState.activityLog, logEntry],
+      ...stateAfterIntangibleTick,
+      activityLog: [...stateAfterIntangibleTick.activityLog, logEntry],
     };
     setTurns((prev) => {
       const withSaved = prev.map((turn, idx) =>
@@ -341,14 +410,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setGameState(cloneGameData(turns[nextIndex].state));
     }
     setTurnPhase('start');
-    toast('Next round', 'success');
+    toast('Next planner turn', 'success');
   };
 
   const beginTurn = () => {
     if (!gameState || turnPhase !== 'start') return;
-    const roundId = turns[currentTurnIndex]?.id ?? currentTurnIndex + 1;
+    const plannerTurnSlotId = turns[currentTurnIndex]?.id ?? currentTurnIndex + 1;
     const logEntry = createActivityLogEntry(
-      `Turn started — round ${roundId}`,
+      `Start phase — planner turn ${plannerTurnSlotId}`,
       undefined,
       undefined,
       'Resolve start-of-turn relics, passive powers, and draw before playing cards (Main phase).',
@@ -416,6 +485,28 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const syncEnemyIntentsGlobally = useCallback((enemiesNext: Enemy[]) => {
+    setGameState((prev) => (prev ? { ...prev, enemies: cloneEnemyArrayDeep(enemiesNext) } : prev));
+    setTurns((prev) =>
+      prev.map((t) => ({
+        ...t,
+        state: {
+          ...cloneGameData(t.state),
+          enemies: cloneEnemyArrayDeep(enemiesNext),
+        },
+      })),
+    );
+    setDecisionNodes((nodes) =>
+      nodes.map((n) => ({
+        ...n,
+        snapshot: {
+          ...cloneGameData(n.snapshot),
+          enemies: cloneEnemyArrayDeep(enemiesNext),
+        },
+      })),
+    );
+  }, []);
+
   const resetGameState = () => {
     if (initialData) {
       setGameState(cloneGameData(initialData));
@@ -425,7 +516,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const saveGameData = (key: string = DEFAULT_SAVE_KEY) => {
     if (turns.length > 0) {
-      saveToLocalStorage(key, { turns, currentTurnIndex, turnPhase });
+      saveToLocalStorage(key, {
+        turns,
+        currentTurnIndex,
+        turnPhase,
+        decisionNodes,
+        activeDecisionNodeId,
+      });
     }
   };
 
@@ -441,8 +538,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
       let bonusEnergy = prevState.player.bonusEnergy ?? 0;
       let bonusBlock = prevState.player.bonusBlock ?? 0;
-      let intangible = prevState.player.intangible ?? false;
       let currentEnergy = prevState.player.currentEnergy ?? 0;
+      let buffsDebuffs = [...(prevState.player.buffsDebuffs ?? [])];
 
       if (relicName === LANTERN_RELIC_NAME) {
         if (isActive) {
@@ -458,7 +555,36 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         bonusBlock = isActive ? Math.max(0, bonusBlock - 18) : bonusBlock + 18;
       }
       if (relicName === "Incense Burner") {
-        intangible = !isActive;
+        if (!isActive) {
+          const idx = buffsDebuffs.findIndex(
+            (bd) =>
+              bd.type === 'buff' &&
+              bd.name.trim().toLowerCase() === INTANGIBLE_BUFF_NAME.toLowerCase(),
+          );
+          if (idx >= 0) {
+            const cur = buffsDebuffs[idx];
+            buffsDebuffs = [...buffsDebuffs];
+            buffsDebuffs[idx] = { ...cur, stacks: cur.stacks + 1 };
+          } else {
+            buffsDebuffs = [
+              ...buffsDebuffs,
+              {
+                name: INTANGIBLE_BUFF_NAME,
+                stacks: 1,
+                type: 'buff' as const,
+                description: INTANGIBLE_BUFF_DESCRIPTION,
+              },
+            ];
+          }
+        } else {
+          buffsDebuffs = buffsDebuffs.filter(
+            (bd) =>
+              !(
+                bd.type === 'buff' &&
+                bd.name.trim().toLowerCase() === INTANGIBLE_BUFF_NAME.toLowerCase()
+              ),
+          );
+        }
       }
 
       return {
@@ -468,8 +594,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           activeRelics: nextActiveRelics,
           bonusEnergy,
           bonusBlock,
-          intangible,
           currentEnergy,
+          ...(relicName === "Incense Burner"
+            ? { buffsDebuffs: buffsDebuffs.length > 0 ? buffsDebuffs : undefined }
+            : {}),
         },
       };
     });
@@ -480,15 +608,222 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (saved && saved.turns && Array.isArray(saved.turns)) {
       setTurns(saved.turns);
       setCurrentTurnIndex(saved.currentTurnIndex || 0);
-      setGameState(cloneGameData(saved.turns[saved.currentTurnIndex || 0]?.state || null));
+      const slotState = saved.turns[saved.currentTurnIndex || 0]?.state;
+      setGameState(slotState ? cloneGameData(slotState) : null);
       const phase = saved.turnPhase as CombatTurnPhase | undefined;
       setTurnPhase(
         phase === 'start' || phase === 'player' || phase === 'enemy' ? phase : 'start',
       );
+
+      const rawNodes = saved.decisionNodes;
+      if (
+        Array.isArray(rawNodes) &&
+        rawNodes.length > 0 &&
+        rawNodes.every(
+          (n: DecisionNode) =>
+            n &&
+            typeof n.id === 'string' &&
+            n.snapshot &&
+            typeof n.plannerTurnSlotId === 'number',
+        )
+      ) {
+        const cloned: DecisionNode[] = rawNodes.map((n: DecisionNode) => ({
+          ...n,
+          snapshot: cloneGameData(n.snapshot),
+        }));
+        const preferred = saved.activeDecisionNodeId as string | undefined;
+        const active =
+          preferred && cloned.some((n) => n.id === preferred) ? preferred : cloned[0]!.id;
+        setDecisionNodes(cloned);
+        setActiveDecisionNodeId(active);
+      } else {
+        const idx = saved.currentTurnIndex || 0;
+        const slot = saved.turns[idx];
+        const phaseNow =
+          saved.turnPhase === 'start' || saved.turnPhase === 'player' || saved.turnPhase === 'enemy'
+            ? saved.turnPhase
+            : 'start';
+        if (slot) {
+          const rootId = crypto.randomUUID();
+          const migrated: DecisionNode = {
+            id: rootId,
+            parentId: null,
+            label: 'Start',
+            snapshot: cloneGameData(slot.state),
+            plannerTurnSlotId: slot.id,
+            turnPhase: phaseNow,
+            createdAt: new Date().toISOString(),
+          };
+          setDecisionNodes([migrated]);
+          setActiveDecisionNodeId(rootId);
+        } else {
+          setDecisionNodes([]);
+          setActiveDecisionNodeId(null);
+        }
+      }
+
       return true;
     }
     return false;
   };
+
+  const forkDecisionBranch = useCallback(
+    (optionalLabel?: string) => {
+      if (!gameState) {
+        toast('Load combat first', 'error');
+        return;
+      }
+
+      const slotId = turns[currentTurnIndex]?.id ?? 1;
+      const childId = crypto.randomUUID();
+
+      setDecisionNodes((prevNodes) => {
+        let nodes = [...prevNodes];
+        let effectiveParentId = activeDecisionNodeId;
+
+        if (nodes.length === 0) {
+          const rootId = crypto.randomUUID();
+          nodes.push({
+            id: rootId,
+            parentId: null,
+            label: 'Start',
+            snapshot: cloneGameData(gameState),
+            plannerTurnSlotId: slotId,
+            turnPhase,
+            createdAt: new Date().toISOString(),
+          });
+          effectiveParentId = rootId;
+        } else {
+          const rootNode = nodes.find((n) => n.parentId === null);
+          if (!effectiveParentId && rootNode) effectiveParentId = rootNode.id;
+        }
+
+        if (!effectiveParentId) return prevNodes;
+
+        nodes = nodes.map((n) =>
+          n.id === effectiveParentId
+            ? {
+                ...n,
+                snapshot: cloneGameData(gameState),
+                plannerTurnSlotId: slotId,
+                turnPhase,
+              }
+            : n,
+        );
+
+        const siblingCount = nodes.filter((n) => n.parentId === effectiveParentId).length;
+        nodes.push({
+          id: childId,
+          parentId: effectiveParentId,
+          label: optionalLabel?.trim() || `Branch ${siblingCount + 1}`,
+          snapshot: cloneGameData(gameState),
+          plannerTurnSlotId: slotId,
+          turnPhase,
+          createdAt: new Date().toISOString(),
+        });
+
+        return nodes;
+      });
+
+      setActiveDecisionNodeId(childId);
+
+      setTurns((prev) =>
+        prev.map((t, i) => (i === currentTurnIndex ? { ...t, state: cloneGameData(gameState) } : t)),
+      );
+
+      toast('Branch created', 'success');
+    },
+    [gameState, activeDecisionNodeId, turns, currentTurnIndex, turnPhase],
+  );
+
+  const jumpToDecisionNode = useCallback(
+    (nodeId: string) => {
+      if (nodeId === activeDecisionNodeId) return;
+
+      const targetNode = decisionNodes.find((n) => n.id === nodeId);
+      if (!targetNode) {
+        toast('Node not found', 'error');
+        return;
+      }
+
+      if (gameState && activeDecisionNodeId && activeDecisionNodeId !== nodeId) {
+        const slotId = turns[currentTurnIndex]?.id ?? 1;
+        setDecisionNodes((prev) =>
+          prev.map((n) =>
+            n.id === activeDecisionNodeId
+              ? {
+                  ...n,
+                  snapshot: cloneGameData(gameState),
+                  plannerTurnSlotId: slotId,
+                  turnPhase,
+                }
+              : n,
+          ),
+        );
+        setTurns((prev) =>
+          prev.map((t, i) =>
+            i === currentTurnIndex ? { ...t, state: cloneGameData(gameState) } : t,
+          ),
+        );
+      }
+
+      const turnIndex = Math.max(0, turns.findIndex((t) => t.id === targetNode.plannerTurnSlotId));
+
+      setTurns((prev) =>
+        prev.map((t, i) =>
+          i === turnIndex ? { ...t, state: cloneGameData(targetNode.snapshot) } : t,
+        ),
+      );
+      setCurrentTurnIndex(turnIndex);
+      setGameState(cloneGameData(targetNode.snapshot));
+      setTurnPhase(targetNode.turnPhase);
+      setActiveDecisionNodeId(nodeId);
+      toast('Switched branch', 'info');
+    },
+    [activeDecisionNodeId, decisionNodes, gameState, turns, currentTurnIndex, turnPhase],
+  );
+
+  const deleteDecisionBranch = useCallback(
+    (nodeId: string) => {
+      const root = decisionNodes.find((n) => n.parentId === null);
+      if (root && nodeId === root.id) {
+        toast('Cannot delete the root node', 'info');
+        return;
+      }
+
+      const toRemove = collectSubtreeIds(decisionNodes, nodeId);
+      const next = decisionNodes.filter((n) => !toRemove.has(n.id));
+      setDecisionNodes(next);
+
+      if (!activeDecisionNodeId || !toRemove.has(activeDecisionNodeId)) return;
+
+      const fallback = next.find((n) => n.parentId === null) ?? next[0];
+      if (!fallback) {
+        setActiveDecisionNodeId(null);
+        toast('Branch deleted', 'info');
+        return;
+      }
+
+      const turnIndex = Math.max(0, turns.findIndex((t) => t.id === fallback.plannerTurnSlotId));
+      setTurns((prev) =>
+        prev.map((t, i) =>
+          i === turnIndex ? { ...t, state: cloneGameData(fallback.snapshot) } : t,
+        ),
+      );
+      setCurrentTurnIndex(turnIndex);
+      setGameState(cloneGameData(fallback.snapshot));
+      setTurnPhase(fallback.turnPhase);
+      setActiveDecisionNodeId(fallback.id);
+      toast('Branch deleted — jumped to remaining tree', 'info');
+    },
+    [decisionNodes, activeDecisionNodeId, turns],
+  );
+
+  const updateDecisionNodeLabel = useCallback((nodeId: string, label: string) => {
+    setDecisionNodes((prev) =>
+      prev.map((n) => (n.id === nodeId ? { ...n, label: label.trim() || n.label } : n)),
+    );
+  }, []);
 
   const getSelectedCards = (state: CombatData) => {
     const locations = ['draw', 'discard', 'exhaust', 'hand', 'playedCards'];
@@ -920,7 +1255,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setGameState((prevState) => {
       if (!prevState) return prevState;
       const appliedDelta =
-        delta < 0 && (prevState.player.intangible ?? false)
+        delta < 0 && entityHasIntangible(prevState.player.buffsDebuffs)
           ? -Math.min(Math.abs(delta), 1)
           : delta;
       const beforeHp = prevState.player.hp ?? 0;
@@ -994,18 +1329,31 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (!prevState || !prevState.enemies) return prevState;
       const nextEnemies = [...prevState.enemies];
       if (enemyIndex < 0 || enemyIndex >= nextEnemies.length) return prevState;
-      
-      const beforeHp = nextEnemies[enemyIndex].hp;
-      const newHp = Math.max(0, beforeHp + delta);
-      
+
+      const enemy = nextEnemies[enemyIndex];
+      const appliedDelta =
+        delta < 0 && entityHasIntangible(enemy.buffsDebuffs)
+          ? -Math.min(Math.abs(delta), 1)
+          : delta;
+
+      const beforeHp = enemy.hp;
+      const newHp = Math.max(0, beforeHp + appliedDelta);
+
       if (beforeHp === newHp) return prevState;
-      
-      const enemyName = nextEnemies[enemyIndex].name || `Enemy ${enemyIndex + 1}`;
-      const maxHp = nextEnemies[enemyIndex].maxHp;
+
+      const enemyName = enemy.name || `Enemy ${enemyIndex + 1}`;
+      const maxHp = enemy.maxHp;
       const logEntry =
-        delta > 0
-          ? buildHealLogEntry('enemy', delta, beforeHp, newHp, enemyName, maxHp)
-          : buildDamageLogEntry('enemy', Math.abs(delta), beforeHp, newHp, enemyName, maxHp);
+        appliedDelta > 0
+          ? buildHealLogEntry('enemy', appliedDelta, beforeHp, newHp, enemyName, maxHp)
+          : buildDamageLogEntry(
+              'enemy',
+              Math.abs(appliedDelta),
+              beforeHp,
+              newHp,
+              enemyName,
+              maxHp,
+            );
       
       nextEnemies[enemyIndex] = {
         ...nextEnemies[enemyIndex],
@@ -1049,23 +1397,40 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  /** Stack additional amounts onto an existing buff/debuff with the same name + kind (case-insensitive). */
+  const findBuffDebuffMergeIndex = (
+    list: { name: string; type: string }[],
+    incomingName: string,
+    incomingType: "buff" | "debuff",
+  ) =>
+    list.findIndex(
+      (bd) =>
+        bd.type === incomingType &&
+        bd.name.trim().toLowerCase() === incomingName.trim().toLowerCase(),
+    );
+
   const addBuffDebuff = (target: 'player' | 'enemy', enemyIndex: number, name: string, type: 'buff' | 'debuff', stacks: number, description?: string) => {
     setGameState((prevState) => {
       if (!prevState) return prevState;
       if (target === 'player') {
         const buffsDebuffs = prevState.player.buffsDebuffs ?? [];
-        const existingIndex = buffsDebuffs.findIndex((bd) => bd.name === name);
+        const existingIndex = findBuffDebuffMergeIndex(buffsDebuffs, name, type);
         let nextBuffsDebuffs: typeof buffsDebuffs;
         let logEntry: ActivityLogEntry;
         
         if (existingIndex >= 0) {
           const previousStacks = buffsDebuffs[existingIndex].stacks;
+          const mergedStacks = previousStacks + stacks;
           nextBuffsDebuffs = [...buffsDebuffs];
-          nextBuffsDebuffs[existingIndex] = { ...nextBuffsDebuffs[existingIndex], stacks, description };
+          nextBuffsDebuffs[existingIndex] = {
+            ...nextBuffsDebuffs[existingIndex],
+            stacks: mergedStacks,
+            description: description ?? nextBuffsDebuffs[existingIndex].description,
+          };
           
           logEntry = type === 'buff'
-            ? buildBuffLogEntry(name, stacks, 'player', undefined, previousStacks)
-            : buildDebuffLogEntry(name, stacks, 'player', undefined, previousStacks);
+            ? buildBuffLogEntry(name, mergedStacks, 'player', undefined, previousStacks)
+            : buildDebuffLogEntry(name, mergedStacks, 'player', undefined, previousStacks);
         } else {
           nextBuffsDebuffs = [...buffsDebuffs, { name, stacks, type, description }];
           
@@ -1085,19 +1450,24 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         if (enemyIndex < 0 || enemyIndex >= nextEnemies.length) return prevState;
         
         const buffsDebuffs = nextEnemies[enemyIndex].buffsDebuffs ?? [];
-        const existingIndex = buffsDebuffs.findIndex((bd) => bd.name === name);
+        const existingIndex = findBuffDebuffMergeIndex(buffsDebuffs, name, type);
         let nextBuffsDebuffs: typeof buffsDebuffs;
         let logEntry: ActivityLogEntry;
         
         if (existingIndex >= 0) {
           const previousStacks = buffsDebuffs[existingIndex].stacks;
+          const mergedStacks = previousStacks + stacks;
           nextBuffsDebuffs = [...buffsDebuffs];
-          nextBuffsDebuffs[existingIndex] = { ...nextBuffsDebuffs[existingIndex], stacks, description };
+          nextBuffsDebuffs[existingIndex] = {
+            ...nextBuffsDebuffs[existingIndex],
+            stacks: mergedStacks,
+            description: description ?? nextBuffsDebuffs[existingIndex].description,
+          };
           
           const enemyName = nextEnemies[enemyIndex].name || `Enemy ${enemyIndex + 1}`;
           logEntry = type === 'buff'
-            ? buildBuffLogEntry(name, stacks, 'enemy', enemyName, previousStacks)
-            : buildDebuffLogEntry(name, stacks, 'enemy', enemyName, previousStacks);
+            ? buildBuffLogEntry(name, mergedStacks, 'enemy', enemyName, previousStacks)
+            : buildDebuffLogEntry(name, mergedStacks, 'enemy', enemyName, previousStacks);
         } else {
           nextBuffsDebuffs = [...buffsDebuffs, { name, stacks, type, description }];
           
@@ -1265,6 +1635,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         error,
         updateGameState,
+        syncEnemyIntentsGlobally,
         resetGameState,
         loadGameData,
         loadGameDataFromJson,
@@ -1304,6 +1675,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         combatTargetSelf,
         toggleCombatTargetSelf,
         clearCombatTargets,
+        decisionNodes,
+        activeDecisionNodeId,
+        forkDecisionBranch,
+        jumpToDecisionNode,
+        deleteDecisionBranch,
+        updateDecisionNodeLabel,
       }}
     >
       {children}

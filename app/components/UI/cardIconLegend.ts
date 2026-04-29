@@ -26,6 +26,7 @@ const STAT_KEYS = [
 const LEGEND_LABEL_OVERRIDES: Partial<Record<keyof typeof STS_ICON_GLYPH, string>> = {
   COST_MANIP: "Cost manipulation",
   UPGRADE_CARD: "Upgrade cards",
+  CAN_ADD_CARDS: "Adds cards",
 };
 
 /** Stable STS catalog keys; skips DRAW_ICON (same meaning as stat “Draw”). */
@@ -37,6 +38,7 @@ const STS_LEGEND_KEYS: (keyof typeof STS_ICON_GLYPH)[] = [
   "KEY_INNATE",
   "KEY_ETHEREAL",
   "KEY_RETAIN",
+  "KEY_UNPLAYABLE",
   "DISCARD_ICON",
   "EVOKE_ICON",
   "CONDITIONAL_MARKER",
@@ -48,6 +50,7 @@ const STS_LEGEND_KEYS: (keyof typeof STS_ICON_GLYPH)[] = [
   "SAME_ORB_AS_EVOKED",
   "COST_MANIP",
   "UPGRADE_CARD",
+  "CAN_ADD_CARDS",
   "ADD_CARD",
   "SCRY_ICON",
   "LOSE_STRENGTH",

@@ -2,6 +2,7 @@ import type { Card } from "@/app/types/gameTypes";
 import type { GalleryGlyph } from "@/app/card-design-gallery/galleryStsGlyphs";
 import {
   cardSelfExhaustsOnPlay,
+  damageMultihitInlineHitLabel,
   energyGainNode,
   galleryBlockRowIsConditional,
   galleryDamageIsConditional,
@@ -21,6 +22,16 @@ function isConditionedEnergyGain(card: Card): boolean {
     typeof eg === "object" &&
     !Array.isArray(eg) &&
     (eg as Record<string, unknown>).conditioned === true
+  );
+}
+
+function bonusDamageIsConditional(card: Card): boolean {
+  const b = (card as Record<string, unknown>).bonusDamage;
+  return (
+    b != null &&
+    typeof b === "object" &&
+    !Array.isArray(b) &&
+    (b as Record<string, unknown>).conditioned === true
   );
 }
 
@@ -75,6 +86,12 @@ function addGlyphLegendHints(card: Card, glyphs: GalleryGlyph[], ids: Set<string
       case "damage-combo":
         if (galleryDamageRowIsAoE(card)) ids.add("AOE_ICON");
         break;
+      case "bonus-damage":
+        ids.add("stat-damage");
+        break;
+      case "block-combo":
+        ids.add("stat-block");
+        break;
       case "discard-random":
       case "structured-random-discard":
         ids.add("DISCARD_ICON");
@@ -98,6 +115,9 @@ function addGlyphLegendHints(card: Card, glyphs: GalleryGlyph[], ids: Set<string
         break;
       case "upgrade-cards":
         ids.add("UPGRADE_CARD");
+        break;
+      case "can-add-cards":
+        ids.add("CAN_ADD_CARDS");
         break;
       case "add-card":
         ids.add("ADD_CARD");
@@ -131,7 +151,7 @@ export function computeLegendHighlightIds(card: Card): Set<string> {
   if (card.damage !== undefined && !suppressStats.damage) ids.add("stat-damage");
   if (card.block !== undefined && !suppressStats.block) ids.add("stat-block");
   if (card.blockOnExhaust !== undefined) ids.add("stat-block");
-  if (card.draw !== undefined && !suppressStats.draw) ids.add("stat-draw");
+  if (card.draw !== undefined) ids.add("stat-draw");
   /** Suppression hides duplicate stat row when energy is in a glyph cluster; legend should still match the visible icon. */
   if (energyGainNode(card) != null) {
     ids.add("stat-energygain");
@@ -153,15 +173,19 @@ export function computeLegendHighlightIds(card: Card): Set<string> {
   if (galleryTieredBoolActive(card, c.innate ?? c.Innate)) ids.add("KEY_INNATE");
   if (galleryTieredBoolActive(card, c.ethereal ?? c.Ethereal)) ids.add("KEY_ETHEREAL");
   if (galleryTieredBoolActive(card, c.retain ?? c.Retain)) ids.add("KEY_RETAIN");
+  if (galleryTieredBoolActive(card, c.unplayable ?? c.Unplayable)) ids.add("KEY_UNPLAYABLE");
 
   if (c.costManipulation === true) ids.add("COST_MANIP");
   if (c.canUpgradeCards === true) ids.add("UPGRADE_CARD");
+  if (galleryTieredBoolActive(card, c.canAddCards)) ids.add("CAN_ADD_CARDS");
 
   if (cardSelfExhaustsOnPlay(card)) ids.add("EXHAUST_SELF");
 
   addDiscardLegendKeys(card, ids);
   addOrbLegendKeys(card, ids);
   addGlyphLegendHints(card, glyphs, ids);
+
+  if (damageMultihitInlineHitLabel(card) != null) ids.add("AOE_DAMAGE");
 
   if (
     galleryDamageRowIsAoE(card) &&
@@ -175,7 +199,8 @@ export function computeLegendHighlightIds(card: Card): Set<string> {
     galleryDamageIsConditional(card) ||
     galleryDrawIsConditional(card) ||
     galleryBlockRowIsConditional(card) ||
-    isConditionedEnergyGain(card)
+    isConditionedEnergyGain(card) ||
+    bonusDamageIsConditional(card)
   ) {
     ids.add("CONDITIONAL_MARKER");
   }

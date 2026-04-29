@@ -98,12 +98,30 @@ const GALLERY_QUICK_TEMPLATES = [
         ]
     },
     {
-        id: "compact-smoke",
-        title: "Compact smoke",
-        blurb: "Ironclad attack + Defect basic — quick layout check",
+        id: "diri",
+        title: "DORO MONSTA CARDO",
+        blurb: "",
         cardIds: [
-            "Anger",
-            "Zap"
+            "Pommel Strike",
+            "Acrobatics",
+            "Evolve",
+            "Dark Embrace",
+            "Prepared",
+            "Calculated Gamble",
+            "Dagger Throw"
+        ]
+    },
+    {
+        id: "multihit",
+        title: "Multi hit",
+        blurb: "MULTIIII",
+        cardIds: [
+            "Dagger Spray",
+            "Whirlwind",
+            "Glass Knife",
+            "Tantrum",
+            "Skewer",
+            "Ragnarok"
         ]
     }
 ];
@@ -788,6 +806,10 @@ if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelper
 "use strict";
 
 __turbopack_context__.s([
+    "formatBlockStatTitle",
+    ()=>formatBlockStatTitle,
+    "formatDamageStatTitle",
+    ()=>formatDamageStatTitle,
     "getBlockStats",
     ()=>getBlockStats,
     "getDamageStats",
@@ -813,6 +835,22 @@ function getBlockStats(block) {
         block,
         frail: Math.floor(block * frailMultiplier)
     };
+}
+function formatDamageStatTitle(baseDamage, cardType) {
+    if (baseDamage === undefined) return undefined;
+    if (cardType !== "Attack") return `DMG ${baseDamage}`;
+    const s = getDamageStats(baseDamage);
+    if (!s) return `DMG ${baseDamage}`;
+    return `DMG ${s.dmg} · WEAK ${s.weak} ↓ · VULN ${s.vulnerable} ↑ · BOTH ${s.both}`;
+}
+function formatBlockStatTitle(baseBlock, cardType) {
+    if (baseBlock === undefined) return undefined;
+    if (cardType === "Attack" || cardType === "Skill") {
+        const s = getBlockStats(baseBlock);
+        if (!s) return String(baseBlock);
+        return `BLOCK ${s.block} · FRAIL ${s.frail}`;
+    }
+    return String(baseBlock);
 }
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
@@ -1164,6 +1202,52 @@ var _s = __turbopack_context__.k.signature();
 ;
 ;
 ;
+function usesEnergyScalingDamageMultihit(card) {
+    const mh = card.multiHit;
+    return mh != null && typeof mh === "object" && !Array.isArray(mh) && mh.multiHitEnergyScaling === true;
+}
+function cardUsesXCostOrb(card) {
+    const v = card.xCost;
+    if (v === undefined || v === null || v === false) return false;
+    if (typeof v === "number" && v === 0) return false;
+    if (typeof v === "string" && v.trim() === "") return false;
+    return true;
+}
+function renderLeadingGlyphSegments(segments, iconCls) {
+    return segments.map((s, i)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].Fragment, {
+            children: [
+                s.Icon ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(s.Icon, {
+                    className: `${iconCls} shrink-0 ${s.iconClass ?? ""}`,
+                    "aria-hidden": true
+                }, void 0, false, {
+                    fileName: "[project]/app/components/UI/Card.tsx",
+                    lineNumber: 83,
+                    columnNumber: 9
+                }, this) : null,
+                s.text != null && s.text !== "" ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                    className: s.textClass ?? "",
+                    children: s.text
+                }, void 0, false, {
+                    fileName: "[project]/app/components/UI/Card.tsx",
+                    lineNumber: 86,
+                    columnNumber: 9
+                }, this) : null
+            ]
+        }, i, true, {
+            fileName: "[project]/app/components/UI/Card.tsx",
+            lineNumber: 81,
+            columnNumber: 5
+        }, this));
+}
+/** Tier-resolved damage number only (multihit count is shown separately after the icon). */ function attackDamageStatDisplay(card) {
+    const n = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["galleryTierNumber"])(card, card.damage);
+    if (n != null) {
+        return String(n);
+    }
+    const raw = card.damage;
+    if (typeof raw === "number" && !Number.isNaN(raw)) return String(raw);
+    return undefined;
+}
 const SIZE_STYLES = {
     small: {
         frame: "w-[6.25rem] h-[8.5rem] rounded-xl",
@@ -1215,6 +1299,7 @@ const SIZE_STYLES = {
         galleryText: "text-[15px] font-bold"
     }
 };
+/** Block + optional frail tier: dark clustered chip (aligned with gallery glyph fallback shell). */ const BLOCK_FRAIL_CLUSTER_CLASS = "inline-flex flex-wrap items-center justify-center gap-1 rounded-md border border-white/15 bg-black/20 px-1 py-0.5 shadow-sm";
 function renderGalleryGlyphCluster(g, iconCls, textBaseCls, opts) {
     const fallbackShell = "rounded-md border border-white/15 bg-black/20 px-1 py-0.5 shadow-sm";
     const shell = opts?.stripClusterShell ? "" : g.clusterClass ?? fallbackShell;
@@ -1236,7 +1321,7 @@ function renderGalleryGlyphCluster(g, iconCls, textBaseCls, opts) {
                             "aria-hidden": true
                         }, void 0, false, {
                             fileName: "[project]/app/components/UI/Card.tsx",
-                            lineNumber: 123,
+                            lineNumber: 181,
                             columnNumber: 15
                         }, this) : null,
                         s.text != null && s.text !== "" ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1244,18 +1329,18 @@ function renderGalleryGlyphCluster(g, iconCls, textBaseCls, opts) {
                             children: s.text
                         }, void 0, false, {
                             fileName: "[project]/app/components/UI/Card.tsx",
-                            lineNumber: 129,
+                            lineNumber: 187,
                             columnNumber: 15
                         }, this) : null
                     ]
                 }, i, true, {
                     fileName: "[project]/app/components/UI/Card.tsx",
-                    lineNumber: 121,
+                    lineNumber: 179,
                     columnNumber: 11
                 }, this))
         }, void 0, false, {
             fileName: "[project]/app/components/UI/Card.tsx",
-            lineNumber: 119,
+            lineNumber: 177,
             columnNumber: 7
         }, this);
     }
@@ -1275,12 +1360,12 @@ function renderGalleryGlyphCluster(g, iconCls, textBaseCls, opts) {
                 "aria-hidden": true
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/Card.tsx",
-                lineNumber: 145,
+                lineNumber: 203,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/app/components/UI/Card.tsx",
-            lineNumber: 139,
+            lineNumber: 197,
             columnNumber: 7
         }, this);
     }
@@ -1317,20 +1402,9 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
         }
         return undefined;
     }
-    function getFullDamage() {
-        if (card.damage === undefined) return undefined;
-        return (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["getDamageStats"])(getValue("damage"));
-    }
     function getFullBlock() {
         if (card.block === undefined) return undefined;
         return (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["getBlockStats"])(getValue("block"));
-    }
-    /** Root `xCost` takes priority over numeric `cost` for the orb (Slay-the-Spire-style X cards). */ function cardUsesXCost() {
-        const v = card.xCost;
-        if (v === undefined || v === null || v === false) return false;
-        if (typeof v === "number" && v === 0) return false;
-        if (typeof v === "string" && v.trim() === "") return false;
-        return true;
     }
     /** Hide cost orb for curse / status / STS `unplayable` (Necronomicurse, etc.). */ const hideCostOrb = card.type === "Curse" || card.type === "Status" || card.unplayable === true;
     const chrome = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$UI$2f$cardVisualVariants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getCardVariantChrome"])({
@@ -1341,13 +1415,52 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
     });
     const rawGalleryGlyphs = mergedEffectGlyphs ?? [];
     const prefixDamageGlyphs = stat ? rawGalleryGlyphs.filter((g)=>g.prefixDamageRow) : [];
+    const prefixDamageGlyphsFiltered = prefixDamageGlyphs.filter((g)=>!(g.id === "multi-hit" && usesEnergyScalingDamageMultihit(card) && cardUsesXCostOrb(card)));
     const suffixGalleryGlyphs = stat ? rawGalleryGlyphs.filter((g)=>!g.prefixDamageRow) : rawGalleryGlyphs;
+    const statStripLeadingAndRest = stat == null ? {
+        keywordLeading: [],
+        rest: []
+    } : (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["galleryStatStripKeywordLeadingAndRest"])(suffixGalleryGlyphs);
+    // #region agent log
+    if (stat && card.name === "Boot Sequence") {
+        fetch("http://127.0.0.1:7283/ingest/08b9d505-d660-4eb9-b23f-47e9eb90cb11", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-Debug-Session-Id": "2826d0"
+            },
+            body: JSON.stringify({
+                sessionId: "2826d0",
+                runId: "post-fix",
+                hypothesisId: "A",
+                location: "Card.tsx:statStripPartition",
+                message: "keywordLeading before stats; rest after",
+                data: {
+                    keywordLeadingIds: statStripLeadingAndRest.keywordLeading.map((g)=>g.id),
+                    restIds: statStripLeadingAndRest.rest.map((g)=>g.id),
+                    hasBlockStatJsxAfterKeywords: card.block !== undefined,
+                    statSize: size
+                },
+                timestamp: Date.now()
+            })
+        }).catch(()=>{});
+    }
+    // #endregion
+    const damageStatLabel = attackDamageStatDisplay(card);
+    const damageFormulaBase = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["galleryTierNumber"])(card, card.damage);
+    const attackDamageBreakdown = card.type === "Attack" && typeof damageFormulaBase === "number" ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["getDamageStats"])(damageFormulaBase) : null;
+    const damageStatTooltip = (()=>{
+        const formula = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["formatDamageStatTitle"])(typeof damageFormulaBase === "number" ? damageFormulaBase : undefined, card.type);
+        if (damageStatLabel && formula) return `${damageStatLabel} — ${formula}`;
+        if (formula) return formula;
+        return damageStatLabel ? `Damage ${damageStatLabel}` : undefined;
+    })();
+    const multihitHitLabel = stat ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["damageMultihitInlineHitLabel"])(card) : null;
+    const multihitLeadSegs = multihitHitLabel != null ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["multihitDamageRowLeadingSegments"])(card) : [];
     const showDamageStatBlock = card.damage !== undefined && !mergedSuppressStats?.damage;
-    const showDamageRow = showDamageStatBlock || prefixDamageGlyphs.length > 0;
+    const showDamageRow = showDamageStatBlock || prefixDamageGlyphsFiltered.length > 0;
     const unifiedDamageAoE = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["galleryDamageRowIsAoE"])(card) && showDamageRow;
     const damageAoEGroupClass = unifiedDamageAoE ? "inline-flex flex-wrap items-center justify-center gap-1 rounded-md border border-rose-400/25 bg-rose-950/45 px-1.5 py-1 shadow-sm" : "flex flex-wrap items-center justify-center gap-1";
-    const blockConditionalShell = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["galleryBlockRowIsConditional"])(card) && card.block !== undefined;
-    const blockRowGroupClass = blockConditionalShell ? "inline-flex flex-wrap items-center justify-center gap-1 rounded-md border border-blue-400/25 bg-blue-950/40 px-1.5 py-1 shadow-sm" : "flex items-center gap-1";
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         "data-sts-card": "",
         onMouseEnter: legendHover ? ()=>{
@@ -1366,29 +1479,29 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                 className: chrome.topLine
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/Card.tsx",
-                lineNumber: 307,
+                lineNumber: 408,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: chrome.innerRim
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/Card.tsx",
-                lineNumber: 309,
+                lineNumber: 410,
                 columnNumber: 7
             }, this),
             !hideCostOrb && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: `absolute z-10 flex items-center justify-center rounded-full border-2 border-slate-950 ${sz.costOrb} ${styles.costBg} ${styles.costGlow} shadow-lg ${chrome.costOrbExtra}`,
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                     className: `${sz.costText} text-white drop-shadow-md`,
-                    children: cardUsesXCost() ? "X" : getValue("cost")
+                    children: cardUsesXCostOrb(card) ? "X" : getValue("cost")
                 }, void 0, false, {
                     fileName: "[project]/app/components/UI/Card.tsx",
-                    lineNumber: 315,
+                    lineNumber: 416,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/Card.tsx",
-                lineNumber: 312,
+                lineNumber: 413,
                 columnNumber: 9
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1406,7 +1519,7 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                             children: card.name
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/Card.tsx",
-                                            lineNumber: 329,
+                                            lineNumber: 430,
                                             columnNumber: 15
                                         }, this),
                                         card.isUpgraded && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1414,13 +1527,13 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                             children: "+"
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/Card.tsx",
-                                            lineNumber: 337,
+                                            lineNumber: 438,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 328,
+                                    lineNumber: 429,
                                     columnNumber: 13
                                 }, this),
                                 card.isChanged && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1428,18 +1541,18 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     children: "CHANGED"
                                 }, void 0, false, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 343,
+                                    lineNumber: 444,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/components/UI/Card.tsx",
-                            lineNumber: 325,
+                            lineNumber: 426,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/app/components/UI/Card.tsx",
-                        lineNumber: 322,
+                        lineNumber: 423,
                         columnNumber: 9
                     }, this),
                     !stat && rawGalleryGlyphs.length > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1451,55 +1564,235 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     children: renderGalleryGlyphCluster(g, SIZE_STYLES.small.galleryIcon, "text-[10px]")
                                 }, g.id, false, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 359,
+                                    lineNumber: 460,
                                     columnNumber: 17
                                 }, this))
                         }, void 0, false, {
                             fileName: "[project]/app/components/UI/Card.tsx",
-                            lineNumber: 357,
+                            lineNumber: 458,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/app/components/UI/Card.tsx",
-                        lineNumber: 353,
+                        lineNumber: 454,
                         columnNumber: 11
                     }, this) : null,
                     stat && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                        className: `flex flex-1 flex-col items-center justify-center ${stat.midGap}`,
+                        className: `flex flex-1 flex-wrap items-center justify-center content-center gap-x-2 gap-y-1 ${stat.midGap}`,
+                        "aria-label": "Card stats",
                         children: [
+                            statStripLeadingAndRest.keywordLeading.map((g)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].Fragment, {
+                                    children: renderGalleryGlyphCluster(g, stat.galleryIcon, stat.galleryText)
+                                }, g.id, false, {
+                                    fileName: "[project]/app/components/UI/Card.tsx",
+                                    lineNumber: 474,
+                                    columnNumber: 15
+                                }, this)),
                             showDamageRow ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 className: damageAoEGroupClass,
                                 children: [
-                                    prefixDamageGlyphs.map((g)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].Fragment, {
+                                    prefixDamageGlyphsFiltered.map((g)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].Fragment, {
                                             children: renderGalleryGlyphCluster(g, stat.galleryIcon, stat.galleryText, unifiedDamageAoE ? {
                                                 stripClusterShell: true
                                             } : undefined)
                                         }, g.id, false, {
                                             fileName: "[project]/app/components/UI/Card.tsx",
-                                            lineNumber: 374,
+                                            lineNumber: 485,
                                             columnNumber: 19
                                         }, this)),
-                                    showDamageStatBlock ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                    showDamageStatBlock ? multihitHitLabel != null ? attackDamageBreakdown ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        className: `${__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["galleryDamageClusterShellClass"]} inline-flex max-w-full flex-row items-center gap-x-0.5 ${stat.statMain}`,
+                                        title: damageStatTooltip,
+                                        children: [
+                                            renderLeadingGlyphSegments(multihitLeadSegs, stat.galleryIcon),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: `inline-flex items-center gap-0.5 text-lg ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("damage").color}`,
+                                                children: [
+                                                    /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].createElement((0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("damage").icon, {
+                                                        className: `${stat.statIcon} inline shrink-0`
+                                                    }),
+                                                    damageStatLabel ?? "?"
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/app/components/UI/Card.tsx",
+                                                lineNumber: 502,
+                                                columnNumber: 25
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: "flex flex-col items-center justify-center leading-none text-sm font-semibold tabular-nums tracking-tight",
+                                                title: "Weak (top) · Vulnerable (bottom)",
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                        className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("weak").color,
+                                                        children: attackDamageBreakdown.weak
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/app/components/UI/Card.tsx",
+                                                        lineNumber: 514,
+                                                        columnNumber: 27
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                        className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("vulnerable").color,
+                                                        children: attackDamageBreakdown.vulnerable
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/app/components/UI/Card.tsx",
+                                                        lineNumber: 517,
+                                                        columnNumber: 27
+                                                    }, this)
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/app/components/UI/Card.tsx",
+                                                lineNumber: 510,
+                                                columnNumber: 25
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: "text-slate-200/95 tabular-nums text-lg",
+                                                title: "Weak + Vulnerable",
+                                                children: attackDamageBreakdown.both
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/Card.tsx",
+                                                lineNumber: 521,
+                                                columnNumber: 25
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["MULTIHIT_INLINE_TIMES_CLASS"],
+                                                children: "×"
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/Card.tsx",
+                                                lineNumber: 527,
+                                                columnNumber: 25
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["MULTIHIT_INLINE_COUNT_CLASS"],
+                                                children: multihitHitLabel
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/Card.tsx",
+                                                lineNumber: 528,
+                                                columnNumber: 25
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/app/components/UI/Card.tsx",
+                                        lineNumber: 497,
+                                        columnNumber: 23
+                                    }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        className: `${__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["galleryDamageClusterShellClass"]} inline-flex max-w-full flex-row items-center gap-x-0.5 ${stat.statMain}`,
+                                        title: damageStatTooltip,
+                                        children: [
+                                            renderLeadingGlyphSegments(multihitLeadSegs, stat.galleryIcon),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: `inline-flex items-center gap-0.5 text-lg ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("damage").color}`,
+                                                children: [
+                                                    /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].createElement((0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("damage").icon, {
+                                                        className: `${stat.statIcon} inline shrink-0`
+                                                    }),
+                                                    damageStatLabel ?? "?"
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/app/components/UI/Card.tsx",
+                                                lineNumber: 536,
+                                                columnNumber: 25
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["MULTIHIT_INLINE_TIMES_CLASS"],
+                                                children: "×"
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/Card.tsx",
+                                                lineNumber: 544,
+                                                columnNumber: 25
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["MULTIHIT_INLINE_COUNT_CLASS"],
+                                                children: multihitHitLabel
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/Card.tsx",
+                                                lineNumber: 545,
+                                                columnNumber: 25
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/app/components/UI/Card.tsx",
+                                        lineNumber: 531,
+                                        columnNumber: 23
+                                    }, this) : attackDamageBreakdown ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        className: `${__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["galleryDamageClusterShellClass"]} inline-flex max-w-full flex-row items-center gap-x-0.5 ${stat.statMain}`,
+                                        title: damageStatTooltip,
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: `inline-flex items-center gap-0.5 text-lg ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("damage").color}`,
+                                                children: [
+                                                    /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].createElement((0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("damage").icon, {
+                                                        className: `${stat.statIcon} inline shrink-0`
+                                                    }),
+                                                    damageStatLabel ?? "?"
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/app/components/UI/Card.tsx",
+                                                lineNumber: 553,
+                                                columnNumber: 23
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: "flex flex-col items-center justify-center leading-none text-sm font-semibold tabular-nums tracking-tight",
+                                                title: "Weak (top) · Vulnerable (bottom)",
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                        className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("weak").color,
+                                                        children: attackDamageBreakdown.weak
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/app/components/UI/Card.tsx",
+                                                        lineNumber: 565,
+                                                        columnNumber: 25
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                        className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("vulnerable").color,
+                                                        children: attackDamageBreakdown.vulnerable
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/app/components/UI/Card.tsx",
+                                                        lineNumber: 568,
+                                                        columnNumber: 25
+                                                    }, this)
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/app/components/UI/Card.tsx",
+                                                lineNumber: 561,
+                                                columnNumber: 23
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: "text-slate-200/95 tabular-nums text-lg",
+                                                title: "Weak + Vulnerable",
+                                                children: attackDamageBreakdown.both
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/Card.tsx",
+                                                lineNumber: 572,
+                                                columnNumber: 23
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/app/components/UI/Card.tsx",
+                                        lineNumber: 549,
+                                        columnNumber: 21
+                                    }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        title: damageStatTooltip,
                                         className: `${stat.statMain} inline-flex items-center gap-0.5 ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("damage").color}`,
                                         children: [
                                             /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].createElement((0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("damage").icon, {
                                                 className: `${stat.statIcon} inline`
                                             }),
-                                            getFullDamage()?.dmg
+                                            damageStatLabel ?? "?"
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                        lineNumber: 384,
-                                        columnNumber: 19
+                                        lineNumber: 580,
+                                        columnNumber: 21
                                     }, this) : null
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 372,
+                                lineNumber: 483,
                                 columnNumber: 15
                             }, this) : null,
                             card.block !== undefined && !mergedSuppressStats?.block && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: blockRowGroupClass,
+                                className: BLOCK_FRAIL_CLUSTER_CLASS,
+                                title: (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["formatBlockStatTitle"])(getValue("block"), card.type),
                                 children: [
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                         className: `${stat.statMain} flex items-center gap-0.5 ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("block").color}`,
@@ -1511,7 +1804,7 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                        lineNumber: 397,
+                                        lineNumber: 598,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1519,17 +1812,18 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                         children: getFullBlock()?.frail
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                        lineNumber: 405,
+                                        lineNumber: 606,
                                         columnNumber: 17
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 396,
+                                lineNumber: 594,
                                 columnNumber: 15
                             }, this),
                             card.blockOnExhaust !== undefined && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "flex items-center gap-1",
+                                className: BLOCK_FRAIL_CLUSTER_CLASS,
+                                title: (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["formatBlockStatTitle"])(getValue("blockOnExhaust"), card.type),
                                 children: [
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                         className: `${stat.statMain} flex items-center gap-0.5 ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("block").color}`,
@@ -1541,7 +1835,7 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                        lineNumber: 414,
+                                        lineNumber: 618,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1549,17 +1843,17 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                         children: getFullBlock()?.frail
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                        lineNumber: 422,
+                                        lineNumber: 626,
                                         columnNumber: 17
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 413,
+                                lineNumber: 614,
                                 columnNumber: 15
                             }, this),
                             card.draw !== undefined && !mergedSuppressStats?.draw && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "flex items-center gap-1",
+                                className: "inline-flex flex-wrap items-center gap-1",
                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                     className: `${stat.statMain} flex items-center gap-0.5 ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("draw").color}`,
                                     children: [
@@ -1570,16 +1864,16 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 431,
+                                    lineNumber: 635,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 430,
+                                lineNumber: 634,
                                 columnNumber: 15
                             }, this),
                             card.takeDamage !== undefined && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "flex items-center gap-1",
+                                className: "inline-flex flex-wrap items-center gap-1",
                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                     className: `${stat.statMain} flex items-center gap-0.5 ${styles.statColor}`,
                                     children: [
@@ -1590,16 +1884,16 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 443,
+                                    lineNumber: 647,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 442,
+                                lineNumber: 646,
                                 columnNumber: 15
                             }, this),
                             getValue("hpcost") !== undefined && !mergedSuppressStats?.hpcost && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "flex items-center gap-1",
+                                className: "inline-flex flex-wrap items-center gap-1",
                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                     className: `${stat.statMain} flex items-center gap-0.5 ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("hpcost").color}`,
                                     children: [
@@ -1610,16 +1904,16 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 455,
+                                    lineNumber: 659,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 454,
+                                lineNumber: 658,
                                 columnNumber: 15
                             }, this),
                             (card.energyGain != null || card.gainEnergy != null) && !mergedSuppressStats?.energyGain && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "flex items-center gap-1",
+                                className: "inline-flex flex-wrap items-center gap-1",
                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                     className: `${stat.statMain} flex items-center gap-0.5 ${styles.statColor}`,
                                     children: [
@@ -1630,16 +1924,16 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 469,
+                                    lineNumber: 673,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 468,
+                                lineNumber: 672,
                                 columnNumber: 15
                             }, this),
                             card.heal != null && !mergedSuppressStats?.heal && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "flex items-center gap-1",
+                                className: "inline-flex flex-wrap items-center gap-1",
                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                     className: `${stat.statMain} flex items-center gap-0.5 ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("heal").color}`,
                                     children: [
@@ -1650,16 +1944,16 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 481,
+                                    lineNumber: 685,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 480,
+                                lineNumber: 684,
                                 columnNumber: 15
                             }, this),
                             card.focus != null && !mergedSuppressStats?.focus && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "flex items-center gap-1",
+                                className: "inline-flex flex-wrap items-center gap-1",
                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                     className: `${stat.statMain} flex items-center gap-0.5 ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getEffectDisplay"])("focus").color}`,
                                     children: [
@@ -1670,33 +1964,25 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 493,
+                                    lineNumber: 697,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 492,
+                                lineNumber: 696,
                                 columnNumber: 15
                             }, this),
-                            suffixGalleryGlyphs.length > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "flex flex-wrap items-center justify-center gap-x-2 gap-y-1",
-                                "aria-label": "Extra effects",
-                                children: suffixGalleryGlyphs.map((g)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].Fragment, {
-                                        children: renderGalleryGlyphCluster(g, stat.galleryIcon, stat.galleryText)
-                                    }, g.id, false, {
-                                        fileName: "[project]/app/components/UI/Card.tsx",
-                                        lineNumber: 509,
-                                        columnNumber: 19
-                                    }, this))
-                            }, void 0, false, {
-                                fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 504,
-                                columnNumber: 15
-                            }, this) : null
+                            statStripLeadingAndRest.rest.map((g)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].Fragment, {
+                                    children: renderGalleryGlyphCluster(g, stat.galleryIcon, stat.galleryText)
+                                }, g.id, false, {
+                                    fileName: "[project]/app/components/UI/Card.tsx",
+                                    lineNumber: 708,
+                                    columnNumber: 15
+                                }, this))
                         ]
                     }, void 0, true, {
                         fileName: "[project]/app/components/UI/Card.tsx",
-                        lineNumber: 368,
+                        lineNumber: 469,
                         columnNumber: 11
                     }, this),
                     stat && card.description && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1704,7 +1990,7 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                         children: (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$descriptionPlaceholders$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getFormattedDescription"])(card.description, card)
                     }, void 0, false, {
                         fileName: "[project]/app/components/UI/Card.tsx",
-                        lineNumber: 523,
+                        lineNumber: 720,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1712,26 +1998,26 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                         children: card.type
                     }, void 0, false, {
                         fileName: "[project]/app/components/UI/Card.tsx",
-                        lineNumber: 530,
+                        lineNumber: 727,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/app/components/UI/Card.tsx",
-                lineNumber: 321,
+                lineNumber: 422,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: chrome.bottomLine
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/Card.tsx",
-                lineNumber: 537,
+                lineNumber: 734,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/app/components/UI/Card.tsx",
-        lineNumber: 281,
+        lineNumber: 382,
         columnNumber: 5
     }, this);
 }

@@ -12,6 +12,11 @@ interface BuffDebuffItemProps {
 
 export default function BuffDebuffItem({ bd, onReduce, onRemove }: BuffDebuffItemProps) {
   const isBuff = bd.type === 'buff';
+  const isIntangibleBuff =
+    isBuff && bd.name.trim().toLowerCase() === 'intangible';
+  const stacksLabel = isIntangibleBuff
+    ? `${bd.stacks} turn${bd.stacks !== 1 ? 's' : ''}`
+    : `×${bd.stacks}`;
 
   return (
     <div
@@ -56,7 +61,7 @@ export default function BuffDebuffItem({ bd, onReduce, onRemove }: BuffDebuffIte
               : 'border-rose-500/40 bg-rose-950/60 text-rose-200'
           }`}
         >
-          ×{bd.stacks}
+          {stacksLabel}
         </div>
       </div>
 

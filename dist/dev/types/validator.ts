@@ -45,10 +45,28 @@ type LayoutConfig<Route extends LayoutRoutes = LayoutRoutes> = {
   type __Unused = __Check
 }
 
+// Validate ../../../app/decision-timeline/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/decision-timeline">> = Specific
+  const handler = {} as typeof import("../../../app/decision-timeline/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../app/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/">> = Specific
   const handler = {} as typeof import("../../../app/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../app/turn-maker/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/turn-maker">> = Specific
+  const handler = {} as typeof import("../../../app/turn-maker/page.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

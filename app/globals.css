@@ -45,6 +45,10 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  /* Scrollbars: slate shell + subtle indigo accent (matches panels / borders). */
+  --scrollbar-track: rgb(15 23 42 / 42%);
+  --scrollbar-thumb: rgb(71 85 105 / 55%);
+  --scrollbar-thumb-hover: rgb(113 101 200 / 62%);
 }
 
 .dark {
@@ -82,6 +86,9 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.267 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --scrollbar-track: oklch(0.22 0.03 264 / 42%);
+  --scrollbar-thumb: oklch(0.42 0.06 272 / 52%);
+  --scrollbar-thumb-hover: oklch(0.52 0.12 285 / 62%);
 }
 
 @theme inline {
@@ -95,6 +102,34 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Themed scrollbars (Firefox + WebKit) — matches slate shell / shadcn tokens when .dark is used */
+*,
+*::-webkit-scrollbar-corner {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: var(--radius);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
 }
 
 /* Buff list & combat panel motion */

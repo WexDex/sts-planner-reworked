@@ -43,10 +43,16 @@ export const GALLERY_QUICK_TEMPLATES: GalleryQuickTemplate[] = [
     ],
   },
   {
-    id: "compact-smoke",
-    title: "Compact smoke",
-    blurb: "Ironclad attack + Defect basic — quick layout check",
-    cardIds: ["Anger", "Zap"],
+    id: "diri",
+    title: "DORO MONSTA CARDO",
+    blurb: "",
+    cardIds: ["Pommel Strike", "Acrobatics", "Evolve", "Dark Embrace", "Prepared", "Calculated Gamble", "Dagger Throw"],
+  },
+  {
+    id: "multihit",
+    title: "Multi hit",
+    blurb: "MULTIIII",
+    cardIds: ["Dagger Spray", "Whirlwind", "Glass Knife", "Tantrum","Skewer","Ragnarok"],
   },
 ];
 

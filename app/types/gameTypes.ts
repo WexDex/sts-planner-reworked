@@ -12,6 +12,18 @@ export interface RelicEffect {
 
 export type ValueNode = number | { base: number; upgraded?: number };
 
+/** STS-style damage payload: tiers plus optional gate (`conditioned`, `trigger`, etc.). */
+export type DamageValueField =
+  | ValueNode
+  | {
+      base?: number;
+      upgraded?: number;
+      conditioned?: boolean;
+      trigger?: string;
+      target?: unknown;
+      [key: string]: unknown;
+    };
+
 export interface Card {
   name: string;
   type?: string;
@@ -22,6 +34,11 @@ export interface Card {
   xCost?: boolean;
   cost?: ValueNode;
   damage?: ValueNode;
+  /**
+   * Second damage line (e.g. Bane repeat hit). Same JSON shape as extended `damage` objects
+   * (`base`, `upgraded`, optional `conditioned`, `trigger`); rendered as its own glyph cluster.
+   */
+  bonusDamage?: DamageValueField;
   block?: ValueNode;
   draw?: ValueNode;
   takeDamage?: ValueNode;
@@ -39,6 +56,8 @@ export interface Card {
   unplayable?: boolean;
   /** Retain on hand (STS tiered booleans). */
   retain?: { base?: boolean; upgraded?: boolean };
+  /** Adds generated/specific cards into hand (Blade Dance, powers that add each turn, etc.). */
+  canAddCards?: boolean | { base?: boolean; upgraded?: boolean };
   [key: string]: any;
 }
 
@@ -68,6 +87,8 @@ export interface PlayerData {
     turn1Bonus: number;
   };
   currentEnergy?: number;
+  /** Combat JSON slug, e.g. `ironclad` — used to resolve generic `Strike` / `Defend` deck IDs to character variants. */
+  characters?: string;
   combatType: string;
   combatName: string;
   floor: number;
@@ -81,16 +102,89 @@ export interface PlayerData {
   activeRelics?: string[];
   bonusEnergy?: number;
   bonusBlock?: number;
-  intangible?: boolean;
   buffsDebuffs?: BuffDebuff[];
 }
 
-export interface EnemyIntentAction {
-  type: string;
+/** Normal single attack; `value` is legacy alias for `dmg` (still read everywhere). */
+export type EnemyIntentActionAttack = {
+  type: "attack";
+  dmg?: number;
   value?: number;
-  effect?: string;
+};
+
+/** Multi-hit attack: same damage per hit, `count` times (each hit applies incoming modifiers separately in the planner). */
+export type EnemyIntentActionMultiAttack = {
+  type: "multi_attack";
+  dmg: number;
+  count: number;
+};
+
+export type EnemyIntentActionBlock = {
+  type: "block";
+  amount: number;
+};
+
+/** Debuff applied to the player; omit `value` for 1 stack (e.g. Weak). */
+export type EnemyIntentActionDebuff = {
+  type: "debuff";
+  effect: string;
+  value?: number;
   description?: string;
-}
+};
+
+export type EnemyIntentActionBuff = {
+  type: "buff";
+  effect: string;
+  value: number;
+  description?: string;
+};
+
+/** Where status cards/tokens apply (deck zone). Legacy saves omit → treat as `"hand"`. */
+export type EnemyIntentStatusLocation = "hand" | "draw" | "discard";
+
+/** Granted card-style status (e.g. Wound ×3 into hand). `effect` = card/token name. */
+export type EnemyIntentActionStatus = {
+  type: "status";
+  effect: string;
+  value: number;
+  location?: EnemyIntentStatusLocation;
+  description?: string;
+};
+
+/** Enemy intends to flee (e.g. Looters). */
+export type EnemyIntentActionCowardly = {
+  type: "cowardly";
+  description?: string;
+};
+
+/** Enemy is stunned / idle for this intent (show turn count). */
+export type EnemyIntentActionStunned = {
+  type: "stunned";
+  value: number;
+  description?: string;
+};
+
+/** One atomic piece of an enemy intent; several can combine in the same planner turn slot. */
+export type EnemyIntentAction =
+  | EnemyIntentActionAttack
+  | EnemyIntentActionMultiAttack
+  | EnemyIntentActionBlock
+  | EnemyIntentActionDebuff
+  | EnemyIntentActionBuff
+  | EnemyIntentActionStatus
+  | EnemyIntentActionCowardly
+  | EnemyIntentActionStunned;
+
+export const ENEMY_INTENT_ACTION_TYPES = [
+  "attack",
+  "multi_attack",
+  "block",
+  "debuff",
+  "buff",
+  "status",
+  "cowardly",
+  "stunned",
+] as const satisfies readonly EnemyIntentAction["type"][];
 
 export interface EnemyIntent {
   turn: number;
@@ -133,12 +227,30 @@ export interface ActivityLogEntry {
   context?: ActivityLogContextLine[];
 }
 
-/** Round flow: start-of-turn hooks (relics, draw, ST) → play cards → enemy resolves. */
+/** Turn flow: start-of-turn hooks (relics, draw, ST) → play cards → enemy resolves. */
 export type CombatTurnPhase = "start" | "player" | "enemy";
 
 export interface Turn {
   id: number;
   state: CombatData;
+}
+
+/** One node in the branching decision overlay; carries a full combat snapshot and planner slot metadata. */
+export interface DecisionNode {
+  id: string;
+  parentId: string | null;
+  /** User-defined short name for the branch. */
+  label: string;
+  snapshot: CombatData;
+  /** Which planner turn slot (`Turn.id`) this snapshot was taken for. */
+  plannerTurnSlotId: number;
+  turnPhase: CombatTurnPhase;
+  createdAt: string;
+}
+
+export interface DecisionTreeState {
+  nodes: DecisionNode[];
+  activeNodeId: string | null;
 }
 
 export interface CombatData {

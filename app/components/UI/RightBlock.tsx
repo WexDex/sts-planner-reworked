@@ -10,6 +10,11 @@ import {
 import type { Enemy } from '@/app/types/gameTypes';
 import BuffDebuffItem from '@/app/components/UI/BuffDebuffItem';
 import {
+  INTANGIBLE_BUFF_DESCRIPTION,
+  INTANGIBLE_BUFF_NAME,
+  sortBuffsForDisplay,
+} from '@/app/utils/intangibleBuff';
+import {
   Activity,
   ChevronDown,
   ChevronUp,
@@ -229,7 +234,7 @@ export default function RightBlock() {
                 <Sparkles className="h-3 w-3 shrink-0" />
                 This turn (relic effects)
               </p>
-              <p className="mb-1.5 text-[9px] text-violet-200/55">Round {currentTurn} — encounter relic timing from combat JSON</p>
+              <p className="mb-1.5 text-[9px] text-violet-200/55">Planner turn {currentTurn} — encounter relic timing from combat JSON</p>
               <div className="flex flex-wrap gap-1.5">
                 {relicTooltips.map((entry) => (
                   <div
@@ -418,23 +423,41 @@ export default function RightBlock() {
           {(player.bonusBlock ?? 0) > 0 && (
             <p className="mt-3 text-[11px] text-emerald-400/90">Bonus block: {player.bonusBlock}</p>
           )}
-          {player.intangible && (
-            <p className="mt-2 rounded-lg border border-violet-500/40 bg-violet-950/40 px-2 py-1.5 text-[11px] text-violet-200">Intangible</p>
-          )}
 
-          {player.buffsDebuffs && player.buffsDebuffs.length > 0 && (
-            <div className="mt-4 space-y-1.5 border-t border-slate-800/80 pt-3">
+          <div className="mt-4 space-y-2 border-t border-slate-800/80 pt-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Your buffs</p>
-              {player.buffsDebuffs.map((bd, idx) => (
-                <BuffDebuffItem
-                  key={`${bd.name}-${idx}`}
-                  bd={bd}
-                  onReduce={() => reduceBuffDebuff('player', 0, bd.name)}
-                  onRemove={() => removeBuffDebuff('player', 0, bd.name)}
-                />
-              ))}
+              <button
+                type="button"
+                title={`Uses “Stacks” from Status below (currently ${Math.max(1, buffStacks)})`}
+                onClick={() =>
+                  addBuffDebuff(
+                    'player',
+                    0,
+                    INTANGIBLE_BUFF_NAME,
+                    'buff',
+                    Math.max(1, buffStacks),
+                    INTANGIBLE_BUFF_DESCRIPTION,
+                  )
+                }
+                className="rounded-lg border border-violet-500/35 bg-slate-900/60 px-2 py-1 text-[10px] font-semibold text-violet-200/90 transition hover:border-violet-500/50 hover:bg-violet-950/40 active:scale-95"
+              >
+                + Intangible ({Math.max(1, buffStacks)} turn{Math.max(1, buffStacks) !== 1 ? 's' : ''})
+              </button>
             </div>
-          )}
+            {player.buffsDebuffs && player.buffsDebuffs.length > 0 && (
+              <div className="space-y-1.5">
+                {sortBuffsForDisplay(player.buffsDebuffs).map((bd, idx) => (
+                  <BuffDebuffItem
+                    key={`${bd.name}-${idx}`}
+                    bd={bd}
+                    onReduce={() => reduceBuffDebuff('player', 0, bd.name)}
+                    onRemove={() => removeBuffDebuff('player', 0, bd.name)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Enemies — all visible; zone styled separately from tool panels */}
@@ -566,18 +589,41 @@ export default function RightBlock() {
                       </button>
                     </div>
 
-                    {enemy.buffsDebuffs && enemy.buffsDebuffs.length > 0 && (
-                      <div className="mt-3 space-y-1 border-t border-slate-800/80 pt-3">
-                        {enemy.buffsDebuffs.map((bd, buffIdx) => (
-                          <BuffDebuffItem
-                            key={`${bd.name}-${buffIdx}`}
-                            bd={bd}
-                            onReduce={() => reduceBuffDebuff('enemy', idx, bd.name)}
-                            onRemove={() => removeBuffDebuff('enemy', idx, bd.name)}
-                          />
-                        ))}
+                    <div className="mt-3 space-y-2 border-t border-slate-800/80 pt-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Buffs</p>
+                        <button
+                          type="button"
+                          title={`Uses “Stacks” from Status below (currently ${Math.max(1, buffStacks)})`}
+                          onClick={() =>
+                            addBuffDebuff(
+                              'enemy',
+                              idx,
+                              INTANGIBLE_BUFF_NAME,
+                              'buff',
+                              Math.max(1, buffStacks),
+                              INTANGIBLE_BUFF_DESCRIPTION,
+                            )
+                          }
+                          className="rounded-lg border border-violet-500/35 bg-slate-900/60 px-2 py-1 text-[10px] font-semibold text-violet-200/90 transition hover:border-violet-500/50 hover:bg-violet-950/40 active:scale-95"
+                        >
+                          + Intangible ({Math.max(1, buffStacks)} turn
+                          {Math.max(1, buffStacks) !== 1 ? 's' : ''})
+                        </button>
                       </div>
-                    )}
+                      {enemy.buffsDebuffs && enemy.buffsDebuffs.length > 0 && (
+                        <div className="space-y-1">
+                          {sortBuffsForDisplay(enemy.buffsDebuffs).map((bd, buffIdx) => (
+                            <BuffDebuffItem
+                              key={`${bd.name}-${buffIdx}`}
+                              bd={bd}
+                              onReduce={() => reduceBuffDebuff('enemy', idx, bd.name)}
+                              onRemove={() => removeBuffDebuff('enemy', idx, bd.name)}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })}

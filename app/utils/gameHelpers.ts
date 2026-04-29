@@ -1,4 +1,5 @@
 import { CombatData, PlayerData, Card, Relic, ValueNode } from '@/app/types/gameTypes';
+import { migrateLegacyIntangibleFields } from '@/app/utils/intangibleBuff';
 
 function numericValue(value?: ValueNode): number {
   if (typeof value === 'number') return value;
@@ -228,10 +229,10 @@ export function canTurnOffLantern(player: PlayerData): boolean {
 }
 
 /**
- * Deep clone game data
+ * Deep clone game data (migrates legacy Intangible flags → buff rows).
  */
 export function cloneGameData(data: CombatData): CombatData {
-  return JSON.parse(JSON.stringify(data));
+  return migrateLegacyIntangibleFields(JSON.parse(JSON.stringify(data)) as CombatData);
 }
 
 /**
