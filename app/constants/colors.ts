@@ -12,7 +12,11 @@ export type EffectType =
   | 'energygain' 
   | 'draw'
   | 'intangible'
-  | 'strength_buff';
+  | 'strength_buff'
+  | 'heal'
+  | 'focus'
+  | 'poison'
+  | 'hpcost';
 
 // Color scheme constants
 export const EFFECT_COLORS = {
@@ -23,6 +27,7 @@ export const EFFECT_COLORS = {
   wound: 'text-red-600',
   entangle: 'text-yellow-500',
   takedamage: 'text-red-500',
+  poison: 'text-emerald-400',
   
   // Positive effects
   strength: 'text-orange-400',
@@ -34,6 +39,9 @@ export const EFFECT_COLORS = {
   // Neutral effects
   damage: 'text-red-400',
   block: 'text-blue-400',
+  heal: 'text-emerald-400',
+  focus: 'text-sky-400',
+  hpcost: 'text-rose-400',
 } as const;
 
 export const EFFECT_COLORS_BG = {
@@ -43,6 +51,7 @@ export const EFFECT_COLORS_BG = {
   wound: 'bg-red-600/20',
   entangle: 'bg-yellow-500/20',
   takedamage: 'bg-red-500/20',
+  poison: 'bg-emerald-500/20',
   strength: 'bg-orange-400/20',
   strength_buff: 'bg-green-500/20',
   intangible: 'bg-teal-400/20',
@@ -50,6 +59,9 @@ export const EFFECT_COLORS_BG = {
   draw: 'bg-indigo-500/20',
   damage: 'bg-red-400/20',
   block: 'bg-blue-400/20',
+  heal: 'bg-emerald-400/20',
+  focus: 'bg-sky-400/20',
+  hpcost: 'bg-rose-500/20',
 } as const;
 
 export const EFFECT_BORDER = {
@@ -59,6 +71,7 @@ export const EFFECT_BORDER = {
   wound: 'border-red-600',
   entangle: 'border-yellow-500',
   takedamage: 'border-red-500',
+  poison: 'border-emerald-400',
   strength: 'border-orange-400',
   strength_buff: 'border-green-500',
   intangible: 'border-teal-400',
@@ -66,6 +79,9 @@ export const EFFECT_BORDER = {
   draw: 'border-indigo-500',
   damage: 'border-red-400',
   block: 'border-blue-400',
+  heal: 'border-emerald-400',
+  focus: 'border-sky-400',
+  hpcost: 'border-rose-400',
 } as const;
 
 // Stat type color schemes

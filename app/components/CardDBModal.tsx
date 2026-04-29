@@ -2,13 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import cardDB from '@/app/data/cardDB.json';
+import { gameCardFromDatabaseId } from '@/app/data/gameCardFromSts';
+import { getStsCardsRecord } from '@/app/card-design-gallery/stsRecord';
 import STSCard from './UI/Card';
 import { LOCATION } from '@/app/types/types';
-import { Card } from '@/app/types/gameTypes';
 import { Search, X } from 'lucide-react';
-
-type CardDBEntry = Omit<Card, 'name' | 'isUpgraded' | 'isChanged' | 'isSelected'>;
 
 interface CardDBModalProps {
   isOpen: boolean;
@@ -97,24 +95,28 @@ export default function CardDBModal({
     setMounted(true);
   }, []);
 
+  const stsCards = useMemo(() => getStsCardsRecord(), []);
+
   const cardEntries = useMemo(() => {
-    return Object.entries(cardDB as Record<string, CardDBEntry>).filter(([cardId, cardData]) => {
+    return Object.entries(stsCards).filter(([cardId, cardData]) => {
+      const desc = String((cardData as { description?: string }).description ?? '');
       const matchesSearch =
         cardId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        cardData.description?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesType =
-        selectedType === 'all' || cardData.type?.toLowerCase() === selectedType.toLowerCase();
+        desc.toLowerCase().includes(searchTerm.toLowerCase());
+      const t = (cardData as { type?: string }).type;
+      const matchesType = selectedType === 'all' || t?.toLowerCase() === selectedType.toLowerCase();
       return matchesSearch && matchesType;
     });
-  }, [searchTerm, selectedType]);
+  }, [stsCards, searchTerm, selectedType]);
 
   const cardTypes = useMemo(() => {
     const types = new Set<string>();
-    Object.values(cardDB as Record<string, CardDBEntry>).forEach((card) => {
-      if (card.type) types.add(card.type);
+    Object.values(stsCards).forEach((card) => {
+      const t = (card as { type?: string }).type;
+      if (t) types.add(t);
     });
     return Array.from(types).sort();
-  }, []);
+  }, [stsCards]);
 
   const typeRadioOptions = useMemo(
     () => [{ value: 'all', label: 'All' }, ...cardTypes.map((t) => ({ value: t.toLowerCase(), label: t }))],
@@ -133,10 +135,14 @@ export default function CardDBModal({
     setIsUpgraded(false);
   };
 
-  if (!isOpen || !mounted) return null;
+  const previewCard = useMemo(() => {
+    if (!selectedCard) return null;
+    const c = gameCardFromDatabaseId(selectedCard, { isUpgraded });
+    if (!c) return null;
+    return { ...c, isChanged: variant === 'transform', isSelected: false };
+  }, [selectedCard, isUpgraded, variant]);
 
-  const db = cardDB as Record<string, CardDBEntry>;
-  const preview = selectedCard ? db[selectedCard] : null;
+  if (!isOpen || !mounted) return null;
 
   return createPortal(
     <div
@@ -221,27 +227,17 @@ export default function CardDBModal({
             </div>
           </div>
 
-          {selectedCard && preview && (
+          {selectedCard && previewCard && (
             <div className="mt-5 flex flex-col gap-5 rounded-xl border border-slate-700/60 bg-slate-950/40 p-4 sm:flex-row sm:items-start">
               <div className="shrink-0">
                 <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Preview</p>
                 <div className="origin-top-left scale-[0.72] sm:scale-75">
                   <STSCard
-                    card={{
-                      name: selectedCard,
-                      type: preview.type,
-                      isUpgraded,
-                      isChanged: variant === 'transform',
-                      isSelected: false,
-                      cost: preview.cost,
-                      damage: preview.damage,
-                      block: preview.block,
-                      draw: preview.draw,
-                      description: preview.description,
-                    }}
+                    card={previewCard}
                     index={0}
                     location={LOCATION.DRAW}
                     size="small"
+                    interactive={false}
                   />
                 </div>
               </div>
@@ -352,10 +348,13 @@ export default function CardDBModal({
         {/* Card grid */}
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {cardEntries.map(([cardId, cardData]) => {
+            {cardEntries.map(([cardId, raw]) => {
+              const cardData = raw as { type?: string; description?: string; cost?: unknown };
               const picked = selectedCard === cardId;
-              const snippet = cardData.description?.slice(0, 72);
-              const ellipsize = (cardData.description?.length ?? 0) > 72;
+              const desc = String(cardData.description ?? '');
+              const snippet = desc.slice(0, 72);
+              const ellipsize = desc.length > 72;
+              const cost = cardData.cost;
               return (
                 <button
                   key={cardId}
@@ -377,10 +376,12 @@ export default function CardDBModal({
                     {snippet}
                     {ellipsize ? '…' : ''}
                   </p>
-                  {cardData.cost != null && (
+                  {cost != null && (
                     <div className="mt-2 text-[11px] font-mono tabular-nums text-amber-200/90">
                       Cost{' '}
-                      {typeof cardData.cost === 'object' ? cardData.cost.base : cardData.cost}
+                      {typeof cost === 'object' && cost !== null && 'base' in cost
+                        ? String((cost as { base: number }).base)
+                        : String(cost as number)}
                     </div>
                   )}
                 </button>

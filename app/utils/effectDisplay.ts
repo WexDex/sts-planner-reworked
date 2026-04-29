@@ -2,7 +2,9 @@ import {
   AlertCircle,
   ArrowDown,
   BarChart3,
+  Battery,
   Dumbbell,
+  Droplets,
   FileText,
   Ghost,
   Heart,
@@ -10,6 +12,8 @@ import {
   Link,
   Shield,
   ShieldOff,
+  Skull,
+  Sparkles,
   TrendingUp,
   Zap,
   type LucideIcon,
@@ -34,7 +38,11 @@ export type EffectType =
   | 'maxHp'
   | 'health'
   | 'attack'
-  | 'energy';
+  | 'energy'
+  | 'heal'
+  | 'focus'
+  | 'poison'
+  | 'hpcost';
 
 interface EffectDisplay {
   label: string;
@@ -54,7 +62,7 @@ const ICONS: Record<EffectType, LucideIcon> = {
   strength_buff: TrendingUp,
   entangle: Link,
   takedamage: HeartCrack,
-  energygain: Zap,
+  energygain: Battery,
   draw: FileText,
   intangible: Ghost,
   hp: Heart,
@@ -62,6 +70,10 @@ const ICONS: Record<EffectType, LucideIcon> = {
   health: Heart,
   attack: BarChart3,
   energy: Zap,
+  heal: Heart,
+  focus: Sparkles,
+  poison: Skull,
+  hpcost: Droplets,
 };
 
 export function getEffectDisplay(type: EffectType, value?: number): EffectDisplay {
@@ -191,6 +203,34 @@ export function getEffectDisplay(type: EffectType, value?: number): EffectDispla
         color: STAT_COLORS.energy,
         fullLabel: 'Energy',
         icon: ICONS.energy,
+      };
+    case 'heal':
+      return {
+        label: `+${value ?? ''}`,
+        color: EFFECT_COLORS.heal,
+        fullLabel: 'Heal',
+        icon: ICONS.heal,
+      };
+    case 'focus':
+      return {
+        label: `${value ?? ''}`,
+        color: EFFECT_COLORS.focus,
+        fullLabel: 'Focus',
+        icon: ICONS.focus,
+      };
+    case 'poison':
+      return {
+        label: `P${value ?? ''}`,
+        color: EFFECT_COLORS.poison,
+        fullLabel: 'Poison',
+        icon: ICONS.poison,
+      };
+    case 'hpcost':
+      return {
+        label: `-${value ?? ''} HP`,
+        color: EFFECT_COLORS.hpcost,
+        fullLabel: `Lose ${value ?? ''} HP`,
+        icon: ICONS.hpcost,
       };
     default:
       return {

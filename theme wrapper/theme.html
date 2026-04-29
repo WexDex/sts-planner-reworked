@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Theme — STS Planner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="sts-theme.css" />
+  </head>
+  <body>
+    <div class="page-wrap">
+      <header class="top">
+        <div>
+          <h1>Theme reference</h1>
+          <p class="lede">
+            Standalone palette for Slay the Spire Combat Planner — design tokens,
+            app shell, and combat UI (from <span class="code">globals.css</span>).
+          </p>
+        </div>
+        <div class="toolbar">
+          <button type="button" class="btn-toggle" id="toggleDark" aria-pressed="false">
+            Preview: design tokens (light)
+          </button>
+        </div>
+      </header>
+
+      <section>
+        <h2>App shell</h2>
+        <p class="section-desc">
+          Root layout uses <span class="code">Inter</span>, <span class="code">bg-slate-950</span>
+          (<span class="code">#020617</span>), and <span class="code">text-slate-100</span>.
+        </p>
+        <div class="flex-gap">
+          <div
+            class="swatch"
+            style="
+              border: none;
+              min-width: 120px;
+              background: #020617;
+              color: #f1f5f9;
+              padding: 16px;
+              border-radius: 12px;
+            "
+          >
+            <strong style="display: block; font-size: 0.75rem; margin-bottom: 8px"
+              >Background</strong
+            >
+            slate-950
+          </div>
+          <div
+            class="swatch"
+            style="
+              border: none;
+              min-width: 120px;
+              background: #0f172a;
+              color: #e2e8f0;
+              padding: 16px;
+              border-radius: 12px;
+            "
+          >
+            <strong style="display: block; font-size: 0.75rem; margin-bottom: 8px"
+              >Surface</strong
+            >
+            slate-900-ish
+          </div>
+          <div
+            class="swatch"
+            style="
+              border: none;
+              min-width: 120px;
+              background: #f1f5f9;
+              color: #020617;
+              padding: 16px;
+              border-radius: 12px;
+            "
+          >
+            <strong style="display: block; font-size: 0.75rem; margin-bottom: 8px"
+              >Foreground</strong
+            >
+            slate-100
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Design tokens (CSS variables)</h2>
+        <p class="section-desc">
+          Toggle “Preview” to compare light <span class="code">:root</span> vs
+          <span class="code">.dark</span> token values used across the app.
+        </p>
+        <div class="token-strip light" id="tokenLight">
+          <p class="token-strip-title">Light tokens</p>
+          <div class="grid-swatches">
+            <div class="swatch">
+              <div class="swatch-color" style="background: var(--background)"></div>
+              <div class="swatch-meta"><strong>background</strong> --background</div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-color" style="background: var(--foreground)"></div>
+              <div class="swatch-meta"><strong>foreground</strong> --foreground</div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-color" style="background: var(--primary)"></div>
+              <div class="swatch-meta"><strong>primary</strong> --primary</div>
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-color"
+                style="background: var(--primary-foreground)"
+              ></div>
+              <div class="swatch-meta">
+                <strong>on primary</strong> --primary-foreground
+              </div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-color" style="background: var(--secondary)"></div>
+              <div class="swatch-meta"><strong>secondary</strong> --secondary</div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-color" style="background: var(--muted)"></div>
+              <div class="swatch-meta"><strong>muted</strong> --muted</div>
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-color"
+                style="background: var(--muted-foreground)"
+              ></div>
+              <div class="swatch-meta">
+                <strong>muted fg</strong> --muted-foreground
+              </div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-color" style="background: var(--accent)"></div>
+              <div class="swatch-meta"><strong>accent</strong> --accent</div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-color" style="background: var(--destructive)"></div>
+              <div class="swatch-meta">
+                <strong>destructive</strong> --destructive
+              </div>
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-color"
+                style="background: var(--input-background)"
+              ></div>
+              <div class="swatch-meta">
+                <strong>input bg</strong> --input-background
+              </div>
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-color"
+                style="background: var(--border); border: 1px solid #ccc"
+              ></div>
+              <div class="swatch-meta"><strong>border</strong> --border</div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-color" style="background: var(--chart-1)"></div>
+              <div class="swatch-meta"><strong>chart-1</strong></div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-color" style="background: var(--chart-2)"></div>
+              <div class="swatch-meta"><strong>chart-2</strong></div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-color" style="background: var(--chart-3)"></div>
+              <div class="swatch-meta"><strong>chart-3</strong></div>
+            </div>
+          </div>
+        </div>
+        <div class="token-strip dark-only" id="tokenDark" style="margin-top: 12px">
+          <p class="token-strip-title">Dark tokens (.dark)</p>
+          <div class="grid-swatches">
+            <div class="swatch">
+              <div class="swatch-color" style="background: var(--background)"></div>
+              <div class="swatch-meta"><strong>background</strong></div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-color" style="background: var(--foreground)"></div>
+              <div class="swatch-meta"><strong>foreground</strong></div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-color" style="background: var(--primary)"></div>
+              <div class="swatch-meta"><strong>primary</strong></div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-color" style="background: var(--secondary)"></div>
+              <div class="swatch-meta"><strong>secondary</strong></div>
+            </div>
+            <div class="swatch">
+              <div class="swatch-color" style="background: var(--destructive)"></div>
+              <div class="swatch-meta"><strong>destructive</strong></div>
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-color"
+                style="background: var(--input-background)"
+              ></div>
+              <div class="swatch-meta"><strong>input bg</strong></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Combat UI — bars & panels</h2>
+        <p class="section-desc">Matches <span class="code">.top-bar</span>, <span class="code">.panel-card</span>, metrics chips.</p>
+        <div class="top-bar">
+          <div>
+            <div class="top-label">Top bar</div>
+            <div class="top-value">Subtitle / value (#b2b7ff)</div>
+          </div>
+          <div class="top-metrics">
+            <span>Floor 12</span>
+            <span>Energy ⚡ 3</span>
+          </div>
+        </div>
+        <div class="panel-card">
+          <h3>Panel card</h3>
+          <p class="muted" style="margin: 0 0 12px">
+            Muted text (#8a8fb8) for secondary copy inside panels.
+          </p>
+          <div class="button-row">
+            <button type="button">Combat action</button>
+            <button type="button" class="active">Selected</button>
+            <button type="button" class="combat-btn btn-primary-solid">Primary</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Buttons</h2>
+        <p class="section-desc">
+          Default combat buttons use indigo translucent fills;
+          <span class="code">.btn-mini.*</span> mirrors Tailwind utility colors from
+          globals.
+        </p>
+        <div class="panel-card" style="margin-bottom: 14px">
+          <h3>Semantic / token</h3>
+          <div class="button-row">
+            <button type="button" class="btn-primary-solid">Primary</button>
+            <button type="button" class="btn-secondary-solid">Secondary</button>
+            <button type="button" class="btn-destructive">Destructive</button>
+            <button type="button" disabled>Disabled</button>
+          </div>
+        </div>
+        <div class="panel-card">
+          <h3>btn-mini variants</h3>
+          <div class="button-row">
+            <button type="button" class="btn-mini green">green</button>
+            <button type="button" class="btn-mini blue">blue</button>
+            <button type="button" class="btn-mini red">red</button>
+            <button type="button" class="btn-mini gray">gray</button>
+            <button type="button" class="btn-mini purple">purple</button>
+            <button type="button" class="btn-mini orange">orange</button>
+            <button type="button" class="btn-mini cyan">cyan</button>
+            <button type="button" class="btn-mini pink">pink</button>
+            <button type="button" class="btn-mini yellow">yellow</button>
+            <button type="button" class="btn-mini lime">lime</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Form controls</h2>
+        <p class="section-desc"><span class="code">input</span>, <span class="code">select</span>, <span class="code">textarea</span> styles from globals.</p>
+        <div class="panel-card flex-gap" style="flex-direction: column; align-items: stretch">
+          <label class="field">
+            Label (color #d1d4ff)
+            <input class="field-input" type="text" placeholder="Text input" value="Sample value" />
+          </label>
+          <label class="field">
+            Select
+            <select class="field-input">
+              <option>Ironclad</option>
+              <option>Silent</option>
+              <option>Defect</option>
+              <option>Watcher</option>
+            </select>
+          </label>
+          <div class="manual-log-box">
+            <label class="field" style="max-width: none">
+              Textarea
+              <textarea placeholder="Manual log…">Multi-line text with dark panel fill.</textarea>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Game cards (STSCard)</h2>
+        <p class="section-desc">
+          Static stand-ins for <span class="code">app/components/UI/Card.tsx</span> at
+          <strong>medium</strong> size — colors and structure from
+          <span class="code">cardTypeStyles</span> in
+          <span class="code">app/types/types.ts</span>. Cost orb is omitted for
+          <span class="code">Curse</span> and <span class="code">Status</span> only (same as the
+          React component).
+        </p>
+
+        <div class="sts-card-row">
+          <div class="sts-card-cell">
+            <div class="sts-card sts-card--md sts-card--attack" aria-hidden="true">
+              <div class="sts-card__hairline sts-card__hairline--top"></div>
+              <div class="sts-card__inset"></div>
+              <div class="sts-card__cost">1</div>
+              <div class="sts-card__main">
+                <div class="sts-card__name-band">
+                  <p class="sts-card__name">Strike</p>
+                </div>
+                <div class="sts-card__mid">
+                  <span class="sts-card__stat sts-card__stat--dmg">⚡ 6</span>
+                </div>
+                <div class="sts-card__desc">Deal 6 damage.</div>
+                <div class="sts-card__type-label">Attack</div>
+              </div>
+              <div class="sts-card__hairline sts-card__hairline--bottom"></div>
+            </div>
+            <p class="sts-card-caption">Attack — red gradient, damage stat</p>
+          </div>
+
+          <div class="sts-card-cell">
+            <div class="sts-card sts-card--md sts-card--skill" aria-hidden="true">
+              <div class="sts-card__hairline sts-card__hairline--top"></div>
+              <div class="sts-card__inset"></div>
+              <div class="sts-card__cost">1</div>
+              <div class="sts-card__main">
+                <div class="sts-card__name-band">
+                  <p class="sts-card__name">Defend</p>
+                </div>
+                <div class="sts-card__mid">
+                  <span class="sts-card__stat sts-card__stat--block">🛡 5</span>
+                </div>
+                <div class="sts-card__desc">Gain 5 Block.</div>
+                <div class="sts-card__type-label">Skill</div>
+              </div>
+              <div class="sts-card__hairline sts-card__hairline--bottom"></div>
+            </div>
+            <p class="sts-card-caption">Skill — emerald gradient, Block</p>
+          </div>
+
+          <div class="sts-card-cell">
+            <div class="sts-card sts-card--md sts-card--power" aria-hidden="true">
+              <div class="sts-card__hairline sts-card__hairline--top"></div>
+              <div class="sts-card__inset"></div>
+              <div class="sts-card__cost">3</div>
+              <div class="sts-card__main">
+                <div class="sts-card__name-band">
+                  <p class="sts-card__name">Demon Form</p>
+                </div>
+                <div class="sts-card__mid">
+                  <span class="sts-card__stat" style="color: #d8b4fe">✦ Passive</span>
+                </div>
+                <div class="sts-card__desc">At the start of your turn, gain 2 Strength.</div>
+                <div class="sts-card__type-label">Power</div>
+              </div>
+              <div class="sts-card__hairline sts-card__hairline--bottom"></div>
+            </div>
+            <p class="sts-card-caption">Power — violet gradient</p>
+          </div>
+
+          <div class="sts-card-cell">
+            <div class="sts-card sts-card--md sts-card--potion" aria-hidden="true">
+              <div class="sts-card__hairline sts-card__hairline--top"></div>
+              <div class="sts-card__inset"></div>
+              <div class="sts-card__cost">0</div>
+              <div class="sts-card__main">
+                <div class="sts-card__name-band">
+                  <p class="sts-card__name">Fire Potion</p>
+                </div>
+                <div class="sts-card__mid">
+                  <span class="sts-card__stat" style="color: #fcd34d">🔥 20</span>
+                </div>
+                <div class="sts-card__desc">Deal 20 damage.</div>
+                <div class="sts-card__type-label">Potion</div>
+              </div>
+              <div class="sts-card__hairline sts-card__hairline--bottom"></div>
+            </div>
+            <p class="sts-card-caption">Potion — amber gradient (shows cost orb like other playable types)</p>
+          </div>
+
+          <div class="sts-card-cell">
+            <div class="sts-card sts-card--md sts-card--curse" aria-hidden="true">
+              <div class="sts-card__hairline sts-card__hairline--top"></div>
+              <div class="sts-card__inset"></div>
+              <div class="sts-card__cost"></div>
+              <div class="sts-card__main">
+                <div class="sts-card__name-band">
+                  <p class="sts-card__name">Pain</p>
+                </div>
+                <div class="sts-card__mid">
+                  <span class="sts-card__stat sts-card__stat--td">💔 1</span>
+                </div>
+                <div class="sts-card__desc">While in hand, lose 1 HP when another card is played.</div>
+                <div class="sts-card__type-label">Curse</div>
+              </div>
+              <div class="sts-card__hairline sts-card__hairline--bottom"></div>
+            </div>
+            <p class="sts-card-caption">Curse — slate/purple blend, no orb</p>
+          </div>
+
+          <div class="sts-card-cell">
+            <div class="sts-card sts-card--md sts-card--status" aria-hidden="true">
+              <div class="sts-card__hairline sts-card__hairline--top"></div>
+              <div class="sts-card__inset"></div>
+              <div class="sts-card__cost"></div>
+              <div class="sts-card__main">
+                <div class="sts-card__name-band">
+                  <p class="sts-card__name">Slimed</p>
+                </div>
+                <div class="sts-card__mid"></div>
+                <div class="sts-card__desc">Retain. Exhaust: gain 2 Slimed → Draw pile.</div>
+                <div class="sts-card__type-label">Status</div>
+              </div>
+              <div class="sts-card__hairline sts-card__hairline--bottom"></div>
+            </div>
+            <p class="sts-card-caption">Status — muted slate gradient, no orb</p>
+          </div>
+        </div>
+
+        <h3 style="font-size: 0.85rem; margin: 28px 0 12px; color: #94a3b8; font-weight: 600">
+          Card.tsx interaction samples
+        </h3>
+        <p class="section-desc" style="margin-bottom: 14px">
+          Selected (<span class="code">ring-amber</span>),
+          upgraded name (<span class="code">text-emerald-300</span> +),
+          <span class="code">CHANGED</span> pill.
+        </p>
+        <div class="sts-card-row">
+          <div class="sts-card-cell">
+            <div
+              class="sts-card sts-card--md sts-card--attack sts-card--selected"
+              aria-hidden="true"
+            >
+              <div class="sts-card__hairline sts-card__hairline--top"></div>
+              <div class="sts-card__inset"></div>
+              <div class="sts-card__cost">2</div>
+              <div class="sts-card__main">
+                <div class="sts-card__name-band">
+                  <p class="sts-card__name">Bash</p>
+                </div>
+                <div class="sts-card__mid">
+                  <span class="sts-card__stat sts-card__stat--dmg">⚡ 8 · V2</span>
+                </div>
+                <div class="sts-card__desc">Deal 8 damage. Apply 2 Vulnerable.</div>
+                <div class="sts-card__type-label">Attack</div>
+              </div>
+              <div class="sts-card__hairline sts-card__hairline--bottom"></div>
+            </div>
+            <p class="sts-card-caption">Selected ring + lift</p>
+          </div>
+
+          <div class="sts-card-cell">
+            <div class="sts-card sts-card--md sts-card--attack" aria-hidden="true">
+              <div class="sts-card__hairline sts-card__hairline--top"></div>
+              <div class="sts-card__inset"></div>
+              <div class="sts-card__cost">2</div>
+              <div class="sts-card__main">
+                <div class="sts-card__name-band">
+                  <p class="sts-card__name">
+                    <span class="upgrade">Heavy Blade</span><span class="upgrade-plus">+</span>
+                  </p>
+                </div>
+                <div class="sts-card__mid">
+                  <span class="sts-card__stat sts-card__stat--dmg">⚡ 14</span>
+                </div>
+                <div class="sts-card__desc">Deal 14 damage.</div>
+                <div class="sts-card__type-label">Attack</div>
+              </div>
+              <div class="sts-card__hairline sts-card__hairline--bottom"></div>
+            </div>
+            <p class="sts-card-caption">Upgraded + suffix</p>
+          </div>
+
+          <div class="sts-card-cell">
+            <div class="sts-card sts-card--md sts-card--skill" aria-hidden="true">
+              <div class="sts-card__hairline sts-card__hairline--top"></div>
+              <div class="sts-card__inset"></div>
+              <div class="sts-card__cost">1</div>
+              <div class="sts-card__main">
+                <div class="sts-card__name-band">
+                  <p class="sts-card__name">Survivor</p>
+                  <span class="sts-card__changed">CHANGED</span>
+                </div>
+                <div class="sts-card__mid">
+                  <span class="sts-card__stat sts-card__stat--block">🛡 8 · !8</span>
+                </div>
+                <div class="sts-card__desc">Gain 8 Block. If discard: deal 8 damage.</div>
+                <div class="sts-card__type-label">Skill</div>
+              </div>
+              <div class="sts-card__hairline sts-card__hairline--bottom"></div>
+            </div>
+            <p class="sts-card-caption">CHANGED badge (isChanged)</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Pills, intent & cards</h2>
+        <div class="panel-card">
+          <div class="button-row" style="margin-bottom: 12px">
+            <span class="status-pill">Status · buff</span>
+            <span class="intent-pill">Intent chip</span>
+          </div>
+          <div class="intent-row">Intent row (default)</div>
+          <div class="intent-row current">Intent row (current — purple border)</div>
+          <div class="flex-gap" style="margin-top: 14px">
+            <div class="card-item">
+              <div class="card-title">Strike</div>
+              <div class="small-text">Attack · deal damage</div>
+            </div>
+            <div class="log-item">Log line — rgba panel, #dadaff text</div>
+          </div>
+          <div class="zone-slot" style="margin-top: 12px">Zone slot (dashed border)</div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Combined examples</h2>
+        <p class="section-desc">
+          Small compositions — how bars, panels, pills, buttons, and forms read together (similar
+          to real combat / tool flows).
+        </p>
+
+        <div class="composite-grid">
+          <div class="example-block">
+            <h4>Turn strip — metrics + statuses + actions</h4>
+            <div class="top-bar" style="margin-bottom: 12px">
+              <div>
+                <div class="top-label">Act 2 · elites</div>
+                <div class="top-value">Hallway fight</div>
+              </div>
+              <div class="top-metrics">
+                <span>Turn 4</span>
+                <span>⚡ 3</span>
+              </div>
+            </div>
+            <div class="row-tight" style="margin-bottom: 12px">
+              <span class="status-pill">Vulnerable ×2</span>
+              <span class="status-pill">Weak</span>
+              <span class="intent-pill">Intent: Attack 14</span>
+            </div>
+            <div class="button-row">
+              <button type="button">End turn</button>
+              <button type="button" class="btn-primary-solid">Confirm</button>
+            </div>
+          </div>
+
+          <div class="example-block">
+            <h4>Enemy block — header + intents + targets</h4>
+            <div class="enemy-card">
+              <div class="enemy-header">
+                <strong>Jaw Worm</strong>
+                <span class="muted" style="font-size: 0.88rem">HP 34 / 42</span>
+              </div>
+              <div class="intent-row current" style="margin-bottom: 8px">
+                <span class="muted" style="font-size: 0.8rem">This turn</span>
+                <div style="margin-top: 6px">
+                  <span class="intent-pill">Chomp 11</span>
+                  <span class="intent-pill">Buff</span>
+                </div>
+              </div>
+              <p class="muted" style="margin: 0 0 8px; font-size: 0.85rem">Target</p>
+              <div class="button-row">
+                <button type="button" class="active combat-btn">Enemy A</button>
+                <button type="button" class="combat-btn">Enemy B</button>
+                <button type="button" class="combat-btn" disabled>Dead</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="composite-grid two-col" style="margin-top: 20px">
+          <div class="example-block">
+            <h4>Hand + sidebar — cards + rolling log</h4>
+            <div class="panel-card" style="padding: 14px">
+              <div class="hand-strip">
+                <div class="card-item" style="border-color: rgba(152, 130, 255, 0.55)">
+                  <span
+                    class="semantic-chip"
+                    style="
+                      margin-bottom: 8px;
+                      font-size: 0.72rem;
+                      padding: 4px 8px;
+                      border-color: rgb(239 68 68 / 0.5);
+                      background: rgb(239 68 68 / 0.2);
+                      color: #f87171;
+                    "
+                    >Attack</span
+                  >
+                  <div class="card-title">Bash</div>
+                  <div class="small-text">Selected</div>
+                </div>
+                <div class="card-item">
+                  <div class="card-title">Defend</div>
+                  <div class="small-text">Skill</div>
+                </div>
+                <div class="split-log">
+                  <span class="muted" style="font-size: 0.75rem">Recent</span>
+                  <div class="mini-log-stack">
+                    <div class="log-item" style="font-size: 0.82rem">Played Bash → Vulnerable +2</div>
+                    <div class="log-item" style="font-size: 0.82rem">Enemy attacks for 8 (blocked 5)</div>
+                  </div>
+                </div>
+              </div>
+              <div class="button-row" style="margin-top: 14px">
+                <button type="button" class="btn-mini blue">Play</button>
+                <button type="button" class="btn-mini gray">Undo</button>
+                <button type="button" class="btn-destructive" style="padding: 8px 14px; border-radius: 14px; font-size: 0.8rem">Discard</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="example-block">
+            <h4>Inline form — field + primary + mini actions</h4>
+            <div class="panel-card" style="padding: 14px">
+              <div class="inline-form-row">
+                <label class="field">
+                  Floor seed (optional)
+                  <input class="field-input" type="text" placeholder="e.g. AS4E2F" />
+                </label>
+                <div class="button-row" style="flex-shrink: 0">
+                  <button type="button" class="btn-mini green">Save</button>
+                  <button type="button" class="btn-mini orange">Reset</button>
+                </div>
+              </div>
+              <p class="muted" style="margin: 12px 0 0; font-size: 0.8rem">
+                Hint text uses <span class="code">.muted</span> under the row.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="example-block" style="margin-top: 20px">
+          <h4>Zones row — draw / discard / exhaust (dashed)</h4>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+              gap: 12px;
+            "
+          >
+            <div class="zone-slot">
+              <strong style="color: #c7c9f0">Draw</strong>
+              <div style="margin-top: 8px; font-size: 0.85rem">12 cards</div>
+            </div>
+            <div class="zone-slot">
+              <strong style="color: #c7c9f0">Discard</strong>
+              <div style="margin-top: 8px; font-size: 0.85rem">3 cards</div>
+            </div>
+            <div class="zone-slot">
+              <strong style="color: #c7c9f0">Exhaust</strong>
+              <div style="margin-top: 8px; font-size: 0.85rem">Empty</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Semantic colors (game data)</h2>
+        <p class="section-desc">
+          Approximate Tailwind pairings from <span class="code">app/constants/colors.ts</span>
+          — effects, card types, activity log.
+        </p>
+        <h3 style="font-size: 0.85rem; margin: 0 0 8px; color: #94a3b8">Card types</h3>
+        <div class="semantic-grid" style="margin-bottom: 20px">
+          <span class="semantic-chip" style="border-color: rgb(239 68 68 / 0.5); background: rgb(239 68 68 / 0.2); color: #f87171">Attack</span>
+          <span class="semantic-chip" style="border-color: rgb(59 130 246 / 0.5); background: rgb(59 130 246 / 0.2); color: #60a5fa">Skill</span>
+          <span class="semantic-chip" style="border-color: rgb(168 85 247 / 0.5); background: rgb(168 85 247 / 0.2); color: #c084fc">Power</span>
+          <span class="semantic-chip" style="border-color: rgb(107 114 128 / 0.5); background: rgb(107 114 128 / 0.2); color: #9ca3af">Status</span>
+          <span class="semantic-chip" style="border-color: rgb(185 28 28 / 0.5); background: rgb(185 28 28 / 0.2); color: #fca5a5">Curse</span>
+        </div>
+        <h3 style="font-size: 0.85rem; margin: 0 0 8px; color: #94a3b8">Effect highlights</h3>
+        <div class="semantic-grid">
+          <span class="semantic-chip" style="border-color: rgb(168 85 247 / 0.45); background: rgb(168 85 247 / 0.2); color: #c4b5fd">weak</span>
+          <span class="semantic-chip" style="border-color: rgb(239 68 68 / 0.45); background: rgb(239 68 68 / 0.2); color: #fca5a5">vulnerable</span>
+          <span class="semantic-chip" style="border-color: rgb(249 115 22 / 0.45); background: rgb(249 115 22 / 0.2); color: #fdba74">strength</span>
+          <span class="semantic-chip" style="border-color: rgb(59 130 246 / 0.45); background: rgb(59 130 246 / 0.2); color: #93c5fd">block</span>
+          <span class="semantic-chip" style="border-color: rgb(234 179 8 / 0.45); background: rgb(234 179 8 / 0.2); color: #fde047">energy</span>
+          <span class="semantic-chip" style="border-color: rgb(20 184 166 / 0.45); background: rgb(20 184 166 / 0.2); color: #5eead4">intangible</span>
+        </div>
+      </section>
+
+      <section class="typo-sample">
+        <h2>Typography</h2>
+        <p class="section-desc">Inter, weights 400 / 500 / 600 / 700 as in the Next font setup.</p>
+        <h3>Heading sample</h3>
+        <p>Body — slate-400 secondary tone on slate-950.</p>
+        <p style="margin-top: 8px; font-weight: 500; color: #e2e8f0">Medium weight line.</p>
+      </section>
+    </div>
+
+    <script>
+      (function () {
+        var btn = document.getElementById("toggleDark");
+        var root = document.documentElement;
+        function sync() {
+          var dark = root.classList.contains("dark");
+          btn.setAttribute("aria-pressed", dark ? "true" : "false");
+          btn.textContent = dark
+            ? "Preview: design tokens (dark)"
+            : "Preview: design tokens (light)";
+        }
+        btn.addEventListener("click", function () {
+          root.classList.toggle("dark");
+          sync();
+        });
+        sync();
+      })();
+    </script>
+  </body>
+</html>

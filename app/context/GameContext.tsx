@@ -26,7 +26,12 @@ import {
   formatPlayCardTargets,
 } from '@/app/utils/activityLogger';
 import { combatData } from '@/app/data/combatData';
-import cardDB from '@/app/data/cardDB.json';
+import {
+  buildGameCardFromStsRaw,
+  gameCardFromDatabaseId,
+  stsTierDescriptionPatch,
+} from '@/app/data/gameCardFromSts';
+import { getStsCardsRecord } from '@/app/card-design-gallery/stsRecord';
 import { toast } from '@/app/utils/toast';
 
 interface GameContextType {
@@ -121,8 +126,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const hydrateCardEntry = (entry: Card | CardReference): Card => {
     if ('card_ID' in entry) {
       const { card_ID, ...referenceFields } = entry;
-      const baseCard = (cardDB as Record<string, Omit<Card, 'name'>>)[card_ID];
-      return Object.assign({ name: card_ID }, baseCard ?? {}, referenceFields);
+      const ref = referenceFields as CardReference;
+      const raw = getStsCardsRecord()[card_ID];
+      if (!raw) {
+        return Object.assign({ name: card_ID }, referenceFields as Card);
+      }
+      const baseCard = buildGameCardFromStsRaw(card_ID, raw as Record<string, unknown>, {
+        isUpgraded: ref.isUpgraded ?? false,
+      });
+      return Object.assign(baseCard, referenceFields as Card, { name: card_ID });
     }
     return entry;
   };
@@ -645,7 +657,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       };
       selected.forEach(({ location, index }) => {
         const pile = (newState as any)[location] as Card[];
-        pile[index] = { ...pile[index], isUpgraded: true, isChanged: true };
+        const cur = pile[index];
+        const name = cur?.name ?? '';
+        pile[index] = {
+          ...cur,
+          isUpgraded: true,
+          isChanged: true,
+          ...stsTierDescriptionPatch(name, true),
+        };
       });
       const stateWithSelectionCleared = clearSelectionState(newState);
       return {
@@ -671,7 +690,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       };
       selected.forEach(({ location, index }) => {
         const pile = (newState as any)[location] as Card[];
-        pile[index] = { ...pile[index], isUpgraded: false, isChanged: true };
+        const cur = pile[index];
+        const name = cur?.name ?? '';
+        pile[index] = {
+          ...cur,
+          isUpgraded: false,
+          isChanged: true,
+          ...stsTierDescriptionPatch(name, false),
+        };
       });
       const stateWithSelectionCleared = clearSelectionState(newState);
       return {
@@ -722,21 +748,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   };
 
   const buildCardFromDatabase = (cardId: string, isUpgraded: boolean): Card | null => {
-    const cardData = (cardDB as Record<string, any>)[cardId];
-    if (!cardData) return null;
-    return {
-      name: cardId,
-      type: cardData.type,
-      isUpgraded,
-      isChanged: true,
-      isSelected: false,
-      cost: cardData.cost,
-      damage: cardData.damage,
-      block: cardData.block,
-      draw: cardData.draw,
-      description: cardData.description,
-      ...cardData,
-    };
+    const card = gameCardFromDatabaseId(cardId, { isUpgraded });
+    if (!card) return null;
+    return { ...card, isChanged: true, isSelected: false };
   };
 
   const transformSelectedFromDatabase = (cardId: string, isUpgraded = false) => {

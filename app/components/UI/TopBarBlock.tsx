@@ -5,7 +5,10 @@ import { getEffectDisplay } from "@/app/utils/effectDisplay";
 import { getPlayerMaxEnergy, importGameData } from "@/app/utils/gameHelpers";
 import { useGameManager } from "@/app/context/GameContext";
 import CardDBModal from "@/app/components/CardDBModal";
-import { Activity, ChevronDown, ChevronUp } from "lucide-react";
+import { getCardEffectLegendItems } from "@/app/components/UI/cardIconLegend";
+import { Activity, BookOpen, ChevronDown, ChevronUp } from "lucide-react";
+
+const CARD_EFFECT_LEGEND = getCardEffectLegendItems();
 
 function clampPct(n: number) {
   return Math.max(0, Math.min(100, n));
@@ -41,9 +44,6 @@ export default function TopBarBlock() {
       ? Math.min(9, Math.max(energyMax, currentEnergy))
       : 0;
   const currentBlock = gameState?.player.currentBlock ?? 0;
-  const playerCombatName = gameState?.player.combatName ?? "Unknown";
-  const combatType = gameState?.player.combatType ?? "Unknown";
-  const playerFloor = gameState?.player.floor ?? 0;
 
   const hpPct = playerMaxHp > 0 ? clampPct((playerHp / playerMaxHp) * 100) : 0;
   const lowHp = playerMaxHp > 0 && (playerHp === 0 || (playerHp > 0 && hpPct < 30));
@@ -274,29 +274,27 @@ export default function TopBarBlock() {
         <div className="flex w-full min-w-0 flex-1 flex-col gap-2 min-[1000px]:min-w-[20rem] lg:max-w-none">
           <div className="flex min-w-0 flex-col items-stretch gap-2 min-[1000px]:flex-row min-[1000px]:items-center min-[1000px]:gap-2">
             <div
-              className="flex min-w-0 flex-1 flex-col gap-1.5 rounded-2xl border border-cyan-500/30 bg-cyan-950/25 p-2.5 ring-1 ring-cyan-500/10 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1 sm:p-2.5"
-              title={`${playerCombatName} — ${combatType} · Floor ${playerFloor}`}
+              className="min-w-0 flex-1 rounded-2xl border border-cyan-500/30 bg-cyan-950/25 p-2.5 ring-1 ring-cyan-500/10 sm:p-2.5"
+              role="region"
+              aria-label="Card effect icons legend"
             >
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <span className="inline-flex shrink-0 items-baseline gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-900/45 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-cyan-200/95">
-                  Turn
-                  <span className="text-lg font-bold tabular-nums tracking-tight text-white">{currentTurn}</span>
-                </span>
-                <span
-                  className="min-w-0 max-w-[20rem] truncate text-sm font-semibold text-slate-50 sm:max-w-[18rem] lg:max-w-[24rem]"
-                  title={playerCombatName}
-                >
-                  {playerCombatName}
-                </span>
-              </div>
-              <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:ms-auto sm:ps-1">
-                <span className="rounded-md border border-slate-600/50 bg-slate-900/60 px-2 py-0.5 text-[10px] font-semibold text-slate-200">
-                  {combatType}
-                </span>
-                <span className="text-slate-500" aria-hidden>
-                  ·
-                </span>
-                <span className="text-[10px] font-bold tabular-nums text-cyan-200/90">Fl {playerFloor}</span>
+              <p className="mb-2 flex items-center gap-1.5 px-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-200/85">
+                <BookOpen className="h-3 w-3 shrink-0 text-cyan-400/90" strokeWidth={2.5} aria-hidden />
+                Card icons
+              </p>
+              <div className="flex max-h-[4.5rem] min-h-0 flex-wrap content-start gap-1.5 overflow-y-auto pr-0.5 [scrollbar-width:thin] sm:max-h-[3.75rem]">
+                {CARD_EFFECT_LEGEND.map((item) => (
+                  <span
+                    key={item.id}
+                    title={item.label}
+                    className="inline-flex items-center gap-1 rounded-md border border-slate-600/45 bg-slate-900/55 px-1.5 py-0.5 shadow-sm shadow-black/20"
+                  >
+                    <item.Icon className={`h-3.5 w-3.5 shrink-0 ${item.iconClass}`} strokeWidth={2.25} aria-hidden />
+                    <span className="max-w-[7rem] truncate text-[9px] font-medium leading-none text-slate-300/95">
+                      {item.label}
+                    </span>
+                  </span>
+                ))}
               </div>
             </div>
             {relicTooltips.length > 0 ? (
@@ -528,21 +526,26 @@ export default function TopBarBlock() {
           </div>
 
           <div className="space-y-2">
-            <div className="rounded-xl border border-cyan-500/40 bg-cyan-950/30 p-2.5 ring-1 ring-cyan-500/15">
-              <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                <span className="shrink-0 rounded-md border border-cyan-500/50 bg-cyan-900/50 px-1.5 py-0.5 text-[9px] font-bold uppercase text-cyan-200/95">
-                  T{currentTurn}
-                </span>
-                <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-50" title={playerCombatName}>
-                  {playerCombatName}
-                </span>
-              </div>
-              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                <span className="rounded border border-slate-600/60 bg-slate-900/50 px-1.5 py-0.5 text-[9px] font-semibold text-slate-200">
-                  {combatType}
-                </span>
-                <span className="text-slate-500">·</span>
-                <span className="text-[9px] font-bold tabular-nums text-cyan-200/90">Fl {playerFloor}</span>
+            <div
+              className="rounded-xl border border-cyan-500/40 bg-cyan-950/30 p-2.5 ring-1 ring-cyan-500/15"
+              role="region"
+              aria-label="Card effect icons legend"
+            >
+              <p className="mb-1.5 flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-cyan-200/90">
+                <BookOpen className="h-3 w-3 text-cyan-400/90" strokeWidth={2.5} aria-hidden />
+                Icons
+              </p>
+              <div className="flex max-h-32 flex-wrap gap-1 overflow-y-auto [scrollbar-width:thin]">
+                {CARD_EFFECT_LEGEND.map((item) => (
+                  <span
+                    key={item.id}
+                    title={item.label}
+                    className="inline-flex items-center gap-0.5 rounded-md border border-slate-600/50 bg-slate-900/55 px-1 py-0.5"
+                  >
+                    <item.Icon className={`h-3 w-3 shrink-0 ${item.iconClass}`} strokeWidth={2.25} aria-hidden />
+                    <span className="max-w-[5.5rem] truncate text-[8px] font-medium text-slate-300">{item.label}</span>
+                  </span>
+                ))}
               </div>
             </div>
             {relicTooltips.length > 0 ? (

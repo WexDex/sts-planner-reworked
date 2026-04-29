@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>STS Theme — Documentation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="sts-theme.css" />
+    <style>
+      /* Documentation chrome only (not part of sts-theme.css) */
+      .doc {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 28px 20px 80px;
+      }
+      @media (min-width: 900px) {
+        .doc {
+          grid-template-columns: 220px minmax(0, 1fr);
+          gap: 40px;
+          align-items: start;
+        }
+      }
+      .doc-nav {
+        position: sticky;
+        top: 16px;
+        font-size: 0.8125rem;
+        line-height: 1.45;
+      }
+      .doc-nav-title {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        margin: 0 0 10px;
+      }
+      .doc-nav a {
+        display: block;
+        color: #94a3b8;
+        text-decoration: none;
+        padding: 4px 0;
+        border-left: 2px solid transparent;
+        padding-left: 10px;
+        margin-left: -2px;
+      }
+      .doc-nav a:hover {
+        color: #e2e8f0;
+      }
+      .doc-main h1 {
+        margin: 0 0 8px;
+        font-size: 1.75rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: #f8fafc;
+      }
+      .doc-lede {
+        margin: 0 0 28px;
+        font-size: 0.95rem;
+        color: #94a3b8;
+        max-width: 52rem;
+      }
+      .doc-section {
+        scroll-margin-top: 20px;
+        margin-bottom: 44px;
+      }
+      .doc-section h2 {
+        margin: 0 0 8px;
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #f1f5f9;
+      }
+      .doc-section > p:first-of-type,
+      .doc-p {
+        margin: 0 0 14px;
+        font-size: 0.9rem;
+        color: #cbd5e1;
+        line-height: 1.62;
+      }
+      .doc-table-wrap {
+        overflow-x: auto;
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        margin: 14px 0;
+      }
+      table.doc-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+      }
+      .doc-table th,
+      .doc-table td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+        vertical-align: top;
+      }
+      .doc-table th {
+        background: rgba(15, 23, 42, 0.95);
+        color: #e2e8f0;
+        font-weight: 600;
+      }
+      .doc-table td {
+        color: #cbd5e1;
+      }
+      .doc-table code {
+        font-family: ui-monospace, monospace;
+        font-size: 0.78em;
+        color: #fcd34d;
+      }
+      .doc-table tr:last-child td {
+        border-bottom: none;
+      }
+      pre.doc-pre {
+        margin: 12px 0;
+        padding: 14px 16px;
+        border-radius: 12px;
+        background: rgb(15 23 42 / 0.85);
+        border: 1px solid rgba(100, 116, 139, 0.25);
+        overflow-x: auto;
+        font-size: 0.75rem;
+        line-height: 1.5;
+        color: #e2e8f0;
+      }
+      pre.doc-pre code {
+        font-family: ui-monospace, monospace;
+      }
+      .doc-callout {
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: rgba(59, 130, 246, 0.08);
+        border: 1px solid rgba(59, 130, 246, 0.22);
+        font-size: 0.85rem;
+        color: #bae6fd;
+        margin: 14px 0;
+      }
+      .doc-h3 {
+        margin: 20px 0 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #cbd5e1;
+      }
+      ul.doc-list {
+        margin: 8px 0 14px 1.1rem;
+        padding: 0;
+        font-size: 0.875rem;
+        color: #cbd5e1;
+        line-height: 1.55;
+      }
+      .doc-mini-demo {
+        margin-top: 16px;
+        padding: 14px;
+        border-radius: 14px;
+        border: 1px dashed rgba(148, 163, 184, 0.25);
+        background: rgba(2, 6, 23, 0.35);
+      }
+      body.doc-body {
+        margin: 0;
+        font-family: Inter, system-ui, sans-serif;
+        background: #020617;
+        color: #f1f5f9;
+        -webkit-font-smoothing: antialiased;
+      }
+      a.doc-link {
+        color: #7dd3fc;
+      }
+      a.doc-link:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body class="doc-body">
+    <div class="doc">
+      <nav class="doc-nav" aria-label="Documentation sections">
+        <p class="doc-nav-title">On this page</p>
+        <a href="#overview">Overview</a>
+        <a href="#install">Installation</a>
+        <a href="#tokens">Design tokens</a>
+        <a href="#shell">App shell</a>
+        <a href="#combat">Combat UI</a>
+        <a href="#buttons">Buttons</a>
+        <a href="#forms">Forms</a>
+        <a href="#pills">Pills &amp; misc</a>
+        <a href="#layouts">Layout helpers</a>
+        <a href="#sts-card">STSCard static</a>
+        <a href="#dark">Dark tokens</a>
+        <a href="#reuse">Reuse checklist</a>
+        <a href="#sources">Source mapping</a>
+      </nav>
+      <main class="doc-main">
+        <h1 id="overview">STS theme pack — documentation</h1>
+        <p class="doc-lede">
+          Lives in folder <span class="code">theme wrapper</span>. This describes
+          <span class="code">sts-theme.css</span> (and the generated
+          <span class="code">sts-theme.min.css</span> build for production): portable styles derived
+          from the Slay the Spire Combat Planner reference theme. Pair with
+          <a class="doc-link" href="theme.html">theme.html</a> for a live gallery of components.
+        </p>
+
+        <section class="doc-section" id="install">
+          <h2>Installation</h2>
+          <p class="doc-p">
+            Copy this folder’s <span class="code">sts-theme.css</span> into your project assets when
+            reusing elsewhere. Link it from HTML or import from your CSS bundler (plain CSS, no deps).
+          </p>
+          <pre class="doc-pre"><code>&lt;link rel=&quot;stylesheet&quot; href=&quot;/path/to/your/copy/of/sts-theme.css&quot; /&gt;
+&lt;!-- or: sts-theme.min.css (smaller transfer, same rules) --&gt;</code></pre>
+          <p class="doc-p">
+            Recommended baseline for pages using this palette (matches the STS Planner Next.js
+            root layout intent):
+          </p>
+          <pre class="doc-pre"><code>&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;sts-theme.css&quot; /&gt;
+&lt;/head&gt;
+&lt;body style=&quot;min-height:100vh;background:var(--app-bg);color:var(--app-fg);font-family:Inter,system-ui,sans-serif;&quot;&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+          <div class="doc-callout">
+            Tokens such as <span class="code">--primary</span> use shadcn-style semantics. Combat
+            panels mix fixed RGBA values for the game UI; semantic buttons also use CSS variables so
+            they respond to light/dark when <span class="code">html</span> has class
+            <span class="code">.dark</span>.
+          </div>
+        </section>
+
+        <section class="doc-section" id="tokens">
+          <h2>Design tokens (<span class="code">:root</span>)</h2>
+          <p class="doc-p">
+            Declared at the root and overridden under <span class="code">.dark</span> (see § Dark
+            tokens). Numeric radii often pair with <span class="code">--radius</span>
+            (0.625rem).
+          </p>
+          <div class="doc-table-wrap">
+            <table class="doc-table">
+              <thead>
+                <tr>
+                  <th>Variable</th>
+                  <th>Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>--background</code></td>
+                  <td>Page / surface background in token-driven UIs.</td>
+                </tr>
+                <tr>
+                  <td><code>--foreground</code></td>
+                  <td>Default text on <span class="code">--background</span>.</td>
+                </tr>
+                <tr>
+                  <td><code>--primary</code> / <code>--primary-foreground</code></td>
+                  <td>Primary solid actions (<span class="code">.btn-primary-solid</span>).</td>
+                </tr>
+                <tr>
+                  <td><code>--secondary</code> / <code>--secondary-foreground</code></td>
+                  <td>Secondary solid buttons.</td>
+                </tr>
+                <tr>
+                  <td><code>--muted</code> / <code>--muted-foreground</code></td>
+                  <td>Muted surfaces and de-emphasized text.</td>
+                </tr>
+                <tr>
+                  <td><code>--accent</code> / <code>--accent-foreground</code></td>
+                  <td>Highlighted surfaces.</td>
+                </tr>
+                <tr>
+                  <td><code>--destructive</code> / <code>--destructive-foreground</code></td>
+                  <td>Destructive actions (<span class="code">.btn-destructive</span>).</td>
+                </tr>
+                <tr>
+                  <td><code>--border</code></td>
+                  <td>Default hairline borders in token layouts.</td>
+                </tr>
+                <tr>
+                  <td><code>--input-background</code></td>
+                  <td>Neutral input fills when using design-token forms.</td>
+                </tr>
+                <tr>
+                  <td><code>--ring</code></td>
+                  <td>Focus ring reference (combine with outlines in your app).</td>
+                </tr>
+                <tr>
+                  <td><code>--chart-1</code> … <code>--chart-5</code></td>
+                  <td>Sequential chart accents (OKLCH).</td>
+                </tr>
+                <tr>
+                  <td><code>--sidebar*</code></td>
+                  <td>Sidebar token set (rail layouts).</td>
+                </tr>
+                <tr>
+                  <td><code>--font-size</code>, <code>--font-weight-*</code></td>
+                  <td>Baseline typography scale knobs.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="doc-section" id="shell">
+          <h2 id="tokens-app-shell">App shell variables</h2>
+          <p class="doc-p">
+            In addition to the shadcn-style tokens above, this pack declares app-specific defaults
+            that mirror Tailwind slate usage in the STS Planner layout (<span class="code"
+              >bg-slate-950</span
+            >, <span class="code">text-slate-100</span>):
+          </p>
+          <div class="doc-table-wrap">
+            <table class="doc-table">
+              <tbody>
+                <tr>
+                  <td><code>--app-bg</code></td>
+                  <td><code>#020617</code> — main shell background.</td>
+                </tr>
+                <tr>
+                  <td><code>--app-fg</code></td>
+                  <td><code>#f1f5f9</code> — primary foreground on the shell.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="doc-section" id="combat">
+          <h2>Combat &amp; panel UI</h2>
+          <p class="doc-p">
+            Dark game-style regions: top summary bar, rounded panel cards, metric chips, and
+            intent rows. Class names match <span class="code">app/globals.css</span> in the repo.
+          </p>
+          <div class="doc-table-wrap">
+            <table class="doc-table">
+              <thead>
+                <tr>
+                  <th>Class</th>
+                  <th>Purpose</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>.top-bar</code></td>
+                  <td>Horizontal bar: title area + <span class="code">.top-metrics</span> chips.</td>
+                </tr>
+                <tr>
+                  <td><code>.top-label</code>, <code>.top-value</code></td>
+                  <td>Primary and secondary text inside the top bar.</td>
+                </tr>
+                <tr>
+                  <td><code>.top-metrics span</code></td>
+                  <td>Pill-shaped stats (floor, energy, etc.).</td>
+                </tr>
+                <tr>
+                  <td><code>.panel-card</code></td>
+                  <td>Primary glassy panel with heading hook <span class="code">h3</span>.</td>
+                </tr>
+                <tr>
+                  <td><code>.intent-row</code>, <code>.intent-row.current</code></td>
+                  <td>Intent blocks; <span class="code">.current</span> adds purple border.</td>
+                </tr>
+                <tr>
+                  <td><code>.enemy-card</code>, <code>.enemy-header</code></td>
+                  <td>Enemy block container and title row.</td>
+                </tr>
+                <tr>
+                  <td><code>.zone-slot</code></td>
+                  <td>Dashed drop zone (draw / discard / exhaust).</td>
+                </tr>
+                <tr>
+                  <td><code>.log-item</code></td>
+                  <td>Single log line surface.</td>
+                </tr>
+                <tr>
+                  <td><code>.card-item</code>, <code>.card-title</code>, <code>.small-text</code></td>
+                  <td>Lightweight list card (not the full STSCard component).</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="doc-section" id="buttons">
+          <h2>Buttons</h2>
+          <p class="doc-p">
+            Combat default buttons use translucent indigo. Token-backed buttons read
+            <span class="code">--primary</span>, <span class="code">--secondary</span>,
+            <span class="code">--destructive</span>. Mini colour variants mirror Tailwind utility
+            colours from <span class="code">.btn-mini.*</span> in globals.
+          </p>
+          <div class="doc-table-wrap">
+            <table class="doc-table">
+              <thead>
+                <tr>
+                  <th>Class</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>.button-row button</code>, <code>.combat-btn</code></td>
+                  <td>Default combat style; <span class="code">.active</span> for selection.</td>
+                </tr>
+                <tr>
+                  <td><code>.btn-primary-solid</code></td>
+                  <td>Filled primary using design tokens.</td>
+                </tr>
+                <tr>
+                  <td><code>.btn-secondary-solid</code></td>
+                  <td>Filled secondary.</td>
+                </tr>
+                <tr>
+                  <td><code>.btn-destructive</code></td>
+                  <td>Destructive fill.</td>
+                </tr>
+                <tr>
+                  <td><code>button:disabled</code>, <code>.is-disabled</code></td>
+                  <td>Muted grey, no pointer, reduced opacity.</td>
+                </tr>
+                <tr>
+                  <td><code>.btn-mini</code> + colour</td>
+                  <td>
+                    <code>.green .blue .red .gray .purple .orange .cyan .pink .yellow .lime</code>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-mini-demo">
+            <div class="button-row">
+              <button type="button" class="combat-btn">Default</button>
+              <button type="button" class="combat-btn active">Active</button>
+              <button type="button" class="btn-primary-solid">Primary</button>
+              <button type="button" class="btn-mini blue">Mini</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="forms">
+          <h2>Forms</h2>
+          <p class="doc-p">
+            Use <span class="code">label.field</span> for spaced label stacks.
+            <span class="code">.field-input</span> applies to <span class="code">input</span> and
+            <span class="code">select</span>; wrap textareas that need the shared min-height inside
+            <span class="code">.manual-log-box</span> as in the reference page.
+          </p>
+          <ul class="doc-list">
+            <li><code>.field-input:focus</code> — purple focus ring (matches game accent).</li>
+            <li>Label colour <code>#d1d4ff</code>; inputs use semi-opaque dark fill.</li>
+          </ul>
+          <div class="doc-mini-demo">
+            <label class="field" style="max-width: 14rem">
+              Sample
+              <input class="field-input" type="text" placeholder="Type…" />
+            </label>
+          </div>
+        </section>
+
+        <section class="doc-section" id="pills">
+          <h2>Pills &amp; supporting utilities</h2>
+          <div class="doc-table-wrap">
+            <table class="doc-table">
+              <tbody>
+                <tr>
+                  <td><code>.status-pill</code></td>
+                  <td>Violet-tint pill for statuses.</td>
+                </tr>
+                <tr>
+                  <td><code>.intent-pill</code></td>
+                  <td>Intent sub-chips.</td>
+                </tr>
+                <tr>
+                  <td><code>.muted</code></td>
+                  <td>Secondary text colour <code>#8a8fb8</code>.</td>
+                </tr>
+                <tr>
+                  <td><code>.flex-gap</code></td>
+                  <td>Row wrap helper with uniform gap.</td>
+                </tr>
+                <tr>
+                  <td><code>.semantic-grid</code>, <code>.semantic-chip</code></td>
+                  <td>Semantic colour chips for game tags (bases only — colours inline in markup).</td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>.token-strip</code>, <code>.grid-swatches</code>, <code>.swatch</code>*
+                  </td>
+                  <td>Gallery utilities for comparing light/dark token swatches (see gallery page).</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="doc-section" id="layouts">
+          <h2>Layout helpers (composed UIs)</h2>
+          <p class="doc-p">
+            Patterns used in composite examples: grids, nested enemy blocks, horizontal form rows,
+            and hand strips beside logs.
+          </p>
+          <div class="doc-table-wrap">
+            <table class="doc-table">
+              <tbody>
+                <tr>
+                  <td><code>.composite-grid</code>, <code>.composite-grid.two-col</code></td>
+                  <td>Responsive grids for side-by-side examples.</td>
+                </tr>
+                <tr>
+                  <td><code>.example-block</code>, <code>.example-block h4</code></td>
+                  <td>Outlined sample frame with eyebrow caption style.</td>
+                </tr>
+                <tr>
+                  <td><code>.row-tight</code></td>
+                  <td>Tight horizontal chip rows.</td>
+                </tr>
+                <tr>
+                  <td><code>.inline-form-row</code></td>
+                  <td>Flex row aligning fields and trailing buttons.</td>
+                </tr>
+                <tr>
+                  <td><code>.hand-strip</code>, <code>.split-log</code>, <code>.mini-log-stack</code></td>
+                  <td>Hand + log column layouts.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="doc-section" id="sts-card">
+          <h2>Static STSCard (<span class="code">.sts-card</span>)</h2>
+          <p class="doc-p">
+            Port of the visual language from <span class="code">app/components/UI/Card.tsx</span> at
+            <strong>medium</strong> dimensions (<span class="code">8.25rem × 12rem</span>,
+            <span class="code">rounded-xl</span>). Type chrome comes from
+            <span class="code">cardTypeStyles</span> in <span class="code">app/types/types.ts</span>.
+          </p>
+          <h3 class="doc-h3">Required DOM shape</h3>
+          <pre class="doc-pre"><code>.sts-card.sts-card--{attack|skill|power|potion|curse|status}
+├── .sts-card__hairline.sts-card__hairline--top
+├── .sts-card__inset
+├── .sts-card__cost            ← hidden for curse &amp; status
+├── .sts-card__main
+│   ├── .sts-card__name-band → .sts-card__name [, .sts-card__changed]
+│   ├── .sts-card__mid → .sts-card__stat*
+│   ├── .sts-card__desc
+│   └── .sts-card__type-label
+└── .sts-card__hairline.sts-card__hairline--bottom</code></pre>
+          <h3 class="doc-h3">Modifiers</h3>
+          <div class="doc-table-wrap">
+            <table class="doc-table">
+              <thead>
+                <tr>
+                  <th>Class</th>
+                  <th>Meaning</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>.sts-card--attack</code></td>
+                  <td>Red family — Strike-style cards.</td>
+                </tr>
+                <tr>
+                  <td><code>.sts-card--skill</code></td>
+                  <td>Emerald — Defend-style.</td>
+                </tr>
+                <tr>
+                  <td><code>.sts-card--power</code></td>
+                  <td>Violet — persistent effects.</td>
+                </tr>
+                <tr>
+                  <td><code>.sts-card--potion</code></td>
+                  <td>Amber — potions keep a cost orb in app logic.</td>
+                </tr>
+                <tr>
+                  <td><code>.sts-card--curse</code></td>
+                  <td>Slate/violet curse blend; hides cost orb via CSS.</td>
+                </tr>
+                <tr>
+                  <td><code>.sts-card--status</code></td>
+                  <td>Muted slate; hides cost orb.</td>
+                </tr>
+                <tr>
+                  <td><code>.sts-card--selected</code></td>
+                  <td>Simulates amber selection ring from React card selection.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="doc-p">
+            Stat colouring helpers: <span class="code">.sts-card__stat--dmg</span>,
+            <span class="code">--block</span>, <span class="code">--draw</span>,
+            <span class="code">--td</span> (curse self-damage styling). Upgrade name colour:
+            <span class="code">.upgrade</span>, <span class="code">.upgrade-plus</span> inside
+            <span class="code">.sts-card__name</span>.
+          </p>
+          <div class="doc-mini-demo sts-card-row" style="border: none; padding-top: 0; background: transparent">
+            <div class="sts-card-cell">
+              <div class="sts-card sts-card--attack" aria-hidden="true">
+                <div class="sts-card__hairline sts-card__hairline--top"></div>
+                <div class="sts-card__inset"></div>
+                <div class="sts-card__cost">1</div>
+                <div class="sts-card__main">
+                  <div class="sts-card__name-band">
+                    <p class="sts-card__name">Strike</p>
+                  </div>
+                  <div class="sts-card__mid">
+                    <span class="sts-card__stat sts-card__stat--dmg">⚡ 6</span>
+                  </div>
+                  <div class="sts-card__desc">Deal 6 damage.</div>
+                  <div class="sts-card__type-label">Attack</div>
+                </div>
+                <div class="sts-card__hairline sts-card__hairline--bottom"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="dark">
+          <h2>Dark tokens</h2>
+          <p class="doc-p">
+            Add class <span class="code">dark</span> to <span class="code">&lt;html&gt;</span> (or any
+            wrapping scope) so <span class="code">.dark</span> rules apply. Colour tokens invert for
+            shadcn-style surfaces; combat RGBA stays visually tuned for dark backdrops regardless.
+          </p>
+          <pre class="doc-pre"><code>&lt;html class=&quot;dark&quot;&gt;</code></pre>
+        </section>
+
+        <section class="doc-section" id="reuse">
+          <h2>Reuse checklist (other projects)</h2>
+          <ul class="doc-list">
+            <li>
+              Prefer Inter (or substitute a neo-grotesque) for parity; load weights 400–700 as needed.
+            </li>
+            <li>Set page background via <span class="code">--app-bg</span> / <span class="code">body</span> or Tailwind slate-950-equivalent.</li>
+            <li>
+              When blending with Tailwind/PostCSS: this file sets <span class="code">box-sizing</span>
+              on <span class="code">*</span> plus a full <span class="code">body</span> rule (see
+              callout above). Scope or override if your base layer conflicts.
+            </li>
+            <li>For React: map <span class="code">design tokens</span> to CSS vars from this file rather than duplicating hex in components.</li>
+          </ul>
+          <div class="doc-callout">
+            <strong>Note:</strong> <span class="code">sts-theme.css</span> includes a global
+            <span class="code">body</span> rule: <span class="code">margin: 0</span>,
+            <span class="code">min-height: 100vh</span>, Inter stack,
+            <span class="code">--app-bg</span> / <span class="code">--app-fg</span>. If your product already styles
+            <span class="code">body</span>, import this pack before or after intentionally so
+            cascade matches your design system.
+          </div>
+        </section>
+
+        <section class="doc-section" id="sources">
+          <h2>Source mapping (repo)</h2>
+          <div class="doc-table-wrap">
+            <table class="doc-table">
+              <tbody>
+                <tr>
+                  <td><code>theme wrapper/</code></td>
+                  <td>Self-contained theme pack: CSS, gallery, and docs (this page).</td>
+                </tr>
+                <tr>
+                  <td><code>theme wrapper/sts-theme.css</code></td>
+                  <td>Readable theme pack (source of truth for edits).</td>
+                </tr>
+                <tr>
+                  <td><code>theme wrapper/sts-theme.min.css</code></td>
+                  <td>
+                    Minified copy. From the repo root, after editing the non-minified file:
+                    <code style="display: block; margin-top: 6px; color: #fcd34d; word-break: break-all">npx clean-css-cli -O1 &quot;theme wrapper/sts-theme.css&quot; -o &quot;theme wrapper/sts-theme.min.css&quot;</code>
+                    Or <span class="code">cd</span> into <span class="code">theme wrapper</span> and
+                    run the same command with paths <span class="code">sts-theme.css</span> →
+                    <span class="code">sts-theme.min.css</span>.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>theme wrapper/theme.html</code></td>
+                  <td>Interactive gallery; wires body + showcases all blocks.</td>
+                </tr>
+                <tr>
+                  <td><code>theme wrapper/theme_docs.html</code></td>
+                  <td>This documentation page.</td>
+                </tr>
+                <tr>
+                  <td><code>app/globals.css</code></td>
+                  <td>Upstream tokens and bespoke combat selectors in the Next.js app.</td>
+                </tr>
+                <tr>
+                  <td><code>app/components/UI/Card.tsx</code>, <code>app/types/types.ts</code></td>
+                  <td>Interactive card component &amp; type style map.</td>
+                </tr>
+                <tr>
+                  <td><code>app/constants/colors.ts</code></td>
+                  <td>Semantic Tailwind pairs for logs and effects.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

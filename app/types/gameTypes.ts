@@ -18,6 +18,8 @@ export interface Card {
   isUpgraded?: boolean;
   isChanged?: boolean;
   isSelected?: boolean;
+  /** When set (e.g. true), cost orb shows X and ignores numeric `cost`. */
+  xCost?: boolean;
   cost?: ValueNode;
   damage?: ValueNode;
   block?: ValueNode;
@@ -26,7 +28,17 @@ export interface Card {
   energyGain?: ValueNode;
   vulnerable?: ValueNode;
   blockOnExhaust?: ValueNode;
+  /** HP restored (Bite, etc.) — tiers in STS DB. */
+  heal?: ValueNode;
+  /** Defect Focus (+/- orbs scaling). */
+  focus?: ValueNode;
+  /** Watcher Mantra stacks when using `[MANTRA]` / mantra-backed `[W]`. */
+  mantra?: ValueNode;
   description?: string;
+  /** No energy cost orb (curse / special). */
+  unplayable?: boolean;
+  /** Retain on hand (STS tiered booleans). */
+  retain?: { base?: boolean; upgraded?: boolean };
   [key: string]: any;
 }
 

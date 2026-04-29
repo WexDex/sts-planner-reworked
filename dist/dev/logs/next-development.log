@@ -1,0 +1,22 @@
+{"timestamp":"00:00:01.951","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:06.921","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"00:00:09.005","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"00:01:32.664","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./app/data/STS_CARDS_DB.json.[json].cjs changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"00:01:32.840","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./app/data/STS_CARDS_DB.json.[json].cjs changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"00:01:32.842","source":"Server","level":"LOG","message":"✓ Compiled in 82ms"}
+{"timestamp":"00:01:33.312","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"00:01:33.313","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"00:01:49.437","source":"Server","level":"LOG","message":"✓ Compiled in 102ms"}
+{"timestamp":"00:01:50.090","source":"Server","level":"LOG","message":"✓ Compiled in 103ms"}
+{"timestamp":"00:01:51.772","source":"Server","level":"LOG","message":"✓ Compiled in 75ms"}
+{"timestamp":"00:02:02.272","source":"Server","level":"LOG","message":"✓ Compiled in 72ms"}
+{"timestamp":"00:02:02.574","source":"Server","level":"LOG","message":"✓ Compiled in 81ms"}
+{"timestamp":"00:02:03.180","source":"Server","level":"LOG","message":"✓ Compiled in 8ms"}
+{"timestamp":"00:02:03.388","source":"Server","level":"LOG","message":"✓ Compiled in 105ms"}
+{"timestamp":"00:02:05.453","source":"Server","level":"LOG","message":"✓ Compiled in 73ms"}
+{"timestamp":"00:03:07.055","source":"Server","level":"LOG","message":"✓ Compiled in 65ms"}
+{"timestamp":"00:03:07.924","source":"Server","level":"LOG","message":"✓ Compiled in 75ms"}
+{"timestamp":"00:03:11.219","source":"Server","level":"LOG","message":"✓ Compiled in 114ms"}
+{"timestamp":"00:03:41.433","source":"Server","level":"LOG","message":"✓ Compiled in 62ms"}
+{"timestamp":"00:03:43.187","source":"Server","level":"LOG","message":"✓ Compiled in 84ms"}
+{"timestamp":"00:03:46.559","source":"Server","level":"LOG","message":"✓ Compiled in 104ms"}

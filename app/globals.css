@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Build artifacts can embed old utility names; scanning them may reintroduce invalid rules. */
+@source not "../dist/**";
+@source not "../.next/**";
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
