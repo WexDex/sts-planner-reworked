@@ -21,6 +21,7 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
+  GitBranch,
   History,
   RotateCcw,
   Save,
@@ -32,7 +33,10 @@ import {
 } from "lucide-react";
 import { toast } from "@/app/utils/toast";
 import { combatSnapshotsEqual } from "@/app/utils/gameHelpers";
-import { turnsVisibleForActiveDecisionLineage } from "@/app/utils/decisionTreeHelpers";
+import {
+  outgoingDecisionBranchCountForPlannerSlot,
+  turnsVisibleForActiveDecisionLineage,
+} from "@/app/utils/decisionTreeHelpers";
 
 interface EnemyIntentSummary {
   name: string;
@@ -94,6 +98,12 @@ function ActionBtn({
 }
 
 const INTENT_PREVIEW_MAX = 4;
+
+function decisionTimelineBranchSummary(outCount: number): string {
+  if (outCount <= 0) return 'No further branches in Decision Timeline';
+  if (outCount === 1) return 'This turn continues in 1 branch';
+  return `This turn branches into ${outCount} branches`;
+}
 
 /** Combat snapshot for a given intent turn: frozen slot in the planner, except the active turn uses live gameState. */
 function snapshotForIntentTurn(
@@ -199,14 +209,16 @@ export default function TimelineBlock() {
 
   const summariesByTurn = useMemo(() => new Map(turnsData.map((s) => [s.turn, s])), [turnsData]);
 
-  const plannerRows = useMemo(
-    () =>
-      displayTurns.map((t) => ({
-        id: t.id,
-        summary: summariesByTurn.get(t.id) ?? null,
-      })),
-    [displayTurns, summariesByTurn],
-  );
+  const plannerRows = useMemo(() => {
+    const hasTimeline = decisionNodes.length > 0;
+    return displayTurns.map((t) => ({
+      id: t.id,
+      summary: summariesByTurn.get(t.id) ?? null,
+      decisionBranchOutCount: hasTimeline
+        ? outgoingDecisionBranchCountForPlannerSlot(decisionNodes, t.id, turns)
+        : null,
+    }));
+  }, [displayTurns, summariesByTurn, decisionNodes, turns]);
 
   const currentTurnId = turns[currentTurnIndex]?.id ?? plannerRows[0]?.id ?? 1;
 
@@ -216,24 +228,8 @@ export default function TimelineBlock() {
     if (!gameState || currentTurnIndex < 0 || currentTurnIndex >= turns.length) return false;
     const slotState = turns[currentTurnIndex]?.state;
     if (!slotState) return false;
-    if (!combatSnapshotsEqual(gameState, slotState)) return true;
-
-    const active =
-      activeDecisionNodeId != null
-        ? decisionNodes.find((n) => n.id === activeDecisionNodeId)
-        : undefined;
-    const slotId = turns[currentTurnIndex]?.id;
-    if (
-      active &&
-      active.timelineRole !== 'timeline_start' &&
-      slotId != null &&
-      active.plannerTurnSlotId === slotId &&
-      !combatSnapshotsEqual(gameState, active.snapshot)
-    ) {
-      return true;
-    }
-    return false;
-  }, [gameState, turns, currentTurnIndex, decisionNodes, activeDecisionNodeId]);
+    return !combatSnapshotsEqual(gameState, slotState);
+  }, [gameState, turns, currentTurnIndex]);
 
   useEffect(() => {
     activeTurnRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -362,20 +358,9 @@ export default function TimelineBlock() {
             <span className="ml-1 text-slate-500">· similar to YGO flow</span>
           </div>
         </div>
-        <div
-          className={`mt-2 flex flex-wrap items-center gap-2 rounded-lg border px-2.5 py-1.5 ${
-            currentTurnHasUnsavedChanges
-              ? "border-amber-500/35 bg-amber-950/20"
-              : "border-cyan-500/20 bg-cyan-950/20"
-          }`}
-        >
-          <Clock
-            className={`h-3.5 w-3.5 shrink-0 ${currentTurnHasUnsavedChanges ? "text-amber-200/90" : "text-cyan-300/80"}`}
-            strokeWidth={2}
-          />
-          <span
-            className={`text-[11px] font-medium tabular-nums ${currentTurnHasUnsavedChanges ? "text-amber-100/95" : "text-cyan-100/95"}`}
-          >
+        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-950/20 px-2.5 py-1.5">
+          <Clock className="h-3.5 w-3.5 shrink-0 text-cyan-300/80" strokeWidth={2} />
+          <span className="text-[11px] font-medium tabular-nums text-cyan-100/95">
             Planner turn {currentTurnId} ·{" "}
             {turnPhase === "start"
               ? "Start (relics / draw / ST)"
@@ -384,9 +369,6 @@ export default function TimelineBlock() {
                 : "Enemy phase"}
             {selected?.totalDamage != null && selected.totalDamage > 0 ? (
               <span className="font-normal text-slate-500"> · {selected.totalDamage} incoming atk</span>
-            ) : null}
-            {currentTurnHasUnsavedChanges ? (
-              <span className="font-semibold text-amber-200/95"> · Unsaved</span>
             ) : null}
           </span>
         </div>
@@ -419,18 +401,24 @@ export default function TimelineBlock() {
                       type="button"
                       onClick={() => setCurrentTurn(row.id)}
                       className={`w-full max-w-full rounded-xl border-2 p-2.5 text-left transition-all duration-200 ${
-                        isActive
-                          ? `border-cyan-500/70 bg-slate-900/95 shadow-md shadow-cyan-950/30 ring-1 ${
-                              currentTurnHasUnsavedChanges ? "ring-amber-400/40" : "ring-cyan-400/15"
-                            }`
-                          : "border-slate-700/80 bg-slate-950/60 hover:border-slate-600 hover:bg-slate-900/50"
+                        isActive && currentTurnHasUnsavedChanges
+                          ? "border-amber-400/75 bg-linear-to-b from-amber-950/70 via-amber-950/45 to-slate-950/90 text-slate-100 shadow-md shadow-amber-950/35 ring-1 ring-amber-300/30"
+                          : isActive
+                            ? "border-cyan-500/70 bg-slate-900/95 shadow-md shadow-cyan-950/30 ring-1 ring-cyan-400/15"
+                            : "border-slate-700/80 bg-slate-950/60 hover:border-slate-600 hover:bg-slate-900/50"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
                             <Swords
-                              className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-cyan-400" : "text-slate-600"}`}
+                              className={`h-3.5 w-3.5 shrink-0 ${
+                                isActive && currentTurnHasUnsavedChanges
+                                  ? "text-amber-300"
+                                  : isActive
+                                    ? "text-cyan-400"
+                                    : "text-slate-600"
+                              }`}
                               strokeWidth={2}
                             />
                             <span className="text-sm font-bold tabular-nums text-slate-100">Turn {row.id}</span>
@@ -441,18 +429,34 @@ export default function TimelineBlock() {
                             ) : null}
                             {isActive && currentTurnHasUnsavedChanges ? (
                               <span
-                                className="rounded-md bg-amber-500/25 px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-amber-100"
-                                title="Live combat differs from the planner row and/or the active timeline checkpoint. Save updates the row; checkpoints also update when you switch or fork in Decision Timeline."
+                                className="rounded-md bg-amber-400/30 px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-amber-50"
+                                title="Live combat differs from this planner turn row. Switching turns saves automatically; you can also Save to planner row."
                               >
                                 Unsaved
                               </span>
                             ) : null}
                           </div>
-                          <p className="mt-0.5 text-[10px] text-slate-500">
+                          <p
+                            className={`mt-0.5 text-[10px] ${
+                              isActive && currentTurnHasUnsavedChanges ? "text-amber-200/80" : "text-slate-500"
+                            }`}
+                          >
                             {summary
                               ? `${summary.enemySummaries.length} intent line${summary.enemySummaries.length === 1 ? "" : "s"}`
                               : "No intents in data for this turn"}
                           </p>
+                          {row.decisionBranchOutCount != null ? (
+                            <p
+                              className={`mt-1 flex items-start gap-1.5 text-[10px] leading-snug ${
+                                isActive && currentTurnHasUnsavedChanges
+                                  ? "text-violet-200/90"
+                                  : "text-violet-300/75"
+                              }`}
+                            >
+                              <GitBranch className="mt-0.5 h-3 w-3 shrink-0 opacity-90" strokeWidth={2} />
+                              <span>{decisionTimelineBranchSummary(row.decisionBranchOutCount)}</span>
+                            </p>
+                          ) : null}
                         </div>
                         {summary && summary.totalDamage > 0 ? (
                           <div className="shrink-0 rounded-full border border-rose-500/35 bg-rose-950/40 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-rose-200">
@@ -462,7 +466,13 @@ export default function TimelineBlock() {
                       </div>
 
                       {lines.length > 0 ? (
-                        <div className="mt-2 space-y-1 border-t border-slate-800/80 pt-2">
+                        <div
+                          className={`mt-2 space-y-1 border-t pt-2 ${
+                            isActive && currentTurnHasUnsavedChanges
+                              ? "border-amber-700/50"
+                              : "border-slate-800/80"
+                          }`}
+                        >
                           {visibleLines.map((s, ei) => {
                             const tone = enemyIntentSlotTone(s.name);
                             const titleParts = [
@@ -587,8 +597,8 @@ export default function TimelineBlock() {
           <p className="mt-2 text-[10px] leading-relaxed text-slate-600">
             Tip: Each planner turn begins in Start — click Start turn to log and enter Main (play cards). End main phase →
             Enemy. End enemy turn → next planner turn (Start again). “Copy state” uses the player-end snapshot during Enemy.
-            Reset restores the initial snapshot. Amber “Unsaved” means the field differs from this row and/or the active
-            timeline checkpoint — use Save to planner row (or save on the main field).
+            Reset restores the initial snapshot. The active turn turns yellow when the field differs from that row; switching
+            turns saves the previous row automatically.
           </p>
         </div>
       </div>

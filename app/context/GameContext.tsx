@@ -363,15 +363,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, [gameState, currentTurnIndex, turns.length]);
 
   const setCurrentTurn = (turnId: number) => {
-    const index = turns.findIndex(turn => turn.id === turnId);
-    if (index !== -1 && index !== currentTurnIndex) {
-      // Autosave current turn before switching
-      setTurns(prev => prev.map((turn, idx) => idx === currentTurnIndex ? { ...turn, state: cloneGameData(gameState!) } : turn));
-      setCurrentTurnIndex(index);
-      setGameState(cloneGameData(turns[index].state));
-      setTurnPhase('start');
-      toast('Turn switched', 'success');
-    }
+    const index = turns.findIndex((turn) => turn.id === turnId);
+    if (index === -1 || index === currentTurnIndex || !gameState) return;
+
+    const nextTurns = turns.map((turn, idx) =>
+      idx === currentTurnIndex ? { ...turn, state: cloneGameData(gameState) } : turn,
+    );
+    setTurns(nextTurns);
+    setCurrentTurnIndex(index);
+    setGameState(cloneGameData(nextTurns[index]!.state));
+    setTurnPhase('start');
+    toast('Turn switched', 'success');
   };
 
   const endPlayerTurn = () => {

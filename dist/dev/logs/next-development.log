@@ -12757,3 +12757,27 @@
 {"timestamp":"01:38:40.767","source":"Server","level":"LOG","message":"✓ Compiled in 165ms"}
 {"timestamp":"01:38:43.867","source":"Server","level":"LOG","message":"✓ Compiled in 93ms"}
 {"timestamp":"01:38:45.193","source":"Server","level":"LOG","message":"✓ Compiled in 102ms"}
+{"timestamp":"01:40:25.495","source":"Server","level":"LOG","message":"✓ Compiled in 117ms"}
+{"timestamp":"01:40:26.984","source":"Server","level":"LOG","message":"✓ Compiled in 149ms"}
+{"timestamp":"01:40:30.005","source":"Server","level":"LOG","message":"✓ Compiled in 287ms"}
+{"timestamp":"01:40:30.560","source":"Server","level":"LOG","message":"✓ Compiled in 125ms"}
+{"timestamp":"01:40:30.955","source":"Server","level":"LOG","message":"✓ Compiled in 163ms"}
+{"timestamp":"01:40:40.022","source":"Server","level":"LOG","message":"✓ Compiled in 126ms"}
+{"timestamp":"01:40:40.025","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./app/context/GameContext.tsx changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"01:40:40.194","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./app/context/GameContext.tsx changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"01:40:40.747","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"01:40:40.974","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"01:41:47.524","source":"Server","level":"LOG","message":"✓ Compiled in 182ms"}
+{"timestamp":"01:41:47.618","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./app/utils/decisionTreeHelpers.ts changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"01:41:47.619","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./app/utils/decisionTreeHelpers.ts changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"01:41:48.170","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"01:41:48.185","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"01:41:51.503","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./app/utils/decisionTreeHelpers.ts changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"01:41:51.504","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./app/utils/decisionTreeHelpers.ts changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"01:41:51.505","source":"Server","level":"LOG","message":"✓ Compiled in 143ms"}
+{"timestamp":"01:41:51.952","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"01:41:52.062","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"01:41:54.091","source":"Server","level":"LOG","message":"✓ Compiled in 166ms"}
+{"timestamp":"01:41:54.759","source":"Server","level":"LOG","message":"✓ Compiled in 199ms"}
+{"timestamp":"01:42:00.999","source":"Server","level":"LOG","message":"✓ Compiled in 107ms"}
+{"timestamp":"01:42:01.967","source":"Server","level":"LOG","message":"✓ Compiled in 290ms"}

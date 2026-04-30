@@ -342,6 +342,30 @@ export function normalizeDecisionNodePlannerSlots(nodes: DecisionNode[], turns: 
   }));
 }
 
+/**
+ * Total outbound edges from Decision Timeline checkpoint(s) tied to this planner {@link Turn.id}
+ * (all non-START nodes whose effective slot is `plannerSlotId`, each child counted once).
+ */
+export function outgoingDecisionBranchCountForPlannerSlot(
+  nodes: DecisionNode[],
+  plannerSlotId: number,
+  turns: Turn[],
+): number {
+  if (nodes.length === 0) return 0;
+  const childCountByParent = new Map<string, number>();
+  for (const c of nodes) {
+    if (c.parentId == null) continue;
+    childCountByParent.set(c.parentId, (childCountByParent.get(c.parentId) ?? 0) + 1);
+  }
+  let total = 0;
+  for (const n of nodes) {
+    if (n.timelineRole === 'timeline_start' || n.parentId === null) continue;
+    if (effectivePlannerTurnSlotId(nodes, n, turns) !== plannerSlotId) continue;
+    total += childCountByParent.get(n.id) ?? 0;
+  }
+  return total;
+}
+
 /** Pins canonical planner-slot snapshots along the ROOT→pinned path for timeline edge layering. */
 export type DecisionTimelineSpineMeta = {
   pinnedPath: DecisionNode[];
