@@ -1158,7 +1158,7 @@ function renderLeadingGlyphSegments(segments, iconCls) {
                     "aria-hidden": true
                 }, void 0, false, {
                     fileName: "[project]/app/components/UI/Card.tsx",
-                    lineNumber: 83,
+                    lineNumber: 86,
                     columnNumber: 9
                 }, this) : null,
                 s.text != null && s.text !== "" ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1166,13 +1166,13 @@ function renderLeadingGlyphSegments(segments, iconCls) {
                     children: s.text
                 }, void 0, false, {
                     fileName: "[project]/app/components/UI/Card.tsx",
-                    lineNumber: 86,
+                    lineNumber: 89,
                     columnNumber: 9
                 }, this) : null
             ]
         }, i, true, {
             fileName: "[project]/app/components/UI/Card.tsx",
-            lineNumber: 81,
+            lineNumber: 84,
             columnNumber: 5
         }, this));
 }
@@ -1212,7 +1212,7 @@ const SIZE_STYLES = {
         statSide: "text-[10px] font-semibold tabular-nums leading-none",
         statIcon: "h-3.5 w-3.5 shrink-0",
         midGap: "my-1 gap-1",
-        descBox: "rounded-md px-1.5 py-1.5 text-[10px] font-medium leading-snug tracking-tight",
+        descBox: "rounded-md px-1.5 py-1 text-[9px] font-medium leading-tight tracking-tight",
         typeLabel: "pt-1 text-[9px] font-semibold uppercase tracking-[0.1em]",
         galleryIcon: "h-3.5 w-3.5",
         galleryText: "text-[13px] font-bold"
@@ -1258,7 +1258,7 @@ function renderGalleryGlyphCluster(g, iconCls, textBaseCls, opts) {
                             "aria-hidden": true
                         }, void 0, false, {
                             fileName: "[project]/app/components/UI/Card.tsx",
-                            lineNumber: 181,
+                            lineNumber: 184,
                             columnNumber: 15
                         }, this) : null,
                         s.text != null && s.text !== "" ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1266,18 +1266,18 @@ function renderGalleryGlyphCluster(g, iconCls, textBaseCls, opts) {
                             children: s.text
                         }, void 0, false, {
                             fileName: "[project]/app/components/UI/Card.tsx",
-                            lineNumber: 187,
+                            lineNumber: 190,
                             columnNumber: 15
                         }, this) : null
                     ]
                 }, i, true, {
                     fileName: "[project]/app/components/UI/Card.tsx",
-                    lineNumber: 179,
+                    lineNumber: 182,
                     columnNumber: 11
                 }, this))
         }, void 0, false, {
             fileName: "[project]/app/components/UI/Card.tsx",
-            lineNumber: 177,
+            lineNumber: 180,
             columnNumber: 7
         }, this);
     }
@@ -1297,12 +1297,12 @@ function renderGalleryGlyphCluster(g, iconCls, textBaseCls, opts) {
                 "aria-hidden": true
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/Card.tsx",
-                lineNumber: 203,
+                lineNumber: 206,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/app/components/UI/Card.tsx",
-            lineNumber: 197,
+            lineNumber: 200,
             columnNumber: 7
         }, this);
     }
@@ -1355,31 +1355,6 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
         keywordLeading: [],
         rest: []
     } : (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["galleryStatStripKeywordLeadingAndRest"])(suffixGalleryGlyphs);
-    // #region agent log
-    if (stat && card.name === "Boot Sequence") {
-        fetch("http://127.0.0.1:7283/ingest/08b9d505-d660-4eb9-b23f-47e9eb90cb11", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-Debug-Session-Id": "2826d0"
-            },
-            body: JSON.stringify({
-                sessionId: "2826d0",
-                runId: "post-fix",
-                hypothesisId: "A",
-                location: "Card.tsx:statStripPartition",
-                message: "keywordLeading before stats; rest after",
-                data: {
-                    keywordLeadingIds: statStripLeadingAndRest.keywordLeading.map((g)=>g.id),
-                    restIds: statStripLeadingAndRest.rest.map((g)=>g.id),
-                    hasBlockStatJsxAfterKeywords: card.block !== undefined,
-                    statSize: size
-                },
-                timestamp: Date.now()
-            })
-        }).catch(()=>{});
-    }
-    // #endregion
     const damageStatLabel = attackDamageStatDisplay(card);
     const damageFormulaBase = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["galleryTierNumber"])(card, card.damage);
     const attackDamageBreakdown = card.type === "Attack" && typeof damageFormulaBase === "number" ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__["getDamageStats"])(damageFormulaBase) : null;
@@ -1389,8 +1364,17 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
         if (formula) return formula;
         return damageStatLabel ? `Damage ${damageStatLabel}` : undefined;
     })();
+    /** Native tooltip on hover (not clipped by card `overflow-hidden`). */ const descriptionHoverTitle = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useMemo"])(()=>{
+        if (!card.description?.trim()) return undefined;
+        const text = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$descriptionPlaceholders$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getFormattedDescription"])(card.description, card).trim();
+        return text.length > 0 ? text : undefined;
+    }, [
+        card
+    ]);
     const multihitHitLabel = stat ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["damageMultihitInlineHitLabel"])(card) : null;
     const multihitLeadSegs = multihitHitLabel != null ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["multihitDamageRowLeadingSegments"])(card) : [];
+    const blockMultihitHitLabel = stat ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["blockMultihitInlineHitLabel"])(card) : null;
+    const blockMultihitLeadSegs = blockMultihitHitLabel != null ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["multihitBlockRowLeadingSegments"])(card) : [];
     const showDamageStatBlock = card.damage !== undefined && !mergedSuppressStats?.damage;
     const showDamageRow = showDamageStatBlock || prefixDamageGlyphsFiltered.length > 0;
     const unifiedDamageAoE = (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["galleryDamageRowIsAoE"])(card) && showDamageRow;
@@ -1408,19 +1392,20 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
             toggleCardSelection(location, index);
         } : undefined,
         className: `${sz.frame} ${chrome.root}`,
+        title: descriptionHoverTitle,
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: chrome.topLine
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/Card.tsx",
-                lineNumber: 408,
+                lineNumber: 398,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: chrome.innerRim
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/Card.tsx",
-                lineNumber: 410,
+                lineNumber: 400,
                 columnNumber: 7
             }, this),
             !hideCostOrb && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1430,16 +1415,16 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                     children: cardUsesXCostOrb(card) ? "X" : getValue("cost")
                 }, void 0, false, {
                     fileName: "[project]/app/components/UI/Card.tsx",
-                    lineNumber: 416,
+                    lineNumber: 406,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/Card.tsx",
-                lineNumber: 413,
+                lineNumber: 403,
                 columnNumber: 9
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: `relative flex h-full flex-col ${sz.bodyPad}`,
+                className: `relative flex h-full min-h-0 flex-col overflow-hidden ${sz.bodyPad}`,
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: `${styles.nameBg} ${sz.nameBand} border ${styles.accentBorder} backdrop-blur-sm transition-all duration-300 hover:brightness-125 ${chrome.nameBandExtra}`,
@@ -1453,7 +1438,7 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                             children: card.name
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/Card.tsx",
-                                            lineNumber: 430,
+                                            lineNumber: 420,
                                             columnNumber: 15
                                         }, this),
                                         card.isUpgraded && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1461,13 +1446,13 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                             children: "+"
                                         }, void 0, false, {
                                             fileName: "[project]/app/components/UI/Card.tsx",
-                                            lineNumber: 438,
+                                            lineNumber: 428,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 429,
+                                    lineNumber: 419,
                                     columnNumber: 13
                                 }, this),
                                 card.isChanged && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1475,18 +1460,18 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     children: "CHANGED"
                                 }, void 0, false, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 444,
+                                    lineNumber: 434,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/components/UI/Card.tsx",
-                            lineNumber: 426,
+                            lineNumber: 416,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/app/components/UI/Card.tsx",
-                        lineNumber: 423,
+                        lineNumber: 413,
                         columnNumber: 9
                     }, this),
                     !stat && rawGalleryGlyphs.length > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1498,28 +1483,28 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     children: renderGalleryGlyphCluster(g, SIZE_STYLES.small.galleryIcon, "text-[10px]")
                                 }, g.id, false, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 460,
+                                    lineNumber: 450,
                                     columnNumber: 17
                                 }, this))
                         }, void 0, false, {
                             fileName: "[project]/app/components/UI/Card.tsx",
-                            lineNumber: 458,
+                            lineNumber: 448,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/app/components/UI/Card.tsx",
-                        lineNumber: 454,
+                        lineNumber: 444,
                         columnNumber: 11
                     }, this) : null,
                     stat && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                        className: `flex flex-1 flex-wrap items-center justify-center content-center gap-x-2 gap-y-1 ${stat.midGap}`,
+                        className: `flex shrink-0 flex-wrap items-center justify-center content-center gap-x-2 gap-y-1 ${stat.midGap}`,
                         "aria-label": "Card stats",
                         children: [
                             statStripLeadingAndRest.keywordLeading.map((g)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].Fragment, {
                                     children: renderGalleryGlyphCluster(g, stat.galleryIcon, stat.galleryText)
                                 }, g.id, false, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 474,
+                                    lineNumber: 464,
                                     columnNumber: 15
                                 }, this)),
                             showDamageRow ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1531,7 +1516,7 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                             } : undefined)
                                         }, g.id, false, {
                                             fileName: "[project]/app/components/UI/Card.tsx",
-                                            lineNumber: 485,
+                                            lineNumber: 475,
                                             columnNumber: 19
                                         }, this)),
                                     showDamageStatBlock ? multihitHitLabel != null ? attackDamageBreakdown ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1549,7 +1534,7 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                                lineNumber: 502,
+                                                lineNumber: 492,
                                                 columnNumber: 25
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1561,7 +1546,7 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                                         children: attackDamageBreakdown.weak
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                                        lineNumber: 514,
+                                                        lineNumber: 504,
                                                         columnNumber: 27
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1569,13 +1554,13 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                                         children: attackDamageBreakdown.vulnerable
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                                        lineNumber: 517,
+                                                        lineNumber: 507,
                                                         columnNumber: 27
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                                lineNumber: 510,
+                                                lineNumber: 500,
                                                 columnNumber: 25
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1584,7 +1569,7 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                                 children: attackDamageBreakdown.both
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                                lineNumber: 521,
+                                                lineNumber: 511,
                                                 columnNumber: 25
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1592,7 +1577,7 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                                 children: "×"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                                lineNumber: 527,
+                                                lineNumber: 517,
                                                 columnNumber: 25
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1600,13 +1585,13 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                                 children: multihitHitLabel
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                                lineNumber: 528,
+                                                lineNumber: 518,
                                                 columnNumber: 25
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                        lineNumber: 497,
+                                        lineNumber: 487,
                                         columnNumber: 23
                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                         className: `${__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["galleryDamageClusterShellClass"]} inline-flex max-w-full flex-row items-center gap-x-0.5 ${stat.statMain}`,
@@ -1623,7 +1608,7 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                                lineNumber: 536,
+                                                lineNumber: 526,
                                                 columnNumber: 25
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1631,7 +1616,7 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                                 children: "×"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                                lineNumber: 544,
+                                                lineNumber: 534,
                                                 columnNumber: 25
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1639,13 +1624,13 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                                 children: multihitHitLabel
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                                lineNumber: 545,
+                                                lineNumber: 535,
                                                 columnNumber: 25
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                        lineNumber: 531,
+                                        lineNumber: 521,
                                         columnNumber: 23
                                     }, this) : attackDamageBreakdown ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                         className: `${__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["galleryDamageClusterShellClass"]} inline-flex max-w-full flex-row items-center gap-x-0.5 ${stat.statMain}`,
@@ -1661,7 +1646,7 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                                lineNumber: 553,
+                                                lineNumber: 543,
                                                 columnNumber: 23
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1673,7 +1658,7 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                                         children: attackDamageBreakdown.weak
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                                        lineNumber: 565,
+                                                        lineNumber: 555,
                                                         columnNumber: 25
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1681,13 +1666,13 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                                         children: attackDamageBreakdown.vulnerable
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                                        lineNumber: 568,
+                                                        lineNumber: 558,
                                                         columnNumber: 25
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                                lineNumber: 561,
+                                                lineNumber: 551,
                                                 columnNumber: 23
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1696,13 +1681,13 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                                 children: attackDamageBreakdown.both
                                             }, void 0, false, {
                                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                                lineNumber: 572,
+                                                lineNumber: 562,
                                                 columnNumber: 23
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                        lineNumber: 549,
+                                        lineNumber: 539,
                                         columnNumber: 21
                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                         title: damageStatTooltip,
@@ -1715,20 +1700,66 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                        lineNumber: 580,
+                                        lineNumber: 570,
                                         columnNumber: 21
                                     }, this) : null
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 483,
+                                lineNumber: 473,
                                 columnNumber: 15
                             }, this) : null,
                             card.block !== undefined && !mergedSuppressStats?.block && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 className: BLOCK_FRAIL_CLUSTER_CLASS,
                                 title: (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__["formatBlockStatTitle"])(getValue("block"), card.type),
                                 children: [
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                    blockMultihitHitLabel != null ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        className: `${__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["galleryBlockClusterShellClass"]} inline-flex max-w-full flex-row items-center gap-x-0.5 ${stat.statMain}`,
+                                        children: [
+                                            renderLeadingGlyphSegments(blockMultihitLeadSegs, stat.galleryIcon),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: `inline-flex items-center gap-0.5 text-lg ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getEffectDisplay"])("block").color}`,
+                                                children: [
+                                                    /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].createElement((0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getEffectDisplay"])("block").icon, {
+                                                        className: `${stat.statIcon} inline shrink-0`
+                                                    }),
+                                                    getFullBlock()?.block
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/app/components/UI/Card.tsx",
+                                                lineNumber: 596,
+                                                columnNumber: 21
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: `${stat.statSide} ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getEffectDisplay"])("frail").color}`,
+                                                children: getFullBlock()?.frail
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/Card.tsx",
+                                                lineNumber: 604,
+                                                columnNumber: 21
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["MULTIHIT_INLINE_TIMES_CLASS"],
+                                                children: "×"
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/Card.tsx",
+                                                lineNumber: 609,
+                                                columnNumber: 21
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$card$2d$design$2d$gallery$2f$galleryStsGlyphs$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["MULTIHIT_INLINE_COUNT_CLASS"],
+                                                children: blockMultihitHitLabel
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/components/UI/Card.tsx",
+                                                lineNumber: 610,
+                                                columnNumber: 21
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/app/components/UI/Card.tsx",
+                                        lineNumber: 589,
+                                        columnNumber: 19
+                                    }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                         className: `${stat.statMain} flex items-center gap-0.5 ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getEffectDisplay"])("block").color}`,
                                         children: [
                                             /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].createElement((0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getEffectDisplay"])("block").icon, {
@@ -1738,21 +1769,21 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                        lineNumber: 598,
-                                        columnNumber: 17
+                                        lineNumber: 615,
+                                        columnNumber: 19
                                     }, this),
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                    blockMultihitHitLabel == null ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                         className: `${stat.statSide} ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$effectDisplay$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getEffectDisplay"])("frail").color}`,
                                         children: getFullBlock()?.frail
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                        lineNumber: 606,
-                                        columnNumber: 17
-                                    }, this)
+                                        lineNumber: 625,
+                                        columnNumber: 19
+                                    }, this) : null
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 594,
+                                lineNumber: 584,
                                 columnNumber: 15
                             }, this),
                             card.blockOnExhaust !== undefined && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1769,7 +1800,7 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                        lineNumber: 618,
+                                        lineNumber: 638,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1777,13 +1808,13 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                         children: getFullBlock()?.frail
                                     }, void 0, false, {
                                         fileName: "[project]/app/components/UI/Card.tsx",
-                                        lineNumber: 626,
+                                        lineNumber: 646,
                                         columnNumber: 17
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 614,
+                                lineNumber: 634,
                                 columnNumber: 15
                             }, this),
                             card.draw !== undefined && !mergedSuppressStats?.draw && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1798,12 +1829,12 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 635,
+                                    lineNumber: 655,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 634,
+                                lineNumber: 654,
                                 columnNumber: 15
                             }, this),
                             card.takeDamage !== undefined && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1818,12 +1849,12 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 647,
+                                    lineNumber: 667,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 646,
+                                lineNumber: 666,
                                 columnNumber: 15
                             }, this),
                             getValue("hpcost") !== undefined && !mergedSuppressStats?.hpcost && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1838,12 +1869,12 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 659,
+                                    lineNumber: 679,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 658,
+                                lineNumber: 678,
                                 columnNumber: 15
                             }, this),
                             (card.energyGain != null || card.gainEnergy != null) && !mergedSuppressStats?.energyGain && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1858,12 +1889,12 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 673,
+                                    lineNumber: 693,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 672,
+                                lineNumber: 692,
                                 columnNumber: 15
                             }, this),
                             card.heal != null && !mergedSuppressStats?.heal && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1878,12 +1909,12 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 685,
+                                    lineNumber: 705,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 684,
+                                lineNumber: 704,
                                 columnNumber: 15
                             }, this),
                             card.focus != null && !mergedSuppressStats?.focus && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1898,33 +1929,40 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 697,
+                                    lineNumber: 717,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/components/UI/Card.tsx",
-                                lineNumber: 696,
+                                lineNumber: 716,
                                 columnNumber: 15
                             }, this),
                             statStripLeadingAndRest.rest.map((g)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].Fragment, {
                                     children: renderGalleryGlyphCluster(g, stat.galleryIcon, stat.galleryText)
                                 }, g.id, false, {
                                     fileName: "[project]/app/components/UI/Card.tsx",
-                                    lineNumber: 708,
+                                    lineNumber: 728,
                                     columnNumber: 15
                                 }, this))
                         ]
                     }, void 0, true, {
                         fileName: "[project]/app/components/UI/Card.tsx",
-                        lineNumber: 469,
+                        lineNumber: 459,
                         columnNumber: 11
                     }, this),
                     stat && card.description && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                        className: `${styles.nameBg} ${stat.descBox} border ${styles.accentBorder} text-center text-slate-200/95 backdrop-blur-sm ${chrome.descBoxExtra}`,
-                        children: (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$descriptionPlaceholders$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getFormattedDescription"])(card.description, card)
+                        className: "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
+                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: `${styles.nameBg} ${stat.descBox} border ${styles.accentBorder} max-h-full min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain break-words text-center text-slate-200/95 [overflow-wrap:anywhere] [scrollbar-width:thin] backdrop-blur-sm ${chrome.descBoxExtra}`,
+                            children: (0, __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$utils$2f$descriptionPlaceholders$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getFormattedDescription"])(card.description, card)
+                        }, void 0, false, {
+                            fileName: "[project]/app/components/UI/Card.tsx",
+                            lineNumber: 741,
+                            columnNumber: 13
+                        }, this)
                     }, void 0, false, {
                         fileName: "[project]/app/components/UI/Card.tsx",
-                        lineNumber: 720,
+                        lineNumber: 740,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1932,26 +1970,26 @@ function STSCard({ card, index, location, size = "large", interactive = true, le
                         children: card.type
                     }, void 0, false, {
                         fileName: "[project]/app/components/UI/Card.tsx",
-                        lineNumber: 727,
+                        lineNumber: 749,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/app/components/UI/Card.tsx",
-                lineNumber: 422,
+                lineNumber: 412,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: chrome.bottomLine
             }, void 0, false, {
                 fileName: "[project]/app/components/UI/Card.tsx",
-                lineNumber: 734,
+                lineNumber: 756,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/app/components/UI/Card.tsx",
-        lineNumber: 382,
+        lineNumber: 371,
         columnNumber: 5
     }, this);
 }

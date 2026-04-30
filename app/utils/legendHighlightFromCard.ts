@@ -1,6 +1,7 @@
 import type { Card } from "@/app/types/gameTypes";
 import type { GalleryGlyph } from "@/app/card-design-gallery/galleryStsGlyphs";
 import {
+  blockMultihitInlineHitLabel,
   cardSelfExhaustsOnPlay,
   damageMultihitInlineHitLabel,
   energyGainNode,
@@ -27,6 +28,16 @@ function isConditionedEnergyGain(card: Card): boolean {
 
 function bonusDamageIsConditional(card: Card): boolean {
   const b = (card as Record<string, unknown>).bonusDamage;
+  return (
+    b != null &&
+    typeof b === "object" &&
+    !Array.isArray(b) &&
+    (b as Record<string, unknown>).conditioned === true
+  );
+}
+
+function bonusBlockIsConditional(card: Card): boolean {
+  const b = (card as Record<string, unknown>).bonusBlock;
   return (
     b != null &&
     typeof b === "object" &&
@@ -88,6 +99,9 @@ function addGlyphLegendHints(card: Card, glyphs: GalleryGlyph[], ids: Set<string
         break;
       case "bonus-damage":
         ids.add("stat-damage");
+        break;
+      case "bonus-block":
+        ids.add("stat-block");
         break;
       case "block-combo":
         ids.add("stat-block");
@@ -186,6 +200,7 @@ export function computeLegendHighlightIds(card: Card): Set<string> {
   addGlyphLegendHints(card, glyphs, ids);
 
   if (damageMultihitInlineHitLabel(card) != null) ids.add("AOE_DAMAGE");
+  if (blockMultihitInlineHitLabel(card) != null) ids.add("AOE_DAMAGE");
 
   if (
     galleryDamageRowIsAoE(card) &&
@@ -200,7 +215,8 @@ export function computeLegendHighlightIds(card: Card): Set<string> {
     galleryDrawIsConditional(card) ||
     galleryBlockRowIsConditional(card) ||
     isConditionedEnergyGain(card) ||
-    bonusDamageIsConditional(card)
+    bonusDamageIsConditional(card) ||
+    bonusBlockIsConditional(card)
   ) {
     ids.add("CONDITIONAL_MARKER");
   }

@@ -20,12 +20,15 @@ import {
 import {
   MULTIHIT_INLINE_COUNT_CLASS,
   MULTIHIT_INLINE_TIMES_CLASS,
+  blockMultihitInlineHitLabel,
   damageMultihitInlineHitLabel,
+  galleryBlockClusterShellClass,
   galleryDamageClusterShellClass,
   galleryDamageRowIsAoE,
   galleryTierNumber,
   galleryStatStripKeywordLeadingAndRest,
   inferGalleryCardEffects,
+  multihitBlockRowLeadingSegments,
   multihitDamageRowLeadingSegments,
   type GalleryGlyph,
   type GalleryGlyphSegment,
@@ -128,7 +131,7 @@ const SIZE_STYLES = {
     statSide: "text-[10px] font-semibold tabular-nums leading-none",
     statIcon: "h-3.5 w-3.5 shrink-0",
     midGap: "my-1 gap-1",
-    descBox: "rounded-md px-1.5 py-1.5 text-[10px] font-medium leading-snug tracking-tight",
+    descBox: "rounded-md px-1.5 py-1 text-[9px] font-medium leading-tight tracking-tight",
     typeLabel: "pt-1 text-[9px] font-semibold uppercase tracking-[0.1em]",
     galleryIcon: "h-3.5 w-3.5",
     galleryText: "text-[13px] font-bold",
@@ -321,32 +324,6 @@ export default function STSCard({
       ? { keywordLeading: [] as GalleryGlyph[], rest: [] as GalleryGlyph[] }
       : galleryStatStripKeywordLeadingAndRest(suffixGalleryGlyphs);
 
-  // #region agent log
-  if (stat && card.name === "Boot Sequence") {
-    fetch("http://127.0.0.1:7283/ingest/08b9d505-d660-4eb9-b23f-47e9eb90cb11", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "2826d0",
-      },
-      body: JSON.stringify({
-        sessionId: "2826d0",
-        runId: "post-fix",
-        hypothesisId: "A",
-        location: "Card.tsx:statStripPartition",
-        message: "keywordLeading before stats; rest after",
-        data: {
-          keywordLeadingIds: statStripLeadingAndRest.keywordLeading.map((g) => g.id),
-          restIds: statStripLeadingAndRest.rest.map((g) => g.id),
-          hasBlockStatJsxAfterKeywords: card.block !== undefined,
-          statSize: size,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-  }
-  // #endregion
-
   const damageStatLabel = attackDamageStatDisplay(card);
   const damageFormulaBase = galleryTierNumber(card, card.damage);
   const attackDamageBreakdown =
@@ -365,9 +342,21 @@ export default function STSCard({
       return damageStatLabel ? `Damage ${damageStatLabel}` : undefined;
     })();
 
+  /** Native tooltip on hover (not clipped by card `overflow-hidden`). */
+  const descriptionHoverTitle = useMemo(() => {
+    if (!card.description?.trim()) return undefined;
+    const text = getFormattedDescription(card.description, card).trim();
+    return text.length > 0 ? text : undefined;
+  }, [card]);
+
   const multihitHitLabel = stat ? damageMultihitInlineHitLabel(card) : null;
   const multihitLeadSegs =
     multihitHitLabel != null ? multihitDamageRowLeadingSegments(card) : [];
+  const blockMultihitHitLabel = stat ? blockMultihitInlineHitLabel(card) : null;
+  const blockMultihitLeadSegs =
+    blockMultihitHitLabel != null
+      ? multihitBlockRowLeadingSegments(card)
+      : [];
 
   const showDamageStatBlock =
     card.damage !== undefined && !mergedSuppressStats?.damage;
@@ -404,6 +393,7 @@ export default function STSCard({
           : undefined
       }
       className={`${sz.frame} ${chrome.root}`}
+      title={descriptionHoverTitle}
     >
       <div className={chrome.topLine} />
 
@@ -419,7 +409,7 @@ export default function STSCard({
         </div>
       )}
 
-      <div className={`relative flex h-full flex-col ${sz.bodyPad}`}>
+      <div className={`relative flex h-full min-h-0 flex-col overflow-hidden ${sz.bodyPad}`}>
         <div
           className={`${styles.nameBg} ${sz.nameBand} border ${styles.accentBorder} backdrop-blur-sm transition-all duration-300 hover:brightness-125 ${chrome.nameBandExtra}`}
         >
@@ -467,7 +457,7 @@ export default function STSCard({
 
         {stat && (
           <div
-            className={`flex flex-1 flex-wrap items-center justify-center content-center gap-x-2 gap-y-1 ${stat.midGap}`}
+            className={`flex shrink-0 flex-wrap items-center justify-center content-center gap-x-2 gap-y-1 ${stat.midGap}`}
             aria-label="Card stats"
           >
             {statStripLeadingAndRest.keywordLeading.map((g) => (
@@ -595,19 +585,49 @@ export default function STSCard({
                 className={BLOCK_FRAIL_CLUSTER_CLASS}
                 title={formatBlockStatTitle(getValue("block"), card.type)}
               >
-                <span
-                  className={`${stat.statMain} flex items-center gap-0.5 ${getEffectDisplay("block").color}`}
-                >
-                  {React.createElement(getEffectDisplay("block").icon, {
-                    className: `${stat.statIcon} inline`,
-                  })}
-                  {getFullBlock()?.block}
-                </span>
-                <span
-                  className={`${stat.statSide} ${getEffectDisplay("frail").color}`}
-                >
-                  {getFullBlock()?.frail}
-                </span>
+                {blockMultihitHitLabel != null ? (
+                  <span
+                    className={`${galleryBlockClusterShellClass} inline-flex max-w-full flex-row items-center gap-x-0.5 ${stat.statMain}`}
+                  >
+                    {renderLeadingGlyphSegments(
+                      blockMultihitLeadSegs,
+                      stat.galleryIcon,
+                    )}
+                    <span
+                      className={`inline-flex items-center gap-0.5 text-lg ${getEffectDisplay("block").color}`}
+                    >
+                      {React.createElement(getEffectDisplay("block").icon, {
+                        className: `${stat.statIcon} inline shrink-0`,
+                      })}
+                      {getFullBlock()?.block}
+                    </span>
+                    <span
+                      className={`${stat.statSide} ${getEffectDisplay("frail").color}`}
+                    >
+                      {getFullBlock()?.frail}
+                    </span>
+                    <span className={MULTIHIT_INLINE_TIMES_CLASS}>×</span>
+                    <span className={MULTIHIT_INLINE_COUNT_CLASS}>
+                      {blockMultihitHitLabel}
+                    </span>
+                  </span>
+                ) : (
+                  <span
+                    className={`${stat.statMain} flex items-center gap-0.5 ${getEffectDisplay("block").color}`}
+                  >
+                    {React.createElement(getEffectDisplay("block").icon, {
+                      className: `${stat.statIcon} inline`,
+                    })}
+                    {getFullBlock()?.block}
+                  </span>
+                )}
+                {blockMultihitHitLabel == null ? (
+                  <span
+                    className={`${stat.statSide} ${getEffectDisplay("frail").color}`}
+                  >
+                    {getFullBlock()?.frail}
+                  </span>
+                ) : null}
               </div>
             )}
             {card.blockOnExhaust !== undefined && (
@@ -717,10 +737,12 @@ export default function STSCard({
         )}
 
         {stat && card.description && (
-          <div
-            className={`${styles.nameBg} ${stat.descBox} border ${styles.accentBorder} text-center text-slate-200/95 backdrop-blur-sm ${chrome.descBoxExtra}`}
-          >
-            {getFormattedDescription(card.description, card)}
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            <div
+              className={`${styles.nameBg} ${stat.descBox} border ${styles.accentBorder} max-h-full min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain break-words text-center text-slate-200/95 [overflow-wrap:anywhere] [scrollbar-width:thin] backdrop-blur-sm ${chrome.descBoxExtra}`}
+            >
+              {getFormattedDescription(card.description, card)}
+            </div>
           </div>
         )}
 

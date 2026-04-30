@@ -39,6 +39,11 @@ export interface Card {
    * (`base`, `upgraded`, optional `conditioned`, `trigger`); rendered as its own glyph cluster.
    */
   bonusDamage?: DamageValueField;
+  /**
+   * Second block line (e.g. Halt in Wrath). Same JSON shape as {@link bonusDamage}
+   * (`base` / `upgraded`, optional `conditioned`, `trigger`).
+   */
+  bonusBlock?: DamageValueField;
   block?: ValueNode;
   draw?: ValueNode;
   takeDamage?: ValueNode;

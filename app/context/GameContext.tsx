@@ -102,7 +102,7 @@ interface GameContextType {
   toggleChangedSelected: () => void;
   /** Replace selected card(s) with a card from the database; sets isChanged. */
   transformSelectedFromDatabase: (cardId: string, isUpgraded?: boolean) => void;
-  addCardFromDB: (cardId: string, location: string, isUpgraded?: boolean) => void;
+  addCardFromDB: (cardId: string | string[], location: string, isUpgraded?: boolean) => void;
   modifyPlayerHp: (delta: number) => void;
   modifyPlayerBlock: (delta: number) => void;
   modifyPlayerEnergy: (delta: number) => void;
@@ -1216,32 +1216,50 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
-  const addCardFromDB = (cardId: string, location: string, isUpgraded = false) => {
-    const newCard = buildCardFromDatabase(cardId, isUpgraded);
-    if (!newCard) return;
+  const addCardFromDB = (cardId: string | string[], location: string, isUpgraded = false) => {
+    const ids = (Array.isArray(cardId) ? cardId : [cardId]).filter(Boolean);
+    if (ids.length === 0) return;
+
+    const built: Card[] = [];
+    for (const id of ids) {
+      const c = buildCardFromDatabase(id, isUpgraded);
+      if (c) built.push(c);
+    }
+    if (built.length === 0) return;
+
+    const suffix = isUpgraded ? '+' : '';
+    const builtNames = built.map((c) => `${c.name ?? '—'}${suffix}`);
+    const title =
+      built.length === 1
+        ? `Added ${builtNames[0]}`
+        : `Added ${built.length} cards (${builtNames.join(', ')})`;
 
     setGameState((prevState) => {
       if (!prevState) return prevState;
       const pile = (prevState as any)[location] as Card[];
       if (!Array.isArray(pile)) return prevState;
 
-      const newPile = [...pile, newCard];
+      const newPile = [...pile, ...built];
       return {
         ...prevState,
         [location]: newPile,
         activityLog: [
           ...prevState.activityLog,
           createActivityLogEntry(
-            `Added ${cardId}${isUpgraded ? '+' : ''}`,
+            title,
             undefined,
             undefined,
             undefined,
             'info',
             {
-              cardsInvolved: [{ name: cardId, cardType: newCard.type }],
+              cardsInvolved: built.map((c) => ({
+                name: c.name ?? '—',
+                cardType: c.type,
+              })),
               context: [
                 { label: 'Pile', value: formatPileLabel(location) },
-                { label: 'Type', value: newCard.type ?? '—' },
+                { label: 'Cards added', value: String(built.length) },
+                { label: 'Unique ids', value: String(new Set(ids).size) },
                 { label: 'Upgraded', value: isUpgraded ? 'Yes' : 'No' },
               ],
             },

@@ -339,6 +339,9 @@ function clusterShellField(field: GalleryClusterField): string {
 /** Same shell as damage-field gallery glyphs (multi-hit, conditional damage row, etc.). */
 export const galleryDamageClusterShellClass = clusterShellField("damage");
 
+/** Same shell as block-field gallery glyphs (multihit block row, etc.). */
+export const galleryBlockClusterShellClass = clusterShellField("block");
+
 /** Small "×" before multihit count when inlined after the damage number. */
 export const MULTIHIT_INLINE_TIMES_CLASS =
   "text-[0.75em] font-semibold leading-none text-slate-400 opacity-90 mx-px";
@@ -363,6 +366,33 @@ export function damageMultihitInlineHitLabel(card: Card): string | null {
   const multi = c.multiHit;
   if (multi == null || typeof multi !== "object" || Array.isArray(multi)) return null;
   const m = multi as Record<string, unknown>;
+  if (m.multiHitEnergyScaling === true && cardUsesXCostOrbLocal(card)) {
+    return "X";
+  }
+  if (!("multiHitCount" in m)) return null;
+  const n = galleryTierNumber(card, m.multiHitCount);
+  return n != null ? String(n) : null;
+}
+
+/** Conditional + markers before block when multihit block uses the same shell as multihit damage. */
+export function multihitBlockRowLeadingSegments(card: Card): GalleryGlyphSegment[] {
+  if (blockMultihitInlineHitLabel(card) == null) return [];
+  const segs: GalleryGlyphSegment[] = [];
+  if (blockIsConditional(card)) segs.push(segmentConditional());
+  return segs;
+}
+
+/**
+ * Multihit block: inline count after block stat (e.g. Reinforced Body: block × X).
+ * Requires {@link Card.block} and `multiHit.blockUsesMainField` on the DB record.
+ */
+export function blockMultihitInlineHitLabel(card: Card): string | null {
+  if (card.block === undefined) return null;
+  const c = card as Record<string, unknown>;
+  const multi = c.multiHit;
+  if (multi == null || typeof multi !== "object" || Array.isArray(multi)) return null;
+  const m = multi as Record<string, unknown>;
+  if (m.blockUsesMainField !== true) return null;
   if (m.multiHitEnergyScaling === true && cardUsesXCostOrbLocal(card)) {
     return "X";
   }
@@ -533,26 +563,6 @@ function finalizeGlyphDisplayOrder(card: Card, glyphs: GalleryGlyph[]): GalleryG
   combined.sort(
     (a, b) => glyphDisplayPriority(a.id) - glyphDisplayPriority(b.id),
   );
-  // #region agent log
-  if (card.name === "Boot Sequence") {
-    fetch("http://127.0.0.1:7283/ingest/08b9d505-d660-4eb9-b23f-47e9eb90cb11", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "2826d0",
-      },
-      body: JSON.stringify({
-        sessionId: "2826d0",
-        runId: "post-fix",
-        hypothesisId: "B",
-        location: "galleryStsGlyphs.ts:finalizeGlyphDisplayOrder",
-        message: "finalized glyph order",
-        data: { name: card.name, ids: combined.map((g) => g.id) },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-  }
-  // #endregion
   return combined;
 }
 
@@ -578,22 +588,34 @@ function tryStructuredGalleryGlyphs(
     | undefined;
 
   const multi = c.multiHit;
+  const mObj =
+    multi && typeof multi === "object" && multi !== null && !Array.isArray(multi)
+      ? (multi as Record<string, unknown>)
+      : null;
   const mhRaw =
-    multi &&
-    typeof multi === "object" &&
-    multi !== null &&
-    "multiHitCount" in multi
-      ? (multi as { multiHitCount?: unknown }).multiHitCount
-      : undefined;
+    mObj && "multiHitCount" in mObj ? mObj.multiHitCount : undefined;
   const multiCount =
-    mhRaw !== null &&
+    mhRaw != null &&
     typeof mhRaw === "object" &&
     !Array.isArray(mhRaw)
       ? (mhRaw as { base?: number; upgraded?: number })
       : null;
 
-  // Pummel-style multihit: hit count is inlined in `Card` after damage (same shell). Optional exhaust glyph only.
-  if (multiCount != null && card.damage !== undefined) {
+  const multihitDamageInlined =
+    card.damage !== undefined &&
+    (multiCount != null ||
+      (mObj?.damageUsesMainField === true &&
+        mObj?.multiHitEnergyScaling === true &&
+        cardUsesXCostOrbLocal(card)));
+
+  const multihitBlockInlined =
+    card.block !== undefined &&
+    mObj?.blockUsesMainField === true &&
+    (multiCount != null ||
+      (mObj?.multiHitEnergyScaling === true && cardUsesXCostOrbLocal(card)));
+
+  // Pummel / Skewer / Reinforced Body: hit count inlined in `Card` after damage or block. Optional exhaust glyph only.
+  if (multihitDamageInlined || multihitBlockInlined) {
     const glyphs: GalleryGlyph[] = [];
     if (cardSelfExhaustsOnPlay(card)) {
       const ex = STS_ICON_GLYPH.EXHAUST_SELF;
@@ -1322,6 +1344,47 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
         label: bTrig ? `Bonus damage — ${bTrig}` : "Bonus damage",
         clusterClass: clusterShellField("damage"),
         segments: segs,
+      });
+    }
+  }
+
+  const bonusBlkRaw = c.bonusBlock;
+  if (bonusBlkRaw != null) {
+    const blkVis = getEffectDisplay("block");
+    if (typeof bonusBlkRaw === "number" && !Number.isNaN(bonusBlkRaw)) {
+      push({
+        id: "bonus-block",
+        label: "Bonus block",
+        clusterClass: clusterShellField("block"),
+        segments: [
+          { Icon: blkVis.icon, iconClass: blkVis.color },
+          {
+            text: String(bonusBlkRaw),
+            textClass: `${blkVis.color} font-bold tabular-nums leading-none`,
+          },
+        ],
+      });
+    } else if (typeof bonusBlkRaw === "object" && !Array.isArray(bonusBlkRaw)) {
+      const bbN = galleryTierNumber(card, bonusBlkRaw);
+      const condB = isConditionedField(bonusBlkRaw);
+      const bbTrig =
+        typeof (bonusBlkRaw as Record<string, unknown>).trigger === "string"
+          ? String((bonusBlkRaw as Record<string, unknown>).trigger)
+          : undefined;
+      const bbSegs: GalleryGlyphSegment[] = [];
+      if (condB) bbSegs.push(segmentConditional());
+      bbSegs.push(
+        { Icon: blkVis.icon, iconClass: blkVis.color },
+        {
+          text: bbN != null ? String(bbN) : "?",
+          textClass: `${blkVis.color} font-bold tabular-nums leading-none`,
+        },
+      );
+      push({
+        id: "bonus-block",
+        label: bbTrig ? `Bonus block — ${bbTrig}` : "Bonus block",
+        clusterClass: clusterShellField("block"),
+        segments: bbSegs,
       });
     }
   }
