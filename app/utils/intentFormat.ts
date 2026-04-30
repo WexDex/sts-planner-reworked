@@ -126,6 +126,9 @@ export function formatIntentActionParts(actions: EnemyIntentAction[] | undefined
       case "stunned":
         parts.push(`💫 Stunned ${action.value}`);
         break;
+      case "no_action":
+        parts.push("No action");
+        break;
       default:
         pushUnknown(parts, action as EnemyIntentAction);
     }
@@ -180,6 +183,9 @@ export function formatIntentActionsLineIncoming(
         break;
       case "stunned":
         parts.push(`💫 Stunned ${action.value}`);
+        break;
+      case "no_action":
+        parts.push("No action");
         break;
       default:
         pushUnknown(parts, action as EnemyIntentAction);

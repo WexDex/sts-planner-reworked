@@ -4,14 +4,17 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useGameManager } from "@/app/context/GameContext";
-import type { CombatData, Turn } from "@/app/types/gameTypes";
+import type { CombatData, EnemyIntentAction, Turn } from "@/app/types/gameTypes";
 import {
   buildIncomingDamageContext,
   describeIncomingModifiers,
   formatIntentActionsLineIncoming,
   isEnemyActiveForIntents,
   sumIncomingAttackDamageFromActions,
+  type IncomingDamageContext,
 } from "@/app/utils/intentFormat";
+import { IntentIncomingChips } from "@/app/components/UI/IntentIncomingChips";
+import { enemyIntentSlotTone } from "@/app/utils/enemyIntentSlotTone";
 import {
   ArrowRight,
   CalendarClock,
@@ -30,9 +33,12 @@ import { toast } from "@/app/utils/toast";
 
 interface EnemyIntentSummary {
   name: string;
+  /** Plain-text intent (modifiers, tooltips); kept for accessibility. */
   line: string;
   damage: number;
   modifierHint: string;
+  actions: EnemyIntentAction[];
+  incomingCtx: IncomingDamageContext;
 }
 
 interface TurnSummary {
@@ -131,6 +137,8 @@ export default function TimelineBlock() {
         for (const intent of enemySnap.intents ?? []) {
           if (intent.turn !== turn) continue;
           if (!isEnemyActiveForIntents(enemySnap)) continue;
+          /** Empty slot = enemy not spawned for this planner turn yet (distinct from explicit `no_action`). */
+          if ((intent.actions?.length ?? 0) === 0) continue;
 
           if (!map.has(turn)) {
             map.set(turn, { turn, totalDamage: 0, enemySummaries: [] });
@@ -146,6 +154,8 @@ export default function TimelineBlock() {
             line,
             damage,
             modifierHint,
+            actions: [...intent.actions],
+            incomingCtx,
           });
           entry.totalDamage += damage;
         }
@@ -371,24 +381,36 @@ export default function TimelineBlock() {
 
                       {lines.length > 0 ? (
                         <div className="mt-2 space-y-1 border-t border-slate-800/80 pt-2">
-                          {visibleLines.map((s) => (
-                            <div key={`${row.id}-${s.name}-${s.line}`} className="space-y-0.5">
+                          {visibleLines.map((s, ei) => {
+                            const tone = enemyIntentSlotTone(s.name);
+                            const titleParts = [
+                              `${s.name}: ${s.line || "No intent"}`,
+                              s.modifierHint ? `${s.modifierHint}. (n) = base attack.` : "",
+                            ].filter(Boolean);
+                            return (
                               <div
-                                className="flex gap-2 text-[10px] leading-snug text-slate-400"
-                                title={
-                                  s.modifierHint
-                                    ? `${s.name}: ${s.line} — ${s.modifierHint}. (n) = base attack.`
-                                    : `${s.name}: ${s.line || "No intent"}`
-                                }
+                                key={`${row.id}-${ei}-${s.name}`}
+                                className={`space-y-0.5 rounded-md border px-2 py-1.5 ${tone.card}`}
                               >
-                                <span className="shrink-0 font-medium text-slate-500">{s.name}</span>
-                                <span className="min-w-0 text-slate-300">{s.line || "—"}</span>
+                                <div
+                                  className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-2"
+                                  title={titleParts.join(" ")}
+                                >
+                                  <span
+                                    className={`shrink-0 text-[10px] font-semibold tracking-tight ${tone.name}`}
+                                  >
+                                    {s.name}
+                                  </span>
+                                  <div className="min-w-0 flex-1 text-[10px] leading-snug text-slate-300">
+                                    <IntentIncomingChips actions={s.actions} ctx={s.incomingCtx} />
+                                  </div>
+                                </div>
+                                {s.modifierHint ? (
+                                  <p className="text-[9px] leading-tight text-amber-200/80">{s.modifierHint}</p>
+                                ) : null}
                               </div>
-                              {s.modifierHint ? (
-                                <p className="text-[9px] leading-tight text-amber-200/75">{s.modifierHint}</p>
-                              ) : null}
-                            </div>
-                          ))}
+                            );
+                          })}
                           {hiddenCount > 0 ? (
                             <button
                               type="button"

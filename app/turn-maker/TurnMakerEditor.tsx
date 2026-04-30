@@ -43,6 +43,7 @@ const ACTION_LABEL: Record<EnemyIntentAction["type"], string> = {
   status: "Status",
   cowardly: "Escape",
   stunned: "Stunned",
+  no_action: "No action",
 };
 
 /** Inactive chip + ring when selected (radio-card look). */
@@ -105,6 +106,13 @@ const ACTION_TYPE_THEME: Record<
     soft: "border-indigo-500/25 bg-indigo-950/25 text-indigo-100/85 hover:bg-indigo-950/45",
     label: "text-indigo-200/95",
     glyph: "💫",
+  },
+  no_action: {
+    Icon: Minus,
+    ring: "ring-slate-400/55 border-slate-400/65 bg-slate-900/95 text-slate-50",
+    soft: "border-slate-500/25 bg-slate-950/40 text-slate-200/85 hover:bg-slate-900/65",
+    label: "text-slate-200/95",
+    glyph: "—",
   },
 };
 
@@ -361,6 +369,7 @@ function actionRowAccentClass(type: EnemyIntentAction["type"]): string {
     status: "border-l-cyan-500/60 bg-cyan-950/15",
     cowardly: "border-l-amber-500/60 bg-amber-950/15",
     stunned: "border-l-indigo-500/60 bg-indigo-950/15",
+    no_action: "border-l-slate-500/60 bg-slate-950/20",
   };
   return map[type] ?? "border-l-slate-600 bg-slate-950/40";
 }
@@ -660,6 +669,25 @@ function ActionFields({
               max={999}
               value={action.value}
               onChange={(n) => setNum({ value: n })}
+            />
+          </label>
+        </FieldShell>
+      );
+    case "no_action":
+      return (
+        <FieldShell tone="neutral">
+          <label className="flex min-w-[12rem] flex-1 flex-col gap-1.5">
+            <span className={L.slateMuted}>Notes</span>
+            <FieldHint>
+              Marks this enemy as in combat for this planner turn with no attack (empty intent row would mean “not
+              spawned yet”).
+            </FieldHint>
+            <input
+              type="text"
+              value={action.description ?? ""}
+              onChange={(e) => setNum({ description: e.target.value || undefined })}
+              className={textCls}
+              placeholder="Optional label"
             />
           </label>
         </FieldShell>

@@ -3,7 +3,7 @@
 
 // ============ FILE OPERATIONS ============
 
-// Load from external JSON file
+// Load from external JSON file (public/combatData.json mirrors app/data/EliteSlavers.json)
 await loadFromFile('/combatData.json');
 
 // Save to browser localStorage

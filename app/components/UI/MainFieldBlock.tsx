@@ -12,20 +12,25 @@ import type {
   ActivityLogContextLine,
   ActivityLogEntry,
   Enemy,
-  EnemyIntent,
+  EnemyIntentAction,
   PlayerData,
 } from "@/app/types/gameTypes";
+import { IntentIncomingChips } from "@/app/components/UI/IntentIncomingChips";
+import type { IncomingDamageContext } from "@/app/utils/intentFormat";
 import {
   buildIncomingDamageContext,
   describeIncomingModifiers,
   formatIntentActionsLineIncoming,
   isEnemyActiveForIntents,
 } from "@/app/utils/intentFormat";
+import { isEnemyTargetableInPlannerTurn } from "@/app/utils/enemyPlannerTurn";
+import { enemyIntentSlotTone } from "@/app/utils/enemyIntentSlotTone";
 import {
   ChevronLeft,
   ChevronRight,
   Columns2,
   Crosshair,
+  GripHorizontal,
   Hand,
   Layers,
   LayoutGrid,
@@ -80,21 +85,29 @@ function CardSizeCycleButton({
 }
 
 const ACTIVITY_LOG_DENSITY_KEY = "sts-activity-log-inline-density";
+const TARGET_ENEMY_LAYOUT_KEY = "sts-target-enemy-layout-v1";
 
-function currentTurnIntentLine(
+/** Visual layout for selectable enemy tiles (persisted locally while comparing). */
+type TargetEnemyLayout = "tiles" | "hud_strip";
+
+/** Intent row + incoming context for the active planner turn (for chips + tooltips). */
+function plannerTurnIntentIncoming(
   enemy: Enemy,
-  intents: EnemyIntent[],
   turnId: number,
   player: PlayerData | undefined,
-): { line: string | null; modifierHint: string } {
-  const intent = intents.find((i) => i.turn === turnId);
-  if (!intent) return { line: null, modifierHint: "" };
-  if (!isEnemyActiveForIntents(enemy)) return { line: null, modifierHint: "" };
-  const ctx = buildIncomingDamageContext(player, enemy);
-  const raw = formatIntentActionsLineIncoming(intent.actions, ctx);
-  const line = raw.length > 0 ? raw : null;
-  const modifierHint = describeIncomingModifiers(ctx);
-  return { line, modifierHint };
+): {
+  actions: EnemyIntentAction[];
+  incomingCtx: IncomingDamageContext;
+  modifierHint: string;
+  line: string;
+} | null {
+  const intent = enemy.intents?.find((i) => i.turn === turnId);
+  if (!intent) return null;
+  if (!isEnemyActiveForIntents(enemy)) return null;
+  const incomingCtx = buildIncomingDamageContext(player, enemy);
+  const line = formatIntentActionsLineIncoming(intent.actions, incomingCtx);
+  const modifierHint = describeIncomingModifiers(incomingCtx);
+  return { actions: [...intent.actions], incomingCtx, modifierHint, line };
 }
 
 type LogColors = (typeof ACTIVITY_LOG_COLORS)[keyof typeof ACTIVITY_LOG_COLORS];
@@ -419,6 +432,7 @@ export default function MainFieldBlock() {
   const [mounted, setMounted] = useState(false);
   const [handCardSize, setHandCardSize] = useState<CardPileViewSize>("medium");
   const [playedCardSize, setPlayedCardSize] = useState<CardPileViewSize>("small");
+  const [enemyTargetLayout, setEnemyTargetLayout] = useState<TargetEnemyLayout>("tiles");
 
   const enemies = useMemo(() => gameState?.enemies ?? [], [gameState?.enemies]);
 
@@ -459,6 +473,13 @@ export default function MainFieldBlock() {
     return minT ?? 1;
   }, [turns, currentTurnIndex, enemies]);
 
+  const plannerTargetEnemyEntries = useMemo(
+    () =>
+      enemies.map((enemy, index) => ({ enemy, index })).filter(({ enemy }) =>
+        isEnemyTargetableInPlannerTurn(enemy, currentTurnId)),
+    [enemies, currentTurnId],
+  );
+
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
@@ -469,6 +490,23 @@ export default function MainFieldBlock() {
       /* ignore */
     }
   }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(TARGET_ENEMY_LAYOUT_KEY);
+      if (raw === "tiles" || raw === "hud_strip") setEnemyTargetLayout(raw);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(TARGET_ENEMY_LAYOUT_KEY, enemyTargetLayout);
+    } catch {
+      /* ignore */
+    }
+  }, [enemyTargetLayout]);
 
   const setInlineLogDensity = useCallback((d: ActivityLogInlineDensity) => {
     setActivityLogDensity(d);
@@ -532,7 +570,11 @@ export default function MainFieldBlock() {
             </span>
             <div>
               <h2 className="text-base font-semibold tracking-tight text-slate-100">Target selection</h2>
-              <p className="text-[11px] text-slate-500">Single or multi-select for card actions</p>
+              <p className="text-[11px] text-slate-500">
+                Single or multi-select for card actions. Only enemies with intent data for planner turn{" "}
+                <span className="font-mono tabular-nums text-slate-400">{currentTurnId}</span> appear here (empty intent = not
+                spawned yet; use Turn Maker &quot;No action&quot; when they should appear with no intent).
+              </p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -585,6 +627,41 @@ export default function MainFieldBlock() {
           </div>
         </div>
 
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-slate-700/65 bg-slate-900/40 px-3 py-2 shadow-inner shadow-black/20">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Enemy layout</span>
+          <div className="inline-flex rounded-lg border border-slate-600/85 bg-slate-950/80 p-0.5">
+            <button
+              type="button"
+              onClick={() => setEnemyTargetLayout("tiles")}
+              title="Wide cards — more stats and buff chips"
+              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition-all ${
+                enemyTargetLayout === "tiles"
+                  ? "bg-cyan-600 text-white shadow-sm shadow-cyan-950/40"
+                  : "text-slate-400 hover:bg-slate-800/90 hover:text-slate-100"
+              }`}
+            >
+              <LayoutGrid className="h-3.5 w-3.5 shrink-0 opacity-90" strokeWidth={2} />
+              Tiles
+            </button>
+            <button
+              type="button"
+              onClick={() => setEnemyTargetLayout("hud_strip")}
+              title="Compact horizontal tokens — scan intents quickly"
+              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition-all ${
+                enemyTargetLayout === "hud_strip"
+                  ? "bg-cyan-600 text-white shadow-sm shadow-cyan-950/40"
+                  : "text-slate-400 hover:bg-slate-800/90 hover:text-slate-100"
+              }`}
+            >
+              <GripHorizontal className="h-3.5 w-3.5 shrink-0 opacity-90" strokeWidth={2} />
+              HUD strip
+            </button>
+          </div>
+          <span className="text-[10px] text-slate-600">
+            Choice is saved in this browser so you can switch turns and still compare.
+          </span>
+        </div>
+
         {(selectedEnemyIndices.length > 0 || combatTargetSelf) && (
           <p
             className="mb-3 truncate rounded-lg border border-rose-500/20 bg-rose-950/25 px-3 py-2 text-xs text-slate-300"
@@ -611,105 +688,236 @@ export default function MainFieldBlock() {
 
         {enemies.length === 0 ? (
           <p className="rounded-xl border border-dashed border-slate-700 py-8 text-center text-sm text-slate-500">No enemies in this combat.</p>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {enemies.map((enemy: Enemy, index: number) => {
-              const selected = selectedEnemyIndices.includes(index);
-              const hpPct = enemy.maxHp > 0 ? Math.max(0, Math.min(100, (enemy.hp / enemy.maxHp) * 100)) : 0;
-              const block = enemy.currentBlock ?? 0;
-              const buffs = enemy.buffsDebuffs ?? [];
-              const { line: intentLine, modifierHint } = currentTurnIntentLine(
-                enemy,
-                enemy.intents ?? [],
-                currentTurnId,
-                gameState?.player,
-              );
+        ) : plannerTargetEnemyEntries.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-slate-700/85 bg-slate-950/35 py-8 text-center text-sm leading-relaxed text-slate-500">
+            No enemies are in combat for planner turn {currentTurnId} yet.&nbsp;
+            <span className="block text-[12px] text-slate-600">
+              Give each enemy an intent slot for this turn — add at least one action, or choose &quot;No action&quot; if they spawn
+              but act later.
+            </span>
+          </p>
+        ) : enemyTargetLayout === "tiles" ? (
+          <div className="rounded-2xl border-2 border-cyan-500/22 bg-linear-to-b from-cyan-950/30 via-slate-950 to-slate-950 p-3 shadow-[inset_0_1px_0_0_rgba(34,211,238,0.07)] shadow-lg shadow-cyan-950/22 ring-1 ring-cyan-400/10">
+            <p className="mb-3 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              <Crosshair className="h-3 w-3 shrink-0 text-cyan-400/80" strokeWidth={2} />
+              Target pool · same intent chips as timeline
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {plannerTargetEnemyEntries.map(({ enemy, index }) => {
+                const tone = enemyIntentSlotTone(enemy.name);
+                const selected = selectedEnemyIndices.includes(index);
+                const hpPct = enemy.maxHp > 0 ? Math.max(0, Math.min(100, (enemy.hp / enemy.maxHp) * 100)) : 0;
+                const block = enemy.currentBlock ?? 0;
+                const buffs = enemy.buffsDebuffs ?? [];
+                const incoming = plannerTurnIntentIncoming(enemy, currentTurnId, gameState?.player);
+                const tooltipLine = incoming
+                  ? incoming.modifierHint
+                    ? `${incoming.line} — ${incoming.modifierHint}. (n) = base attack where shown.`
+                    : `${incoming.line}. (n) = base attack where shown.`
+                  : undefined;
 
-              return (
-                <button
-                  key={`${enemy.name}-${index}`}
-                  type="button"
-                  onClick={() => toggleCombatEnemyTarget(index)}
-                  className={`rounded-2xl border-2 p-4 text-left transition-all duration-200 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${selected
-                      ? "border-rose-500 bg-rose-950/35 shadow-md shadow-rose-950/20 ring-1 ring-rose-400/20"
-                      : "border-slate-700/90 bg-slate-900/50 hover:border-rose-500/45"
+                return (
+                  <button
+                    key={`${enemy.name}-${index}-tiles`}
+                    type="button"
+                    onClick={() => toggleCombatEnemyTarget(index)}
+                    title={tooltipLine}
+                    className={`group relative w-full overflow-hidden rounded-xl border text-left shadow-md transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${tone.card} ${
+                      selected
+                        ? "ring-2 ring-rose-400/55 ring-offset-2 ring-offset-[rgb(2,6,23)] shadow-lg shadow-rose-950/35 brightness-105"
+                        : "hover:shadow-lg hover:shadow-black/25 hover:brightness-[1.03]"
                     }`}
-                >
-                  <div className="mb-2 flex items-start justify-between gap-2">
-                    <span className="line-clamp-2 text-base font-bold leading-tight text-slate-100">{enemy.name}</span>
-                    <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${selected ? "bg-rose-600 text-white" : "bg-slate-800 text-slate-400"
-                        }`}
-                    >
-                      #{index + 1}
-                    </span>
-                  </div>
-
-                  <div className="space-y-2 text-xs">
-                    <div>
-                      <div className="mb-0.5 flex justify-between text-[10px] text-slate-500">
-                        <span>HP</span>
-                        <span className="font-mono tabular-nums text-rose-300">
-                          {enemy.hp}/{enemy.maxHp}
-                        </span>
-                      </div>
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-rose-700 to-rose-500 transition-[width]"
-                          style={{ width: `${hpPct}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between rounded-lg border border-slate-700/80 bg-slate-800/60 px-2 py-1.5">
-                      <span className="text-slate-500">Block</span>
-                      <span className="font-mono text-sm font-semibold tabular-nums text-sky-300">{block}</span>
-                    </div>
-
-                    {buffs.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {buffs.map((bd, bi) => (
-                          <span
-                            key={bi}
-                            title={bd.description}
-                            className={`rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-none ${bd.type === "buff"
-                                ? "border border-emerald-800 bg-emerald-950/80 text-emerald-300"
-                                : "border border-amber-800 bg-amber-950/80 text-amber-200"
-                              }`}
-                          >
-                            {bd.name}
-                            {bd.stacks !== 1 ? `×${bd.stacks}` : ""}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {intentLine != null && (
-                      <div className="mt-1 flex items-start gap-2 border-t border-slate-800/90 pt-2 text-[11px] leading-snug">
-                        <span className="shrink-0 rounded bg-slate-800 px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-slate-400">
-                          T{currentTurnId}
-                        </span>
-                        <span
-                          className="min-w-0 text-slate-300"
-                          title={
-                            modifierHint
-                              ? `Turn ${currentTurnId} — ${modifierHint}. Numbers in ( ) are base attack before modifiers.`
-                              : `Turn ${currentTurnId}: ${intentLine}`
-                          }
-                        >
-                          {intentLine}
-                          {modifierHint ? (
-                            <span className="mt-0.5 block text-[9px] font-normal leading-tight text-amber-200/80">
-                              {modifierHint}
+                  >
+                    <div
+                      aria-hidden
+                      className={`pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent ${selected ? "via-rose-300/35" : "via-white/12"} to-transparent`}
+                    />
+                    <div className="relative p-3">
+                      <div className="mb-3 flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className={`line-clamp-2 text-[15px] font-bold leading-snug tracking-tight ${tone.name}`}>
+                            {enemy.name}
+                          </p>
+                          <p className="mt-0.5 text-[10px] font-medium text-slate-500">Combat slot {index + 1}</p>
+                        </div>
+                        <div className="flex shrink-0 flex-col items-end gap-1">
+                          {selected ? (
+                            <span className="rounded-md bg-rose-500/95 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm">
+                              Targeted
                             </span>
                           ) : null}
-                        </span>
+                          <span className="rounded-md border border-white/10 bg-black/35 px-1.5 py-px font-mono text-[10px] tabular-nums text-slate-400">
+                            T{currentTurnId}
+                          </span>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
+
+                      <div className="mb-3 grid grid-cols-2 gap-2 rounded-xl border border-white/8 bg-black/22 p-2 shadow-inner shadow-black/30">
+                        <div>
+                          <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-500">HP</p>
+                          <p className="font-mono text-sm font-semibold tabular-nums text-rose-200">
+                            {enemy.hp}
+                            <span className="font-normal text-slate-600"> / </span>
+                            {enemy.maxHp}
+                          </p>
+                          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-900/90">
+                            <div
+                              className="h-full rounded-full bg-linear-to-r from-rose-800 to-rose-400 transition-[width]"
+                              style={{ width: `${hpPct}%` }}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-500">Block</p>
+                          <p
+                            className={`font-mono text-sm font-semibold tabular-nums ${block ? "text-sky-300" : "text-slate-600"}`}
+                          >
+                            {block}
+                          </p>
+                          <div className="mt-[1.35rem] h-px w-full bg-linear-to-r from-sky-500/25 via-sky-400/15 to-transparent opacity-80" />
+                        </div>
+                      </div>
+
+                      {buffs.length > 0 ? (
+                        <div className="mb-3 flex flex-wrap gap-1">
+                          {buffs.map((bd, bi) => (
+                            <span
+                              key={bi}
+                              title={bd.description}
+                              className={`rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-none ${
+                                bd.type === "buff"
+                                  ? "border border-emerald-800/90 bg-emerald-950/85 text-emerald-300"
+                                  : "border border-amber-800/90 bg-amber-950/85 text-amber-200"
+                              }`}
+                            >
+                              {bd.name}
+                              {bd.stacks !== 1 ? `×${bd.stacks}` : ""}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+
+                      <div className="rounded-lg border border-white/10 bg-slate-950/55 px-2.5 py-2 shadow-inner shadow-black/40">
+                        <p className="mb-1 text-[9px] font-bold uppercase tracking-wider text-slate-500">Incoming</p>
+                        {incoming ? (
+                          <>
+                            <IntentIncomingChips actions={incoming.actions} ctx={incoming.incomingCtx} />
+                            {incoming.modifierHint ? (
+                              <p className="mt-2 border-t border-amber-500/15 pt-1.5 text-[9px] leading-relaxed text-amber-200/85">
+                                {incoming.modifierHint}
+                              </p>
+                            ) : null}
+                          </>
+                        ) : (
+                          <p className="text-[10px] italic text-slate-600">No intent for this slot</p>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-cyan-500/18 bg-linear-to-br from-slate-950 via-slate-900/92 to-slate-950 px-3 py-3 shadow-inner shadow-black/35 ring-1 ring-cyan-500/8">
+            <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 px-0.5">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-400/75">
+                Alternate · HUD strip
+              </span>
+              <span className="max-w-xl text-[10px] text-slate-500">
+                Compact tokens in a scrolling row — swipe on narrow viewports.
+              </span>
+            </div>
+            <div className="-mx-1 flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-2 pt-0.5 [scrollbar-width:thin]">
+              {plannerTargetEnemyEntries.map(({ enemy, index }) => {
+                const selected = selectedEnemyIndices.includes(index);
+                const hpPct = enemy.maxHp > 0 ? Math.max(0, Math.min(100, (enemy.hp / enemy.maxHp) * 100)) : 0;
+                const block = enemy.currentBlock ?? 0;
+                const buffCount = enemy.buffsDebuffs?.length ?? 0;
+                const incoming = plannerTurnIntentIncoming(enemy, currentTurnId, gameState?.player);
+                const titleIntent = incoming
+                  ? incoming.modifierHint
+                    ? `${incoming.line} — ${incoming.modifierHint}`
+                    : incoming.line
+                  : undefined;
+
+                return (
+                  <button
+                    key={`${enemy.name}-${index}-hud`}
+                    type="button"
+                    onClick={() => toggleCombatEnemyTarget(index)}
+                    title={titleIntent}
+                    className={`group relative flex w-[154px] shrink-0 snap-start flex-col gap-1.5 rounded-xl border px-3 py-2.5 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 active:scale-[0.985] md:w-[164px] ${
+                      selected
+                        ? "border-rose-500/95 bg-linear-to-b from-rose-950/55 to-slate-950/90 shadow-lg shadow-rose-950/25 ring-1 ring-rose-400/25"
+                        : "border-slate-600/75 bg-slate-900/55 hover:border-cyan-500/40 hover:bg-slate-900/95"
+                    }`}
+                  >
+                    {selected ? (
+                      <span
+                        aria-hidden
+                        className="absolute left-2 top-2 h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_12px_theme(colors.cyan.400)]"
+                      />
+                    ) : null}
+
+                    <div className={`flex items-start gap-2 ${selected ? "pl-4" : "pl-0"}`}>
+                      <div
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border font-mono text-xs font-black tabular-nums ${
+                          selected
+                            ? "border-cyan-500/55 bg-linear-to-br from-cyan-950/90 to-slate-950 text-cyan-100"
+                            : "border-slate-600 bg-slate-950/95 text-slate-400 group-hover:border-slate-500"
+                        }`}
+                      >
+                        {index + 1}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="line-clamp-2 text-[13px] font-bold leading-snug tracking-tight text-slate-100">
+                          {enemy.name}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="relative h-[3px] w-full overflow-hidden rounded-full bg-black/65">
+                      <div
+                        className={`absolute inset-y-0 left-0 rounded-full transition-[width] ${
+                          selected
+                            ? "bg-linear-to-r from-rose-500 to-orange-400"
+                            : "bg-linear-to-r from-rose-600/90 to-rose-400/85"
+                        }`}
+                        style={{ width: `${hpPct}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-1 font-mono text-[10px] tabular-nums text-slate-400">
+                      <span className="truncate text-rose-200/90">{enemy.hp}</span>
+                      <span className="shrink-0 text-slate-600">/</span>
+                      <span className="truncate text-right text-slate-500">{enemy.maxHp}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-1 border-t border-white/10 pt-1.5 text-[10px]">
+                      <span className="text-slate-500">Blk</span>
+                      <span className={`font-semibold tabular-nums ${block ? "text-sky-300" : "text-slate-600"}`}>{block}</span>
+                      <span className={`text-[9px] ${buffCount ? "text-violet-300/90" : "text-slate-600"}`}>
+                        Status×{buffCount}
+                      </span>
+                    </div>
+                    <div className="max-h-[5.5rem] min-h-[2.75rem] overflow-y-auto border-t border-dashed border-slate-700/85 pt-1.5 text-[10px] leading-snug [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-600">
+                      {incoming ? (
+                        <>
+                          <span className="mb-1 block font-mono text-[9px] text-cyan-500/85">T{currentTurnId}</span>
+                          <IntentIncomingChips actions={incoming.actions} ctx={incoming.incomingCtx} />
+                          {incoming.modifierHint ? (
+                            <span className="mt-1 block text-[9px] text-amber-200/75" title={incoming.modifierHint}>
+                              {incoming.modifierHint}
+                            </span>
+                          ) : null}
+                        </>
+                      ) : (
+                        <span className="text-slate-600 italic">No intent preview</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </section>

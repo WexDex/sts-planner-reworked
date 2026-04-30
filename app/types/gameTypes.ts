@@ -169,6 +169,12 @@ export type EnemyIntentActionStunned = {
   description?: string;
 };
 
+/** In combat but no attack / utility this turn — distinguishes from missing intent (not spawned yet). */
+export type EnemyIntentActionNoAction = {
+  type: "no_action";
+  description?: string;
+};
+
 /** One atomic piece of an enemy intent; several can combine in the same planner turn slot. */
 export type EnemyIntentAction =
   | EnemyIntentActionAttack
@@ -178,7 +184,8 @@ export type EnemyIntentAction =
   | EnemyIntentActionBuff
   | EnemyIntentActionStatus
   | EnemyIntentActionCowardly
-  | EnemyIntentActionStunned;
+  | EnemyIntentActionStunned
+  | EnemyIntentActionNoAction;
 
 export const ENEMY_INTENT_ACTION_TYPES = [
   "attack",
@@ -189,6 +196,7 @@ export const ENEMY_INTENT_ACTION_TYPES = [
   "status",
   "cowardly",
   "stunned",
+  "no_action",
 ] as const satisfies readonly EnemyIntentAction["type"][];
 
 export interface EnemyIntent {

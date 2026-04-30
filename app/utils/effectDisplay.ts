@@ -1,15 +1,15 @@
+import { spiderWeb } from '@lucide/lab';
 import {
   AlertCircle,
   ArrowDown,
   BarChart3,
-  Battery,
+  createLucideIcon,
   Dumbbell,
   Droplets,
   FileText,
   Ghost,
   Heart,
   HeartCrack,
-  Link,
   Shield,
   ShieldOff,
   Skull,
@@ -20,6 +20,8 @@ import {
   Orbit,
 } from 'lucide-react';
 import { EFFECT_COLORS, STAT_COLORS } from '@/app/constants/colors';
+
+const EntangleIcon = createLucideIcon('spider-web', spiderWeb);
 
 export type EffectType =
   | 'weak'
@@ -61,7 +63,7 @@ const ICONS: Record<EffectType, LucideIcon> = {
   wound: HeartCrack,
   strength: Dumbbell,
   strength_buff: TrendingUp,
-  entangle: Link,
+  entangle: EntangleIcon,
   takedamage: HeartCrack,
   energygain: Orbit,
   draw: FileText,

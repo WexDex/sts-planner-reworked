@@ -34,7 +34,7 @@ import {
   buildDebuffRemovedLogEntry,
   formatPlayCardTargets,
 } from '@/app/utils/activityLogger';
-import { combatData } from '@/app/data/combatData';
+import defaultCombatFromFile from '@/app/data/EliteSlavers.json';
 import {
   buildGameCardFromStsRaw,
   gameCardFromDatabaseId,
@@ -52,6 +52,10 @@ import {
   INTANGIBLE_BUFF_NAME,
   migrateLegacyIntangibleFields,
 } from '@/app/utils/intangibleBuff';
+import { isEnemyTargetableInPlannerTurn } from '@/app/utils/enemyPlannerTurn';
+
+/** Default bundled combat — Elite Slavers payload (`app/data/EliteSlavers.json`). */
+const defaultCombatPayload = defaultCombatFromFile as unknown as CombatData;
 
 function cloneEnemyArrayDeep(enemies: Enemy[]): Enemy[] {
   return JSON.parse(JSON.stringify(enemies)) as Enemy[];
@@ -257,7 +261,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const loadGameData = async (filePath?: string) => {
     const data = filePath
       ? await loadFromFile(filePath)
-      : cloneGameData(combatData);
+      : cloneGameData(defaultCombatPayload);
     await ingestCombatPayload(data);
   };
 
@@ -274,6 +278,20 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const n = gameState?.enemies?.length ?? 0;
     setCombatTargetEnemyIndices((prev) => prev.filter((i) => i >= 0 && i < n));
   }, [gameState?.enemies?.length]);
+
+  useEffect(() => {
+    if (!gameState?.enemies) return;
+    const plannerTurnId = turns[currentTurnIndex]?.id;
+    if (plannerTurnId === undefined || plannerTurnId === null) return;
+    setCombatTargetEnemyIndices((prev) =>
+      prev.filter((i) => {
+        const list = gameState.enemies;
+        if (!list) return false;
+        const e = list[i];
+        return e !== undefined && isEnemyTargetableInPlannerTurn(e, plannerTurnId);
+      }),
+    );
+  }, [gameState, currentTurnIndex, turns]);
 
   const setCombatTargetMode = useCallback((mode: 'single' | 'multi') => {
     setCombatTargetModeState(mode);

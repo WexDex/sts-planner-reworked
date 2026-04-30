@@ -8,6 +8,7 @@ import {
   getPlayerMaxEnergy,
 } from '@/app/utils/gameHelpers';
 import type { Enemy } from '@/app/types/gameTypes';
+import { isEnemyTargetableInPlannerTurn } from '@/app/utils/enemyPlannerTurn';
 import BuffDebuffItem from '@/app/components/UI/BuffDebuffItem';
 import {
   INTANGIBLE_BUFF_DESCRIPTION,
@@ -105,14 +106,33 @@ export default function RightBlock() {
 
   const enemies = gameState?.enemies;
 
+  const currentTurn = Number(turns[currentTurnIndex]?.id ?? 1);
+
+  const plannerTargetEnemyIndices = useMemo(() => {
+    if (!enemies?.length) return [];
+    return enemies
+      .map((e, idx) => (isEnemyTargetableInPlannerTurn(e, currentTurn) ? idx : -1))
+      .filter((idx) => idx >= 0);
+  }, [enemies, currentTurn]);
+
   useEffect(() => {
     if (!enemies?.length) return;
     setSelectedEnemyIdx((i) => Math.min(Math.max(0, i), enemies.length - 1));
   }, [enemies?.length]);
 
-  const activeRelics = gameState?.player.activeRelics ?? [];
+  useEffect(() => {
+    if (buffTarget !== 'enemy') return;
+    if (!enemies?.length) return;
+    if (plannerTargetEnemyIndices.length === 0) {
+      setBuffTarget('player');
+      return;
+    }
+    setSelectedEnemyIdx((prev) =>
+      plannerTargetEnemyIndices.includes(prev) ? prev : plannerTargetEnemyIndices[0],
+    );
+  }, [buffTarget, enemies?.length, plannerTargetEnemyIndices]);
 
-  const currentTurn = Number(turns[currentTurnIndex]?.id ?? 1);
+  const activeRelics = gameState?.player.activeRelics ?? [];
 
   const relicTooltips = useMemo(() => {
     if (!gameState) return [];
@@ -650,7 +670,10 @@ export default function RightBlock() {
             >
               You
             </button>
-            {enemies?.map((enemy: Enemy, idx: number) => (
+            {plannerTargetEnemyIndices.map((idx) => {
+              const enemy = enemies![idx];
+              if (!enemy) return null;
+              return (
               <button
                 key={`bt-${idx}`}
                 type="button"
@@ -665,8 +688,15 @@ export default function RightBlock() {
               >
                 {enemy.name}
               </button>
-            ))}
+            );
+            })}
           </div>
+          {enemies && enemies.length > 0 && plannerTargetEnemyIndices.length === 0 ? (
+            <p className="mb-3 text-[10px] leading-relaxed text-slate-600">
+              No enemies are targetable for planner turn {currentTurn} yet — add an intent row with at least one action, or
+              &quot;No action&quot; if they should count as in combat.
+            </p>
+          ) : null}
 
           <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
             Stacks <span className="font-normal normal-case text-slate-600">(quick + custom)</span>

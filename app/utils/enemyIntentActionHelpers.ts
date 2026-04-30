@@ -25,6 +25,8 @@ export function createDefaultEnemyIntentAction(type: EnemyIntentAction["type"]):
       return { type: "cowardly" };
     case "stunned":
       return { type: "stunned", value: 1 };
+    case "no_action":
+      return { type: "no_action" };
     default:
       return { type: "attack", dmg: 6 };
   }
