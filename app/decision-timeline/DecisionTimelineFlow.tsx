@@ -11,6 +11,7 @@ import {
   useState,
   Fragment,
 } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ReactFlow,
   Background,
@@ -30,9 +31,27 @@ import {
   type NodeMouseHandler,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { ChevronDown, ChevronRight, ChevronUp, Link2, Minus, Pencil, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Link2,
+  Minus,
+  Pencil,
+  ScrollText,
+  Skull,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { useGameManager, type DecisionTimelinePositionMap } from '@/app/context/GameContext';
-import type { CombatTurnPhase, DecisionNode as DecisionNodeModel, Turn } from '@/app/types/gameTypes';
+import type {
+  ActivityLogEntry,
+  CombatTurnPhase,
+  DecisionNode as DecisionNodeModel,
+  Turn,
+} from '@/app/types/gameTypes';
 import {
   layoutDecisionTreeNodes,
   layoutDecisionTreePacked,
@@ -48,20 +67,39 @@ import {
   effectivePlannerTurnSlotId,
   decisionNodeDepthFromRoot,
 } from '@/app/utils/decisionTreeHelpers';
-import { deriveDecisionNodeSummary } from '@/app/utils/deriveDecisionNodeSummary';
-import { getNewLogEntriesForDecisionNode, summarizePlays } from '@/app/utils/decisionNodePlays';
+import { getNewLogEntriesForDecisionNode } from '@/app/utils/decisionNodePlays';
 import {
   minimapHexForDecisionNodePreview,
-  plannerCombatPhaseLong,
-  plannerPhasePillClasses,
   plannerPhaseStripClass,
   plannerPhaseTimelineCardAccent,
 } from '@/app/utils/decisionTimelinePhaseUi';
 import {
-  ActivityLogRowExpanded,
   ActivityLogRowInline,
   type ActivityLogInlineDensity,
 } from '@/app/components/activity-log/activity-log-rows';
+import { IntentIncomingChips } from '@/app/components/UI/IntentIncomingChips';
+import {
+  collectEnemyIntentLinesForPlannerSlot,
+  type DecisionTimelineEnemyIntentLine,
+} from '@/app/utils/decisionTimelineIntentSummaries';
+import { enemyIntentSlotTone } from '@/app/utils/enemyIntentSlotTone';
+
+/** Match Turn timeline: collapse long enemy lists on branch cards. */
+const BRANCH_INTENT_PREVIEW_MAX = 4;
+
+/** Keep aligned with `MainFieldBlock` `ACTIVITY_LOG_DENSITY_KEY`. */
+const ACTIVITY_LOG_INLINE_DENSITY_KEY = 'sts-activity-log-inline-density';
+
+/** Snapshot-derived fields for branch nodes; built in {@link buildFlowGraph}. */
+type DecisionTimelineBranchCardDisplay = {
+  treeDepth: number;
+  branchOrdinal: number;
+  branchPeerCount: number;
+  playerHp: number;
+  /** Enemy intents for {@link DecisionCardData.effectivePlannerSlotId} on this checkpoint. */
+  enemyIntentLines: DecisionTimelineEnemyIntentLine[];
+  logEntries: ActivityLogEntry[];
+};
 
 type DecisionCardData = {
   decisionNode: DecisionNodeModel;
@@ -81,6 +119,8 @@ type DecisionCardData = {
   relinkPanelRole: 'child' | 'parent' | null;
   /** Parent checkpoint missing from tree — relink to restore. */
   isOrphan: boolean;
+  /** Present on branch cards only — START omits. */
+  branchDisplay?: DecisionTimelineBranchCardDisplay;
 };
 
 /** Background grouping for all checkpoints at the same tree depth (same planner row / branch alternates). */
@@ -132,12 +172,6 @@ function FitViewOnStructureChange({ structureKey }: { structureKey: string }) {
     return () => window.clearTimeout(t);
   }, [structureKey, fitView]);
   return null;
-}
-
-function phaseShort(p: CombatTurnPhase): string {
-  if (p === 'start') return 'ST';
-  if (p === 'player') return 'P';
-  return 'E';
 }
 
 function reparentRingClass(isHoverTarget: boolean): string {
@@ -525,6 +559,52 @@ function TurnPhaseTripleStrip({
   );
 }
 
+function neighborCheckpointSummary(
+  n: DecisionNodeModel | null | undefined,
+  allNodes: DecisionNodeModel[],
+  turnRows: Turn[],
+): string | null {
+  if (!n) return null;
+  if (n.timelineRole === 'timeline_start') {
+    const slot = effectivePlannerTurnSlotId(allNodes, n, turnRows);
+    return `START · depth 0 · Planner row ${slot}`;
+  }
+  const depth = decisionNodeDepthFromRoot(allNodes, n.id);
+  const peers = decisionNodesPeersSameTurnDepth(allNodes, n.id);
+  const ord = Math.max(1, peers.findIndex((x) => x.id === n.id) + 1);
+  const slot = effectivePlannerTurnSlotId(allNodes, n, turnRows);
+  return `Depth ${depth} · Branch ${ord}/${peers.length} · Planner row ${slot}`;
+}
+
+function DtlModalLogScroll({
+  entries,
+  density,
+  emptyLabel,
+}: {
+  entries: ActivityLogEntry[];
+  density: ActivityLogInlineDensity;
+  emptyLabel: string;
+}) {
+  if (entries.length === 0) {
+    return <p className="px-3 py-10 text-center text-xs leading-snug text-slate-500">{emptyLabel}</p>;
+  }
+  return (
+    <div className="relative px-3 py-3">
+      {density === 'detailed' ? (
+        <div
+          className="pointer-events-none absolute bottom-0 left-[21px] top-3 w-px bg-slate-700/80"
+          aria-hidden
+        />
+      ) : null}
+      <div className="relative space-y-1 py-1">
+        {[...entries].reverse().map((entry) => (
+          <ActivityLogRowInline key={entry.id} entry={entry} density={density} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const DecisionStartCard = memo(function DecisionStartCard({ data }: { id: string; data: DecisionCardData }) {
   const interact = useContext(TimelineInteractContext);
   const { decisionNodes } = useGameManager();
@@ -568,9 +648,10 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
     updateDecisionNodeLabel,
     updateDecisionNodeTurnPhase,
     decisionNodes,
+    turns,
   } = useGameManager();
-  const { decisionNode, parent, isSlotActive, isPinned, effectivePlannerSlotId, breadcrumbDisplay } = data;
-  const summary = deriveDecisionNodeSummary(decisionNode.snapshot, effectivePlannerSlotId);
+  const bd = data.branchDisplay;
+  const { decisionNode, isSlotActive, isPinned, effectivePlannerSlotId, breadcrumbDisplay } = data;
   const isRoot = decisionNode.parentId === null;
 
   const eligibleParentIds = useMemo(() => {
@@ -584,31 +665,62 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
     interact.reparentHoverParentId === decisionNode.id &&
     eligibleParentIds?.has(decisionNode.id);
 
-  const peersSameTurnDepth = useMemo(() => {
-    return decisionNodesPeersSameTurnDepth(decisionNodes, decisionNode.id);
-  }, [decisionNodes, decisionNode.id]);
-
-  const branchOrdinal = useMemo(
-    () =>
-      Math.max(
-        1,
-        peersSameTurnDepth.findIndex((n) => n.id === decisionNode.id) + 1,
-      ),
-    [peersSameTurnDepth, decisionNode.id],
-  );
-
-  const playEntries = useMemo(
-    () => getNewLogEntriesForDecisionNode(decisionNode, parent),
-    [decisionNode, parent],
-  );
-  const playsSummary = useMemo(
-    () => summarizePlays(playEntries, decisionNode.turnPhase),
-    [playEntries, decisionNode.turnPhase],
-  );
-
-  const [playsOpen, setPlaysOpen] = useState(false);
   const [inlineLogDensity, setInlineLogDensity] = useState<ActivityLogInlineDensity>('minimal');
-  const [showFullyExpanded, setShowFullyExpanded] = useState(false);
+  const [logModalOpen, setLogModalOpen] = useState(false);
+  const [portalMounted, setPortalMounted] = useState(false);
+  const [intentsExpanded, setIntentsExpanded] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(ACTIVITY_LOG_INLINE_DENSITY_KEY);
+      if (raw === 'minimal' || raw === 'detailed') setInlineLogDensity(raw);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const setInlineLogDensityPersisted = useCallback((d: ActivityLogInlineDensity) => {
+    setInlineLogDensity(d);
+    try {
+      localStorage.setItem(ACTIVITY_LOG_INLINE_DENSITY_KEY, d);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    setPortalMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!logModalOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLogModalOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [logModalOpen]);
+
+  const parentNode = data.parent;
+  const childNodes = useMemo(
+    () => decisionNodes.filter((n) => n.parentId === decisionNode.id),
+    [decisionNodes, decisionNode.id],
+  );
+  const grandparentNode = useMemo(() => {
+    if (!parentNode?.parentId) return null;
+    return decisionNodes.find((n) => n.id === parentNode.parentId) ?? null;
+  }, [decisionNodes, parentNode?.parentId]);
+
+  const parentStepLogs = useMemo((): ActivityLogEntry[] | null => {
+    if (!parentNode) return null;
+    return getNewLogEntriesForDecisionNode(parentNode, grandparentNode);
+  }, [parentNode, grandparentNode]);
+
+  const soleChildNode = childNodes.length === 1 ? childNodes[0]! : null;
+  const childStepLogs = useMemo((): ActivityLogEntry[] | null => {
+    if (!soleChildNode) return null;
+    return getNewLogEntriesForDecisionNode(soleChildNode, decisionNode);
+  }, [soleChildNode, decisionNode]);
 
   const onRename = useCallback(() => {
     const next = window.prompt('Branch label', decisionNode.label);
@@ -641,7 +753,21 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
     ? 'border-rose-500 shadow-[0_0_28px_-4px_rgba(244,63,94,0.55)] ring-2 ring-rose-400/85 ring-offset-2 ring-offset-slate-950'
     : '';
 
+  if (!bd) return null;
+
+  const playerHp = decisionNode.snapshot.player?.hp ?? bd.playerHp;
+  const logEntries = bd.logEntries;
+  const intentLines = bd.enemyIntentLines;
+  const incomingIntentDamageTotal = intentLines.reduce((s, x) => s + x.damage, 0);
+  const intentsExpandedView =
+    intentLines.length <= BRANCH_INTENT_PREVIEW_MAX || intentsExpanded;
+  const visibleIntentLines = intentsExpandedView
+    ? intentLines
+    : intentLines.slice(0, BRANCH_INTENT_PREVIEW_MAX);
+  const hiddenIntentCount = intentLines.length - visibleIntentLines.length;
+
   return (
+    <>
     <div className="relative max-w-[358px] min-w-[273px] shrink-0">
       {data.relinkPanelRole === 'child' ? <RelinkMoveBranchAboveCard /> : null}
       <div
@@ -654,7 +780,7 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
           className="pointer-events-none absolute left-2 top-7 z-[22] rounded-md border border-rose-400/80 bg-rose-950/95 px-1.5 py-px text-[8px] font-extrabold uppercase tracking-wider text-rose-100"
           title="Parent checkpoint is missing — pick a new parent (Relink or Link on card)."
         >
-          Orphan
+          Orphan Node
         </span>
       ) : null}
       <div className={`pointer-events-none absolute left-0 right-0 top-0 z-[2] h-[5px] ${plannerPhaseStripClass(decisionNode.turnPhase)}`} aria-hidden />
@@ -707,23 +833,20 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
 
       <div className="relative z-[2]">
         <div className="mb-1 flex flex-col gap-0.5 pr-14">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0">
-            <p
-              className="text-[13px] font-black tabular-nums tracking-tight text-slate-50"
-              title="Turn row from depth below START. Branch ordinal counts all checkpoints at this depth—competing alternates share Set Active."
-            >
-              Turn{' '}
-              <span className="text-cyan-300">{effectivePlannerSlotId}</span>
-              {peersSameTurnDepth.length > 1 ? (
-                <span className="ml-1 text-[10px] font-bold uppercase text-slate-500">
-                  Branch {branchOrdinal}/{peersSameTurnDepth.length}
-                </span>
-              ) : null}
-            </p>
-          </div>
-          <p className="line-clamp-2 text-[9px] leading-tight tracking-tight text-slate-500" title={breadcrumbDisplay}>
-            {breadcrumbDisplay}
+          <p
+            className="text-[13px] font-black tabular-nums tracking-tight text-slate-50"
+            title={`${breadcrumbDisplay} · Planner turn row ${effectivePlannerSlotId}.`}
+          >
+            Turn{' '}
+            <span className="text-cyan-300">{bd.treeDepth}</span>
+            <span className="ml-1.5 text-[10px] font-bold uppercase tabular-nums text-slate-500">
+              Branch {bd.branchOrdinal}/{bd.branchPeerCount}
+            </span>
           </p>
+        </div>
+
+        <div className="mb-1">
+          <p className="line-clamp-2 pr-1 text-[11px] font-bold leading-tight text-slate-100">{decisionNode.label}</p>
         </div>
 
         <TurnPhaseTripleStrip
@@ -731,153 +854,191 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
           onSelectPhase={(phase) => updateDecisionNodeTurnPhase(decisionNode.id, phase)}
         />
 
-        <div className="mb-1">
-          <p className="line-clamp-2 pr-1 text-[11px] font-bold leading-tight text-slate-100">{decisionNode.label}</p>
-        </div>
-
-        <div className="mb-1.5 flex flex-wrap items-center gap-2">
-          <span
-            className={`rounded-md border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${plannerPhasePillClasses(decisionNode.turnPhase)}`}
-            title="Planner sub-phase captured on this snapshot"
-          >
-            {plannerCombatPhaseLong(decisionNode.turnPhase)}
-          </span>
-          <span
-            className="font-mono text-[9px] tabular-nums text-slate-600"
-            title="STS combat phase marker on this snapshot"
-          >
-            {decisionNode.turnPhase}/{phaseShort(decisionNode.turnPhase)}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-300/95">
-          <span>HP {summary.hp}</span>
-          <span>Blk {summary.block}</span>
-          <span>En {summary.energy}</span>
-          <span>Hand {summary.handSize}</span>
-        </div>
-
-        <p
-          className="mt-1.5 line-clamp-2 border-t border-slate-700/50 pt-1 text-[9px] text-slate-500"
-          title={summary.lastLogTitle}
-        >
-          {summary.lastLogTitle}
+        <p className="mb-1.5 mt-1 text-[10px] font-semibold tabular-nums text-slate-300">
+          HP <span className="text-emerald-300">{playerHp}</span>
         </p>
 
-        <button
-          type="button"
-          className={`nodrag nopan mt-1.5 flex w-full items-center justify-between gap-1 rounded-lg border border-slate-600/50 bg-slate-900/70 px-2 py-1 text-left text-[10px] font-semibold text-slate-200 hover:bg-slate-800/80`}
-          aria-expanded={playsOpen}
-          onClick={(e) => {
-            e.stopPropagation();
-            setPlaysOpen((o) => !o);
-          }}
+        <div
+          className="nodrag nopan mb-1.5 border-t border-slate-700/35 pt-2"
+          onPointerDown={(e) => e.stopPropagation()}
         >
-          <span className="flex min-w-0 items-center gap-1">
-            {playsOpen ? <ChevronDown className="h-3 w-3 shrink-0" aria-hidden /> : <ChevronRight className="h-3 w-3 shrink-0" aria-hidden />}
-            <span className="truncate">Plays</span>
-            <span className="shrink-0 text-slate-500">({playsSummary.entryCount})</span>
-          </span>
-        </button>
-
-        {playsOpen ? (
-          <div
-            className="nodrag nopan mt-1 space-y-2 border-t border-slate-700/40 pt-2"
-            onPointerDown={(e) => e.stopPropagation()}
-            onWheelCapture={stopWheelZoomOnPane}
-          >
-            <p className="text-[10px] leading-snug text-slate-400" title={playsSummary.headline}>
-              {playsSummary.headline}
-            </p>
-            {playsSummary.phasesTouched.length > 0 ? (
-              <div className="flex flex-wrap gap-1">
-                {playsSummary.phasesTouched.map((ph) => (
-                  <span
-                    key={ph}
-                    className="rounded-md border border-slate-600/60 bg-slate-900/80 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-slate-400"
-                  >
-                    {ph} ({phaseShort(ph)})
-                  </span>
-                ))}
+          <div className="mb-1 flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="flex flex-wrap items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-rose-200/95">
+                <Skull className="h-3 w-3 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
+                <span>Enemy intents</span>
+                <span className="font-normal tabular-nums text-slate-500">
+                  · Planner turn {effectivePlannerSlotId}
+                </span>
+              </p>
+              <p className="mt-0.5 text-[9px] text-slate-600">
+                {intentLines.length === 0
+                  ? 'No intents on snapshot for this turn slot.'
+                  : `${intentLines.length} intent line${intentLines.length === 1 ? '' : 's'}`}
+              </p>
+            </div>
+            {incomingIntentDamageTotal > 0 ? (
+              <div
+                className="shrink-0 rounded-full border border-rose-500/35 bg-rose-950/40 px-2 py-px text-[10px] font-semibold tabular-nums text-rose-200"
+                title="Sum of incoming attack damage from intents (after Weak / Vulnerable / Intangible)"
+              >
+                {incomingIntentDamageTotal} dmg
               </div>
             ) : null}
-            {playsSummary.uniqueCardNames.length > 0 ? (
-              <div className="flex flex-wrap gap-1">
-                {playsSummary.uniqueCardNames.slice(0, 8).map((name) => (
-                  <span
-                    key={name}
-                    className="max-w-[9rem] truncate rounded-md border border-cyan-900/50 bg-cyan-950/40 px-1.5 py-0.5 text-[9px] font-medium text-cyan-100/95"
-                    title={name}
-                  >
-                    {name}
-                  </span>
-                ))}
-                {playsSummary.uniqueCardNames.length > 8 ? (
-                  <span className="text-[9px] text-slate-500">+{playsSummary.uniqueCardNames.length - 8}</span>
-                ) : null}
-              </div>
-            ) : null}
+          </div>
 
-            <div className="flex flex-wrap gap-1.5">
+          {intentLines.length > 0 ? (
+            <>
+              <div
+                className="max-h-[11rem] space-y-1 overflow-y-auto overscroll-contain pr-0.5 [scrollbar-width:thin]"
+                onWheelCapture={stopWheelZoomOnPane}
+              >
+                {visibleIntentLines.map((row, ei) => {
+                  const tone = enemyIntentSlotTone(row.name);
+                  const titleParts = [
+                    `${row.name}: ${row.line || 'No intent'}`,
+                    row.modifierHint ? `${row.modifierHint}. (n) = base attack.` : '',
+                  ].filter(Boolean);
+                  return (
+                    <div
+                      key={`${decisionNode.id}-intent-${ei}-${row.name}`}
+                      className={`space-y-0.5 rounded-md border px-2 py-1.5 ${tone.card}`}
+                    >
+                      <div
+                        className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-2"
+                        title={titleParts.join(' ')}
+                      >
+                        <span className={`shrink-0 text-[10px] font-semibold tracking-tight ${tone.name}`}>
+                          {row.name}
+                        </span>
+                        <div className="min-w-0 flex-1 text-[10px] leading-snug text-slate-300">
+                          <IntentIncomingChips actions={row.actions} ctx={row.incomingCtx} />
+                        </div>
+                      </div>
+                      {row.modifierHint ? (
+                        <p className="text-[9px] leading-tight text-amber-200/85">{row.modifierHint}</p>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+              {hiddenIntentCount > 0 ? (
+                <button
+                  type="button"
+                  className="nodrag nopan mt-1 flex w-full items-center justify-center gap-1 rounded-lg border border-slate-700/80 bg-slate-900/50 py-1 text-[10px] font-medium text-cyan-300/90 transition hover:bg-slate-800/80"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIntentsExpanded((v) => !v);
+                  }}
+                >
+                  {intentsExpanded ? (
+                    <>
+                      <ChevronDown className="h-3 w-3 shrink-0" strokeWidth={2} aria-hidden />
+                      Show less
+                    </>
+                  ) : (
+                    <>
+                      <ChevronRight className="h-3 w-3 shrink-0" strokeWidth={2} aria-hidden />
+                      +{hiddenIntentCount} more
+                    </>
+                  )}
+                </button>
+              ) : intentLines.length > BRANCH_INTENT_PREVIEW_MAX ? (
+                <button
+                  type="button"
+                  className="nodrag nopan mt-1 flex w-full items-center justify-center gap-1 text-[10px] font-medium text-slate-500 hover:text-slate-400"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIntentsExpanded(false);
+                  }}
+                >
+                  <ChevronDown className="h-3 w-3 shrink-0" strokeWidth={2} aria-hidden />
+                  Collapse
+                </button>
+              ) : null}
+            </>
+          ) : null}
+        </div>
+
+        <div
+          className="nodrag nopan border-t border-slate-700/40 pt-2"
+          onPointerDown={(e) => e.stopPropagation()}
+          onWheelCapture={stopWheelZoomOnPane}
+        >
+          <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+              Log <span className="tabular-nums text-slate-500">({logEntries.length})</span>
+            </span>
+            <div className="flex flex-wrap gap-1">
               <button
                 type="button"
-                className={`rounded-lg border px-2 py-0.5 text-[9px] font-semibold ${
+                className={`rounded-md border px-1.5 py-px text-[8px] font-semibold ${
                   inlineLogDensity === 'minimal'
                     ? 'border-violet-500/50 bg-violet-950/55 text-violet-100'
                     : 'border-slate-600 bg-slate-900 text-slate-400'
                 }`}
-                onClick={() => setInlineLogDensity('minimal')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setInlineLogDensityPersisted('minimal');
+                }}
               >
-                Compact log
+                Compact
               </button>
               <button
                 type="button"
-                className={`rounded-lg border px-2 py-0.5 text-[9px] font-semibold ${
+                className={`rounded-md border px-1.5 py-px text-[8px] font-semibold ${
                   inlineLogDensity === 'detailed'
                     ? 'border-violet-500/50 bg-violet-950/55 text-violet-100'
                     : 'border-slate-600 bg-slate-900 text-slate-400'
                 }`}
-                onClick={() => setInlineLogDensity('detailed')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setInlineLogDensityPersisted('detailed');
+                }}
               >
-                Detailed log
+                Detailed
               </button>
               <button
                 type="button"
-                className={`rounded-lg border px-2 py-0.5 text-[9px] font-semibold ${
-                  showFullyExpanded
+                disabled={logEntries.length === 0}
+                className={`rounded-md border px-1.5 py-px text-[8px] font-semibold ${
+                  logModalOpen
                     ? 'border-amber-500/50 bg-amber-950/45 text-amber-100'
                     : 'border-slate-600 bg-slate-900 text-slate-400'
-                }`}
-                onClick={() => setShowFullyExpanded((v) => !v)}
-                aria-expanded={showFullyExpanded}
+                } disabled:cursor-not-allowed disabled:opacity-40`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLogModalOpen(true);
+                }}
+                aria-haspopup="dialog"
+                aria-expanded={logModalOpen}
               >
-                Full entries
+                Full
               </button>
             </div>
+          </div>
 
-            {playEntries.length === 0 ? (
-              <p className="py-2 text-center text-[10px] text-slate-600">No new log entries for this step.</p>
-            ) : showFullyExpanded ? (
+          {logEntries.length === 0 ? (
+            <p className="py-2 text-center text-[10px] text-slate-600">No new log entries for this step.</p>
+          ) : (
+            <div className="relative">
+              {inlineLogDensity === 'detailed' ? (
+                <div
+                  className="pointer-events-none absolute bottom-0 left-[21px] top-2 w-px bg-slate-700/80"
+                  aria-hidden
+                />
+              ) : null}
               <div
-                className="max-h-56 space-y-2 overflow-y-auto overscroll-contain pr-0.5 [scrollbar-width:thin]"
+                className="max-h-44 overflow-y-auto overscroll-contain py-1 pr-0.5 [scrollbar-width:thin]"
                 onWheelCapture={stopWheelZoomOnPane}
               >
-                {[...playEntries].reverse().map((entry) => (
-                  <ActivityLogRowExpanded key={entry.id} entry={entry} />
-                ))}
-              </div>
-            ) : (
-              <div
-                className="max-h-44 overflow-y-auto overscroll-contain pr-0.5 [scrollbar-width:thin]"
-                onWheelCapture={stopWheelZoomOnPane}
-              >
-                {[...playEntries].reverse().map((entry) => (
+                {[...logEntries].reverse().map((entry) => (
                   <ActivityLogRowInline key={entry.id} entry={entry} density={inlineLogDensity} />
                 ))}
               </div>
-            )}
-          </div>
-        ) : null}
+            </div>
+          )}
+        </div>
 
         <button
           type="button"
@@ -906,6 +1067,183 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
       </div>
     </div>
     </div>
+
+    {portalMounted && logModalOpen
+      ? createPortal(
+          <div
+            className="fixed inset-0 z-[240] flex flex-col"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="dtl-branch-log-title"
+          >
+            <button
+              type="button"
+              className="absolute inset-0 bg-slate-950/88 backdrop-blur-md"
+              aria-label="Close log modal"
+              onClick={() => setLogModalOpen(false)}
+            />
+            <div className="relative z-10 mx-auto flex h-full min-h-0 w-full max-w-[1480px] flex-col px-2 pb-3 pt-4 md:px-5 md:pb-6 md:pt-5">
+              <div className="flex shrink-0 flex-col gap-2 rounded-t-2xl border border-b-0 border-slate-600/45 bg-slate-950/96 px-3 py-3 shadow-2xl shadow-black/40 md:flex-row md:items-start md:justify-between md:px-5 md:py-4">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-500/35 bg-cyan-950/50 text-cyan-300 sm:flex">
+                    <ScrollText className="h-5 w-5" strokeWidth={2} aria-hidden />
+                  </span>
+                  <div className="min-w-0">
+                    <h2 id="dtl-branch-log-title" className="text-base font-bold tracking-tight text-slate-50 md:text-lg">
+                      Checkpoint logs — this step & neighbors
+                    </h2>
+                    <p className="mt-0.5 truncate text-xs font-semibold text-slate-300">{decisionNode.label}</p>
+                    <div className="mt-2 space-y-1 text-[11px] leading-snug text-slate-400">
+                      <p className="font-semibold tabular-nums text-slate-300">
+                        Turn depth {bd.treeDepth} · Branch {bd.branchOrdinal}/{bd.branchPeerCount} · Planner row{' '}
+                        {effectivePlannerSlotId}
+                      </p>
+                      <p className="text-slate-500">
+                        Center: delta vs parent ({logEntries.length} new{' '}
+                        {logEntries.length === 1 ? 'line' : 'lines'}). Side panels: parent step / single child step · Esc
+                        to close
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setLogModalOpen(false)}
+                  className="inline-flex shrink-0 items-center justify-center gap-2 self-end rounded-xl border border-slate-600 bg-slate-900 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-slate-800 md:self-auto"
+                >
+                  <X className="h-4 w-4" strokeWidth={2} aria-hidden />
+                  Close
+                </button>
+              </div>
+
+              <div className="flex shrink-0 flex-wrap items-center gap-2 border border-y-0 border-slate-600/35 bg-slate-950/92 px-3 py-2.5 md:px-5">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Log density</span>
+                <button
+                  type="button"
+                  className={`rounded-lg border px-2.5 py-1 text-[11px] font-semibold ${
+                    inlineLogDensity === 'minimal'
+                      ? 'border-violet-500/50 bg-violet-950/55 text-violet-100'
+                      : 'border-slate-600 bg-slate-900 text-slate-400 hover:text-slate-200'
+                  }`}
+                  onClick={() => setInlineLogDensityPersisted('minimal')}
+                >
+                  Compact
+                </button>
+                <button
+                  type="button"
+                  className={`rounded-lg border px-2.5 py-1 text-[11px] font-semibold ${
+                    inlineLogDensity === 'detailed'
+                      ? 'border-violet-500/50 bg-violet-950/55 text-violet-100'
+                      : 'border-slate-600 bg-slate-900 text-slate-400 hover:text-slate-200'
+                  }`}
+                  onClick={() => setInlineLogDensityPersisted('detailed')}
+                >
+                  Detailed
+                </button>
+              </div>
+
+              <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-hidden rounded-b-2xl border border-t-0 border-slate-600/45 bg-slate-950/85 p-3 shadow-2xl shadow-black/45 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.12fr)_minmax(0,1fr)] lg:gap-4 lg:p-4">
+                <section
+                  className="flex min-h-[200px] flex-col overflow-hidden rounded-xl border border-sky-500/40 bg-slate-950/95 lg:min-h-0"
+                  aria-label="Parent checkpoint log"
+                >
+                  <div className="shrink-0 border-b border-sky-800/45 bg-sky-950/25 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <ArrowLeft className="h-3.5 w-3.5 shrink-0 text-sky-400" strokeWidth={2} aria-hidden />
+                      <span className="text-[10px] font-black uppercase tracking-wider text-sky-200">Parent</span>
+                    </div>
+                    {parentNode ? (
+                      <>
+                        <p className="mt-1 truncate text-xs font-semibold text-slate-200">{parentNode.label}</p>
+                        <p className="mt-0.5 text-[10px] text-sky-200/80">
+                          {neighborCheckpointSummary(parentNode, decisionNodes, turns)}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="mt-1 text-[11px] text-slate-500">No linked parent in the tree.</p>
+                    )}
+                  </div>
+                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:thin]">
+                    {parentNode && parentStepLogs ? (
+                      <DtlModalLogScroll
+                        entries={parentStepLogs}
+                        density={inlineLogDensity}
+                        emptyLabel="No new log lines on the parent step (same prefix as its parent)."
+                      />
+                    ) : (
+                      <p className="px-3 py-10 text-center text-xs text-slate-500">
+                        Parent panel unavailable — this checkpoint is the planner root.
+                      </p>
+                    )}
+                  </div>
+                </section>
+
+                <section
+                  className="flex min-h-[240px] flex-col overflow-hidden rounded-xl border border-cyan-500/45 bg-slate-950/95 lg:min-h-0"
+                  aria-label="This checkpoint log"
+                >
+                  <div className="shrink-0 border-b border-cyan-800/45 bg-cyan-950/20 px-3 py-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-cyan-200">
+                      This checkpoint
+                    </span>
+                    <p className="mt-1 text-[10px] text-cyan-100/75">
+                      {neighborCheckpointSummary(decisionNode, decisionNodes, turns)}
+                    </p>
+                  </div>
+                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:thin]">
+                    <DtlModalLogScroll
+                      entries={logEntries}
+                      density={inlineLogDensity}
+                      emptyLabel="No new entries since the parent snapshot for this step."
+                    />
+                  </div>
+                </section>
+
+                <section
+                  className="flex min-h-[200px] flex-col overflow-hidden rounded-xl border border-emerald-500/40 bg-slate-950/95 lg:min-h-0"
+                  aria-label="Child checkpoint log"
+                >
+                  <div className="shrink-0 border-b border-emerald-800/45 bg-emerald-950/25 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-emerald-200">Child</span>
+                      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-emerald-400" strokeWidth={2} aria-hidden />
+                    </div>
+                    {soleChildNode ? (
+                      <>
+                        <p className="mt-1 truncate text-xs font-semibold text-slate-200">{soleChildNode.label}</p>
+                        <p className="mt-0.5 text-[10px] text-emerald-200/85">
+                          {neighborCheckpointSummary(soleChildNode, decisionNodes, turns)}
+                        </p>
+                      </>
+                    ) : childNodes.length === 0 ? (
+                      <p className="mt-1 text-[11px] text-slate-500">Leaf — no downstream checkpoints yet.</p>
+                    ) : (
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        {childNodes.length} child branches — open each downstream card on the graph for its delta log.
+                      </p>
+                    )}
+                  </div>
+                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:thin]">
+                    {soleChildNode && childStepLogs ? (
+                      <DtlModalLogScroll
+                        entries={childStepLogs}
+                        density={inlineLogDensity}
+                        emptyLabel="Child step has no new lines vs this checkpoint yet."
+                      />
+                    ) : (
+                      <p className="px-3 py-10 text-center text-xs text-slate-500">
+                        Child log preview appears only when this node has exactly one child checkpoint.
+                      </p>
+                    )}
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null}
+    </>
   );
 });
 
@@ -1086,6 +1424,19 @@ function buildFlowGraph(
           ? 'parent'
           : null;
     const isOrphan = !isStart && isDecisionTimelineOrphan(decisionNodes, n);
+    let branchDisplay: DecisionTimelineBranchCardDisplay | undefined;
+    if (!isStart) {
+      const peersSame = decisionNodesPeersSameTurnDepth(decisionNodes, n.id);
+      const branchOrdinal = Math.max(1, peersSame.findIndex((x) => x.id === n.id) + 1);
+      branchDisplay = {
+        treeDepth,
+        branchOrdinal,
+        branchPeerCount: peersSame.length,
+        playerHp: n.snapshot.player?.hp ?? 0,
+        enemyIntentLines: collectEnemyIntentLinesForPlannerSlot(n.snapshot, rowPlannerSlotId),
+        logEntries: getNewLogEntriesForDecisionNode(n, parent),
+      };
+    }
     return {
       id: n.id,
       type: isStart ? 'decisionStartCard' : 'decisionCard',
@@ -1104,6 +1455,7 @@ function buildFlowGraph(
         breadcrumbDisplay,
         relinkPanelRole,
         isOrphan,
+        ...(branchDisplay ? { branchDisplay } : {}),
       },
     };
   });
@@ -1257,6 +1609,7 @@ function DecisionTimelineCanvas({ onSelectedNodeIdChange }: DecisionTimelineFlow
     mergeDecisionTimelinePositions,
     linkDecisionTimelineParent,
     randomizeDecisionTimelineParentsForTesting,
+    syncActiveDecisionNodeFromPlanner,
   } = useGameManager();
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<DecisionFlowNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -1283,6 +1636,12 @@ function DecisionTimelineCanvas({ onSelectedNodeIdChange }: DecisionTimelineFlow
   } | null>(null);
   /** After relink / randomize topology, run Organize on the next `decisionNodes` commit. */
   const pendingOrganizeAfterTopologyRef = useRef(false);
+
+  /** Match main planner activity log before rendering nodes (logs / intents / HP from live `gameState`). */
+  useEffect(() => {
+    if (isLoading || !gameState) return;
+    syncActiveDecisionNodeFromPlanner();
+  }, [isLoading, gameState, syncActiveDecisionNodeFromPlanner]);
 
   const toggleClusterSnapDepth = useCallback((depth: number) => {
     setSnapLockedDepths((prev) => {

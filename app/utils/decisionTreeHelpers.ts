@@ -44,9 +44,12 @@ export function isDecisionTimelineOrphan(nodes: DecisionNode[], n: DecisionNode)
   return !nodes.some((x) => x.id === n.parentId);
 }
 
-/** Simple top-to-bottom layout (centered per depth), wide spacing — prefer {@link layoutDecisionTreePacked}. */
-export function layoutDecisionTreeNodes(nodes: DecisionNode[]): Map<string, { x: number; y: number }> {
-  return layoutDecisionTreePacked(nodes, 'vertical');
+/** Packed tree positions when no saved timeline coords exist — {@link layoutDecisionTreePacked} (default horizontal). */
+export function layoutDecisionTreeNodes(
+  nodes: DecisionNode[],
+  orientation: DecisionTreePackOrientation = 'horizontal',
+): Map<string, { x: number; y: number }> {
+  return layoutDecisionTreePacked(nodes, orientation);
 }
 
 function centerPackedPositions(positions: Map<string, { x: number; y: number }>): Map<string, { x: number; y: number }> {
@@ -186,7 +189,7 @@ function layoutDecisionTreePackedHorizontal(nodes: DecisionNode[]): Map<string, 
  */
 export function layoutDecisionTreePacked(
   nodes: DecisionNode[],
-  orientation: DecisionTreePackOrientation = 'vertical',
+  orientation: DecisionTreePackOrientation = 'horizontal',
 ): Map<string, { x: number; y: number }> {
   if (orientation === 'horizontal') {
     return layoutDecisionTreePackedHorizontal(nodes);

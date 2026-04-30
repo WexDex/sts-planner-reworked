@@ -375,3 +375,62 @@ export const buildDebuffRemovedLogEntry = (
     },
   );
 };
+
+/** Prefix title with `(TEST)` when missing — for synthetic / dev-only log rows. */
+export function tagActivityLogEntryAsTest(entry: ActivityLogEntry): ActivityLogEntry {
+  const t = entry.title.trim();
+  if (t.startsWith('(TEST)')) return entry;
+  return { ...entry, title: `(TEST) ${entry.title}` };
+}
+
+/**
+ * Synthetic activity-log rows for exercising log UI (decision timeline, etc.). All titles are `(TEST)`-tagged.
+ * Does not mutate combat state — log lines only.
+ */
+export function generateTestNoiseActivityLogEntries(count = 12): ActivityLogEntry[] {
+  const rnd = (a: number, b: number) => Math.floor(a + Math.random() * (b - a + 1));
+  const enemyNames = ['Gremlin Nob', 'Lagavulin', 'Slaver', 'Cultist', 'Orb Walker'];
+  const pickEnemy = () => enemyNames[rnd(0, enemyNames.length - 1)]!;
+  const builders: (() => ActivityLogEntry)[] = [
+    () =>
+      createActivityLogEntry(
+        `(TEST) Synthetic info #${rnd(1, 999)}`,
+        undefined,
+        undefined,
+        'Noise row',
+        'info',
+      ),
+    () =>
+      createActivityLogEntry(`(TEST) Planner ping (${rnd(8, 120)}ms)`, undefined, undefined, undefined, 'system'),
+    () =>
+      tagActivityLogEntryAsTest(
+        buildDamageLogEntry('player', rnd(4, 14), rnd(45, 72), rnd(35, 68), undefined, 80),
+      ),
+    () =>
+      tagActivityLogEntryAsTest(
+        buildDamageLogEntry('enemy', rnd(6, 22), rnd(20, 55), rnd(10, 48), pickEnemy(), 60),
+      ),
+    () =>
+      tagActivityLogEntryAsTest(buildHealLogEntry('player', rnd(3, 9), rnd(50, 65), rnd(55, 72), undefined, 80)),
+    () =>
+      tagActivityLogEntryAsTest(buildBlockLogEntry('player', rnd(5, 15), rnd(0, 25), rnd(5, 35))),
+    () =>
+      tagActivityLogEntryAsTest(buildEnergyLogEntry(rnd(1, 4), rnd(2, 7), { reason: 'Synthetic' })),
+    () => tagActivityLogEntryAsTest(buildBuffLogEntry('Strength', rnd(1, 3), 'player')),
+    () =>
+      tagActivityLogEntryAsTest(buildDebuffLogEntry('Vulnerable', rnd(1, 2), 'enemy', pickEnemy())),
+    () =>
+      tagActivityLogEntryAsTest(buildBlockLostLogEntry('player', rnd(3, 8), rnd(15, 28), rnd(5, 22))),
+    () =>
+      tagActivityLogEntryAsTest(
+        buildActionLogEntry('Moved card (noise)', [{ card: { name: 'Strike', type: 'Attack' } }]),
+      ),
+  ];
+
+  const out: ActivityLogEntry[] = [];
+  const n = Math.min(48, Math.max(1, count));
+  for (let i = 0; i < n; i++) {
+    out.push(builders[rnd(0, builders.length - 1)]!());
+  }
+  return out;
+}

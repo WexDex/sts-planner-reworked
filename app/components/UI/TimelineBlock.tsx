@@ -135,7 +135,13 @@ export default function TimelineBlock() {
     decisionNodes,
     activeDecisionNodeId,
     saveCurrentTurn,
+    syncActiveDecisionNodeFromPlanner,
   } = useGameManager();
+
+  /** Flush live board state into the planner turn row when this panel mounts (e.g. mobile timeline sheet). */
+  useEffect(() => {
+    syncActiveDecisionNodeFromPlanner();
+  }, [syncActiveDecisionNodeFromPlanner]);
 
   const activeTurnRef = useRef<HTMLDivElement | null>(null);
   const [expandedTurns, setExpandedTurns] = useState<Record<number, boolean>>({});

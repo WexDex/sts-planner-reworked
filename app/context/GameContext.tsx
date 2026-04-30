@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import {
   CombatData,
   Card,
@@ -14,6 +14,7 @@ import {
 import {
   loadFromFile,
   cloneGameData,
+  combatSnapshotsEqual,
   saveToLocalStorage,
   loadFromLocalStorage,
   LANTERN_RELIC_NAME,
@@ -33,6 +34,7 @@ import {
   buildDebuffLogEntry,
   buildDebuffRemovedLogEntry,
   formatPlayCardTargets,
+  generateTestNoiseActivityLogEntries,
 } from '@/app/utils/activityLogger';
 import defaultCombatFromFile from '@/app/data/EliteSlavers.json';
 import {
@@ -48,6 +50,7 @@ import {
   buildTurnStatesFromBranchPath,
   defaultForkDecisionLabel,
   eligibleDecisionReparentParents,
+  effectivePlannerTurnSlotId,
   isValidDecisionReparent,
   normalizeDecisionNodePlannerSlots,
 } from '@/app/utils/decisionTreeHelpers';
@@ -144,6 +147,12 @@ interface GameContextType {
   forkDecisionBranch: (label?: string) => void;
   /** Restore combat + planner slot from a node’s snapshot (autosaves prior active node). */
   jumpToDecisionNode: (nodeId: string) => void;
+  /**
+   * Copy live planner combat (`gameState`) into the active decision node (when set) and **persist**
+   * the current planner turn row (`turns[currentTurnIndex]`) so slot snapshots stay aligned — use when
+   * opening Decision Timeline or the turn timeline panel after editing on the main board.
+   */
+  syncActiveDecisionNodeFromPlanner: () => void;
   /** Remove a node and all descendants (cannot delete root). */
   deleteDecisionBranch: (nodeId: string) => void;
   updateDecisionNodeLabel: (nodeId: string, label: string) => void;
@@ -160,6 +169,11 @@ interface GameContextType {
    * TEST ONLY: picks a random valid parent for each branch checkpoint. **Remove before release** (search `REMOVE_BEFORE_SHIP`).
    */
   randomizeDecisionTimelineParentsForTesting: () => void;
+  /**
+   * TEST ONLY: append `(TEST)`-tagged synthetic rows to `turns[turnIndex].state.activityLog` (main planner).
+   * When `turnIndex` is the active turn, also updates live `gameState.activityLog`.
+   */
+  appendTestNoiseLogsForPlannerTurnIndex: (turnIndex: number, options?: { count?: number }) => void;
   /** Set planner phase marker on a turn checkpoint; writes a row to that node's snapshot log (and live log if active). */
   updateDecisionNodeTurnPhase: (nodeId: string, phase: CombatTurnPhase) => void;
 }
@@ -175,6 +189,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [initialData, setInitialData] = useState<CombatData | null>(null);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [currentTurnIndex, setCurrentTurnIndex] = useState(0);
+  const currentTurnIndexRef = useRef(0);
+  currentTurnIndexRef.current = currentTurnIndex;
   const [turnPhase, setTurnPhase] = useState<CombatTurnPhase>('start');
   const [decisionNodes, setDecisionNodes] = useState<DecisionNode[]>([]);
   const [activeDecisionNodeId, setActiveDecisionNodeId] = useState<string | null>(null);
@@ -845,6 +861,60 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     [activeDecisionNodeId, decisionNodes, gameState, turns, currentTurnIndex, turnPhase],
   );
 
+  const syncActiveDecisionNodeFromPlanner = useCallback(() => {
+    if (!gameState) return;
+
+    if (activeDecisionNodeId) {
+      setDecisionNodes((prev) => {
+        const snap = cloneGameData(gameState);
+        const idx = currentTurnIndexRef.current;
+        const slotId = turns[idx]?.id;
+
+        const byIdWalk = new Map(prev.map((x) => [x.id, x] as const));
+        const inActiveSubtree = (nodeId: string): boolean => {
+          let cur = byIdWalk.get(nodeId);
+          while (cur) {
+            if (cur.id === activeDecisionNodeId) return true;
+            cur = cur.parentId ? byIdWalk.get(cur.parentId) : undefined;
+          }
+          return false;
+        };
+
+        const nextNodes = prev.map((n) => {
+          if (n.timelineRole === 'timeline_start' || n.parentId === null) {
+            return n;
+          }
+          let patch = false;
+          if (
+            slotId != null &&
+            inActiveSubtree(n.id) &&
+            effectivePlannerTurnSlotId(prev, n, turns) === slotId
+          ) {
+            patch = true;
+          } else if (slotId == null && n.id === activeDecisionNodeId) {
+            patch = true;
+          }
+          if (patch) {
+            return { ...n, snapshot: snap, turnPhase };
+          }
+          return n;
+        });
+
+        return normalizeDecisionNodePlannerSlots(nextNodes, turns);
+      });
+    }
+
+    const idx = currentTurnIndexRef.current;
+    setTurns((prev) => {
+      if (idx < 0 || idx >= prev.length) return prev;
+      const slot = prev[idx];
+      if (combatSnapshotsEqual(slot.state, gameState)) return prev;
+      return prev.map((turn, i) =>
+        i === idx ? { ...turn, state: cloneGameData(gameState) } : turn,
+      );
+    });
+  }, [gameState, activeDecisionNodeId, turnPhase, turns]);
+
   const deleteDecisionBranch = useCallback(
     (nodeId: string) => {
       const target = decisionNodes.find((n) => n.id === nodeId);
@@ -1033,6 +1103,37 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     });
     toast('TEST: randomized timeline parents (remove dev tool)', 'warning', { durationMs: 1500 });
   }, [turns]);
+
+  const appendTestNoiseLogsForPlannerTurnIndex = useCallback(
+    (turnIndex: number, options?: { count?: number }) => {
+      if (turnIndex < 0 || turnIndex >= turns.length) {
+        toast('Invalid planner turn', 'warning');
+        return;
+      }
+      const count = Math.min(48, Math.max(1, options?.count ?? 12));
+      const entries = generateTestNoiseActivityLogEntries(count);
+      const slotId = turns[turnIndex]?.id;
+
+      setTurns((prev) =>
+        prev.map((t, i) => {
+          if (i !== turnIndex) return t;
+          const st = cloneGameData(t.state);
+          st.activityLog = [...st.activityLog, ...entries];
+          return { ...t, state: st };
+        }),
+      );
+
+      if (turnIndex === currentTurnIndexRef.current) {
+        setGameState((prev) => {
+          if (!prev) return prev;
+          return { ...prev, activityLog: [...prev.activityLog, ...entries] };
+        });
+      }
+
+      toast(`(TEST) Added ${count} lines to turn ${slotId ?? turnIndex + 1}`, 'info', { durationMs: 1400 });
+    },
+    [turns],
+  );
 
   const getSelectedCards = (state: CombatData) => {
     const locations = ['draw', 'discard', 'exhaust', 'hand', 'playedCards'];
@@ -1906,6 +2007,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         activeDecisionNodeId,
         forkDecisionBranch,
         jumpToDecisionNode,
+        syncActiveDecisionNodeFromPlanner,
         deleteDecisionBranch,
         updateDecisionNodeLabel,
         decisionTimelinePositions,
@@ -1914,6 +2016,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         applyDecisionBranchToPlanner,
         linkDecisionTimelineParent,
         randomizeDecisionTimelineParentsForTesting,
+        appendTestNoiseLogsForPlannerTurnIndex,
         updateDecisionNodeTurnPhase,
       }}
     >
