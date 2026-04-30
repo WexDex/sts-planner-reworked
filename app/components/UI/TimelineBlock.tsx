@@ -34,6 +34,7 @@ import {
 import { toast } from "@/app/utils/toast";
 import { combatSnapshotsEqual } from "@/app/utils/gameHelpers";
 import {
+  getDecisionTimelineSpineMeta,
   outgoingDecisionBranchCountForPlannerSlot,
   turnsVisibleForActiveDecisionLineage,
 } from "@/app/utils/decisionTreeHelpers";
@@ -153,6 +154,44 @@ export default function TimelineBlock() {
     }
     return { displayTurns: lineageTurns, timelineFilteredToLineage: true };
   }, [decisionNodes, activeDecisionNodeId, turns]);
+
+  /** User-facing {@link DecisionNode.label} along the pinned path — deepest checkpoint per planner row (aligned with Decision timeline spine). */
+  const decisionTimelineLabelBySlotId = useMemo(() => {
+    const out = new Map<number, string>();
+    if (!activeDecisionNodeId || decisionNodes.length === 0) return out;
+    const { canonicalNodeIdBySlot } = getDecisionTimelineSpineMeta(
+      decisionNodes,
+      activeDecisionNodeId,
+      turns,
+    );
+    const byId = new Map(decisionNodes.map((n) => [n.id, n] as const));
+    for (const [slot, nodeId] of canonicalNodeIdBySlot) {
+      const trimmed = byId.get(nodeId)?.label?.trim() ?? "";
+      if (trimmed) out.set(slot, trimmed);
+    }
+    return out;
+  }, [activeDecisionNodeId, decisionNodes, turns]);
+
+  /**
+   * Second headline segment: spine label for this planner row when present, else default `Turn {rowId}`
+   * using the real planner {@link Turn.id}. The leading `Turn X` in the box is the path projection index.
+   */
+  const timelineTurnSubtitleByPlannerRowId = useMemo(() => {
+    const spine = decisionTimelineLabelBySlotId;
+    const m = new Map<number, string>();
+    displayTurns.forEach((t) => {
+      const raw = spine.get(t.id)?.trim();
+      if (!raw?.length) {
+        m.set(t.id, `Turn ${t.id}`);
+        return;
+      }
+      const numMatch = raw.match(/^turn\s*(\d+)$/i);
+      const name =
+        numMatch !== null && Number(numMatch[1]) === t.id ? `Turn ${t.id}` : raw;
+      m.set(t.id, name);
+    });
+    return m;
+  }, [decisionTimelineLabelBySlotId, displayTurns]);
 
   const turnsData = useMemo(() => {
     const map = new Map<number, TurnSummary>();
@@ -397,7 +436,7 @@ export default function TimelineBlock() {
         <div className={TIMELINE_ZONE}>
           <p className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
             <History className="h-3 w-3 text-cyan-500/80" strokeWidth={2} />
-            Intent preview by turn
+            Intent preview{timelineFilteredToLineage ? ' · active path' : ''}
           </p>
 
           {plannerRows.length === 0 ? (
@@ -407,6 +446,9 @@ export default function TimelineBlock() {
           ) : (
             <div className="flex flex-col gap-2">
               {plannerRows.map((row, index) => {
+                const turnCount = index + 1;
+                const turnSubtitle =
+                  timelineTurnSubtitleByPlannerRowId.get(row.id) ?? `Turn ${row.id}`;
                 const isActive = row.id === currentTurnId;
                 const summary = row.summary;
                 const lines = summary?.enemySummaries ?? [];
@@ -419,7 +461,7 @@ export default function TimelineBlock() {
                     <button
                       type="button"
                       onClick={() => setCurrentTurn(row.id)}
-                      title={`${row.combatName} · Turn ${row.id}`}
+                      title={`${row.combatName} · Turn ${turnCount} · ${turnSubtitle} · Planner row ${row.id}`}
                       className={`w-full max-w-full rounded-xl border-2 p-2.5 text-left transition-all duration-200 ${
                         isActive && currentTurnHasUnsavedChanges
                           ? "border-amber-400/75 bg-linear-to-b from-amber-950/70 via-amber-950/45 to-slate-950/90 text-slate-100 shadow-md shadow-amber-950/35 ring-1 ring-amber-300/30"
@@ -441,9 +483,19 @@ export default function TimelineBlock() {
                               }`}
                               strokeWidth={2}
                             />
-                            <span className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-sm font-bold text-slate-100">
-                              <span className="min-w-0 truncate">{row.combatName}</span>
-                              <span className="shrink-0 tabular-nums text-slate-400">· Turn {row.id}</span>
+                            <span className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+                              <span className="shrink-0 text-sm font-bold tabular-nums tracking-tight text-slate-100">
+                                Turn {turnCount}
+                              </span>
+                              <span className="shrink-0 text-[10px] leading-none text-slate-600" aria-hidden>
+                                ·
+                              </span>
+                              <span
+                                className="min-w-0 max-w-[13rem] truncate text-[10px] font-medium leading-none tabular-nums text-slate-500 md:max-w-[15rem]"
+                                title={turnSubtitle}
+                              >
+                                {turnSubtitle}
+                              </span>
                             </span>
                             {isActive ? (
                               <span className="rounded-md bg-cyan-500/20 px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-cyan-200">

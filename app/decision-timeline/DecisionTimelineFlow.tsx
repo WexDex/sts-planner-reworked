@@ -44,6 +44,7 @@ import {
   ScrollText,
   Skull,
   Trash2,
+  Unlink,
   X,
 } from 'lucide-react';
 import { useGameManager, type DecisionTimelinePositionMap } from '@/app/context/GameContext';
@@ -88,6 +89,12 @@ import { useRouter } from 'next/navigation';
 
 /** Match Turn timeline: collapse long enemy lists on branch cards. */
 const BRANCH_INTENT_PREVIEW_MAX = 4;
+
+/** 32×32-ish hit targets (~44px is full touch guideline; slight padding helps without crowding canvas). */
+const DTL_CARD_TOOLBAR_HIT =
+  'flex min-h-8 min-w-8 shrink-0 cursor-pointer touch-manipulation items-center justify-center rounded-md border border-slate-600/55 bg-slate-900/95 p-0 text-slate-300 transition-colors hover:bg-slate-800';
+const DTL_CARD_TOOLBAR_ROW =
+  'nodrag nopan absolute right-1 top-1 z-20 flex items-center gap-0.5 rounded-md border border-slate-600/70 bg-slate-950/95 p-0.5 shadow-md backdrop-blur-sm';
 
 /** Keep aligned with `MainFieldBlock` `ACTIVITY_LOG_DENSITY_KEY`. */
 const ACTIVITY_LOG_INLINE_DENSITY_KEY = 'sts-activity-log-inline-density';
@@ -650,21 +657,18 @@ const DecisionStartCard = memo(function DecisionStartCard({ data }: { id: string
     >
       <DtlCardPortHandles />
       <RelinkRoleBadge role={data.relinkPanelRole} placement="start" />
-      <div
-        className="nodrag nopan absolute right-1 top-1 z-20 flex items-center gap-px rounded-md border border-slate-600/70 bg-slate-950/95 p-px shadow-md backdrop-blur-sm"
-        onPointerDown={(e) => e.stopPropagation()}
-      >
+      <div className={`${DTL_CARD_TOOLBAR_ROW}`} onPointerDown={(e) => e.stopPropagation()}>
         <button
           type="button"
           title={`Edit turn — open main planner (row ${effectivePlannerSlotId})`}
           aria-label={`Edit turn ${effectivePlannerSlotId} on main planner`}
-          className="flex h-7 w-7 shrink-0 cursor-pointer touch-manipulation items-center justify-center rounded border border-slate-600/55 bg-slate-900/95 p-0 text-slate-300 transition-colors hover:bg-slate-800"
+          className={`${DTL_CARD_TOOLBAR_HIT} nodrag nopan`}
           onClick={(e) => {
             e.stopPropagation();
             goEditTurnOnMain(effectivePlannerSlotId);
           }}
         >
-          <LayoutDashboard className="h-3 w-3" strokeWidth={2} aria-hidden />
+          <LayoutDashboard className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
         </button>
       </div>
       <div
@@ -673,6 +677,9 @@ const DecisionStartCard = memo(function DecisionStartCard({ data }: { id: string
       />
       <p className="relative z-[2] text-[12px] font-black tracking-[0.22em] text-amber-50">START</p>
       <p className="relative z-[2] mt-0.5 text-[9px] font-bold uppercase text-amber-400/95">STATIC</p>
+      <p className="relative z-[2] mt-1 text-[10px] font-semibold tabular-nums text-amber-200/85">
+        Turn {effectivePlannerSlotId}
+      </p>
     </div>
     </div>
   );
@@ -683,6 +690,7 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
   const {
     jumpToDecisionNode,
     deleteDecisionBranch,
+    unlinkDecisionTimelineBranch,
     updateDecisionNodeLabel,
     updateDecisionNodeTurnPhase,
     decisionNodes,
@@ -706,6 +714,7 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
 
   const [inlineLogDensity, setInlineLogDensity] = useState<ActivityLogInlineDensity>('minimal');
   const [logModalOpen, setLogModalOpen] = useState(false);
+  const [logsSectionExpanded, setLogsSectionExpanded] = useState(true);
   const [portalMounted, setPortalMounted] = useState(false);
   const [intentsExpanded, setIntentsExpanded] = useState(false);
 
@@ -783,9 +792,26 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
     [interact, decisionNode.id],
   );
 
-  const btnCls = 'nodrag nopan cursor-pointer touch-manipulation';
-  const iconToolbarBtn =
-    'flex h-7 w-7 shrink-0 items-center justify-center rounded border border-slate-600/55 bg-slate-900/95 p-0 text-slate-300 transition-colors hover:bg-slate-800';
+  const onUnlinkBranch = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!decisionNode.parentId) return;
+      if (interact?.reparentSourceId === decisionNode.id) {
+        interact.setReparentSourceId(null);
+      }
+      interact?.setReparentHoverParentId(null);
+      interact?.disarmMovingBranchFromCard(decisionNode.id);
+      unlinkDecisionTimelineBranch(decisionNode.id);
+    },
+    [
+      interact,
+      decisionNode.id,
+      decisionNode.parentId,
+      unlinkDecisionTimelineBranch,
+    ],
+  );
+
+  const iconToolbarHit = `${DTL_CARD_TOOLBAR_HIT} nodrag nopan`;
   const accentShell = plannerPhaseTimelineCardAccent(decisionNode.turnPhase, isSlotActive && !isPinned);
   const reparentSelf = interact?.reparentSourceId === decisionNode.id;
   const orphanShell = data.isOrphan
@@ -824,32 +850,29 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
       ) : null}
       <div className={`pointer-events-none absolute left-0 right-0 top-0 z-[2] h-[5px] ${plannerPhaseStripClass(decisionNode.turnPhase)}`} aria-hidden />
 
-      <div
-        className="nodrag nopan absolute right-1 top-1 z-20 flex items-center gap-px rounded-md border border-slate-600/70 bg-slate-950/95 p-px shadow-md backdrop-blur-sm"
-        onPointerDown={(e) => e.stopPropagation()}
-      >
+      <div className={`${DTL_CARD_TOOLBAR_ROW}`} onPointerDown={(e) => e.stopPropagation()}>
         <button
           type="button"
           title="Rename"
-          className={`${iconToolbarBtn} ${btnCls}`}
+          className={iconToolbarHit}
           onClick={(e) => {
             e.stopPropagation();
             onRename();
           }}
         >
-          <Pencil className="h-3 w-3" strokeWidth={2} aria-hidden />
+          <Pencil className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
         </button>
         <button
           type="button"
           title={`Edit turn — open main planner (row ${effectivePlannerSlotId})`}
           aria-label={`Edit turn ${effectivePlannerSlotId} on main planner`}
-          className={`${iconToolbarBtn} ${btnCls}`}
+          className={iconToolbarHit}
           onClick={(e) => {
             e.stopPropagation();
             goEditTurnOnMain(effectivePlannerSlotId);
           }}
         >
-          <LayoutDashboard className="h-3 w-3" strokeWidth={2} aria-hidden />
+          <LayoutDashboard className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
         </button>
         <button
           type="button"
@@ -858,26 +881,34 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
               ? 'Cancel relink'
               : 'Link parent — hover a valid node, then click it (or use Relink panel: toggles + click nodes)'
           }
-          className={`${iconToolbarBtn} ${btnCls} ${
-            reparentSelf
-              ? 'border-sky-500/70 bg-sky-950/85 text-sky-100'
-              : ''
+          className={`${iconToolbarHit} ${
+            reparentSelf ? 'border-sky-500/70 bg-sky-950/85 text-sky-100' : ''
           }`}
           onClick={toggleReparentMode}
         >
-          <Link2 className="h-3 w-3" strokeWidth={2} aria-hidden />
+          <Link2 className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
         </button>
+        {decisionNode.parentId ? (
+          <button
+            type="button"
+            title="Unlink from parent — makes this checkpoint an orphan (relink later)"
+            className={`${iconToolbarHit} border-amber-500/45 bg-amber-950/40 text-amber-100 hover:bg-amber-900/35`}
+            onClick={onUnlinkBranch}
+          >
+            <Unlink className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+          </button>
+        ) : null}
         {!isRoot ? (
           <button
             type="button"
             title="Delete branch"
-            className={`${iconToolbarBtn} border-rose-500/40 bg-rose-950/50 text-rose-200 hover:bg-rose-900/55 ${btnCls}`}
+            className={`${iconToolbarHit} border-rose-500/40 bg-rose-950/50 text-rose-200 hover:bg-rose-900/55`}
             onClick={(e) => {
               e.stopPropagation();
               deleteDecisionBranch(decisionNode.id);
             }}
           >
-            <Trash2 className="h-3 w-3" strokeWidth={2} aria-hidden />
+            <Trash2 className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
           </button>
         ) : null}
       </div>
@@ -886,13 +917,14 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
         <div className="mb-1 flex flex-col gap-0.5 pr-14">
           <p
             className="text-[13px] font-black tabular-nums tracking-tight text-slate-50"
-            title={`${breadcrumbDisplay} · Planner turn row ${effectivePlannerSlotId}.`}
+            title={`Planner turn ${effectivePlannerSlotId} · ${breadcrumbDisplay} · tree depth ${bd.treeDepth}`}
           >
             Turn{' '}
-            <span className="text-cyan-300">{bd.treeDepth}</span>
+            <span className="text-cyan-300">{effectivePlannerSlotId}</span>
             <span className="ml-1.5 text-[10px] font-bold uppercase tabular-nums text-slate-500">
               Branch {bd.branchOrdinal}/{bd.branchPeerCount}
             </span>
+            <span className="ml-1.5 text-[9px] font-semibold tabular-nums text-slate-600">· depth {bd.treeDepth}</span>
           </p>
         </div>
 
@@ -1016,17 +1048,39 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
           onPointerDown={(e) => e.stopPropagation()}
           onWheelCapture={stopWheelZoomOnPane}
         >
-          <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-              Log <span className="tabular-nums text-slate-500">({logEntries.length})</span>
-            </span>
-            <div className="flex flex-wrap gap-1">
+          <div className="mb-1 flex flex-wrap items-start gap-x-2 gap-y-2">
+            <button
+              type="button"
+              className={`nodrag nopan flex min-h-8 min-w-0 flex-1 shrink items-center gap-1 rounded-lg border px-2 py-1 text-left transition-colors ${
+                logsSectionExpanded
+                  ? 'border-slate-600/70 bg-slate-900/35 text-slate-200 hover:bg-slate-800/50'
+                  : 'border-slate-700/50 bg-slate-950/50 text-slate-400 hover:bg-slate-900/65'
+              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setLogsSectionExpanded((v) => !v);
+              }}
+              aria-expanded={logsSectionExpanded}
+            >
+              {logsSectionExpanded ? (
+                <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-500" aria-hidden strokeWidth={2} />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-500" aria-hidden strokeWidth={2} />
+              )}
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">
+                Log <span className="tabular-nums text-slate-500">({logEntries.length})</span>
+              </span>
+              {!logsSectionExpanded ? (
+                <span className="ml-auto text-[9px] font-normal text-slate-600">Collapsed</span>
+              ) : null}
+            </button>
+            <div className="flex flex-wrap gap-1 sm:justify-end">
               <button
                 type="button"
-                className={`rounded-md border px-1.5 py-px text-[8px] font-semibold ${
+                className={`nodrag nopan min-h-8 rounded-md border px-2 py-1 text-[9px] font-semibold transition-colors sm:px-2.5 ${
                   inlineLogDensity === 'minimal'
                     ? 'border-violet-500/50 bg-violet-950/55 text-violet-100'
-                    : 'border-slate-600 bg-slate-900 text-slate-400'
+                    : 'border-slate-600 bg-slate-900 text-slate-400 hover:bg-slate-800'
                 }`}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -1037,10 +1091,10 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
               </button>
               <button
                 type="button"
-                className={`rounded-md border px-1.5 py-px text-[8px] font-semibold ${
+                className={`nodrag nopan min-h-8 rounded-md border px-2 py-1 text-[9px] font-semibold transition-colors sm:px-2.5 ${
                   inlineLogDensity === 'detailed'
                     ? 'border-violet-500/50 bg-violet-950/55 text-violet-100'
-                    : 'border-slate-600 bg-slate-900 text-slate-400'
+                    : 'border-slate-600 bg-slate-900 text-slate-400 hover:bg-slate-800'
                 }`}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -1052,11 +1106,11 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
               <button
                 type="button"
                 disabled={logEntries.length === 0}
-                className={`rounded-md border px-1.5 py-px text-[8px] font-semibold ${
+                className={`nodrag nopan min-h-8 rounded-md border px-2 py-1 text-[9px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 sm:px-2.5 ${
                   logModalOpen
                     ? 'border-amber-500/50 bg-amber-950/45 text-amber-100'
-                    : 'border-slate-600 bg-slate-900 text-slate-400'
-                } disabled:cursor-not-allowed disabled:opacity-40`}
+                    : 'border-slate-600 bg-slate-900 text-slate-400 hover:bg-slate-800'
+                }`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setLogModalOpen(true);
@@ -1069,25 +1123,33 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
             </div>
           </div>
 
-          {logEntries.length === 0 ? (
-            <p className="py-2 text-center text-[10px] text-slate-600">No new log entries for this step.</p>
-          ) : (
-            <div className="relative">
-              {inlineLogDensity === 'detailed' ? (
+          {logsSectionExpanded ? (
+            logEntries.length === 0 ? (
+              <p className="py-2 text-center text-[10px] text-slate-600">No new log entries for this step.</p>
+            ) : (
+              <div className="relative">
+                {inlineLogDensity === 'detailed' ? (
+                  <div
+                    className="pointer-events-none absolute bottom-0 left-[21px] top-2 w-px bg-slate-700/80"
+                    aria-hidden
+                  />
+                ) : null}
                 <div
-                  className="pointer-events-none absolute bottom-0 left-[21px] top-2 w-px bg-slate-700/80"
-                  aria-hidden
-                />
-              ) : null}
-              <div
-                className="max-h-44 overflow-y-auto overscroll-contain py-1 pr-0.5 [scrollbar-width:thin]"
-                onWheelCapture={stopWheelZoomOnPane}
-              >
-                {[...logEntries].reverse().map((entry) => (
-                  <ActivityLogRowInline key={entry.id} entry={entry} density={inlineLogDensity} />
-                ))}
+                  className="max-h-44 overflow-y-auto overscroll-contain py-1 pr-0.5 [scrollbar-width:thin]"
+                  onWheelCapture={stopWheelZoomOnPane}
+                >
+                  {[...logEntries].reverse().map((entry) => (
+                    <ActivityLogRowInline key={entry.id} entry={entry} density={inlineLogDensity} />
+                  ))}
+                </div>
               </div>
-            </div>
+            )
+          ) : (
+            logEntries.length > 0 ? (
+              <p className="py-1.5 text-center text-[9px] text-slate-600">
+                Expand to preview inline logs, or tap <span className="font-semibold text-slate-400">Full</span>.
+              </p>
+            ) : null
           )}
         </div>
 
@@ -1103,7 +1165,7 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
                   effectivePlannerSlotId +
                   ' (timeline row differs from planner selection)'
           }
-          className={`mt-2 w-full rounded-lg border py-1.5 text-[10px] font-semibold ${btnCls} ${
+          className={`nodrag nopan mt-2 w-full cursor-pointer touch-manipulation rounded-lg border py-1.5 text-[10px] font-semibold ${
             isPinned
               ? 'cursor-default border-slate-600/55 bg-slate-900/50 text-slate-500 opacity-95'
               : 'border-cyan-500/45 bg-cyan-950/50 text-cyan-100 hover:bg-cyan-900/55'
@@ -1146,8 +1208,8 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
                     <p className="mt-0.5 truncate text-xs font-semibold text-slate-300">{decisionNode.label}</p>
                     <div className="mt-2 space-y-1 text-[11px] leading-snug text-slate-400">
                       <p className="font-semibold tabular-nums text-slate-300">
-                        Turn depth {bd.treeDepth} · Branch {bd.branchOrdinal}/{bd.branchPeerCount} · Planner row{' '}
-                        {effectivePlannerSlotId}
+                        Planner turn {effectivePlannerSlotId} · Branch {bd.branchOrdinal}/{bd.branchPeerCount} · Depth{' '}
+                        {bd.treeDepth}
                       </p>
                       <p className="text-slate-500">
                         Center: delta vs parent ({logEntries.length} new{' '}
@@ -1660,7 +1722,7 @@ function DecisionTimelineCanvas({ onSelectedNodeIdChange }: DecisionTimelineFlow
     mergeDecisionTimelinePositions,
     linkDecisionTimelineParent,
     randomizeDecisionTimelineParentsForTesting,
-    syncActiveDecisionNodeFromPlanner,
+    saveGameData,
   } = useGameManager();
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<DecisionFlowNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -1685,14 +1747,15 @@ function DecisionTimelineCanvas({ onSelectedNodeIdChange }: DecisionTimelineFlow
     memberIds: string[];
     memberStarts: Map<string, { x: number; y: number }>;
   } | null>(null);
+  /** Bumps XYFlow rebuild after relink/organize so main-spine edge styling stays in sync with topology. */
+  const [timelineGraphRefreshNonce, setTimelineGraphRefreshNonce] = useState(0);
+  const bumpTimelineGraphRefresh = useCallback(() => {
+    setTimelineGraphRefreshNonce((n) => n + 1);
+  }, []);
   /** After relink / randomize topology, run Organize on the next `decisionNodes` commit. */
   const pendingOrganizeAfterTopologyRef = useRef(false);
 
-  /** Match main planner activity log before rendering nodes (logs / intents / HP from live `gameState`). */
-  useEffect(() => {
-    if (isLoading || !gameState) return;
-    syncActiveDecisionNodeFromPlanner();
-  }, [isLoading, gameState, syncActiveDecisionNodeFromPlanner]);
+  /** XYFlow renders from `decisionNodes` + `gameState`; Provider syncs snapshots on every live `gameState` change. */
 
   const toggleClusterSnapDepth = useCallback((depth: number) => {
     setSnapLockedDepths((prev) => {
@@ -1738,13 +1801,14 @@ function DecisionTimelineCanvas({ onSelectedNodeIdChange }: DecisionTimelineFlow
   const applyRelinkFromPanel = useCallback(() => {
     if (!relinkChildId || !relinkParentId || relinkParentId === relinkOldParentId) return;
     linkDecisionTimelineParent(relinkChildId, relinkParentId);
+    bumpTimelineGraphRefresh();
     setRelinkChildId(null);
     setRelinkParentId(null);
     setRelinkPickMode(null);
     setReparentSourceId(null);
     setReparentHoverParentId(null);
     pendingOrganizeAfterTopologyRef.current = true;
-  }, [relinkChildId, relinkParentId, relinkOldParentId, linkDecisionTimelineParent]);
+  }, [relinkChildId, relinkParentId, relinkOldParentId, linkDecisionTimelineParent, bumpTimelineGraphRefresh]);
 
   /** Toolbar Link2 arms a branch → mirror it in the Relink panel and clear stale new-parent pick. */
   useEffect(() => {
@@ -1777,10 +1841,21 @@ function DecisionTimelineCanvas({ onSelectedNodeIdChange }: DecisionTimelineFlow
     const patch = computeOrganizePositionPatch(decisionNodes, organizeOrientation);
     if (Object.keys(patch).length === 0) return;
     mergeDecisionTimelinePositions(patch);
+    bumpTimelineGraphRefresh();
+    window.setTimeout(() => {
+      saveGameData();
+    }, 0);
     requestAnimationFrame(() => {
       fitView({ padding: 0.14, duration: 320 });
     });
-  }, [decisionNodes, organizeOrientation, mergeDecisionTimelinePositions, fitView]);
+  }, [
+    decisionNodes,
+    organizeOrientation,
+    mergeDecisionTimelinePositions,
+    fitView,
+    bumpTimelineGraphRefresh,
+    saveGameData,
+  ]);
 
   useEffect(() => {
     if (!pendingOrganizeAfterTopologyRef.current) return;
@@ -1888,6 +1963,7 @@ function DecisionTimelineCanvas({ onSelectedNodeIdChange }: DecisionTimelineFlow
     relinkParentId,
     reparentSourceId,
     reparentHoverParentId,
+    timelineGraphRefreshNonce,
     setNodes,
     setEdges,
   ]);
@@ -1895,7 +1971,6 @@ function DecisionTimelineCanvas({ onSelectedNodeIdChange }: DecisionTimelineFlow
   const defaultEdgeOptions = useMemo(
     () => ({
       type: curvedLinks ? ('default' as const) : ('straight' as const),
-      animated: false,
       interactionWidth: 14,
       style: { strokeWidth: 1.1, stroke: '#5e6875' },
       markerEnd: {
@@ -2045,6 +2120,7 @@ function DecisionTimelineCanvas({ onSelectedNodeIdChange }: DecisionTimelineFlow
       if (!eligibleParentIdSet.has(node.id)) return;
       const movedBranchId = reparentSourceId;
       linkDecisionTimelineParent(movedBranchId, node.id);
+      bumpTimelineGraphRefresh();
       pendingOrganizeAfterTopologyRef.current = true;
       setRelinkChildId(null);
       setRelinkParentId(null);
@@ -2060,6 +2136,7 @@ function DecisionTimelineCanvas({ onSelectedNodeIdChange }: DecisionTimelineFlow
       reparentSourceId,
       eligibleParentIdSet,
       linkDecisionTimelineParent,
+      bumpTimelineGraphRefresh,
     ],
   );
 
@@ -2168,7 +2245,7 @@ function DecisionTimelineCanvas({ onSelectedNodeIdChange }: DecisionTimelineFlow
               <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Relink</span>
               <button
                 type="button"
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-slate-600/80 text-slate-400 transition hover:border-slate-500 hover:bg-slate-800 hover:text-slate-100"
+                className={`nodrag nopan ${DTL_CARD_TOOLBAR_HIT} text-slate-400`}
                 title={relinkPanelMinimized ? 'Expand relink panel' : 'Minimize relink panel'}
                 aria-expanded={!relinkPanelMinimized}
                 onClick={() => setRelinkPanelMinimized((v) => !v)}
@@ -2466,7 +2543,7 @@ function DecisionTimelineCanvas({ onSelectedNodeIdChange }: DecisionTimelineFlow
             position="bottom-center"
             className="pointer-events-none m-0 max-w-[min(40rem,92vw)] rounded-lg border border-slate-700/40 bg-slate-950/85 px-2 py-1 text-center text-[10px] text-slate-400 shadow-md backdrop-blur-sm"
           >
-            Curved or straight: <span className="font-semibold text-slate-300">Links</span> bottom-left (default layout is horizontal organize). <span className="font-semibold text-slate-300">Relink</span> top-right — card Link or panel; dashed preview edges. <span className="font-semibold text-rose-300">Rose</span> cards: orphan (relink to fix). <span className="font-semibold text-slate-300">Organize</span> reflows after relink / randomize.
+            Curved or straight: <span className="font-semibold text-slate-300">Links</span> bottom-left (default layout is horizontal organize). <span className="font-semibold text-slate-300">Relink</span> top-right — card Link or panel; dashed preview edges. Card <span className="font-semibold text-amber-200">Unlink</span> clears the parent edge (rose orphan until relinked). <span className="font-semibold text-rose-300">Rose</span> frame: orphan. <span className="font-semibold text-slate-300">Organize</span> reflows after topology changes.
           </Panel>
           <FitViewOnStructureChange structureKey={structureKey} />
         </ReactFlow>

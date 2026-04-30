@@ -27,7 +27,7 @@ export default function DecisionTimelinePage() {
 
   return (
     <div className="relative flex h-dvh min-h-0 flex-col bg-slate-950 text-slate-100">
-      <ToastStack placement="topLeft" />
+      <ToastStack placement="topRight" />
       <header className="shrink-0 border-b border-slate-800/90 bg-slate-900/90 px-4 py-3 shadow-md shadow-black/20">
         <div className="mx-auto flex max-w-[1600px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-3">

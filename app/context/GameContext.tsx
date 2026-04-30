@@ -167,6 +167,8 @@ interface GameContextType {
   applyDecisionBranchToPlanner: (nodeId: string) => void;
   /** Point an existing node's parent at another node (keeps START as root); no cycles. */
   linkDecisionTimelineParent: (nodeId: string, newParentId: string) => void;
+  /** Detach branch from parent (parentId → null — orphan until relinked). Not allowed for START. */
+  unlinkDecisionTimelineBranch: (nodeId: string) => void;
   /**
    * TEST ONLY: picks a random valid parent for each branch checkpoint. **Remove before release** (search `REMOVE_BEFORE_SHIP`).
    */
@@ -193,6 +195,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [currentTurnIndex, setCurrentTurnIndex] = useState(0);
   const currentTurnIndexRef = useRef(0);
   currentTurnIndexRef.current = currentTurnIndex;
+  /** Holds latest planner↔timeline sync impl so the sync effect avoids depending on unstable callback identity (`turns` churn). */
+  const syncActiveDecisionNodeFromPlannerRef = useRef<() => void>(() => {});
   const [turnPhase, setTurnPhase] = useState<CombatTurnPhase>('start');
   const [decisionNodes, setDecisionNodes] = useState<DecisionNode[]>([]);
   const [activeDecisionNodeId, setActiveDecisionNodeId] = useState<string | null>(null);
@@ -963,6 +967,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     });
   }, [gameState, activeDecisionNodeId, turnPhase, turns]);
 
+  syncActiveDecisionNodeFromPlannerRef.current = syncActiveDecisionNodeFromPlanner;
+
+  /** Align `turns[currentTurnIndex]` + active subtree decision snapshots whenever live `gameState` changes (e.g. activity log). */
+  useEffect(() => {
+    if (isLoading || !gameState) return;
+    syncActiveDecisionNodeFromPlannerRef.current();
+  }, [isLoading, gameState, turns, activeDecisionNodeId, turnPhase]);
+
+
   const deleteDecisionBranch = useCallback(
     (nodeId: string) => {
       const target = decisionNodes.find((n) => n.id === nodeId);
@@ -1117,15 +1130,73 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         toast('Cannot relink — invalid parent or would break START / create a cycle.', 'error');
         return;
       }
-      setDecisionNodes((prev) =>
-        normalizeDecisionNodePlannerSlots(
-          prev.map((n) => (n.id === nodeId ? { ...n, parentId: newParentId } : n)),
-          turns,
-        ),
+      const nextDecisionNodes = normalizeDecisionNodePlannerSlots(
+        decisionNodes.map((n) => (n.id === nodeId ? { ...n, parentId: newParentId } : n)),
+        turns,
       );
+      setDecisionNodes(nextDecisionNodes);
+      if (turns.length > 0) {
+        saveToLocalStorage(DEFAULT_SAVE_KEY, {
+          turns,
+          currentTurnIndex,
+          turnPhase,
+          decisionNodes: nextDecisionNodes,
+          activeDecisionNodeId,
+          decisionTimelinePositions,
+        });
+      }
       toast('Timeline parent updated', 'success');
     },
-    [decisionNodes, turns],
+    [
+      decisionNodes,
+      turns,
+      currentTurnIndex,
+      turnPhase,
+      activeDecisionNodeId,
+      decisionTimelinePositions,
+    ],
+  );
+
+  const unlinkDecisionTimelineBranch = useCallback(
+    (nodeId: string) => {
+      const target = decisionNodes.find((n) => n.id === nodeId);
+      if (!target) {
+        toast('Node not found', 'error');
+        return;
+      }
+      if (target.timelineRole === 'timeline_start') {
+        toast('START cannot be unlinked.', 'info');
+        return;
+      }
+      if (target.parentId === null) {
+        toast('This branch is already unlinked.', 'info');
+        return;
+      }
+      const nextDecisionNodes = normalizeDecisionNodePlannerSlots(
+        decisionNodes.map((n) => (n.id === nodeId ? { ...n, parentId: null } : n)),
+        turns,
+      );
+      setDecisionNodes(nextDecisionNodes);
+      if (turns.length > 0) {
+        saveToLocalStorage(DEFAULT_SAVE_KEY, {
+          turns,
+          currentTurnIndex,
+          turnPhase,
+          decisionNodes: nextDecisionNodes,
+          activeDecisionNodeId,
+          decisionTimelinePositions,
+        });
+      }
+      toast('Branch unlinked — orphan until you relink.', 'success');
+    },
+    [
+      decisionNodes,
+      turns,
+      currentTurnIndex,
+      turnPhase,
+      activeDecisionNodeId,
+      decisionTimelinePositions,
+    ],
   );
 
   // REMOVE_BEFORE_SHIP — dev-only tree stress; delete this callback + context field + UI button.
@@ -2064,6 +2135,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         mergeDecisionTimelinePositions,
         applyDecisionBranchToPlanner,
         linkDecisionTimelineParent,
+        unlinkDecisionTimelineBranch,
         randomizeDecisionTimelineParentsForTesting,
         appendTestNoiseLogsForPlannerTurnIndex,
         updateDecisionNodeTurnPhase,

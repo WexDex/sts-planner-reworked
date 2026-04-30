@@ -11,7 +11,7 @@ import {
   getCardEffectLegendItems,
   type CardIconLegendItem,
 } from "@/app/components/UI/cardIconLegend";
-import { Activity, BookOpen, ChevronDown, ChevronUp } from "lucide-react";
+import { Activity, BookOpen, CalendarClock, ChevronDown, ChevronUp, GitBranch } from "lucide-react";
 
 const CARD_EFFECT_LEGEND = getCardEffectLegendItems();
 
@@ -165,7 +165,35 @@ export default function TopBarBlock() {
         aria-label="Load combat JSON file"
       />
       <div className="hidden md:block">
-        <div className="mx-auto flex max-w-[1600px] flex-col items-stretch gap-3 px-0 py-0 lg:flex-row lg:items-center lg:gap-4">
+        <div className="mx-auto flex max-w-[1600px] flex-col items-stretch gap-3 px-0 py-0">
+          {/* Planner routes — separated from player combat stats for fast, obvious access */}
+          <div
+            className="flex flex-wrap items-center justify-center gap-2 border-b border-slate-700/50 bg-slate-900/40 px-1 py-2.5 sm:justify-start sm:px-0 sm:py-3"
+            role="navigation"
+            aria-label="Planner routes"
+          >
+            <span className="hidden min-[1100px]:inline text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+              Planner
+            </span>
+            <Link
+              href="/turn-maker"
+              className="inline-flex min-h-11 min-w-[8.5rem] flex-1 items-center justify-center gap-2 rounded-xl border-2 border-amber-400/55 bg-amber-950/50 px-4 py-2.5 text-sm font-bold text-amber-50 shadow-md shadow-amber-950/30 ring-1 ring-amber-500/20 transition hover:border-amber-300/70 hover:bg-amber-900/45 sm:flex-initial sm:min-w-[10rem]"
+              title="Edit enemy turn intents and planner rows"
+            >
+              <CalendarClock className="h-4 w-4 shrink-0 text-amber-200" strokeWidth={2.25} aria-hidden />
+              Turns
+            </Link>
+            <Link
+              href="/decision-timeline"
+              className="inline-flex min-h-11 min-w-[8.5rem] flex-1 items-center justify-center gap-2 rounded-xl border-2 border-cyan-400/55 bg-cyan-950/45 px-4 py-2.5 text-sm font-bold text-cyan-50 shadow-md shadow-cyan-950/35 ring-1 ring-cyan-500/25 transition hover:border-cyan-300/70 hover:bg-cyan-900/40 sm:flex-initial sm:min-w-[10rem]"
+              title="Branching decision tree for this combat"
+            >
+              <GitBranch className="h-4 w-4 shrink-0 text-cyan-200" strokeWidth={2.25} aria-hidden />
+              Timeline
+            </Link>
+          </div>
+
+        <div className="flex w-full flex-col items-stretch gap-3 px-0 py-0 lg:flex-row lg:items-center lg:gap-4">
         {/* Player vitals — primary read */}
         <div
           className={`min-w-0 flex-1 rounded-2xl border bg-slate-950/60 p-2 shadow-inner shadow-black/20 ring-1 ring-inset sm:p-2.5 ${
@@ -387,20 +415,6 @@ export default function TopBarBlock() {
               >
                 {isLoading ? "Loading…" : "Load data"}
               </button>
-              <Link
-                href="/turn-maker"
-                className="rounded-xl border border-amber-500/40 bg-amber-950/40 px-3 py-2 text-center text-xs font-semibold text-amber-100 shadow-sm transition hover:bg-amber-900/50"
-                title="Edit enemy turn intents"
-              >
-                Turns
-              </Link>
-              <Link
-                href="/decision-timeline"
-                className="rounded-xl border border-cyan-500/45 bg-cyan-950/50 px-3.5 py-2 text-center text-xs font-semibold text-cyan-100 shadow-sm transition hover:bg-cyan-900/55"
-                title="Branching decision tree for this combat"
-              >
-                Timeline
-              </Link>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(true)}
@@ -418,11 +432,35 @@ export default function TopBarBlock() {
           ) : null}
         </div>
         </div>
+        </div>
       </div>
 
       {/* Mobile: high-contrast strip + collapsible vitals */}
       <div className="md:hidden">
         <div className="mx-auto max-w-2xl space-y-2 px-2 py-2">
+          <nav
+            className="flex gap-2"
+            role="navigation"
+            aria-label="Planner routes"
+          >
+            <Link
+              href="/turn-maker"
+              className="inline-flex min-h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-amber-400/55 bg-amber-950/50 px-3 py-3 text-sm font-bold text-amber-50 shadow-md shadow-amber-950/25 ring-1 ring-amber-500/20 active:scale-[0.99]"
+              title="Edit enemy turn intents"
+            >
+              <CalendarClock className="h-5 w-5 shrink-0 text-amber-200" strokeWidth={2.25} aria-hidden />
+              Turns
+            </Link>
+            <Link
+              href="/decision-timeline"
+              className="inline-flex min-h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-cyan-400/55 bg-cyan-950/45 px-3 py-3 text-sm font-bold text-cyan-50 shadow-md shadow-cyan-950/30 ring-1 ring-cyan-500/25 active:scale-[0.99]"
+              title="Decision timeline"
+            >
+              <GitBranch className="h-5 w-5 shrink-0 text-cyan-200" strokeWidth={2.25} aria-hidden />
+              Timeline
+            </Link>
+          </nav>
+
           <div className="overflow-hidden rounded-2xl border-2 border-cyan-500/40 bg-slate-900/90 shadow-md shadow-cyan-950/30">
             <div className="flex items-center justify-between border-b border-cyan-800/30 bg-cyan-950/40 px-2.5 py-2">
               <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-200/90">
@@ -646,27 +684,15 @@ export default function TopBarBlock() {
                 type="button"
                 disabled={isLoading}
                 onClick={() => fileInputRef.current?.click()}
-                className="min-w-0 flex-1 rounded-lg border border-sky-500/50 bg-sky-800/90 px-2 py-2.5 text-[11px] font-semibold text-white active:scale-[0.99] disabled:opacity-50"
+                className="min-h-12 min-w-0 flex-1 rounded-lg border border-sky-500/50 bg-sky-800/90 px-2 py-3 text-[11px] font-semibold text-white active:scale-[0.99] disabled:opacity-50"
               >
                 {isLoading ? "…" : "Load data"}
               </button>
-              <Link
-                href="/turn-maker"
-                className="min-w-0 flex-1 rounded-lg border border-amber-500/40 bg-amber-950/45 py-2.5 text-center text-[11px] font-semibold text-amber-100 active:scale-[0.99]"
-              >
-                Turns
-              </Link>
-              <Link
-                href="/decision-timeline"
-                className="min-w-0 flex-1 rounded-lg border border-cyan-500/45 bg-cyan-950/55 py-2.5 text-center text-[11px] font-semibold text-cyan-100 active:scale-[0.99]"
-              >
-                Timeline
-              </Link>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(true)}
                 disabled={!gameState}
-                className="min-w-0 flex-1 rounded-lg border border-emerald-500/50 bg-emerald-700/90 px-2 py-2.5 text-[11px] font-semibold text-white active:scale-[0.99] disabled:opacity-40"
+                className="min-h-12 min-w-0 flex-1 rounded-lg border border-emerald-500/50 bg-emerald-700/90 px-2 py-3 text-[11px] font-semibold text-white active:scale-[0.99] disabled:opacity-40"
               >
                 Add card
               </button>
