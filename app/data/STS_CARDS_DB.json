@@ -13,7 +13,7 @@
       "draw": "base/upgraded counts; conditioned + trigger when draw depends on If/Whenever (icons applied at render time).",
       "discardEffect": "Flat: base, upgraded, random, fromHand — no icon keys; UI maps discard to DISCARD_ICON; descriptions may use [DISCARD].",
       "orbInteractions": "Ordered verbs: channel/evoke/next/repeat; orbIcon + presentation only (no usesIcon).",
-      "multiHit": "damageUsesMainField binds to main damage; blockUsesMainField binds to main block (e.g. Reinforced Body); multiHitCount { base, upgraded? } for fixed repeat; multiHitEnergyScaling true for X-cost hit count (Skewer, Whirlwind, Reinforced Body).",
+      "multiHit": "damageUsesMainField binds to main damage; blockUsesMainField binds to main block (e.g. Reinforced Body); appliesDebuffsUsesMainField binds appliesDebuffs (e.g. poison stacks per application) to multiHitCount / X scaling (Bouncing Flask); multiHitCount { base, upgraded? } for fixed repeat; multiHitEnergyScaling true for X-cost hit count (Skewer, Whirlwind, Reinforced Body, debuff multihit).",
       "multiHitCount": "Per-tier hit count when not energy-scaling.",
       "multiHitEnergyScaling": "X-cost: repeat count follows spent energy (no multiHitCount) — damage (Skewer) or block (Reinforced Body).",
       "selfExhaustOnPlay": "Per tier: base and upgraded booleans — whether playing that copy exhausts the card.",
@@ -802,7 +802,7 @@
       "id": "Bouncing Flask",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Apply 3 Poison to a random enemy 3 times.",
+      "description": "Apply [PSN] Poison to a random enemy [HITS] times.",
       "characters": "silent",
       "cost": {
         "base": 2
@@ -812,7 +812,13 @@
           "base": 3
         }
       },
-      "descriptionUpgraded": "Apply 3 Poison to a random enemy 4 times."
+      "multiHit": {
+        "appliesDebuffsUsesMainField": true,
+        "multiHitCount": {
+          "base": 3,
+          "upgraded": 4
+        }
+      }
     },
     "Bowling Bash": {
       "id": "Bowling Bash",

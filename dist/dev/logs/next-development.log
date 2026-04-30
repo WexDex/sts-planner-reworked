@@ -1042,3 +1042,28 @@
 {"timestamp":"02:48:48.739","source":"Server","level":"LOG","message":"✓ Compiled in 136ms"}
 {"timestamp":"02:48:48.990","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
 {"timestamp":"02:50:14.121","source":"Server","level":"LOG","message":"✓ Compiled in 78ms"}
+{"timestamp":"02:53:11.005","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./app/card-design-gallery/galleryStsGlyphs.ts changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"02:53:11.121","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./app/card-design-gallery/galleryStsGlyphs.ts changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"02:53:11.122","source":"Server","level":"LOG","message":"✓ Compiled in 94ms"}
+{"timestamp":"02:53:11.556","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"02:53:11.643","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"02:53:13.623","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./app/card-design-gallery/galleryStsGlyphs.ts changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"02:53:13.734","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./app/card-design-gallery/galleryStsGlyphs.ts changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"02:53:13.735","source":"Server","level":"LOG","message":"✓ Compiled in 87ms"}
+{"timestamp":"02:53:14.078","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"02:53:14.128","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"02:53:15.089","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./app/data/STS_CARDS_DB.json.[json].cjs changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"02:53:15.206","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./app/data/STS_CARDS_DB.json.[json].cjs changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"02:53:15.207","source":"Server","level":"LOG","message":"✓ Compiled in 85ms"}
+{"timestamp":"02:53:15.558","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"02:53:15.662","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"02:53:17.085","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./app/data/STS_CARDS_DB.json.[json].cjs changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"02:53:17.086","source":"Server","level":"LOG","message":"✓ Compiled in 89ms"}
+{"timestamp":"02:53:17.102","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./app/data/STS_CARDS_DB.json.[json].cjs changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"02:53:17.613","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"02:53:17.656","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"02:53:35.339","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./app/card-design-gallery/galleryStsGlyphs.ts changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"02:53:35.339","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./app/card-design-gallery/galleryStsGlyphs.ts changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"02:53:35.340","source":"Server","level":"LOG","message":"✓ Compiled in 90ms"}
+{"timestamp":"02:53:35.719","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"02:53:35.746","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}

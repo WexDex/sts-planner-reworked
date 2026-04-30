@@ -4,6 +4,7 @@ import {
   blockMultihitInlineHitLabel,
   cardSelfExhaustsOnPlay,
   damageMultihitInlineHitLabel,
+  debuffPoisonMultihitHitLabel,
   energyGainNode,
   galleryBlockRowIsConditional,
   galleryDamageIsConditional,
@@ -201,6 +202,7 @@ export function computeLegendHighlightIds(card: Card): Set<string> {
 
   if (damageMultihitInlineHitLabel(card) != null) ids.add("AOE_DAMAGE");
   if (blockMultihitInlineHitLabel(card) != null) ids.add("AOE_DAMAGE");
+  if (debuffPoisonMultihitHitLabel(card) != null) ids.add("AOE_DAMAGE");
 
   if (
     galleryDamageRowIsAoE(card) &&

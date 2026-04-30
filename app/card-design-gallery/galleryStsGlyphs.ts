@@ -401,6 +401,26 @@ export function blockMultihitInlineHitLabel(card: Card): string | null {
   return n != null ? String(n) : null;
 }
 
+/**
+ * Multihit repeat count for `appliesDebuffs.poison` when `multiHit.appliesDebuffsUsesMainField`
+ * is set (e.g. Bouncing Flask). `×X` when energy-scaling; else numeric tier from `multiHitCount`.
+ */
+export function debuffPoisonMultihitHitLabel(card: Card): string | null {
+  const c = card as Record<string, unknown>;
+  const debuffs = c.appliesDebuffs as Record<string, unknown> | undefined;
+  if (debuffs?.poison == null) return null;
+  const multi = c.multiHit;
+  if (multi == null || typeof multi !== "object" || Array.isArray(multi)) return null;
+  const m = multi as Record<string, unknown>;
+  if (m.appliesDebuffsUsesMainField !== true) return null;
+  if (m.multiHitEnergyScaling === true && cardUsesXCostOrbLocal(card)) {
+    return "X";
+  }
+  if (!("multiHitCount" in m)) return null;
+  const n = galleryTierNumber(card, m.multiHitCount);
+  return n != null ? String(n) : null;
+}
+
 /** Conditional + AoE icons placed before damage inside the unified multihit damage cluster. */
 export function multihitDamageRowLeadingSegments(card: Card): GalleryGlyphSegment[] {
   if (damageMultihitInlineHitLabel(card) == null) return [];
@@ -1211,38 +1231,67 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
             ? (raw as Record<string, unknown>)
             : null;
         const stacks = galleryTierNumber(card, raw);
-        const hits =
+        const multi = c.multiHit;
+        const mHit =
+          multi != null && typeof multi === "object" && !Array.isArray(multi)
+            ? (multi as Record<string, unknown>)
+            : null;
+        const hitFromMulti =
+          mHit?.appliesDebuffsUsesMainField === true
+            ? mHit.multiHitEnergyScaling === true && cardUsesXCostOrbLocal(card)
+              ? ("X" as const)
+              : galleryTierNumber(card, mHit.multiHitCount)
+            : undefined;
+        const hitsLegacy =
           poisonObj != null
             ? galleryTierNumber(card, poisonObj.hits) ??
               galleryTierNumber(card, poisonObj.times)
             : undefined;
+        const hitCount: number | "X" | undefined =
+          hitFromMulti !== undefined ? hitFromMulti : hitsLegacy;
+
         const p = getEffectDisplay("poison");
         const segments: GalleryGlyphSegment[] = [
           { Icon: p.icon, iconClass: p.color },
         ];
-        const mult = hits ?? stacks;
-        if (mult != null) {
+        if (stacks != null) {
+          segments.push({
+            text: String(stacks),
+            textClass: `${p.color} font-bold tabular-nums leading-none`,
+          });
+        }
+        const showRepeat =
+          hitCount === "X" ||
+          (typeof hitCount === "number" && hitCount > 1);
+        if (showRepeat) {
+          const repeatText =
+            hitCount === "X" ? "X" : typeof hitCount === "number" ? String(hitCount) : "";
           segments.push(
             { text: "×", textClass: MULTIHIT_INLINE_TIMES_CLASS },
             {
-              text: String(mult),
-              textClass: `${p.color} font-bold tabular-nums leading-none`,
+              text: repeatText,
+              textClass: MULTIHIT_INLINE_COUNT_CLASS,
             },
           );
-        }
-        if (hits != null && stacks != null && hits !== stacks) {
+        } else if (stacks == null && typeof hitCount === "number") {
           segments.push({
-            text: `(${stacks})`,
-            textClass:
-              "text-[0.65em] font-semibold tabular-nums text-slate-400",
+            text: String(hitCount),
+            textClass: `${p.color} font-bold tabular-nums leading-none`,
           });
         }
-        const label =
-          hits != null && stacks != null
-            ? `Poison ×${hits} (${stacks})`
-            : stacks != null
-              ? `Poison ${stacks}`
-              : "Poison";
+
+        let label = "Poison";
+        if (stacks != null) {
+          label =
+            showRepeat && hitCount !== undefined
+              ? hitCount === "X"
+                ? `Poison ${stacks} × X`
+                : `Poison ${stacks} × ${hitCount}`
+              : `Poison ${stacks}`;
+        } else if (hitCount != null) {
+          label =
+            hitCount === "X" ? "Poison × X" : `Poison × ${hitCount}`;
+        }
         push({
           id: "debuff-poison",
           catalogKey: "POISON_STAT",
