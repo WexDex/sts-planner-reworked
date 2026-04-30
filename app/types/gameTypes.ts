@@ -248,14 +248,19 @@ export interface Turn {
   state: CombatData;
 }
 
+/** Decision timeline topology: anchored START vs imported planner row vs divergent fork. */
+export type DecisionTimelineRole = 'timeline_start' | 'turn_checkpoint' | 'branch';
+
 /** One node in the branching decision overlay; carries a full combat snapshot and planner slot metadata. */
 export interface DecisionNode {
   id: string;
   parentId: string | null;
+  /** Imported spine / UI role; absent in legacy saves (migrated at load). */
+  timelineRole?: DecisionTimelineRole;
   /** User-defined short name for the branch. */
   label: string;
   snapshot: CombatData;
-  /** Which planner turn slot (`Turn.id`) this snapshot was taken for. */
+  /** Which planner turn slot (`Turn.id`); recomputed from depth below START (matches `turns[]` order). */
   plannerTurnSlotId: number;
   turnPhase: CombatTurnPhase;
   createdAt: string;

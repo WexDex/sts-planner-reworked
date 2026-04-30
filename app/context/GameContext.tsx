@@ -44,7 +44,19 @@ import {
 } from '@/app/data/gameCardFromSts';
 import { getStsCardsRecord } from '@/app/card-design-gallery/stsRecord';
 import { toast } from '@/app/utils/toast';
-import { collectSubtreeIds } from '@/app/utils/decisionTreeHelpers';
+import {
+  buildTurnStatesFromBranchPath,
+  defaultForkDecisionLabel,
+  eligibleDecisionReparentParents,
+  isValidDecisionReparent,
+  normalizeDecisionNodePlannerSlots,
+} from '@/app/utils/decisionTreeHelpers';
+import {
+  buildImportedDecisionTimelineSpine,
+  migrateDecisionNodeTimelineRoles,
+} from '@/app/utils/decisionTimelineSpine';
+
+export type DecisionTimelinePositionMap = Record<string, { x: number; y: number }>;
 import {
   decrementIntangibleStacks,
   entityHasIntangible,
@@ -135,6 +147,21 @@ interface GameContextType {
   /** Remove a node and all descendants (cannot delete root). */
   deleteDecisionBranch: (nodeId: string) => void;
   updateDecisionNodeLabel: (nodeId: string, label: string) => void;
+  /** Persisted React Flow coordinates for Decision Timeline (`Save game`). */
+  decisionTimelinePositions: DecisionTimelinePositionMap;
+  setDecisionTimelineNodePosition: (nodeId: string, position: { x: number; y: number }) => void;
+  /** Merge many timeline positions in one update (e.g. scatter layout). */
+  mergeDecisionTimelinePositions: (patch: DecisionTimelinePositionMap) => void;
+  /** Hydrate planner turn rows from root→node path; set active node + live combat to target. */
+  applyDecisionBranchToPlanner: (nodeId: string) => void;
+  /** Point an existing node's parent at another node (keeps START as root); no cycles. */
+  linkDecisionTimelineParent: (nodeId: string, newParentId: string) => void;
+  /**
+   * TEST ONLY: picks a random valid parent for each branch checkpoint. **Remove before release** (search `REMOVE_BEFORE_SHIP`).
+   */
+  randomizeDecisionTimelineParentsForTesting: () => void;
+  /** Set planner phase marker on a turn checkpoint; writes a row to that node's snapshot log (and live log if active). */
+  updateDecisionNodeTurnPhase: (nodeId: string, phase: CombatTurnPhase) => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -151,6 +178,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [turnPhase, setTurnPhase] = useState<CombatTurnPhase>('start');
   const [decisionNodes, setDecisionNodes] = useState<DecisionNode[]>([]);
   const [activeDecisionNodeId, setActiveDecisionNodeId] = useState<string | null>(null);
+  const [decisionTimelinePositions, setDecisionTimelinePositions] = useState<DecisionTimelinePositionMap>({});
   const [combatTargetMode, setCombatTargetModeState] = useState<'single' | 'multi'>('single');
   const [combatTargetEnemyIndices, setCombatTargetEnemyIndices] = useState<number[]>([]);
   const [combatTargetSelf, setCombatTargetSelf] = useState(false);
@@ -233,19 +261,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setCurrentTurnIndex(0);
       setTurnPhase('start');
 
-      const firstTurnId = uniqueTurns[0] ?? 1;
-      const rootId = crypto.randomUUID();
-      const rootNode: DecisionNode = {
-        id: rootId,
-        parentId: null,
-        label: 'Start',
-        snapshot: cloneGameData(withPiles),
-        plannerTurnSlotId: firstTurnId,
-        turnPhase: 'start',
-        createdAt: new Date().toISOString(),
-      };
-      setDecisionNodes([rootNode]);
-      setActiveDecisionNodeId(rootId);
+      const spine = buildImportedDecisionTimelineSpine(
+        initialTurns,
+        withPiles,
+        () => crypto.randomUUID(),
+        { activePlannerTurnSlotId: initialTurns[0]?.id },
+      );
+      setDecisionNodes(normalizeDecisionNodePlannerSlots(spine.nodes, initialTurns));
+      setActiveDecisionNodeId(spine.activeNodeId);
+      setDecisionTimelinePositions({});
 
       setGameState(cloneGameData(withPiles));
       setError(null);
@@ -540,6 +564,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         turnPhase,
         decisionNodes,
         activeDecisionNodeId,
+        decisionTimelinePositions,
       });
     }
   };
@@ -645,15 +670,21 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             typeof n.plannerTurnSlotId === 'number',
         )
       ) {
-        const cloned: DecisionNode[] = rawNodes.map((n: DecisionNode) => ({
-          ...n,
-          snapshot: cloneGameData(n.snapshot),
-        }));
+        const cloned: DecisionNode[] = migrateDecisionNodeTimelineRoles(
+          rawNodes.map((n: DecisionNode) => ({
+            ...n,
+            snapshot: cloneGameData(n.snapshot),
+          })),
+        );
         const preferred = saved.activeDecisionNodeId as string | undefined;
         const active =
           preferred && cloned.some((n) => n.id === preferred) ? preferred : cloned[0]!.id;
-        setDecisionNodes(cloned);
+        setDecisionNodes(normalizeDecisionNodePlannerSlots(cloned, saved.turns));
         setActiveDecisionNodeId(active);
+        const pos = saved.decisionTimelinePositions as DecisionTimelinePositionMap | undefined;
+        setDecisionTimelinePositions(
+          pos && typeof pos === 'object' && !Array.isArray(pos) ? pos : {},
+        );
       } else {
         const idx = saved.currentTurnIndex || 0;
         const slot = saved.turns[idx];
@@ -663,21 +694,25 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             : 'start';
         if (slot) {
           const rootId = crypto.randomUUID();
-          const migrated: DecisionNode = {
-            id: rootId,
-            parentId: null,
-            label: 'Start',
-            snapshot: cloneGameData(slot.state),
-            plannerTurnSlotId: slot.id,
-            turnPhase: phaseNow,
-            createdAt: new Date().toISOString(),
-          };
+          const [migrated] = migrateDecisionNodeTimelineRoles([
+            {
+              id: rootId,
+              parentId: null,
+              label: 'START',
+              timelineRole: 'timeline_start',
+              snapshot: cloneGameData(slot.state),
+              plannerTurnSlotId: slot.id,
+              turnPhase: phaseNow,
+              createdAt: new Date().toISOString(),
+            },
+          ]);
           setDecisionNodes([migrated]);
           setActiveDecisionNodeId(rootId);
         } else {
           setDecisionNodes([]);
           setActiveDecisionNodeId(null);
         }
+        setDecisionTimelinePositions({});
       }
 
       return true;
@@ -704,7 +739,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           nodes.push({
             id: rootId,
             parentId: null,
-            label: 'Start',
+            label: 'START',
+            timelineRole: 'timeline_start',
             snapshot: cloneGameData(gameState),
             plannerTurnSlotId: slotId,
             turnPhase,
@@ -723,24 +759,29 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             ? {
                 ...n,
                 snapshot: cloneGameData(gameState),
-                plannerTurnSlotId: slotId,
                 turnPhase,
               }
             : n,
         );
 
-        const siblingCount = nodes.filter((n) => n.parentId === effectiveParentId).length;
-        nodes.push({
+        const pending: DecisionNode = {
           id: childId,
           parentId: effectiveParentId,
-          label: optionalLabel?.trim() || `Branch ${siblingCount + 1}`,
+          label: '',
+          timelineRole: 'branch',
           snapshot: cloneGameData(gameState),
           plannerTurnSlotId: slotId,
           turnPhase,
           createdAt: new Date().toISOString(),
-        });
+        };
+        nodes.push(pending);
+        const auto = defaultForkDecisionLabel(nodes, pending, turns);
+        nodes[nodes.length - 1] = {
+          ...pending,
+          label: optionalLabel?.trim() || auto,
+        };
 
-        return nodes;
+        return normalizeDecisionNodePlannerSlots(nodes, turns);
       });
 
       setActiveDecisionNodeId(childId);
@@ -765,17 +806,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (gameState && activeDecisionNodeId && activeDecisionNodeId !== nodeId) {
-        const slotId = turns[currentTurnIndex]?.id ?? 1;
         setDecisionNodes((prev) =>
-          prev.map((n) =>
-            n.id === activeDecisionNodeId
-              ? {
-                  ...n,
-                  snapshot: cloneGameData(gameState),
-                  plannerTurnSlotId: slotId,
-                  turnPhase,
-                }
-              : n,
+          normalizeDecisionNodePlannerSlots(
+            prev.map((n) =>
+              n.id === activeDecisionNodeId
+                ? {
+                    ...n,
+                    snapshot: cloneGameData(gameState),
+                    turnPhase,
+                  }
+                : n,
+            ),
+            turns,
           ),
         );
         setTurns((prev) =>
@@ -803,22 +845,36 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const deleteDecisionBranch = useCallback(
     (nodeId: string) => {
+      const target = decisionNodes.find((n) => n.id === nodeId);
+      if (target?.timelineRole === 'timeline_start') {
+        toast('START is fixed — it cannot be deleted.', 'info');
+        return;
+      }
+
       const root = decisionNodes.find((n) => n.parentId === null);
       if (root && nodeId === root.id) {
         toast('Cannot delete the root node', 'info');
         return;
       }
 
-      const toRemove = collectSubtreeIds(decisionNodes, nodeId);
-      const next = decisionNodes.filter((n) => !toRemove.has(n.id));
+      const next = decisionNodes.filter((n) => n.id !== nodeId);
       setDecisionNodes(next);
+      setDecisionTimelinePositions((prev) => {
+        const out = { ...prev };
+        delete out[nodeId];
+        return out;
+      });
 
-      if (!activeDecisionNodeId || !toRemove.has(activeDecisionNodeId)) return;
+      toast('Turn removed — children kept as orphans (red) until relinked.', 'info');
+
+      if (!activeDecisionNodeId || activeDecisionNodeId !== nodeId) {
+        return;
+      }
 
       const fallback = next.find((n) => n.parentId === null) ?? next[0];
       if (!fallback) {
         setActiveDecisionNodeId(null);
-        toast('Branch deleted', 'info');
+        toast('Turn deleted — tree is empty', 'info');
         return;
       }
 
@@ -832,7 +888,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setGameState(cloneGameData(fallback.snapshot));
       setTurnPhase(fallback.turnPhase);
       setActiveDecisionNodeId(fallback.id);
-      toast('Branch deleted — jumped to remaining tree', 'info');
+      toast('Active branch deleted — jumped to fallback. Orphans stay red until relinked.', 'info');
     },
     [decisionNodes, activeDecisionNodeId, turns],
   );
@@ -842,6 +898,139 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       prev.map((n) => (n.id === nodeId ? { ...n, label: label.trim() || n.label } : n)),
     );
   }, []);
+
+  const updateDecisionNodeTurnPhase = useCallback(
+    (nodeId: string, phase: CombatTurnPhase) => {
+      const target = decisionNodes.find((n) => n.id === nodeId);
+      if (!target || target.timelineRole === 'timeline_start') {
+        toast('Phase can only be set on turn checkpoints', 'info');
+        return;
+      }
+      if (target.turnPhase === phase) return;
+
+      if (nodeId === activeDecisionNodeId && gameState) {
+        setTurnPhase(phase);
+        setDecisionNodes((prev) =>
+          prev.map((n) =>
+            n.id === nodeId ? { ...n, turnPhase: phase, snapshot: cloneGameData(gameState) } : n,
+          ),
+        );
+        return;
+      }
+
+      setDecisionNodes((prev) => prev.map((n) => (n.id === nodeId ? { ...n, turnPhase: phase } : n)));
+    },
+    [decisionNodes, activeDecisionNodeId, gameState],
+  );
+
+  const setDecisionTimelineNodePosition = useCallback((nodeId: string, position: { x: number; y: number }) => {
+    setDecisionTimelinePositions((prev) => ({ ...prev, [nodeId]: { ...position } }));
+  }, []);
+
+  const mergeDecisionTimelinePositions = useCallback((patch: DecisionTimelinePositionMap) => {
+    setDecisionTimelinePositions((prev) => {
+      const next = { ...prev };
+      for (const [id, pos] of Object.entries(patch)) {
+        if (pos && typeof pos.x === 'number' && typeof pos.y === 'number') {
+          next[id] = { x: pos.x, y: pos.y };
+        }
+      }
+      return next;
+    });
+  }, []);
+
+  const applyDecisionBranchToPlanner = useCallback(
+    (nodeId: string) => {
+      const targetNodeBare = decisionNodes.find((n) => n.id === nodeId);
+      if (!gameState) {
+        toast('Load combat first', 'error');
+        return;
+      }
+      if (!targetNodeBare) {
+        toast('Node not found', 'error');
+        return;
+      }
+
+      let nodesForPath = decisionNodes;
+      let turnsScratch = turns;
+
+      if (activeDecisionNodeId) {
+        nodesForPath = normalizeDecisionNodePlannerSlots(
+          decisionNodes.map((n) =>
+            n.id === activeDecisionNodeId
+              ? {
+                  ...n,
+                  snapshot: cloneGameData(gameState),
+                  turnPhase,
+                }
+              : n,
+          ),
+          turns,
+        );
+        turnsScratch = turns.map((t, i) =>
+          i === currentTurnIndex ? { ...t, state: cloneGameData(gameState) } : t,
+        );
+      }
+
+      const mergedTurns = buildTurnStatesFromBranchPath(nodesForPath, nodeId, turnsScratch);
+      const targetNode = nodesForPath.find((n) => n.id === nodeId);
+      if (!targetNode) {
+        toast('Node not found', 'error');
+        return;
+      }
+
+      setDecisionNodes(nodesForPath);
+      setTurns(mergedTurns);
+      const turnIndex = Math.max(0, mergedTurns.findIndex((t) => t.id === targetNode.plannerTurnSlotId));
+      setCurrentTurnIndex(turnIndex);
+      setGameState(cloneGameData(targetNode.snapshot));
+      setTurnPhase(targetNode.turnPhase);
+      setActiveDecisionNodeId(nodeId);
+      toast('Applied branch to planner', 'success');
+    },
+    [decisionNodes, gameState, turns, currentTurnIndex, turnPhase, activeDecisionNodeId],
+  );
+
+  const linkDecisionTimelineParent = useCallback(
+    (nodeId: string, newParentId: string) => {
+      if (!isValidDecisionReparent(decisionNodes, nodeId, newParentId)) {
+        toast('Cannot relink — invalid parent or would break START / create a cycle.', 'error');
+        return;
+      }
+      setDecisionNodes((prev) =>
+        normalizeDecisionNodePlannerSlots(
+          prev.map((n) => (n.id === nodeId ? { ...n, parentId: newParentId } : n)),
+          turns,
+        ),
+      );
+      toast('Timeline parent updated', 'success');
+    },
+    [decisionNodes, turns],
+  );
+
+  // REMOVE_BEFORE_SHIP — dev-only tree stress; delete this callback + context field + UI button.
+  const randomizeDecisionTimelineParentsForTesting = useCallback(() => {
+    setDecisionNodes((prev) => {
+      const branchIds = prev
+        .filter((n) => n.timelineRole !== 'timeline_start' && n.parentId != null)
+        .map((n) => n.id);
+      const order = [...branchIds];
+      for (let i = order.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [order[i], order[j]] = [order[j]!, order[i]!];
+      }
+      let draft = prev;
+      for (const id of order) {
+        const eligible = eligibleDecisionReparentParents(draft, id);
+        if (eligible.length === 0) continue;
+        const pick = eligible[Math.floor(Math.random() * eligible.length)]!;
+        if (!isValidDecisionReparent(draft, id, pick.id)) continue;
+        draft = draft.map((n) => (n.id === id ? { ...n, parentId: pick.id } : n));
+      }
+      return normalizeDecisionNodePlannerSlots(draft, turns);
+    });
+    toast('TEST: randomized timeline parents (remove dev tool)', 'warning', { durationMs: 1500 });
+  }, [turns]);
 
   const getSelectedCards = (state: CombatData) => {
     const locations = ['draw', 'discard', 'exhaust', 'hand', 'playedCards'];
@@ -1717,6 +1906,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         jumpToDecisionNode,
         deleteDecisionBranch,
         updateDecisionNodeLabel,
+        decisionTimelinePositions,
+        setDecisionTimelineNodePosition,
+        mergeDecisionTimelinePositions,
+        applyDecisionBranchToPlanner,
+        linkDecisionTimelineParent,
+        randomizeDecisionTimelineParentsForTesting,
+        updateDecisionNodeTurnPhase,
       }}
     >
       {children}

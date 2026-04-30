@@ -21,10 +21,10 @@ export function subscribeToasts(fn: Subscriber | null) {
 }
 
 /**
- * Show a stacked toast at the bottom center. Safe to call from anywhere
- * (handlers, utilities) once {@link NotificationProvider} is mounted.
+ * Push a toast into the global stack (see {@link ToastStack}). Renders with a dismiss control and
+ * a linear time-remaining bar; placement is controlled by whichever `ToastStack` is mounted.
  */
 export function toast(message: string, type: ToastType = "info", options?: ToastOptions) {
-  const durationMs = options?.durationMs ?? 4000;
+  const durationMs = options?.durationMs ?? 2500;
   subscriber?.({ message, type, durationMs });
 }

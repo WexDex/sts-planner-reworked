@@ -11,6 +11,8 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    /** Local Next output / turbopack exports — not lintable source */
+    "dist/**",
     "next-env.d.ts",
   ]),
 ]);

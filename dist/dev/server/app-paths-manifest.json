@@ -1,5 +1,6 @@
 {
   "/card-design-gallery/page": "app/card-design-gallery/page.js",
+  "/decision-timeline/page": "app/decision-timeline/page.js",
   "/page": "app/page.js",
   "/turn-maker/page": "app/turn-maker/page.js"
 }

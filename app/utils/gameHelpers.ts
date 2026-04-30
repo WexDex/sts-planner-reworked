@@ -235,6 +235,16 @@ export function cloneGameData(data: CombatData): CombatData {
   return migrateLegacyIntangibleFields(JSON.parse(JSON.stringify(data)) as CombatData);
 }
 
+/** Deep equality for combat snapshots (used for dirty / unsaved UI checks). */
+export function combatSnapshotsEqual(
+  a: CombatData | null | undefined,
+  b: CombatData | null | undefined,
+): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 /**
  * Get game statistics
  */

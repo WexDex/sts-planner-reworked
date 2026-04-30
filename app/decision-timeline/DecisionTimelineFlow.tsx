@@ -1,6 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, memo, useRef } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  memo,
+  useRef,
+  useState,
+  Fragment,
+} from 'react';
 import {
   ReactFlow,
   Background,
@@ -11,19 +21,100 @@ import {
   useEdgesState,
   useReactFlow,
   Panel,
+  Handle,
+  Position,
+  MarkerType,
   type Node,
   type Edge,
+  type OnNodeDrag,
+  type NodeMouseHandler,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Pencil, Trash2 } from 'lucide-react';
-import { useGameManager } from '@/app/context/GameContext';
-import type { DecisionNode as DecisionNodeModel } from '@/app/types/gameTypes';
-import { layoutDecisionTreeNodes } from '@/app/utils/decisionTreeHelpers';
+import { ChevronDown, ChevronRight, ChevronUp, Link2, Minus, Pencil, Trash2 } from 'lucide-react';
+import { useGameManager, type DecisionTimelinePositionMap } from '@/app/context/GameContext';
+import type { CombatTurnPhase, DecisionNode as DecisionNodeModel, Turn } from '@/app/types/gameTypes';
+import {
+  layoutDecisionTreeNodes,
+  layoutDecisionTreePacked,
+  DECISION_TIMELINE_BRANCH_CARD_W,
+  DECISION_TIMELINE_START_CARD_W,
+  type DecisionTreePackOrientation,
+  getActiveLineageBranchIds,
+  getDecisionNodeBreadcrumb,
+  decisionNodesPeersSameTurnDepth,
+  eligibleDecisionReparentParents,
+  isDecisionTimelineOrphan,
+  getDecisionTimelineSpineMeta,
+  effectivePlannerTurnSlotId,
+  decisionNodeDepthFromRoot,
+} from '@/app/utils/decisionTreeHelpers';
 import { deriveDecisionNodeSummary } from '@/app/utils/deriveDecisionNodeSummary';
+import { getNewLogEntriesForDecisionNode, summarizePlays } from '@/app/utils/decisionNodePlays';
+import {
+  minimapHexForDecisionNodePreview,
+  plannerCombatPhaseLong,
+  plannerPhasePillClasses,
+  plannerPhaseStripClass,
+  plannerPhaseTimelineCardAccent,
+} from '@/app/utils/decisionTimelinePhaseUi';
+import {
+  ActivityLogRowExpanded,
+  ActivityLogRowInline,
+  type ActivityLogInlineDensity,
+} from '@/app/components/activity-log/activity-log-rows';
 
 type DecisionCardData = {
   decisionNode: DecisionNodeModel;
-  isActive: boolean;
+  parent: DecisionNodeModel | null;
+  /** Same planner turn row as the left Timeline (all matching nodes highlight together). */
+  isSlotActive: boolean;
+  /**
+   * Loaded timeline lineage: true for START when any decision is active (`activeDecisionNodeId`);
+   * true for branch cards on ROOT→active path plus the unique single-child continuation to a
+   * fork/leaf (so the main ladder through the pin shows Active; alternates show Set Active).
+   */
+  isPinned: boolean;
+  /** Depth-derived row id (maps to planner `Turn.id` by row order). */
+  effectivePlannerSlotId: number;
+  breadcrumbDisplay: string;
+  /** Relink panel: which role this node plays in the pending parent change. */
+  relinkPanelRole: 'child' | 'parent' | null;
+  /** Parent checkpoint missing from tree — relink to restore. */
+  isOrphan: boolean;
+};
+
+/** Background grouping for all checkpoints at the same tree depth (same planner row / branch alternates). */
+type DecisionSlotClusterData = {
+  label: string;
+  depth: number;
+  /** Tailwind surface + border classes for depth-based hue. */
+  surfaceClass: string;
+};
+
+type DecisionFlowNodeData = DecisionCardData | DecisionSlotClusterData;
+
+type ClusterSnapCtx = {
+  snapLockedDepths: ReadonlySet<number>;
+  toggleClusterSnapDepth: (depth: number) => void;
+  /** Reset all timeline nodes to compact packed tree positions (reduces overlap / messy drags). */
+  organizeTimelineLayout: () => void;
+};
+
+const ClusterSnapContext = createContext<ClusterSnapCtx | null>(null);
+
+type TimelineInteractCtx = {
+  reparentSourceId: string | null;
+  setReparentSourceId: React.Dispatch<React.SetStateAction<string | null>>;
+  reparentHoverParentId: string | null;
+  setReparentHoverParentId: React.Dispatch<React.SetStateAction<string | null>>;
+  /** Clear panel relink picks for the branch being moved when disarming Link2 on that card. */
+  disarmMovingBranchFromCard: (branchNodeId: string) => void;
+};
+
+const TimelineInteractContext = createContext<TimelineInteractCtx | null>(null);
+
+type DecisionTimelineFlowProps = {
+  onSelectedNodeIdChange?: (nodeId: string | null) => void;
 };
 
 /** Fit viewport when the tree structure (node ids) changes — not on every activate. */
@@ -32,24 +123,492 @@ function FitViewOnStructureChange({ structureKey }: { structureKey: string }) {
   const isFirst = useRef(true);
   useEffect(() => {
     const t = window.setTimeout(() => {
-      fitView({ padding: 0.2, duration: isFirst.current ? 0 : 220 });
+      fitView({
+        padding: 0.18,
+        duration: isFirst.current ? 0 : 440,
+      });
       isFirst.current = false;
-    }, 40);
+    }, 48);
     return () => window.clearTimeout(t);
   }, [structureKey, fitView]);
   return null;
 }
 
-const DecisionCardNode = memo(function DecisionCardNode({
-  data,
+function phaseShort(p: CombatTurnPhase): string {
+  if (p === 'start') return 'ST';
+  if (p === 'player') return 'P';
+  return 'E';
+}
+
+function reparentRingClass(isHoverTarget: boolean): string {
+  return isHoverTarget
+    ? ' z-30 scale-[1.04] ring-4 ring-emerald-400/90 ring-offset-2 ring-offset-slate-950 shadow-xl shadow-emerald-950/40'
+    : '';
+}
+
+/** Off the loaded Active path — read clearly darker / less saturated than {@link timelineBranchOnPathClass}. */
+function timelineBranchOffPathClass(active: boolean): string {
+  return active
+    ? ''
+    : 'relative z-0 opacity-[0.85] saturate-[0.62] brightness-[0.86] before:pointer-events-none before:absolute before:inset-0 before:z-[1] before:rounded-[inherit] before:bg-slate-950/65 before:content-[""]';
+}
+
+/** On the pinned lineage — strong cyan frame and glow so the main path pops vs alternates. */
+function timelineBranchOnPathClass(active: boolean): string {
+  return active
+    ? 'z-[3] border-cyan-400/80 ring-[3px] ring-cyan-200/95 ring-offset-[3px] ring-offset-slate-950 brightness-[1.06] shadow-[inset_0_0_0_1px_rgba(103,232,249,0.4),0_0_40px_-4px_rgba(34,211,238,0.55)]'
+    : '';
+}
+
+function timelineStartPathClass(active: boolean): string {
+  return active
+    ? 'z-[3] border-amber-400/85 ring-[3px] ring-cyan-200/95 ring-offset-[3px] ring-offset-slate-950 shadow-[0_0_40px_-4px_rgba(34,211,238,0.5)]'
+    : 'relative z-0 opacity-[0.85] saturate-[0.7] brightness-[0.88] before:pointer-events-none before:absolute before:inset-0 before:z-[1] before:rounded-[inherit] before:bg-slate-950/65 before:content-[""]';
+}
+
+/** Labels/nodes selected in the zoom-safe Relink panel (distinct from active-path styling). */
+function relinkPanelVisualClass(role: 'child' | 'parent' | null): string {
+  if (role === 'child') {
+    return ' z-[5] !ring-amber-400 shadow-[0_0_26px_rgba(251,191,36,0.45),inset_0_0_0_1px_rgba(251,191,36,0.35)] !ring-[3px] ring-offset-2 ring-offset-slate-950';
+  }
+  if (role === 'parent') {
+    return ' z-[5] !ring-sky-300 shadow-[0_0_26px_rgba(56,189,248,0.4),inset_0_0_0_1px_rgba(125,211,252,0.35)] !ring-[3px] ring-offset-2 ring-offset-slate-950';
+  }
+  return '';
+}
+
+/** "Move branch" relink target — rendered above the card so it is not clipped by overflow-hidden. */
+function RelinkMoveBranchAboveCard() {
+  return (
+    <span
+      className="pointer-events-none absolute bottom-full left-1/2 z-[25] mb-1 max-w-[min(320px,calc(100vw-2rem))] -translate-x-1/2 truncate rounded-md border border-amber-200/80 bg-amber-500 px-2 py-0.5 text-[8px] font-black uppercase leading-none tracking-wider text-amber-950 shadow-md shadow-amber-950/40"
+      title="Relink: branch that will move"
+      aria-hidden
+    >
+      Move branch
+    </span>
+  );
+}
+
+function RelinkRoleBadge({ role, placement }: { role: 'child' | 'parent' | null; placement: 'start' | 'branch' }) {
+  const posClass = placement === 'start' ? 'bottom-2 left-2' : 'top-9 left-2';
+  if (role === 'parent') {
+    return (
+      <span
+        className={`pointer-events-none absolute ${posClass} z-[25] max-w-[calc(100%-1rem)] truncate rounded-md border border-sky-200/80 bg-sky-400 px-1.5 py-0.5 text-[8px] font-black uppercase leading-none tracking-wider text-slate-950 shadow-md shadow-sky-950/40`}
+        title="Relink: new parent"
+        aria-hidden
+      >
+        New parent
+      </span>
+    );
+  }
+  return null;
+}
+
+const DTL_HANDLE_CLS = '!h-2 !w-2 !min-h-0 !min-w-0 !border-0 !bg-transparent';
+
+const DTL_PORT_SIDES: { suffix: 'top' | 'bottom' | 'left' | 'right'; position: Position }[] = [
+  { suffix: 'top', position: Position.Top },
+  { suffix: 'bottom', position: Position.Bottom },
+  { suffix: 'left', position: Position.Left },
+  { suffix: 'right', position: Position.Right },
+];
+
+/** Source + target ports on every side so edges can exit/enter the nearest face (positions chosen in {@link nearestPortHandles}). */
+function DtlCardPortHandles() {
+  return (
+    <>
+      {DTL_PORT_SIDES.map(({ suffix, position }) => (
+        <Fragment key={suffix}>
+          <Handle
+            type="source"
+            position={position}
+            id={`dtl-src-${suffix}`}
+            isConnectable={false}
+            className={DTL_HANDLE_CLS}
+            aria-hidden
+          />
+          <Handle
+            type="target"
+            position={position}
+            id={`dtl-tgt-${suffix}`}
+            isConnectable={false}
+            className={DTL_HANDLE_CLS}
+            aria-hidden
+          />
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
+type DtlCardSide = 'top' | 'bottom' | 'left' | 'right';
+
+/** For an edge from `from` → `to` (node center positions), pick the side of each node that faces the other. */
+function nearestPortHandles(
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+): { sourceHandle: string; targetHandle: string } {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  let fromSide: DtlCardSide;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    fromSide = dx > 0 ? 'right' : 'left';
+  } else {
+    fromSide = dy > 0 ? 'bottom' : 'top';
+  }
+  const dx2 = from.x - to.x;
+  const dy2 = from.y - to.y;
+  let toSide: DtlCardSide;
+  if (Math.abs(dx2) > Math.abs(dy2)) {
+    toSide = dx2 > 0 ? 'right' : 'left';
+  } else {
+    toSide = dy2 > 0 ? 'bottom' : 'top';
+  }
+  return {
+    sourceHandle: `dtl-src-${fromSide}`,
+    targetHandle: `dtl-tgt-${toSide}`,
+  };
+}
+
+const TREE_BEZIER_CURVATURE_BASE = 0.26;
+const TREE_BEZIER_CURVATURE_SPREAD = 0.052;
+const CLUSTER_PAD = 28;
+
+/** Depth row cluster panel hues (cycles by depth). Tint kept muted so cards stay the focus. */
+const CLUSTER_DEPTH_PANEL_STYLES: readonly string[] = [
+  'bg-violet-950/44 border-violet-800/24',
+  'bg-sky-950/42 border-sky-800/24',
+  'bg-emerald-950/42 border-emerald-800/24',
+  'bg-amber-950/42 border-amber-800/22',
+  'bg-rose-950/42 border-rose-800/24',
+  'bg-fuchsia-950/42 border-fuchsia-800/24',
+  'bg-cyan-950/42 border-cyan-800/24',
+  'bg-orange-950/42 border-orange-800/22',
+];
+
+function clusterSurfaceClassForDepth(depth: number): string {
+  return CLUSTER_DEPTH_PANEL_STYLES[(depth - 1) % CLUSTER_DEPTH_PANEL_STYLES.length]!;
+}
+
+/** Ordered child nodes per parent (left→right by layout x), to fan sibling edges and reduce overlap. */
+function groupChildrenByParentId(
+  decisionNodes: DecisionNodeModel[],
+  pos: Map<string, { x: number; y: number }>,
+): Map<string, DecisionNodeModel[]> {
+  const byParent = new Map<string, DecisionNodeModel[]>();
+  for (const n of decisionNodes) {
+    if (n.parentId == null) continue;
+    const list = byParent.get(n.parentId);
+    if (list) list.push(n);
+    else byParent.set(n.parentId, [n]);
+  }
+  for (const [, kids] of byParent) {
+    kids.sort((a, b) => {
+      const ax = pos.get(a.id)?.x ?? 0;
+      const bx = pos.get(b.id)?.x ?? 0;
+      if (ax !== bx) return ax - bx;
+      return a.createdAt.localeCompare(b.createdAt);
+    });
+  }
+  return byParent;
+}
+
+/** Slightly different Bézier tension per sibling so shared parent→child bundles don’t sit on one path. */
+function bezierCurvatureForFan(
+  siblingIdsLeftToRight: string[],
+  edgeChildId: string,
+  base: number,
+  spread: number,
+): number {
+  if (siblingIdsLeftToRight.length <= 1) return base;
+  const idx = siblingIdsLeftToRight.indexOf(edgeChildId);
+  if (idx < 0) return base;
+  const mid = (siblingIdsLeftToRight.length - 1) / 2;
+  const t = base + (idx - mid) * spread;
+  return Math.min(0.48, Math.max(0.12, t));
+}
+
+function footprintForTimelineCard(n: DecisionNodeModel): { w: number; h: number } {
+  return n.timelineRole === 'timeline_start'
+    ? { w: DECISION_TIMELINE_START_CARD_W, h: 118 }
+    : { w: DECISION_TIMELINE_BRANCH_CARD_W, h: 400 };
+}
+
+function buildSlotClusterNodes(
+  decisionNodes: DecisionNodeModel[],
+  pos: Map<string, { x: number; y: number }>,
+  turns: Turn[],
+  snapLockedDepths: ReadonlySet<number>,
+): Node<DecisionSlotClusterData>[] {
+  let maxDepth = 0;
+  for (const n of decisionNodes) {
+    if (n.timelineRole === 'timeline_start' || n.parentId == null) continue;
+    maxDepth = Math.max(maxDepth, decisionNodeDepthFromRoot(decisionNodes, n.id));
+  }
+  const clusters: Node<DecisionSlotClusterData>[] = [];
+  for (let depth = 1; depth <= maxDepth; depth++) {
+    const peers = decisionNodes.filter(
+      (n) =>
+        n.timelineRole !== 'timeline_start' &&
+        n.parentId != null &&
+        decisionNodeDepthFromRoot(decisionNodes, n.id) === depth,
+    );
+    if (peers.length < 2) continue;
+
+    let minL = Infinity;
+    let minT = Infinity;
+    let maxR = -Infinity;
+    let maxB = -Infinity;
+    for (const n of peers) {
+      const c = pos.get(n.id) ?? { x: 0, y: 0 };
+      const { w, h } = footprintForTimelineCard(n);
+      minL = Math.min(minL, c.x - w / 2);
+      maxR = Math.max(maxR, c.x + w / 2);
+      minT = Math.min(minT, c.y - h / 2);
+      maxB = Math.max(maxB, c.y + h / 2);
+    }
+    const slotId = effectivePlannerTurnSlotId(decisionNodes, peers[0]!, turns);
+    const wBox = maxR - minL + CLUSTER_PAD * 2;
+    const hBox = maxB - minT + CLUSTER_PAD * 2;
+    const snapLocked = snapLockedDepths.has(depth);
+    clusters.push({
+      id: `dtl-cluster:d${depth}`,
+      type: 'decisionSlotCluster',
+      position: { x: minL - CLUSTER_PAD, y: minT - CLUSTER_PAD },
+      origin: [0, 0] as const,
+      width: wBox,
+      height: hBox,
+      draggable: snapLocked,
+      dragHandle: snapLocked ? '.dtl-cluster-drag-rail' : undefined,
+      selectable: false,
+      focusable: false,
+      zIndex: snapLocked ? 0 : -2,
+      data: {
+        label: `Turn ${slotId} · ${peers.length} branches`,
+        depth,
+        surfaceClass: clusterSurfaceClassForDepth(depth),
+      },
+    });
+  }
+  return clusters;
+}
+
+const DecisionSlotCluster = memo(function DecisionSlotCluster({ data }: { id: string; data: DecisionSlotClusterData }) {
+  const clusterSnap = useContext(ClusterSnapContext);
+  const locked = clusterSnap ? clusterSnap.snapLockedDepths.has(data.depth) : false;
+  const toggle = clusterSnap?.toggleClusterSnapDepth;
+  const organize = clusterSnap?.organizeTimelineLayout;
+
+  return (
+    <div
+      className={`relative h-full w-full rounded-2xl border-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ring-1 ring-black/35 ${data.surfaceClass}`}
+    >
+      <span className="pointer-events-none absolute inset-x-0 top-2 z-0 truncate px-2 text-center text-[9px] font-bold uppercase tracking-wide text-slate-500/95">
+        {data.label}
+      </span>
+      {organize ? (
+        <button
+          type="button"
+          title="Reorganize entire graph: compact tree layout, less overlap (saved with game)"
+          className="nodrag nopan absolute left-2 top-1.5 z-[2] rounded-md border border-emerald-600/55 bg-emerald-950/90 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-emerald-100 shadow-sm shadow-emerald-950/25 transition-colors hover:border-emerald-500 hover:bg-emerald-900/90"
+          onClick={(e) => {
+            e.stopPropagation();
+            organize();
+          }}
+        >
+          Organize
+        </button>
+      ) : null}
+      {toggle ? (
+        <button
+          type="button"
+          title={
+            locked
+              ? 'Unlock: drag individual branches again (cluster frame follows layout)'
+              : 'Snap: drag the whole group from the top rail; branches stay locked together'
+          }
+          className={`nodrag nopan absolute right-2 top-1.5 z-[2] rounded-md border px-2 py-0.5 text-[8px] font-black uppercase tracking-wider transition-colors ${
+            locked
+              ? 'border-sky-500/60 bg-sky-950/90 text-sky-100 shadow-md shadow-sky-950/30'
+              : 'border-slate-600/70 bg-slate-900/95 text-slate-400 hover:border-slate-500 hover:text-slate-200'
+          }`}
+          aria-pressed={locked}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggle(data.depth);
+          }}
+        >
+          Snap
+        </button>
+      ) : null}
+      {locked ? (
+        <div
+          className="dtl-cluster-drag-rail absolute left-0 right-0 top-0 z-0 flex h-8 cursor-grab items-end justify-center rounded-t-2xl border-b border-slate-700/35 bg-slate-900/55 pb-0.5 text-[8px] font-semibold text-slate-600 active:cursor-grabbing"
+          title="Drag to move all branches in this row together"
+        >
+          <span className="pointer-events-none select-none">Drag row</span>
+        </div>
+      ) : null}
+    </div>
+  );
+});
+
+/** Prevent wheel from reaching React Flow’s pane (zoom) when scrolling nested log lists. */
+function stopWheelZoomOnPane(e: React.WheelEvent) {
+  e.stopPropagation();
+}
+
+const PHASE_STRIP: readonly { phase: CombatTurnPhase; label: string; tint: string }[] = [
+  { phase: 'start', label: 'Draw', tint: 'border-violet-400/55 bg-violet-950/90 text-violet-100' },
+  { phase: 'player', label: 'Main', tint: 'border-emerald-400/55 bg-emerald-950/90 text-emerald-100' },
+  { phase: 'enemy', label: 'Enemy', tint: 'border-rose-400/55 bg-rose-950/90 text-rose-100' },
+];
+
+function TurnPhaseTripleStrip({
+  activePhase,
+  onSelectPhase,
 }: {
-  id: string;
-  data: DecisionCardData;
+  activePhase: CombatTurnPhase;
+  onSelectPhase?: (phase: CombatTurnPhase) => void;
 }) {
-  const { jumpToDecisionNode, deleteDecisionBranch, updateDecisionNodeLabel } = useGameManager();
-  const { decisionNode, isActive } = data;
-  const summary = deriveDecisionNodeSummary(decisionNode.snapshot, decisionNode.plannerTurnSlotId);
+  const editable = !!onSelectPhase;
+  return (
+    <div
+      className="nodrag nopan mb-2 flex overflow-hidden rounded-lg border border-slate-600/55 shadow-inner shadow-black/30"
+        title={
+          editable
+          ? 'Click Draw / Main / Enemy to set this step’s phase (not written to combat activity logs)'
+          : 'Draw → Main → Enemy for this planner turn'
+      }
+      role={editable ? 'group' : undefined}
+      aria-label={editable ? 'Set timeline step phase' : undefined}
+    >
+      {PHASE_STRIP.map(({ phase, label, tint }) => {
+        const sel = activePhase === phase;
+        const cellCls = `${tint} ${
+          sel ? 'relative z-[1] shadow-[inset_0_0_0_2px_rgb(250_250_250/0.35)] brightness-105' : 'opacity-[0.82] saturate-[0.88]'
+        } ${editable ? 'cursor-pointer hover:brightness-110 hover:saturate-100 active:brightness-95' : ''}`;
+        const inner = (
+          <>
+            <span className="text-[8px] font-extrabold uppercase leading-none tracking-tight">{label}</span>
+            <span className="mt-0.5 font-mono text-[7px] opacity-85">{phase}</span>
+          </>
+        );
+        if (!editable) {
+          return (
+            <div
+              key={phase}
+              className={`nodrag nopan flex min-h-[2.25rem] flex-1 flex-col items-center justify-center border-r border-slate-800/85 px-0.5 py-1 text-center last:border-r-0 ${cellCls}`}
+            >
+              {inner}
+            </div>
+          );
+        }
+        return (
+          <button
+            key={phase}
+            type="button"
+            className={`nodrag nopan flex min-h-[2.25rem] flex-1 flex-col items-center justify-center border-r border-slate-800/85 px-0.5 py-1 text-center last:border-r-0 ${cellCls}`}
+            aria-pressed={sel}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelectPhase(phase);
+            }}
+          >
+            {inner}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+const DecisionStartCard = memo(function DecisionStartCard({ data }: { id: string; data: DecisionCardData }) {
+  const interact = useContext(TimelineInteractContext);
+  const { decisionNodes } = useGameManager();
+  const { decisionNode, isPinned } = data;
+
+  const eligibleParentIds = useMemo(() => {
+    const src = interact?.reparentSourceId;
+    if (!src) return null;
+    return new Set(eligibleDecisionReparentParents(decisionNodes, src).map((p) => p.id));
+  }, [interact?.reparentSourceId, decisionNodes]);
+
+  const hoverPick =
+    interact?.reparentSourceId &&
+    interact.reparentHoverParentId === decisionNode.id &&
+    eligibleParentIds?.has(decisionNode.id);
+
+  return (
+    <div className="relative w-[136px] shrink-0">
+      {data.relinkPanelRole === 'child' ? <RelinkMoveBranchAboveCard /> : null}
+      <div
+      className={`relative w-[136px] overflow-hidden rounded-xl border-2 border-amber-500/55 bg-linear-to-b from-amber-950/45 via-slate-950/95 to-slate-950 px-2 pb-4 pt-6 text-center shadow-lg transition-[transform,box-shadow,ring,filter] duration-150 ${timelineStartPathClass(isPinned)}${reparentRingClass(!!hoverPick)}${relinkPanelVisualClass(data.relinkPanelRole)}`}
+    >
+      <DtlCardPortHandles />
+      <RelinkRoleBadge role={data.relinkPanelRole} placement="start" />
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 z-[2] h-2 bg-linear-to-r from-amber-200 via-amber-500 to-amber-700"
+        aria-hidden
+      />
+      <p className="relative z-[2] text-[12px] font-black tracking-[0.22em] text-amber-50">START</p>
+      <p className="relative z-[2] mt-0.5 text-[9px] font-bold uppercase text-amber-400/95">STATIC</p>
+    </div>
+    </div>
+  );
+});
+
+const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: string; data: DecisionCardData }) {
+  const interact = useContext(TimelineInteractContext);
+  const {
+    jumpToDecisionNode,
+    deleteDecisionBranch,
+    updateDecisionNodeLabel,
+    updateDecisionNodeTurnPhase,
+    decisionNodes,
+  } = useGameManager();
+  const { decisionNode, parent, isSlotActive, isPinned, effectivePlannerSlotId, breadcrumbDisplay } = data;
+  const summary = deriveDecisionNodeSummary(decisionNode.snapshot, effectivePlannerSlotId);
   const isRoot = decisionNode.parentId === null;
+
+  const eligibleParentIds = useMemo(() => {
+    const src = interact?.reparentSourceId;
+    if (!src) return null;
+    return new Set(eligibleDecisionReparentParents(decisionNodes, src).map((p) => p.id));
+  }, [interact?.reparentSourceId, decisionNodes]);
+
+  const hoverPick =
+    interact?.reparentSourceId &&
+    interact.reparentHoverParentId === decisionNode.id &&
+    eligibleParentIds?.has(decisionNode.id);
+
+  const peersSameTurnDepth = useMemo(() => {
+    return decisionNodesPeersSameTurnDepth(decisionNodes, decisionNode.id);
+  }, [decisionNodes, decisionNode.id]);
+
+  const branchOrdinal = useMemo(
+    () =>
+      Math.max(
+        1,
+        peersSameTurnDepth.findIndex((n) => n.id === decisionNode.id) + 1,
+      ),
+    [peersSameTurnDepth, decisionNode.id],
+  );
+
+  const playEntries = useMemo(
+    () => getNewLogEntriesForDecisionNode(decisionNode, parent),
+    [decisionNode, parent],
+  );
+  const playsSummary = useMemo(
+    () => summarizePlays(playEntries, decisionNode.turnPhase),
+    [playEntries, decisionNode.turnPhase],
+  );
+
+  const [playsOpen, setPlaysOpen] = useState(false);
+  const [inlineLogDensity, setInlineLogDensity] = useState<ActivityLogInlineDensity>('minimal');
+  const [showFullyExpanded, setShowFullyExpanded] = useState(false);
 
   const onRename = useCallback(() => {
     const next = window.prompt('Branch label', decisionNode.label);
@@ -57,98 +616,624 @@ const DecisionCardNode = memo(function DecisionCardNode({
     updateDecisionNodeLabel(decisionNode.id, next);
   }, [decisionNode.id, decisionNode.label, updateDecisionNodeLabel]);
 
-  const btnCls =
-    'nodrag nopan cursor-pointer'; /* let React Flow pan/drag the node, not start on buttons */
+  const toggleReparentMode = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!interact) return;
+      interact.setReparentSourceId((cur) => {
+        if (cur === decisionNode.id) {
+          interact.disarmMovingBranchFromCard(decisionNode.id);
+          return null;
+        }
+        return decisionNode.id;
+      });
+      interact.setReparentHoverParentId(null);
+    },
+    [interact, decisionNode.id],
+  );
+
+  const btnCls = 'nodrag nopan cursor-pointer touch-manipulation';
+  const iconToolbarBtn =
+    'flex h-7 w-7 shrink-0 items-center justify-center rounded border border-slate-600/55 bg-slate-900/95 p-0 text-slate-300 transition-colors hover:bg-slate-800';
+  const accentShell = plannerPhaseTimelineCardAccent(decisionNode.turnPhase, isSlotActive && !isPinned);
+  const reparentSelf = interact?.reparentSourceId === decisionNode.id;
+  const orphanShell = data.isOrphan
+    ? 'border-rose-500 shadow-[0_0_28px_-4px_rgba(244,63,94,0.55)] ring-2 ring-rose-400/85 ring-offset-2 ring-offset-slate-950'
+    : '';
 
   return (
-    <div
-      className={`min-w-[200px] max-w-[220px] rounded-xl border-2 px-2.5 py-2 shadow-lg transition-colors ${
-        isActive
-          ? 'border-cyan-400/70 bg-slate-900/95 shadow-cyan-900/30 ring-1 ring-cyan-400/25'
-          : 'border-slate-600/60 bg-slate-950/90 ring-1 ring-slate-700/30'
-      }`}
+    <div className="relative max-w-[358px] min-w-[273px] shrink-0">
+      {data.relinkPanelRole === 'child' ? <RelinkMoveBranchAboveCard /> : null}
+      <div
+      className={`relative max-w-[358px] min-w-[273px] overflow-hidden rounded-xl border-2 px-2.5 pb-2.5 pt-3 shadow-lg transition-[transform,box-shadow,ring,filter] duration-150 ${accentShell} ${timelineBranchOffPathClass(isPinned)} ${timelineBranchOnPathClass(isPinned)}${reparentRingClass(!!hoverPick)}${relinkPanelVisualClass(data.relinkPanelRole)} ${orphanShell}`}
     >
-      <div className="mb-1 flex items-start justify-between gap-1">
-        <p className="line-clamp-2 text-[11px] font-bold leading-tight text-slate-100">{decisionNode.label}</p>
-        <div className="flex shrink-0 gap-0.5">
+      <DtlCardPortHandles />
+      <RelinkRoleBadge role={data.relinkPanelRole} placement="branch" />
+      {data.isOrphan ? (
+        <span
+          className="pointer-events-none absolute left-2 top-7 z-[22] rounded-md border border-rose-400/80 bg-rose-950/95 px-1.5 py-px text-[8px] font-extrabold uppercase tracking-wider text-rose-100"
+          title="Parent checkpoint is missing — pick a new parent (Relink or Link on card)."
+        >
+          Orphan
+        </span>
+      ) : null}
+      <div className={`pointer-events-none absolute left-0 right-0 top-0 z-[2] h-[5px] ${plannerPhaseStripClass(decisionNode.turnPhase)}`} aria-hidden />
+
+      <div
+        className="nodrag nopan absolute right-1 top-1 z-20 flex items-center gap-px rounded-md border border-slate-600/70 bg-slate-950/95 p-px shadow-md backdrop-blur-sm"
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          title="Rename"
+          className={`${iconToolbarBtn} ${btnCls}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRename();
+          }}
+        >
+          <Pencil className="h-3 w-3" strokeWidth={2} aria-hidden />
+        </button>
+        <button
+          type="button"
+          title={
+            reparentSelf
+              ? 'Cancel relink'
+              : 'Link parent — hover a valid node, then click it (or use Relink panel: toggles + click nodes)'
+          }
+          className={`${iconToolbarBtn} ${btnCls} ${
+            reparentSelf
+              ? 'border-sky-500/70 bg-sky-950/85 text-sky-100'
+              : ''
+          }`}
+          onClick={toggleReparentMode}
+        >
+          <Link2 className="h-3 w-3" strokeWidth={2} aria-hidden />
+        </button>
+        {!isRoot ? (
           <button
             type="button"
-            title="Rename"
-            className={`rounded-md border border-slate-600/50 bg-slate-900 p-1 text-slate-300 hover:bg-slate-800 ${btnCls}`}
+            title="Delete branch"
+            className={`${iconToolbarBtn} border-rose-500/40 bg-rose-950/50 text-rose-200 hover:bg-rose-900/55 ${btnCls}`}
             onClick={(e) => {
               e.stopPropagation();
-              onRename();
+              deleteDecisionBranch(decisionNode.id);
             }}
           >
-            <Pencil className="h-3 w-3" strokeWidth={2} aria-hidden />
+            <Trash2 className="h-3 w-3" strokeWidth={2} aria-hidden />
           </button>
-          {!isRoot ? (
-            <button
-              type="button"
-              title="Delete branch"
-              className={`rounded-md border border-rose-500/40 bg-rose-950/50 p-1 text-rose-200 hover:bg-rose-900/60 ${btnCls}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                deleteDecisionBranch(decisionNode.id);
-              }}
+        ) : null}
+      </div>
+
+      <div className="relative z-[2]">
+        <div className="mb-1 flex flex-col gap-0.5 pr-14">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0">
+            <p
+              className="text-[13px] font-black tabular-nums tracking-tight text-slate-50"
+              title="Turn row from depth below START. Branch ordinal counts all checkpoints at this depth—competing alternates share Set Active."
             >
-              <Trash2 className="h-3 w-3" strokeWidth={2} aria-hidden />
-            </button>
-          ) : null}
+              Turn{' '}
+              <span className="text-cyan-300">{effectivePlannerSlotId}</span>
+              {peersSameTurnDepth.length > 1 ? (
+                <span className="ml-1 text-[10px] font-bold uppercase text-slate-500">
+                  Branch {branchOrdinal}/{peersSameTurnDepth.length}
+                </span>
+              ) : null}
+            </p>
+          </div>
+          <p className="line-clamp-2 text-[9px] leading-tight tracking-tight text-slate-500" title={breadcrumbDisplay}>
+            {breadcrumbDisplay}
+          </p>
         </div>
+
+        <TurnPhaseTripleStrip
+          activePhase={decisionNode.turnPhase}
+          onSelectPhase={(phase) => updateDecisionNodeTurnPhase(decisionNode.id, phase)}
+        />
+
+        <div className="mb-1">
+          <p className="line-clamp-2 pr-1 text-[11px] font-bold leading-tight text-slate-100">{decisionNode.label}</p>
+        </div>
+
+        <div className="mb-1.5 flex flex-wrap items-center gap-2">
+          <span
+            className={`rounded-md border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${plannerPhasePillClasses(decisionNode.turnPhase)}`}
+            title="Planner sub-phase captured on this snapshot"
+          >
+            {plannerCombatPhaseLong(decisionNode.turnPhase)}
+          </span>
+          <span
+            className="font-mono text-[9px] tabular-nums text-slate-600"
+            title="STS combat phase marker on this snapshot"
+          >
+            {decisionNode.turnPhase}/{phaseShort(decisionNode.turnPhase)}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-300/95">
+          <span>HP {summary.hp}</span>
+          <span>Blk {summary.block}</span>
+          <span>En {summary.energy}</span>
+          <span>Hand {summary.handSize}</span>
+        </div>
+
+        <p
+          className="mt-1.5 line-clamp-2 border-t border-slate-700/50 pt-1 text-[9px] text-slate-500"
+          title={summary.lastLogTitle}
+        >
+          {summary.lastLogTitle}
+        </p>
+
+        <button
+          type="button"
+          className={`nodrag nopan mt-1.5 flex w-full items-center justify-between gap-1 rounded-lg border border-slate-600/50 bg-slate-900/70 px-2 py-1 text-left text-[10px] font-semibold text-slate-200 hover:bg-slate-800/80`}
+          aria-expanded={playsOpen}
+          onClick={(e) => {
+            e.stopPropagation();
+            setPlaysOpen((o) => !o);
+          }}
+        >
+          <span className="flex min-w-0 items-center gap-1">
+            {playsOpen ? <ChevronDown className="h-3 w-3 shrink-0" aria-hidden /> : <ChevronRight className="h-3 w-3 shrink-0" aria-hidden />}
+            <span className="truncate">Plays</span>
+            <span className="shrink-0 text-slate-500">({playsSummary.entryCount})</span>
+          </span>
+        </button>
+
+        {playsOpen ? (
+          <div
+            className="nodrag nopan mt-1 space-y-2 border-t border-slate-700/40 pt-2"
+            onPointerDown={(e) => e.stopPropagation()}
+            onWheelCapture={stopWheelZoomOnPane}
+          >
+            <p className="text-[10px] leading-snug text-slate-400" title={playsSummary.headline}>
+              {playsSummary.headline}
+            </p>
+            {playsSummary.phasesTouched.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {playsSummary.phasesTouched.map((ph) => (
+                  <span
+                    key={ph}
+                    className="rounded-md border border-slate-600/60 bg-slate-900/80 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-slate-400"
+                  >
+                    {ph} ({phaseShort(ph)})
+                  </span>
+                ))}
+              </div>
+            ) : null}
+            {playsSummary.uniqueCardNames.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {playsSummary.uniqueCardNames.slice(0, 8).map((name) => (
+                  <span
+                    key={name}
+                    className="max-w-[9rem] truncate rounded-md border border-cyan-900/50 bg-cyan-950/40 px-1.5 py-0.5 text-[9px] font-medium text-cyan-100/95"
+                    title={name}
+                  >
+                    {name}
+                  </span>
+                ))}
+                {playsSummary.uniqueCardNames.length > 8 ? (
+                  <span className="text-[9px] text-slate-500">+{playsSummary.uniqueCardNames.length - 8}</span>
+                ) : null}
+              </div>
+            ) : null}
+
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                className={`rounded-lg border px-2 py-0.5 text-[9px] font-semibold ${
+                  inlineLogDensity === 'minimal'
+                    ? 'border-violet-500/50 bg-violet-950/55 text-violet-100'
+                    : 'border-slate-600 bg-slate-900 text-slate-400'
+                }`}
+                onClick={() => setInlineLogDensity('minimal')}
+              >
+                Compact log
+              </button>
+              <button
+                type="button"
+                className={`rounded-lg border px-2 py-0.5 text-[9px] font-semibold ${
+                  inlineLogDensity === 'detailed'
+                    ? 'border-violet-500/50 bg-violet-950/55 text-violet-100'
+                    : 'border-slate-600 bg-slate-900 text-slate-400'
+                }`}
+                onClick={() => setInlineLogDensity('detailed')}
+              >
+                Detailed log
+              </button>
+              <button
+                type="button"
+                className={`rounded-lg border px-2 py-0.5 text-[9px] font-semibold ${
+                  showFullyExpanded
+                    ? 'border-amber-500/50 bg-amber-950/45 text-amber-100'
+                    : 'border-slate-600 bg-slate-900 text-slate-400'
+                }`}
+                onClick={() => setShowFullyExpanded((v) => !v)}
+                aria-expanded={showFullyExpanded}
+              >
+                Full entries
+              </button>
+            </div>
+
+            {playEntries.length === 0 ? (
+              <p className="py-2 text-center text-[10px] text-slate-600">No new log entries for this step.</p>
+            ) : showFullyExpanded ? (
+              <div
+                className="max-h-56 space-y-2 overflow-y-auto overscroll-contain pr-0.5 [scrollbar-width:thin]"
+                onWheelCapture={stopWheelZoomOnPane}
+              >
+                {[...playEntries].reverse().map((entry) => (
+                  <ActivityLogRowExpanded key={entry.id} entry={entry} />
+                ))}
+              </div>
+            ) : (
+              <div
+                className="max-h-44 overflow-y-auto overscroll-contain pr-0.5 [scrollbar-width:thin]"
+                onWheelCapture={stopWheelZoomOnPane}
+              >
+                {[...playEntries].reverse().map((entry) => (
+                  <ActivityLogRowInline key={entry.id} entry={entry} density={inlineLogDensity} />
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
+
+        <button
+          type="button"
+          disabled={isPinned}
+          title={
+            isPinned
+              ? 'On the loaded timeline path for this turn row (alternate branches use Set Active).'
+              : isSlotActive
+                ? 'Load this alternate for planner turn row ' + effectivePlannerSlotId
+                : 'Load checkpoint for planner turn row ' +
+                  effectivePlannerSlotId +
+                  ' (timeline row differs from planner selection)'
+          }
+          className={`mt-2 w-full rounded-lg border py-1.5 text-[10px] font-semibold ${btnCls} ${
+            isPinned
+              ? 'cursor-default border-slate-600/55 bg-slate-900/50 text-slate-500 opacity-95'
+              : 'border-cyan-500/45 bg-cyan-950/50 text-cyan-100 hover:bg-cyan-900/55'
+          } disabled:pointer-events-none`}
+          onClick={(e) => {
+            e.stopPropagation();
+            jumpToDecisionNode(decisionNode.id);
+          }}
+        >
+          {isPinned ? 'Active' : 'Set Active'}
+        </button>
       </div>
-      <p className="mb-1.5 text-[9px] uppercase tracking-wide text-slate-500">
-        Turn slot {summary.turnSlot} · {decisionNode.turnPhase}
-      </p>
-      <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-300/95">
-        <span>HP {summary.hp}</span>
-        <span>Blk {summary.block}</span>
-        <span>En {summary.energy}</span>
-        <span>Hand {summary.handSize}</span>
-      </div>
-      <p
-        className="mt-1.5 line-clamp-2 border-t border-slate-700/50 pt-1 text-[9px] text-slate-500"
-        title={summary.lastLogTitle}
-      >
-        {summary.lastLogTitle}
-      </p>
-      <button
-        type="button"
-        className={`mt-2 w-full rounded-lg border border-cyan-500/45 bg-cyan-950/50 py-1.5 text-[10px] font-semibold text-cyan-100 hover:bg-cyan-900/55 ${btnCls}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          jumpToDecisionNode(decisionNode.id);
-        }}
-      >
-        Activate
-      </button>
+    </div>
     </div>
   );
 });
 
+function mergeLayoutWithPersisted(
+  layoutPos: Map<string, { x: number; y: number }>,
+  persisted: DecisionTimelinePositionMap,
+  nodeIds: Set<string>,
+): Map<string, { x: number; y: number }> {
+  const out = new Map(layoutPos);
+  for (const [id, pos] of Object.entries(persisted)) {
+    if (nodeIds.has(id) && pos && typeof pos.x === 'number' && typeof pos.y === 'number') {
+      out.set(id, pos);
+    }
+  }
+  return out;
+}
+
+/** Minimum center-to-center spacing when scattering siblings at the same depth (~card width + gutter). */
+const SCATTER_MIN_CENTER_DIST = DECISION_TIMELINE_BRANCH_CARD_W + 38;
+
+function scatterHash(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/** Widen same-depth rows, light vertical jitter, re-center horizontally — writes positions for all timeline nodes. */
+function computeScatterPositionPatch(
+  decisionNodes: DecisionNodeModel[],
+  persisted: DecisionTimelinePositionMap,
+): DecisionTimelinePositionMap {
+  const layoutPos = layoutDecisionTreeNodes(decisionNodes);
+  const nodeIds = new Set(decisionNodes.map((n) => n.id));
+  const next = mergeLayoutWithPersisted(layoutPos, persisted, nodeIds);
+
+  const byDepth = new Map<number, DecisionNodeModel[]>();
+  for (const n of decisionNodes) {
+    if (n.timelineRole === 'timeline_start' || n.parentId == null) continue;
+    const d = decisionNodeDepthFromRoot(decisionNodes, n.id);
+    if (!byDepth.has(d)) byDepth.set(d, []);
+    byDepth.get(d)!.push(n);
+  }
+
+  for (const peers of byDepth.values()) {
+    if (peers.length < 2) continue;
+    peers.sort((a, b) => {
+      const ax = next.get(a.id)?.x ?? 0;
+      const bx = next.get(b.id)?.x ?? 0;
+      if (ax !== bx) return ax - bx;
+      return a.id.localeCompare(b.id);
+    });
+    const xs = peers.map((p) => next.get(p.id)!.x);
+    const cx = xs.reduce((s, x) => s + x, 0) / peers.length;
+    const span = (peers.length - 1) * SCATTER_MIN_CENTER_DIST;
+    let xCursor = cx - span / 2;
+    for (const p of peers) {
+      const old = next.get(p.id)!;
+      const jy = ((scatterHash(p.id) % 11) - 5) * 5;
+      next.set(p.id, { x: xCursor, y: old.y + jy });
+      xCursor += SCATTER_MIN_CENTER_DIST;
+    }
+  }
+
+  let minL = Infinity;
+  let maxR = -Infinity;
+  for (const n of decisionNodes) {
+    const c = next.get(n.id)!;
+    const { w } = footprintForTimelineCard(n);
+    minL = Math.min(minL, c.x - w / 2);
+    maxR = Math.max(maxR, c.x + w / 2);
+  }
+  if (!Number.isFinite(minL) || !Number.isFinite(maxR)) {
+    return {};
+  }
+  const mid = (minL + maxR) / 2;
+
+  const patch: DecisionTimelinePositionMap = {};
+  for (const n of decisionNodes) {
+    const c = next.get(n.id)!;
+    patch[n.id] = { x: c.x - mid, y: c.y };
+  }
+  return patch;
+}
+
+/** Recompute positions from the packed tree. Ignores current drags. */
+function computeOrganizePositionPatch(
+  decisionNodes: DecisionNodeModel[],
+  orientation: DecisionTreePackOrientation,
+): DecisionTimelinePositionMap {
+  const packed = layoutDecisionTreePacked(decisionNodes, orientation);
+  const patch: DecisionTimelinePositionMap = {};
+  for (const [id, pos] of packed) {
+    patch[id] = { x: pos.x, y: pos.y };
+  }
+  return patch;
+}
+
+type DecisionTimelineLinkStyle = 'curved' | 'straight';
+
 function buildFlowGraph(
   decisionNodes: DecisionNodeModel[],
   activeNodeId: string | null,
-): { nodes: Node<DecisionCardData>[]; edges: Edge[] } {
-  const pos = layoutDecisionTreeNodes(decisionNodes);
-  const nodes: Node<DecisionCardData>[] = decisionNodes.map((n) => {
+  activePlannerTurnSlotId: number | undefined,
+  persistedPositions: DecisionTimelinePositionMap,
+  turns: Turn[],
+  linkStyle: DecisionTimelineLinkStyle = 'curved',
+  snapLockedDepths: ReadonlySet<number> = new Set(),
+  relinkChildId: string | null = null,
+  relinkParentId: string | null = null,
+  reparentSourceId: string | null = null,
+  reparentHoverParentId: string | null = null,
+): { nodes: Node<DecisionFlowNodeData>[]; edges: Edge[] } {
+  const byId = new Map(decisionNodes.map((n) => [n.id, n] as const));
+  const layoutPos = layoutDecisionTreeNodes(decisionNodes);
+  const nodeIds = new Set(decisionNodes.map((n) => n.id));
+  const pos = mergeLayoutWithPersisted(layoutPos, persistedPositions, nodeIds);
+  const childrenByParent = groupChildrenByParentId(decisionNodes, pos);
+
+  const previewChildId = relinkChildId ?? reparentSourceId ?? null;
+  const toolbarHoverEligible =
+    Boolean(reparentSourceId) &&
+    Boolean(reparentHoverParentId) &&
+    eligibleDecisionReparentParents(decisionNodes, reparentSourceId!).some((p) => p.id === reparentHoverParentId);
+  const previewParentId =
+    relinkParentId ?? (toolbarHoverEligible && reparentHoverParentId ? reparentHoverParentId : null);
+
+  const relinkOldParentId =
+    previewChildId != null ? (byId.get(previewChildId)?.parentId ?? null) : null;
+
+  const showRelinkPreview = Boolean(
+    previewChildId &&
+      previewParentId &&
+      relinkOldParentId &&
+      previewParentId !== relinkOldParentId &&
+      byId.has(previewParentId),
+  );
+
+  /** Toolbar Link mode: red old edge once the branch is armed; green appears when hovering a valid new parent. */
+  const showToolbarOldEdgeHighlight = Boolean(
+    reparentSourceId &&
+      !relinkChildId &&
+      previewChildId &&
+      relinkOldParentId &&
+      byId.has(relinkOldParentId) &&
+      !showRelinkPreview,
+  );
+
+  /**
+   * Set Active vs Active pinning: lineage = ROOT→`activeDecisionNodeId` checkpoints (excluding START)
+   * plus the forced unique-child continuation to the next fork or leaf ({@link getActiveLineageBranchIds}).
+   */
+  const activeLineageBranchIds = getActiveLineageBranchIds(decisionNodes, activeNodeId);
+
+  const cardNodes: Node<DecisionCardData>[] = decisionNodes.map((n) => {
     const p = pos.get(n.id) ?? { x: 0, y: 0 };
+    const parent = n.parentId ? byId.get(n.parentId) ?? null : null;
+    const { display: breadcrumbDisplay } = getDecisionNodeBreadcrumb(decisionNodes, n.id, turns);
+    const rowPlannerSlotId = effectivePlannerTurnSlotId(decisionNodes, n, turns);
+    const isStart = n.timelineRole === 'timeline_start';
+    const fp = footprintForTimelineCard(n);
+    const packFootprintW = fp.w;
+    const packFootprintH = fp.h;
+    const isPinned = isStart
+      ? Boolean(activeNodeId)
+      : Boolean(activeNodeId && activeLineageBranchIds.has(n.id));
+    const isSlotActive =
+      !isStart && activePlannerTurnSlotId !== undefined && rowPlannerSlotId === activePlannerTurnSlotId;
+    const treeDepth =
+      isStart || !n.parentId ? 0 : decisionNodeDepthFromRoot(decisionNodes, n.id);
+    const clusterSnapLocked = !isStart && treeDepth > 0 && snapLockedDepths.has(treeDepth);
+    const relinkPanelRole: DecisionCardData['relinkPanelRole'] =
+      previewChildId != null && n.id === previewChildId
+        ? 'child'
+        : previewParentId != null && n.id === previewParentId
+          ? 'parent'
+          : null;
+    const isOrphan = !isStart && isDecisionTimelineOrphan(decisionNodes, n);
     return {
       id: n.id,
-      type: 'decisionCard',
+      type: isStart ? 'decisionStartCard' : 'decisionCard',
       position: { x: p.x, y: p.y },
-      data: { decisionNode: n, isActive: n.id === activeNodeId },
+      origin: [0.5, 0.5] as const,
+      width: packFootprintW,
+      height: packFootprintH,
+      draggable: !clusterSnapLocked,
+      zIndex: clusterSnapLocked ? 2 : undefined,
+      data: {
+        decisionNode: n,
+        parent,
+        isSlotActive,
+        isPinned,
+        effectivePlannerSlotId: rowPlannerSlotId,
+        breadcrumbDisplay,
+        relinkPanelRole,
+        isOrphan,
+      },
     };
   });
-  const edges: Edge[] = decisionNodes
-    .filter((n) => n.parentId != null)
-    .map((n) => ({
-      id: `${n.parentId}-${n.id}`,
-      source: n.parentId!,
-      target: n.id,
-      type: 'smoothstep',
-    }));
-  return { nodes, edges };
+
+  const spineMeta = getDecisionTimelineSpineMeta(decisionNodes, activeNodeId, turns);
+  const MAIN_SPINE = '#38bdf8';
+  const BRANCH_STROKE = '#5c6573';
+  const RELINK_REMOVE_STROKE = '#f87171';
+  const RELINK_NEW_STROKE = '#22c55e';
+
+  const showRelinkRemovedEdge = showRelinkPreview || showToolbarOldEdgeHighlight;
+
+  const treeEdges: Edge[] = decisionNodes
+    .filter((n) => n.parentId != null && byId.has(n.parentId))
+    .map((n) => {
+      const stepKey = `${n.id}|${n.parentId!}`;
+      const isMainSpine = spineMeta.spineEdgeKeys.has(stepKey);
+
+      const parentId = n.parentId!;
+      const parentPt = pos.get(parentId) ?? { x: 0, y: 0 };
+      const childPt = pos.get(n.id) ?? { x: 0, y: 0 };
+      const { sourceHandle, targetHandle } = nearestPortHandles(parentPt, childPt);
+      const siblingIds = childrenByParent.get(parentId)?.map((c) => c.id) ?? [];
+      const curvature = bezierCurvatureForFan(
+        siblingIds,
+        n.id,
+        TREE_BEZIER_CURVATURE_BASE,
+        TREE_BEZIER_CURVATURE_SPREAD,
+      );
+
+      const isRemovedRelink =
+        showRelinkRemovedEdge && n.id === previewChildId && parentId === relinkOldParentId;
+
+      const common = {
+        id: `${parentId}→${n.id}`,
+        source: parentId,
+        target: n.id,
+        sourceHandle,
+        targetHandle,
+        animated: isRemovedRelink ? false : isMainSpine,
+        style: isRemovedRelink
+          ? { stroke: RELINK_REMOVE_STROKE, strokeWidth: 3, strokeDasharray: '8 5' }
+          : isMainSpine
+            ? { stroke: MAIN_SPINE, strokeWidth: 3 }
+            : { stroke: BRANCH_STROKE, strokeWidth: 1.1, opacity: 0.65 },
+        markerEnd: isRemovedRelink
+          ? {
+              type: MarkerType.ArrowClosed,
+              width: 22,
+              height: 22,
+              color: RELINK_REMOVE_STROKE,
+            }
+          : {
+              type: MarkerType.ArrowClosed,
+              width: isMainSpine ? 22 : 14,
+              height: isMainSpine ? 22 : 14,
+              color: isMainSpine ? MAIN_SPINE : '#8b96a8',
+            },
+        zIndex: isRemovedRelink ? 52 : isMainSpine ? 35 : 6,
+      };
+
+      if (linkStyle === 'curved') {
+        return {
+          ...common,
+          type: 'default' as const,
+          pathOptions: { curvature },
+        } as Edge;
+      }
+
+      return {
+        ...common,
+        type: 'straight' as const,
+      } as Edge;
+    });
+
+  const edges: Edge[] = [...treeEdges];
+  if (showRelinkPreview && previewParentId && previewChildId) {
+    const parentPt = pos.get(previewParentId) ?? { x: 0, y: 0 };
+    const childPt = pos.get(previewChildId) ?? { x: 0, y: 0 };
+    const { sourceHandle, targetHandle } = nearestPortHandles(parentPt, childPt);
+    const existingKids = childrenByParent.get(previewParentId)?.map((c) => c.id) ?? [];
+    const siblingIdsForNew = existingKids.includes(previewChildId)
+      ? [...existingKids]
+      : [...existingKids, previewChildId];
+    siblingIdsForNew.sort((a, b) => (pos.get(a)?.x ?? 0) - (pos.get(b)?.x ?? 0));
+    const previewCurvature = bezierCurvatureForFan(
+      siblingIdsForNew,
+      previewChildId,
+      TREE_BEZIER_CURVATURE_BASE,
+      TREE_BEZIER_CURVATURE_SPREAD,
+    );
+    const greenCommon = {
+      id: 'dtl-relink-preview-new',
+      source: previewParentId,
+      target: previewChildId,
+      sourceHandle,
+      targetHandle,
+      animated: true,
+      style: { stroke: RELINK_NEW_STROKE, strokeWidth: 3, strokeDasharray: '10 6' },
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        width: 22,
+        height: 22,
+        color: RELINK_NEW_STROKE,
+      },
+      zIndex: 55,
+    };
+    edges.push(
+      (linkStyle === 'curved'
+        ? { ...greenCommon, type: 'default' as const, pathOptions: { curvature: previewCurvature } }
+        : { ...greenCommon, type: 'straight' as const }) as Edge,
+    );
+  }
+
+  const clusterNodes = buildSlotClusterNodes(decisionNodes, pos, turns, snapLockedDepths);
+  return { nodes: [...clusterNodes, ...cardNodes], edges };
+}
+
+function formatRelinkNodePickLabel(
+  id: string | null,
+  decisionNodes: DecisionNodeModel[],
+  turns: Turn[],
+): string {
+  if (!id) return '— none —';
+  const n = decisionNodes.find((x) => x.id === id);
+  if (!n) return '— none —';
+  if (n.timelineRole === 'timeline_start') return 'START';
+  const slice = (n.label || '(no label)').slice(0, 26);
+  const ellipsis = n.label && n.label.length > 26 ? '…' : '';
+  return `T${effectivePlannerTurnSlotId(decisionNodes, n, turns)} · ${slice}${ellipsis}`;
 }
 
 function structureKeyFromNodes(decisionNodes: DecisionNodeModel[]) {
@@ -158,26 +1243,443 @@ function structureKeyFromNodes(decisionNodes: DecisionNodeModel[]) {
     .join(',')}`;
 }
 
-function DecisionTimelineCanvas() {
-  const { decisionNodes, activeDecisionNodeId, gameState, isLoading } = useGameManager();
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node<DecisionCardData>>([]);
+function DecisionTimelineCanvas({ onSelectedNodeIdChange }: DecisionTimelineFlowProps) {
+  const { fitView } = useReactFlow();
+  const {
+    decisionNodes,
+    activeDecisionNodeId,
+    turns,
+    currentTurnIndex,
+    gameState,
+    isLoading,
+    decisionTimelinePositions,
+    setDecisionTimelineNodePosition,
+    mergeDecisionTimelinePositions,
+    linkDecisionTimelineParent,
+    randomizeDecisionTimelineParentsForTesting,
+  } = useGameManager();
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<DecisionFlowNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+
+  const [reparentSourceId, setReparentSourceId] = useState<string | null>(null);
+  const [reparentHoverParentId, setReparentHoverParentId] = useState<string | null>(null);
+  const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
+  /** Default curved (Bézier); straight uses XYFlow straight edges. */
+  const [curvedLinks, setCurvedLinks] = useState(true);
+  /** Organize direction: top-down vs left-right packed tree. */
+  const [organizeOrientation, setOrganizeOrientation] = useState<DecisionTreePackOrientation>('horizontal');
+  /** Zoom-safe relink panel: pick branch + new parent via toggles, then click nodes on the canvas. */
+  const [relinkChildId, setRelinkChildId] = useState<string | null>(null);
+  const [relinkParentId, setRelinkParentId] = useState<string | null>(null);
+  /** Relink: arm canvas click — next branch card sets move target; next valid node sets new parent. */
+  const [relinkPickMode, setRelinkPickMode] = useState<null | 'child' | 'parent'>(null);
+  const [relinkPanelMinimized, setRelinkPanelMinimized] = useState(false);
+  const [snapLockedDepths, setSnapLockedDepths] = useState<Set<number>>(() => new Set());
+  const clusterDragSessionRef = useRef<{
+    clusterId: string;
+    clusterStart: { x: number; y: number };
+    memberIds: string[];
+    memberStarts: Map<string, { x: number; y: number }>;
+  } | null>(null);
+  /** After relink / randomize topology, run Organize on the next `decisionNodes` commit. */
+  const pendingOrganizeAfterTopologyRef = useRef(false);
+
+  const toggleClusterSnapDepth = useCallback((depth: number) => {
+    setSnapLockedDepths((prev) => {
+      const next = new Set(prev);
+      if (next.has(depth)) next.delete(depth);
+      else next.add(depth);
+      return next;
+    });
+  }, []);
+
+  const disarmMovingBranchFromCard = useCallback((branchNodeId: string) => {
+    setReparentHoverParentId(null);
+    setRelinkChildId((c) => (c === branchNodeId ? null : c));
+    setRelinkParentId(null);
+  }, []);
+
+  const interactValue = useMemo<TimelineInteractCtx>(
+    () => ({
+      reparentSourceId,
+      setReparentSourceId,
+      reparentHoverParentId,
+      setReparentHoverParentId,
+      disarmMovingBranchFromCard,
+    }),
+    [reparentSourceId, reparentHoverParentId, disarmMovingBranchFromCard],
+  );
+
+  const eligibleParentIdSet = useMemo(() => {
+    if (!reparentSourceId) return new Set<string>();
+    return new Set(eligibleDecisionReparentParents(decisionNodes, reparentSourceId).map((p) => p.id));
+  }, [reparentSourceId, decisionNodes]);
+
+  const eligibleRelinkParentIdSet = useMemo(() => {
+    if (!relinkChildId) return new Set<string>();
+    return new Set(eligibleDecisionReparentParents(decisionNodes, relinkChildId).map((p) => p.id));
+  }, [relinkChildId, decisionNodes]);
+
+  const relinkOldParentId = useMemo(() => {
+    if (!relinkChildId) return null;
+    return decisionNodes.find((n) => n.id === relinkChildId)?.parentId ?? null;
+  }, [relinkChildId, decisionNodes]);
+
+  const applyRelinkFromPanel = useCallback(() => {
+    if (!relinkChildId || !relinkParentId || relinkParentId === relinkOldParentId) return;
+    linkDecisionTimelineParent(relinkChildId, relinkParentId);
+    setRelinkChildId(null);
+    setRelinkParentId(null);
+    setRelinkPickMode(null);
+    setReparentSourceId(null);
+    setReparentHoverParentId(null);
+    pendingOrganizeAfterTopologyRef.current = true;
+  }, [relinkChildId, relinkParentId, relinkOldParentId, linkDecisionTimelineParent]);
+
+  /** Toolbar Link2 arms a branch → mirror it in the Relink panel and clear stale new-parent pick. */
+  useEffect(() => {
+    if (!reparentSourceId) return;
+    setRelinkChildId(reparentSourceId);
+    setRelinkParentId(null);
+    setRelinkPickMode(null);
+  }, [reparentSourceId]);
+
+  /** Relink panel: entering move-branch pick mode — reset toolbar + selections for a fresh branch choice. */
+  useEffect(() => {
+    if (relinkPickMode !== 'child') return;
+    setReparentSourceId(null);
+    setReparentHoverParentId(null);
+    setRelinkChildId(null);
+    setRelinkParentId(null);
+  }, [relinkPickMode]);
 
   const structureKey = useMemo(() => structureKeyFromNodes(decisionNodes), [decisionNodes]);
 
+  const autoScatterRanForKeyRef = useRef<string | null>(null);
+
+  const applyTimelineScatter = useCallback(() => {
+    const patch = computeScatterPositionPatch(decisionNodes, decisionTimelinePositions);
+    if (Object.keys(patch).length === 0) return;
+    mergeDecisionTimelinePositions(patch);
+  }, [decisionNodes, decisionTimelinePositions, mergeDecisionTimelinePositions]);
+
+  const applyTimelineOrganize = useCallback(() => {
+    const patch = computeOrganizePositionPatch(decisionNodes, organizeOrientation);
+    if (Object.keys(patch).length === 0) return;
+    mergeDecisionTimelinePositions(patch);
+    requestAnimationFrame(() => {
+      fitView({ padding: 0.14, duration: 320 });
+    });
+  }, [decisionNodes, organizeOrientation, mergeDecisionTimelinePositions, fitView]);
+
   useEffect(() => {
-    const { nodes: nextNodes, edges: nextEdges } = buildFlowGraph(decisionNodes, activeDecisionNodeId);
+    if (!pendingOrganizeAfterTopologyRef.current) return;
+    pendingOrganizeAfterTopologyRef.current = false;
+    if (isLoading || !gameState) return;
+    applyTimelineOrganize();
+  }, [decisionNodes, applyTimelineOrganize, isLoading, gameState]);
+
+  const clusterSnapContextValue = useMemo<ClusterSnapCtx>(
+    () => ({
+      snapLockedDepths,
+      toggleClusterSnapDepth,
+      organizeTimelineLayout: applyTimelineOrganize,
+    }),
+    [snapLockedDepths, toggleClusterSnapDepth, applyTimelineOrganize],
+  );
+
+  useEffect(() => {
+    if (isLoading || !gameState) return;
+    const hasSaved = decisionNodes.some((n) => {
+      const p = decisionTimelinePositions[n.id];
+      return p != null && Number.isFinite(p.x) && Number.isFinite(p.y);
+    });
+    if (hasSaved) return;
+    if (autoScatterRanForKeyRef.current === structureKey) return;
+    autoScatterRanForKeyRef.current = structureKey;
+    const patch = computeScatterPositionPatch(decisionNodes, decisionTimelinePositions);
+    if (Object.keys(patch).length === 0) return;
+    mergeDecisionTimelinePositions(patch);
+  }, [
+    isLoading,
+    gameState,
+    decisionNodes,
+    structureKey,
+    decisionTimelinePositions,
+    mergeDecisionTimelinePositions,
+  ]);
+
+  const activePlannerTurnSlotId = turns[currentTurnIndex]?.id;
+
+  useEffect(() => {
+    const { nodes: nextNodes, edges: nextEdges } = buildFlowGraph(
+      decisionNodes,
+      activeDecisionNodeId,
+      activePlannerTurnSlotId,
+      decisionTimelinePositions,
+      turns,
+      curvedLinks ? 'curved' : 'straight',
+      snapLockedDepths,
+      relinkChildId,
+      relinkParentId,
+      reparentSourceId,
+      reparentHoverParentId,
+    );
     setEdges(nextEdges);
     setNodes((curr) => {
+      // XYFlow edges need RF-measured dims; rebuilding from topology must not drop them (see XYFlow troubleshooting).
+      const prevById = new Map(curr.map((n) => [n.id, n]));
       const posById = new Map(curr.map((n) => [n.id, n.position]));
-      return nextNodes.map((n) => ({
-        ...n,
-        position: posById.get(n.id) ?? n.position,
-      }));
+      return nextNodes.map((n) => {
+        const prev = prevById.get(n.id);
+        const draggingThis = draggingNodeId !== null && n.id === draggingNodeId;
+        /** Cluster box is recomputed in buildFlowGraph from member footprints; do not reuse stale RF width/height. */
+        if (n.type === 'decisionSlotCluster') {
+          if (draggingThis) {
+            return {
+              ...n,
+              position: posById.get(n.id) ?? n.position,
+              ...(prev?.measured ? { measured: { ...prev.measured } } : {}),
+              ...(prev?.width !== undefined ? { width: prev.width } : {}),
+              ...(prev?.height !== undefined ? { height: prev.height } : {}),
+              ...(prev?.initialWidth !== undefined ? { initialWidth: prev.initialWidth } : {}),
+              ...(prev?.initialHeight !== undefined ? { initialHeight: prev.initialHeight } : {}),
+              className: 'dtl-node-dragging',
+            };
+          }
+          return {
+            ...n,
+            className: undefined,
+          };
+        }
+        return {
+          ...n,
+          /** Use graph layout position when not dragging — otherwise Organize / persisted updates never apply visually. */
+          position: draggingThis ? (posById.get(n.id) ?? n.position) : n.position,
+          ...(prev?.measured ? { measured: { ...prev.measured } } : {}),
+          ...(prev?.width !== undefined ? { width: prev.width } : {}),
+          ...(prev?.height !== undefined ? { height: prev.height } : {}),
+          ...(prev?.initialWidth !== undefined ? { initialWidth: prev.initialWidth } : {}),
+          ...(prev?.initialHeight !== undefined ? { initialHeight: prev.initialHeight } : {}),
+          className: draggingThis ? 'dtl-node-dragging' : undefined,
+        };
+      });
     });
-  }, [decisionNodes, activeDecisionNodeId, setNodes, setEdges]);
+  }, [
+    decisionNodes,
+    activeDecisionNodeId,
+    activePlannerTurnSlotId,
+    decisionTimelinePositions,
+    draggingNodeId,
+    turns,
+    curvedLinks,
+    snapLockedDepths,
+    relinkChildId,
+    relinkParentId,
+    reparentSourceId,
+    reparentHoverParentId,
+    setNodes,
+    setEdges,
+  ]);
 
-  const nodeTypes = useMemo(() => ({ decisionCard: DecisionCardNode }), []);
+  const defaultEdgeOptions = useMemo(
+    () => ({
+      type: curvedLinks ? ('default' as const) : ('straight' as const),
+      animated: false,
+      interactionWidth: 14,
+      style: { strokeWidth: 1.1, stroke: '#5e6875' },
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        width: 14,
+        height: 14,
+        color: '#8c98a9',
+      },
+    }),
+    [curvedLinks],
+  );
+
+  const onNodeDragStart = useCallback<OnNodeDrag<Node<DecisionFlowNodeData>>>(
+    (_, node) => {
+      setDraggingNodeId(node.id);
+      if (node.type !== 'decisionSlotCluster') return;
+      const depth = (node.data as DecisionSlotClusterData).depth;
+      if (!snapLockedDepths.has(depth)) return;
+      const memberIds = decisionNodes
+        .filter(
+          (n) =>
+            n.timelineRole !== 'timeline_start' &&
+            n.parentId != null &&
+            decisionNodeDepthFromRoot(decisionNodes, n.id) === depth,
+        )
+        .map((n) => n.id);
+      const memberStarts = new Map<string, { x: number; y: number }>();
+      for (const id of memberIds) {
+        const found = nodes.find((x) => x.id === id);
+        if (found) memberStarts.set(id, { ...found.position });
+      }
+      clusterDragSessionRef.current = {
+        clusterId: node.id,
+        clusterStart: { ...node.position },
+        memberIds,
+        memberStarts,
+      };
+    },
+    [decisionNodes, snapLockedDepths, nodes],
+  );
+
+  const onNodeDrag = useCallback<OnNodeDrag<Node<DecisionFlowNodeData>>>(
+    (_, node) => {
+      const s = clusterDragSessionRef.current;
+      if (!s || node.id !== s.clusterId) return;
+      const dx = node.position.x - s.clusterStart.x;
+      const dy = node.position.y - s.clusterStart.y;
+      setNodes((curr) =>
+        curr.map((n) => {
+          if (n.id === node.id) return n;
+          if (s.memberStarts.has(n.id)) {
+            const p0 = s.memberStarts.get(n.id)!;
+            return { ...n, position: { x: p0.x + dx, y: p0.y + dy } };
+          }
+          return n;
+        }),
+      );
+    },
+    [setNodes],
+  );
+
+  const onNodeDragStop = useCallback<OnNodeDrag<Node<DecisionFlowNodeData>>>(
+    (_event, node) => {
+      setDraggingNodeId(null);
+      if (node.type === 'decisionSlotCluster') {
+        const s = clusterDragSessionRef.current;
+        clusterDragSessionRef.current = null;
+        if (s && node.id === s.clusterId) {
+          const dx = node.position.x - s.clusterStart.x;
+          const dy = node.position.y - s.clusterStart.y;
+          for (const id of s.memberIds) {
+            const p0 = s.memberStarts.get(id);
+            if (p0) {
+              setDecisionTimelineNodePosition(id, { x: p0.x + dx, y: p0.y + dy });
+            }
+          }
+        }
+        return;
+      }
+      setDecisionTimelineNodePosition(node.id, { x: node.position.x, y: node.position.y });
+    },
+    [setDecisionTimelineNodePosition],
+  );
+
+  useEffect(() => {
+    onSelectedNodeIdChange?.(activeDecisionNodeId);
+  }, [activeDecisionNodeId, onSelectedNodeIdChange]);
+
+  useEffect(() => {
+    if (!reparentSourceId && !relinkPickMode) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setReparentSourceId(null);
+      setReparentHoverParentId(null);
+      setRelinkPickMode(null);
+      setRelinkChildId(null);
+      setRelinkParentId(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [reparentSourceId, relinkPickMode]);
+
+  const onNodeMouseEnter = useCallback<NodeMouseHandler<Node<DecisionFlowNodeData>>>(
+    (_, node) => {
+      if (!reparentSourceId) return;
+      if (eligibleParentIdSet.has(node.id)) setReparentHoverParentId(node.id);
+    },
+    [reparentSourceId, eligibleParentIdSet],
+  );
+
+  const onNodeMouseLeave = useCallback<NodeMouseHandler<Node<DecisionFlowNodeData>>>(
+    (_, node) => {
+      setReparentHoverParentId((h) => (h === node.id ? null : h));
+    },
+    [],
+  );
+
+  const onNodeClick = useCallback<NodeMouseHandler<Node<DecisionFlowNodeData>>>(
+    (_, node) => {
+      if (node.type === 'decisionSlotCluster') return;
+
+      if (relinkPickMode === 'child') {
+        const model = decisionNodes.find((n) => n.id === node.id);
+        if (!model || model.timelineRole === 'timeline_start') return;
+        setRelinkChildId(node.id);
+        setRelinkParentId(null);
+        setRelinkPickMode(null);
+        setReparentSourceId(node.id);
+        setReparentHoverParentId(null);
+        return;
+      }
+
+      if (relinkPickMode === 'parent') {
+        if (!relinkChildId) return;
+        if (!eligibleRelinkParentIdSet.has(node.id)) return;
+        setRelinkParentId(node.id);
+        setRelinkPickMode(null);
+        return;
+      }
+
+      if (!reparentSourceId) return;
+      if (node.id === reparentSourceId) {
+        setReparentSourceId(null);
+        setReparentHoverParentId(null);
+        return;
+      }
+      if (!eligibleParentIdSet.has(node.id)) return;
+      const movedBranchId = reparentSourceId;
+      linkDecisionTimelineParent(movedBranchId, node.id);
+      pendingOrganizeAfterTopologyRef.current = true;
+      setRelinkChildId(null);
+      setRelinkParentId(null);
+      setRelinkPickMode(null);
+      setReparentSourceId(null);
+      setReparentHoverParentId(null);
+    },
+    [
+      relinkPickMode,
+      decisionNodes,
+      relinkChildId,
+      eligibleRelinkParentIdSet,
+      reparentSourceId,
+      eligibleParentIdSet,
+      linkDecisionTimelineParent,
+    ],
+  );
+
+  const onPaneClick = useCallback(() => {
+    setReparentSourceId(null);
+    setReparentHoverParentId(null);
+    setRelinkPickMode(null);
+    setRelinkChildId(null);
+    setRelinkParentId(null);
+  }, []);
+
+  const onFlowSelectionChange = useCallback(
+    ({ nodes: selected }: { nodes: Node<DecisionFlowNodeData>[] }) => {
+      if (selected.length === 0) {
+        onSelectedNodeIdChange?.(null);
+        return;
+      }
+      onSelectedNodeIdChange?.(selected[0]!.id);
+    },
+    [onSelectedNodeIdChange],
+  );
+
+  const nodeTypes = useMemo(
+    () => ({
+      decisionStartCard: DecisionStartCard,
+      decisionCard: DecisionBranchCard,
+      decisionSlotCluster: DecisionSlotCluster,
+    }),
+    [],
+  );
 
   if (isLoading) {
     return (
@@ -194,59 +1696,380 @@ function DecisionTimelineCanvas() {
   }
 
   return (
-    <div className="relative h-full min-h-[400px] w-full rounded-xl border border-slate-700/50 bg-slate-900/40">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        nodeTypes={nodeTypes}
-        nodesDraggable
-        nodesConnectable={false}
-        elementsSelectable
-        selectNodesOnDrag={false}
-        panOnDrag
-        panOnScroll={false}
-        zoomOnScroll
-        zoomOnPinch
-        zoomOnDoubleClick={false}
-        minZoom={0.08}
-        maxZoom={2}
-        proOptions={{ hideAttribution: true }}
-        defaultEdgeOptions={{ type: 'smoothstep' }}
-        deleteKeyCode={null}
-        connectionRadius={0}
-        elevateNodesOnSelect
-      >
-        <Background color="#334155" gap={20} size={1} />
-        <Controls
-          position="bottom-left"
-          showZoom
-          showFitView
-          showInteractive
-          className="!m-2 !flex !flex-row !flex-wrap !gap-0.5 !rounded-xl !border !border-slate-600 !bg-slate-900/95 !p-2 !shadow-lg [&_button]:!rounded-lg [&_button]:!border-slate-600 [&_button]:!bg-slate-800 [&_button]:!fill-slate-200 [&_button]:hover:!bg-slate-700"
-        />
-        <MiniMap
-          className="!m-2 !rounded-lg !border !border-slate-600 !bg-slate-950/90"
-          nodeStrokeWidth={2}
-          pannable
-          zoomable
-          maskColor="rgb(15 23 42 / 0.65)"
-          nodeColor={(n) => (n.data && (n.data as DecisionCardData).isActive ? '#22d3ee' : '#475569')}
-        />
-        <Panel position="bottom-center" className="pointer-events-none m-0 max-w-[min(36rem,92vw)] rounded-lg border border-slate-700/40 bg-slate-950/85 px-2 py-1 text-center text-[10px] text-slate-400 shadow-md backdrop-blur-sm">
-          Drag nodes to rearrange · wheel zooms · drag background to pan · use controls for zoom/extent · minimap pans/zooms
-        </Panel>
-        <FitViewOnStructureChange structureKey={structureKey} />
-      </ReactFlow>
-    </div>
+    <TimelineInteractContext.Provider value={interactValue}>
+      <ClusterSnapContext.Provider value={clusterSnapContextValue}>
+      <div className="decision-timeline-flow relative h-full min-h-[400px] w-full rounded-xl border border-slate-700/50 bg-slate-900/40">
+        <style>
+          {`
+            .decision-timeline-flow .react-flow__node:not(.dtl-node-dragging) {
+              transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1);
+            }
+            .decision-timeline-flow .react-flow__node.dtl-node-dragging {
+              transition: none !important;
+            }
+            /* Tailwind / preflight can clip edge layers; keep viewport + SVG visible (XYFlow + Tailwind). */
+            .decision-timeline-flow .react-flow__viewport,
+            .decision-timeline-flow .react-flow__renderer {
+              overflow: visible !important;
+            }
+            .decision-timeline-flow .react-flow__edges svg {
+              overflow: visible !important;
+            }
+          `}
+        </style>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onNodeDragStart={onNodeDragStart}
+          onNodeDrag={onNodeDrag}
+          onNodeDragStop={onNodeDragStop}
+          onNodeMouseEnter={onNodeMouseEnter}
+          onNodeMouseLeave={onNodeMouseLeave}
+          onNodeClick={onNodeClick}
+          onPaneClick={onPaneClick}
+          onSelectionChange={onFlowSelectionChange}
+          nodeTypes={nodeTypes}
+          nodesDraggable
+          nodesConnectable={false}
+          elementsSelectable
+          selectNodesOnDrag={false}
+          panOnDrag
+          panOnScroll={false}
+          zoomOnScroll
+          zoomOnPinch
+          zoomOnDoubleClick={false}
+          minZoom={0.08}
+          maxZoom={2}
+          proOptions={{ hideAttribution: true }}
+          deleteKeyCode={null}
+          connectionRadius={0}
+          elevateEdgesOnSelect
+          elevateNodesOnSelect
+          defaultEdgeOptions={defaultEdgeOptions}
+        >
+          <Background color="#334155" gap={20} size={1} />
+          <Panel
+            position="top-right"
+            className="pointer-events-auto z-[6] m-0 flex w-[min(12.5rem,calc(100vw-1rem))] flex-col gap-1.5 !mt-2 !mr-2 !rounded-xl !border !border-slate-600 !bg-slate-900/98 !p-2 !shadow-xl"
+          >
+            <div className="nodrag nopan flex items-center justify-between gap-1">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Relink</span>
+              <button
+                type="button"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-slate-600/80 text-slate-400 transition hover:border-slate-500 hover:bg-slate-800 hover:text-slate-100"
+                title={relinkPanelMinimized ? 'Expand relink panel' : 'Minimize relink panel'}
+                aria-expanded={!relinkPanelMinimized}
+                onClick={() => setRelinkPanelMinimized((v) => !v)}
+              >
+                {relinkPanelMinimized ? (
+                  <ChevronUp className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                ) : (
+                  <Minus className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                )}
+              </button>
+            </div>
+
+            {relinkPanelMinimized ? (
+              <p className="text-[8px] leading-snug text-slate-500">
+                {relinkChildId || relinkParentId
+                  ? 'Branch / parent set — expand to edit or apply.'
+                  : 'Minimized — expand to relink.'}
+              </p>
+            ) : (
+              <>
+                <div>
+                  <p className="text-[8px] leading-snug text-slate-500">
+                    Toggle, then <span className="font-semibold text-slate-300">click a node</span>.{' '}
+                    <span className="font-semibold text-red-400">Red dashed</span> removes old link;{' '}
+                    <span className="font-semibold text-emerald-400">green dashed</span> is new parent.
+                  </p>
+                  <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[7px] font-semibold uppercase tracking-wide text-slate-500">
+                    <span className="inline-flex items-center gap-0.5">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-sm bg-amber-400 ring-1 ring-amber-200/90" aria-hidden />
+                      Move
+                    </span>
+                    <span className="inline-flex items-center gap-0.5">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-sm bg-sky-400 ring-1 ring-sky-200/90" aria-hidden />
+                      Parent
+                    </span>
+                  </div>
+                </div>
+
+                {relinkPickMode ? (
+                  <p className="rounded-md border border-sky-500/40 bg-sky-950/40 px-1.5 py-1 text-[8px] font-medium text-sky-100/95">
+                    {relinkPickMode === 'child'
+                      ? 'Click a branch node (not START).'
+                      : 'Click a valid parent (including START).'}
+                  </p>
+                ) : null}
+
+                <div className="flex flex-col gap-1">
+                  <span className="text-[8px] font-bold uppercase tracking-wide text-slate-400">Move branch</span>
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      aria-pressed={relinkPickMode === 'child'}
+                      className={`nodrag nopan flex-1 rounded-lg border px-1.5 py-1.5 text-left text-[9px] font-semibold leading-tight transition-colors ${
+                        relinkPickMode === 'child'
+                          ? 'border-amber-400/70 bg-amber-950/70 text-amber-50 shadow-inner'
+                          : 'border-slate-600 bg-slate-950 text-slate-200 hover:border-slate-500'
+                      }`}
+                      onClick={() => setRelinkPickMode((m) => (m === 'child' ? null : 'child'))}
+                    >
+                      {relinkPickMode === 'child' ? 'Click a node…' : 'Pick a node'}
+                    </button>
+                    <button
+                      type="button"
+                      title="Clear move branch"
+                      className={`nodrag nopan shrink-0 rounded-lg border px-1.5 py-1.5 text-[9px] font-semibold ${
+                        relinkChildId
+                          ? 'border-slate-600 text-slate-300 hover:bg-slate-800'
+                          : 'cursor-not-allowed border-slate-700 text-slate-600'
+                      }`}
+                      disabled={!relinkChildId}
+                      onClick={() => {
+                        setRelinkChildId(null);
+                        setRelinkParentId(null);
+                        setRelinkPickMode(null);
+                        setReparentSourceId(null);
+                        setReparentHoverParentId(null);
+                      }}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div
+                    className={`min-h-[2.35rem] rounded-lg border px-2 py-1.5 transition-colors ${
+                      relinkChildId
+                        ? 'border-amber-400/75 bg-amber-950/50 text-amber-50 shadow-[inset_0_0_0_1px_rgba(251,191,36,0.2)]'
+                        : 'border-slate-700/60 bg-slate-950/80 text-slate-500'
+                    }`}
+                  >
+                    <p
+                      className="line-clamp-3 text-[9px] font-semibold leading-snug"
+                      title={formatRelinkNodePickLabel(relinkChildId, decisionNodes, turns)}
+                    >
+                      {formatRelinkNodePickLabel(relinkChildId, decisionNodes, turns)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <span className="text-[8px] font-bold uppercase tracking-wide text-slate-400">New parent</span>
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      aria-pressed={relinkPickMode === 'parent'}
+                      disabled={!relinkChildId || eligibleRelinkParentIdSet.size === 0}
+                      className={`nodrag nopan flex-1 rounded-lg border px-1.5 py-1.5 text-left text-[9px] font-semibold leading-tight transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${
+                        relinkPickMode === 'parent'
+                          ? 'border-sky-400/70 bg-sky-950/70 text-sky-50 shadow-inner'
+                          : 'border-slate-600 bg-slate-950 text-slate-200 hover:border-slate-500'
+                      }`}
+                      onClick={() => {
+                        if (!relinkChildId || eligibleRelinkParentIdSet.size === 0) return;
+                        setRelinkPickMode((m) => (m === 'parent' ? null : 'parent'));
+                      }}
+                    >
+                      {relinkPickMode === 'parent' ? 'Click a node…' : 'Pick a node'}
+                    </button>
+                    <button
+                      type="button"
+                      title="Clear new parent"
+                      className={`nodrag nopan shrink-0 rounded-lg border px-1.5 py-1.5 text-[9px] font-semibold ${
+                        relinkParentId
+                          ? 'border-slate-600 text-slate-300 hover:bg-slate-800'
+                          : 'cursor-not-allowed border-slate-700 text-slate-600'
+                      }`}
+                      disabled={!relinkParentId}
+                      onClick={() => {
+                        setRelinkParentId(null);
+                        setRelinkPickMode(null);
+                      }}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div
+                    className={`min-h-[2.35rem] rounded-lg border px-2 py-1.5 transition-colors ${
+                      relinkParentId
+                        ? 'border-sky-400/70 bg-sky-950/45 text-sky-50 shadow-[inset_0_0_0_1px_rgba(56,189,248,0.2)]'
+                        : 'border-slate-700/60 bg-slate-950/80 text-slate-500'
+                    }`}
+                  >
+                    <p
+                      className="line-clamp-3 text-[9px] font-semibold leading-snug"
+                      title={formatRelinkNodePickLabel(relinkParentId, decisionNodes, turns)}
+                    >
+                      {formatRelinkNodePickLabel(relinkParentId, decisionNodes, turns)}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="nodrag nopan rounded-lg border border-sky-500/55 bg-sky-950/70 px-2 py-1.5 text-[11px] font-semibold text-sky-50 transition-colors hover:bg-sky-900/80 disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={
+                    !relinkChildId ||
+                    !relinkParentId ||
+                    relinkParentId === relinkOldParentId ||
+                    !eligibleRelinkParentIdSet.has(relinkParentId)
+                  }
+                  onClick={applyRelinkFromPanel}
+                >
+                  Apply parent link
+                </button>
+              </>
+            )}
+          </Panel>
+          <Panel
+            position="bottom-left"
+            className="pointer-events-auto z-[6] m-0 flex max-w-[min(18rem,calc(100vw-2rem))] flex-col gap-1.5 !mb-[5.75rem] !ml-2 !rounded-xl !border !border-slate-600 !bg-slate-900/96 !p-2 !shadow-lg"
+          >
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Links</span>
+            <div
+              className="flex rounded-lg border border-slate-600/80 bg-slate-950/90 p-0.5"
+              role="group"
+              aria-label="Edge link style"
+            >
+              <button
+                type="button"
+                aria-pressed={curvedLinks}
+                className={`nodrag nopan flex-1 rounded-md px-2 py-1.5 text-[10px] font-semibold transition-colors ${
+                  curvedLinks
+                    ? 'bg-sky-600/90 text-white shadow-sm'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                }`}
+                onClick={() => setCurvedLinks(true)}
+              >
+                Curved
+              </button>
+              <button
+                type="button"
+                aria-pressed={!curvedLinks}
+                className={`nodrag nopan flex-1 rounded-md px-2 py-1.5 text-[10px] font-semibold transition-colors ${
+                  !curvedLinks
+                    ? 'bg-sky-600/90 text-white shadow-sm'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                }`}
+                onClick={() => setCurvedLinks(false)}
+              >
+                Straight
+              </button>
+            </div>
+            <button
+              type="button"
+              className="nodrag nopan w-full rounded-lg border border-violet-500/45 bg-violet-950/55 px-2 py-1.5 text-[10px] font-semibold text-violet-100 transition-colors hover:bg-violet-900/55"
+              title="Spread same-depth rows and re-center (saved with the game)"
+              onClick={applyTimelineScatter}
+            >
+              Scatter layout
+            </button>
+          </Panel>
+          <Panel
+            position="bottom-right"
+            className="pointer-events-auto z-[6] m-0 flex max-w-[min(18rem,calc(100vw-2rem))] flex-col gap-1.5 !mb-[10rem] !mr-2 !rounded-xl !border !border-slate-600 !bg-slate-900/96 !p-2 !shadow-lg"
+          >
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Layout</span>
+            <div
+              className="flex rounded-lg border border-slate-600/80 bg-slate-950/90 p-0.5"
+              role="group"
+              aria-label="Organize tree direction"
+            >
+              <button
+                type="button"
+                aria-pressed={organizeOrientation === 'vertical'}
+                className={`nodrag nopan flex-1 rounded-md px-2 py-1.5 text-[10px] font-semibold transition-colors ${
+                  organizeOrientation === 'vertical'
+                    ? 'bg-teal-600/90 text-white shadow-sm'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                }`}
+                title="Organize: tree grows downward (root at top)"
+                onClick={() => setOrganizeOrientation('vertical')}
+              >
+                Vertical
+              </button>
+              <button
+                type="button"
+                aria-pressed={organizeOrientation === 'horizontal'}
+                className={`nodrag nopan flex-1 rounded-md px-2 py-1.5 text-[10px] font-semibold transition-colors ${
+                  organizeOrientation === 'horizontal'
+                    ? 'bg-teal-600/90 text-white shadow-sm'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                }`}
+                title="Organize: tree grows to the right (root at left)"
+                onClick={() => setOrganizeOrientation('horizontal')}
+              >
+                Horizontal
+              </button>
+            </div>
+            <button
+              type="button"
+              className="nodrag nopan w-full rounded-lg border border-emerald-500/45 bg-emerald-950/55 px-2 py-1.5 text-[10px] font-semibold text-emerald-100 transition-colors hover:bg-emerald-900/55"
+              title={`Reset to compact ${organizeOrientation} tree (saved with the game)`}
+              onClick={applyTimelineOrganize}
+            >
+              Organize
+            </button>
+            {/* REMOVE_BEFORE_SHIP: delete this block + randomizeDecisionTimelineParentsForTesting from GameContext */}
+            <button
+              type="button"
+              className="nodrag nopan w-full rounded-lg border border-amber-500/60 bg-amber-950/50 px-2 py-1.5 text-[10px] font-semibold text-amber-100 transition-colors hover:bg-amber-900/50"
+              title="DEV ONLY — random valid parent per branch (testing). Remove before ship (search REMOVE_BEFORE_SHIP)."
+              onClick={() => {
+                randomizeDecisionTimelineParentsForTesting();
+                pendingOrganizeAfterTopologyRef.current = true;
+              }}
+            >
+              Randomize links (TEST)
+            </button>
+          </Panel>
+          <Controls
+            position="bottom-left"
+            showZoom
+            showFitView
+            showInteractive
+            className="!m-2 !flex !flex-row !flex-wrap !gap-0.5 !rounded-xl !border !border-slate-600 !bg-slate-900/95 !p-2 !shadow-lg [&_button]:!rounded-lg [&_button]:!border-slate-600 [&_button]:!bg-slate-800 [&_button]:!fill-slate-200 [&_button]:hover:!bg-slate-700"
+          />
+          <MiniMap
+            className="!m-2 !rounded-lg !border !border-slate-600 !bg-slate-950/90"
+            nodeStrokeWidth={2}
+            pannable
+            zoomable
+            maskColor="rgb(15 23 42 / 0.65)"
+            nodeColor={(n) => {
+              if (n.type === 'decisionSlotCluster') return '#0f172a';
+              const data = n.data as DecisionCardData | undefined;
+              const node = data?.decisionNode;
+              if (!node) return '#475569';
+              if (data.isOrphan) return '#e11d48';
+              return minimapHexForDecisionNodePreview(
+                node,
+                !!data?.isPinned,
+                !!(data?.isSlotActive && !data?.isPinned),
+              );
+            }}
+          />
+          <Panel
+            position="bottom-center"
+            className="pointer-events-none m-0 max-w-[min(40rem,92vw)] rounded-lg border border-slate-700/40 bg-slate-950/85 px-2 py-1 text-center text-[10px] text-slate-400 shadow-md backdrop-blur-sm"
+          >
+            Curved or straight: <span className="font-semibold text-slate-300">Links</span> bottom-left (default layout is horizontal organize). <span className="font-semibold text-slate-300">Relink</span> top-right — card Link or panel; dashed preview edges. <span className="font-semibold text-rose-300">Rose</span> cards: orphan (relink to fix). <span className="font-semibold text-slate-300">Organize</span> reflows after relink / randomize.
+          </Panel>
+          <FitViewOnStructureChange structureKey={structureKey} />
+        </ReactFlow>
+      </div>
+      </ClusterSnapContext.Provider>
+    </TimelineInteractContext.Provider>
   );
 }
 
-export default function DecisionTimelineFlow() {
+export default function DecisionTimelineFlow(props: DecisionTimelineFlowProps) {
   return (
     <ReactFlowProvider>
-      <DecisionTimelineCanvas />
+      <DecisionTimelineCanvas {...props} />
     </ReactFlowProvider>
   );
 }
