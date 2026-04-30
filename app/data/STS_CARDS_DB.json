@@ -17,7 +17,7 @@
       "multiHitCount": "Per-tier hit count when not energy-scaling.",
       "multiHitEnergyScaling": "X-cost: repeat count follows spent energy (no multiHitCount) — damage (Skewer) or block (Reinforced Body).",
       "selfExhaustOnPlay": "Per tier: base and upgraded booleans — whether playing that copy exhausts the card.",
-      "appliesDebuffs": "vulnerable, weak, poison etc. with base/upgraded stacks.",
+      "appliesDebuffs": "vulnerable, weak, poison, etc. with base/upgraded stacks; optional per-entry or root `target` tier { base/upgraded: \"all enemies\" } → AoE icon before that debuff cluster(s).",
       "heal": "Tiered HP healed — card face + [HEAL] placeholder.",
       "focus": "Defect Focus (+/- orbs) — card face + [FOCUS] placeholder.",
       "mantra": "Watcher Mantra — use [MANTRA] or [W] when card.mantra is set; [W] falls back to Weak if mantra absent.",
@@ -1483,15 +1483,16 @@
         "upgraded": true
       },
       "appliesDebuffs": {
+        "target": {
+          "base": "all enemies",
+          "upgraded": "all enemies"
+        },
         "poison": {
           "base": 4,
           "upgraded": 7
         },
         "weak": {
-          "base": 2,
-          "target": {
-            "base": "all enemies"
-          }
+          "base": 2
         }
       }
     },

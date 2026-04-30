@@ -6,6 +6,7 @@ import {
   damageMultihitInlineHitLabel,
   debuffPoisonMultihitHitLabel,
   energyGainNode,
+  galleryAppliesDebuffsIsAoE,
   galleryBlockRowIsConditional,
   galleryDamageIsConditional,
   galleryDamageRowIsAoE,
@@ -209,6 +210,10 @@ export function computeLegendHighlightIds(card: Card): Set<string> {
     card.damage !== undefined &&
     !suppressStats.damage
   ) {
+    ids.add("AOE_ICON");
+  }
+
+  if (galleryAppliesDebuffsIsAoE(card)) {
     ids.add("AOE_ICON");
   }
 

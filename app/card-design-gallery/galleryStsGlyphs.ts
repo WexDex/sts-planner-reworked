@@ -178,6 +178,50 @@ function damageRowIsAoE(card: Card): boolean {
   );
 }
 
+/** String or tiered `{ base, upgraded? }` → current tier is "all enemies". */
+function appliesDebuffTargetTierIsAllEnemies(card: Card, t: unknown): boolean {
+  if (typeof t === "string" && /\ball enemies\b/i.test(t)) return true;
+  if (t != null && typeof t === "object" && !Array.isArray(t)) {
+    const o = t as { base?: string; upgraded?: string };
+    const pick =
+      card.isUpgraded === true && o.upgraded !== undefined ? o.upgraded : o.base;
+    if (typeof pick === "string" && /\ball enemies\b/i.test(pick)) return true;
+  }
+  return false;
+}
+
+function appliesDebuffRootIsAllEnemies(card: Card, debuffs: Record<string, unknown>): boolean {
+  return appliesDebuffTargetTierIsAllEnemies(card, debuffs.target);
+}
+
+/** Per-entry `target` on a debuff node (e.g. weak: { base: 2, target: { base: "all enemies" } }). */
+function appliesDebuffEntryTargetIsAllEnemies(card: Card, raw: unknown): boolean {
+  if (raw == null || typeof raw !== "object" || Array.isArray(raw)) return false;
+  return appliesDebuffTargetTierIsAllEnemies(card, (raw as Record<string, unknown>).target);
+}
+
+/** AoE icon prefix for this debuff row: root `appliesDebuffs.target` or per-entry `target`. */
+function appliesDebuffGlyphLeadsWithAoe(
+  card: Card,
+  debuffs: Record<string, unknown>,
+  raw: unknown,
+): boolean {
+  return appliesDebuffRootIsAllEnemies(card, debuffs) || appliesDebuffEntryTargetIsAllEnemies(card, raw);
+}
+
+/** True if any appliesDebuffs effect is flagged all-enemies (legend / hints). */
+export function galleryAppliesDebuffsIsAoE(card: Card): boolean {
+  const c = card as Record<string, unknown>;
+  const debuffs = c.appliesDebuffs as Record<string, unknown> | undefined;
+  if (!debuffs || typeof debuffs !== "object") return false;
+  if (appliesDebuffRootIsAllEnemies(card, debuffs)) return true;
+  for (const [key, val] of Object.entries(debuffs)) {
+    if (key === "target") continue;
+    if (appliesDebuffEntryTargetIsAllEnemies(card, val)) return true;
+  }
+  return false;
+}
+
 export function galleryDamageIsConditional(card: Card): boolean {
   return card.damage != undefined && isConditionedField(card.damage);
 }
@@ -1193,34 +1237,49 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
     for (const kind of ["vulnerable", "weak", "poison", "wound", "losestrength"] as const) {
       const raw = debuffs[kind];
       if (raw == null) continue;
+      const debuffAoe = appliesDebuffGlyphLeadsWithAoe(card, debuffs, raw);
 
       if (kind === "losestrength") {
         const stacks = galleryTierNumber(card, raw);
         const m = STS_ICON_GLYPH.LOSE_STRENGTH;
+        const pfx = debuffAoe ? "AoE · " : "";
         const label =
-          stacks != null ? `Lose Strength ${stacks}` : "Lose Strength";
+          stacks != null ? `${pfx}Lose Strength ${stacks}` : `${pfx}Lose Strength`;
         if (stacks != null) {
+          const segs: GalleryGlyphSegment[] = [];
+          if (debuffAoe) segs.push(segmentAoe());
+          segs.push(
+            { Icon: m.Icon, iconClass: m.iconClass },
+            {
+              text: String(stacks),
+              textClass: `${m.iconClass} font-bold tabular-nums leading-none`,
+            },
+          );
           push({
             id: "debuff-losestrength",
             catalogKey: "LOSE_STRENGTH",
             label,
             clusterClass: clusterShellField("neutral"),
-            segments: [
-              { Icon: m.Icon, iconClass: m.iconClass },
-              {
-                text: String(stacks),
-                textClass: `${m.iconClass} font-bold tabular-nums leading-none`,
-              },
-            ],
+            segments: segs,
           });
         } else {
-          push({
-            id: "debuff-losestrength",
-            catalogKey: "LOSE_STRENGTH",
-            label,
-            Icon: m.Icon,
-            iconClass: m.iconClass,
-          });
+          if (debuffAoe) {
+            push({
+              id: "debuff-losestrength",
+              catalogKey: "LOSE_STRENGTH",
+              label,
+              clusterClass: clusterShellField("neutral"),
+              segments: [segmentAoe(), { Icon: m.Icon, iconClass: m.iconClass }],
+            });
+          } else {
+            push({
+              id: "debuff-losestrength",
+              catalogKey: "LOSE_STRENGTH",
+              label,
+              Icon: m.Icon,
+              iconClass: m.iconClass,
+            });
+          }
         }
         continue;
       }
@@ -1251,9 +1310,9 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
           hitFromMulti !== undefined ? hitFromMulti : hitsLegacy;
 
         const p = getEffectDisplay("poison");
-        const segments: GalleryGlyphSegment[] = [
-          { Icon: p.icon, iconClass: p.color },
-        ];
+        const segments: GalleryGlyphSegment[] = [];
+        if (debuffAoe) segments.push(segmentAoe());
+        segments.push({ Icon: p.icon, iconClass: p.color });
         if (stacks != null) {
           segments.push({
             text: String(stacks),
@@ -1280,17 +1339,19 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
           });
         }
 
-        let label = "Poison";
+        let label = `${debuffAoe ? "AoE · " : ""}Poison`;
         if (stacks != null) {
           label =
             showRepeat && hitCount !== undefined
               ? hitCount === "X"
-                ? `Poison ${stacks} × X`
-                : `Poison ${stacks} × ${hitCount}`
-              : `Poison ${stacks}`;
+                ? `${debuffAoe ? "AoE · " : ""}Poison ${stacks} × X`
+                : `${debuffAoe ? "AoE · " : ""}Poison ${stacks} × ${hitCount}`
+              : `${debuffAoe ? "AoE · " : ""}Poison ${stacks}`;
         } else if (hitCount != null) {
           label =
-            hitCount === "X" ? "Poison × X" : `Poison × ${hitCount}`;
+            hitCount === "X"
+              ? `${debuffAoe ? "AoE · " : ""}Poison × X`
+              : `${debuffAoe ? "AoE · " : ""}Poison × ${hitCount}`;
         }
         push({
           id: "debuff-poison",
@@ -1306,19 +1367,30 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
         kind === "vulnerable" || kind === "weak" ? kind : ("wound" as const);
       const d = getEffectDisplay(eff);
       const stacks = galleryTierNumber(card, raw);
-      const label = stacks != null ? `${kind} ${stacks}` : kind;
+      const pfx = debuffAoe ? "AoE · " : "";
+      const label = stacks != null ? `${pfx}${kind} ${stacks}` : `${pfx}${kind}`;
       if (stacks != null) {
+        const segs: GalleryGlyphSegment[] = [];
+        if (debuffAoe) segs.push(segmentAoe());
+        segs.push(
+          { Icon: d.icon, iconClass: d.color },
+          {
+            text: String(stacks),
+            textClass: `${d.color} font-bold tabular-nums leading-none`,
+          },
+        );
         push({
           id: `debuff-${kind}`,
           label,
           clusterClass: clusterShellField("neutral"),
-          segments: [
-            { Icon: d.icon, iconClass: d.color },
-            {
-              text: String(stacks),
-              textClass: `${d.color} font-bold tabular-nums leading-none`,
-            },
-          ],
+          segments: segs,
+        });
+      } else if (debuffAoe) {
+        push({
+          id: `debuff-${kind}`,
+          label,
+          clusterClass: clusterShellField("neutral"),
+          segments: [segmentAoe(), { Icon: d.icon, iconClass: d.color }],
         });
       } else {
         push({
