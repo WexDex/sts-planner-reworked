@@ -37,6 +37,7 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronUp,
+  LayoutDashboard,
   Link2,
   Minus,
   Pencil,
@@ -83,6 +84,7 @@ import {
   type DecisionTimelineEnemyIntentLine,
 } from '@/app/utils/decisionTimelineIntentSummaries';
 import { enemyIntentSlotTone } from '@/app/utils/enemyIntentSlotTone';
+import { useRouter } from 'next/navigation';
 
 /** Match Turn timeline: collapse long enemy lists on branch cards. */
 const BRANCH_INTENT_PREVIEW_MAX = 4;
@@ -152,6 +154,24 @@ type TimelineInteractCtx = {
 };
 
 const TimelineInteractContext = createContext<TimelineInteractCtx | null>(null);
+
+/** Jump to main planner (`/`) and select the given planner turn row (`Turn.id`). */
+function useGoEditTurnOnMainScene() {
+  const router = useRouter();
+  const { gameState, turns, currentTurnIndex, setCurrentTurn } = useGameManager();
+  return useCallback(
+    (plannerTurnId: number) => {
+      if (gameState) {
+        const idx = turns.findIndex((t) => t.id === plannerTurnId);
+        if (idx !== -1 && idx !== currentTurnIndex) {
+          setCurrentTurn(plannerTurnId);
+        }
+      }
+      router.push('/');
+    },
+    [gameState, turns, currentTurnIndex, setCurrentTurn, router],
+  );
+}
 
 type DecisionTimelineFlowProps = {
   onSelectedNodeIdChange?: (nodeId: string | null) => void;
@@ -608,7 +628,8 @@ function DtlModalLogScroll({
 const DecisionStartCard = memo(function DecisionStartCard({ data }: { id: string; data: DecisionCardData }) {
   const interact = useContext(TimelineInteractContext);
   const { decisionNodes } = useGameManager();
-  const { decisionNode, isPinned } = data;
+  const { decisionNode, isPinned, effectivePlannerSlotId } = data;
+  const goEditTurnOnMain = useGoEditTurnOnMainScene();
 
   const eligibleParentIds = useMemo(() => {
     const src = interact?.reparentSourceId;
@@ -630,6 +651,23 @@ const DecisionStartCard = memo(function DecisionStartCard({ data }: { id: string
       <DtlCardPortHandles />
       <RelinkRoleBadge role={data.relinkPanelRole} placement="start" />
       <div
+        className="nodrag nopan absolute right-1 top-1 z-20 flex items-center gap-px rounded-md border border-slate-600/70 bg-slate-950/95 p-px shadow-md backdrop-blur-sm"
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          title={`Edit turn — open main planner (row ${effectivePlannerSlotId})`}
+          aria-label={`Edit turn ${effectivePlannerSlotId} on main planner`}
+          className="flex h-7 w-7 shrink-0 cursor-pointer touch-manipulation items-center justify-center rounded border border-slate-600/55 bg-slate-900/95 p-0 text-slate-300 transition-colors hover:bg-slate-800"
+          onClick={(e) => {
+            e.stopPropagation();
+            goEditTurnOnMain(effectivePlannerSlotId);
+          }}
+        >
+          <LayoutDashboard className="h-3 w-3" strokeWidth={2} aria-hidden />
+        </button>
+      </div>
+      <div
         className="pointer-events-none absolute inset-x-0 top-0 z-[2] h-2 bg-linear-to-r from-amber-200 via-amber-500 to-amber-700"
         aria-hidden
       />
@@ -650,6 +688,7 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
     decisionNodes,
     turns,
   } = useGameManager();
+  const goEditTurnOnMain = useGoEditTurnOnMainScene();
   const bd = data.branchDisplay;
   const { decisionNode, isSlotActive, isPinned, effectivePlannerSlotId, breadcrumbDisplay } = data;
   const isRoot = decisionNode.parentId === null;
@@ -799,6 +838,18 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
           }}
         >
           <Pencil className="h-3 w-3" strokeWidth={2} aria-hidden />
+        </button>
+        <button
+          type="button"
+          title={`Edit turn — open main planner (row ${effectivePlannerSlotId})`}
+          aria-label={`Edit turn ${effectivePlannerSlotId} on main planner`}
+          className={`${iconToolbarBtn} ${btnCls}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            goEditTurnOnMain(effectivePlannerSlotId);
+          }}
+        >
+          <LayoutDashboard className="h-3 w-3" strokeWidth={2} aria-hidden />
         </button>
         <button
           type="button"

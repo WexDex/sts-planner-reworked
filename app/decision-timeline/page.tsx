@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { ArrowLeft, GitBranch } from 'lucide-react';
+import { ArrowLeft, Download, GitBranch } from 'lucide-react';
 import { useGameManager } from '@/app/context/GameContext';
 import DecisionTimelineFlow from '@/app/decision-timeline/DecisionTimelineFlow';
 import { ToastStack } from '@/app/components/UI/NotificationProvider';
@@ -11,7 +11,7 @@ import { getDecisionNodeBreadcrumb } from '@/app/utils/decisionTreeHelpers';
 export default function DecisionTimelinePage() {
   const {
     forkDecisionBranch,
-    saveGameData,
+    downloadPlannerSaveJson,
     applyDecisionBranchToPlanner,
     decisionNodes,
     activeDecisionNodeId,
@@ -44,7 +44,7 @@ export default function DecisionTimelinePage() {
                 <span className="truncate">Decision timeline</span>
               </h1>
               <p className="truncate text-[10px] text-slate-500 sm:text-xs">
-                Expandable plays per node, breadcrumb path, draggable layout (saved with Save game). Apply merges each planner turn
+                Expandable plays per node, breadcrumb path, draggable layout (autosaved to browser). Apply merges each planner turn
                 slot along the branch path, then opens that snapshot.
               </p>
             </div>
@@ -67,16 +67,18 @@ export default function DecisionTimelinePage() {
                 forkDecisionBranch(label);
               }}
               className="rounded-xl border border-cyan-500/50 bg-cyan-900/70 px-3.5 py-2 text-xs font-semibold text-cyan-50 shadow-sm transition hover:bg-cyan-800/80 active:scale-[0.99]"
+              title="Checkpoint current state under the active branch and continue from a new node"
             >
-              Fork from current
+              Branch out / Add new turn
             </button>
             <button
               type="button"
-              onClick={() => saveGameData()}
-              className="rounded-xl border border-slate-600 bg-slate-800/90 px-3.5 py-2 text-xs font-semibold text-slate-200 transition hover:bg-slate-800"
-              title="Save planner, decision tree, and timeline node positions to browser storage"
+              onClick={() => downloadPlannerSaveJson()}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-600 bg-slate-800/90 px-3.5 py-2 text-xs font-semibold text-slate-200 transition hover:bg-slate-800"
+              title="Download planner, decision tree, and timeline positions as JSON"
             >
-              Save game
+              <Download className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden />
+              Export JSON
             </button>
           </div>
         </div>

@@ -219,6 +219,7 @@ export default function TimelineBlock() {
     const hasTimeline = decisionNodes.length > 0;
     return displayTurns.map((t) => ({
       id: t.id,
+      combatName: (t.state?.player?.combatName ?? "").trim() || "Encounter",
       summary: summariesByTurn.get(t.id) ?? null,
       decisionBranchOutCount: hasTimeline
         ? outgoingDecisionBranchCountForPlannerSlot(decisionNodes, t.id, turns)
@@ -227,6 +228,12 @@ export default function TimelineBlock() {
   }, [displayTurns, summariesByTurn, decisionNodes, turns]);
 
   const currentTurnId = turns[currentTurnIndex]?.id ?? plannerRows[0]?.id ?? 1;
+
+  const currentTurnCombatName = useMemo(() => {
+    const row = turns[currentTurnIndex];
+    const name = row?.state?.player?.combatName?.trim();
+    return name || null;
+  }, [turns, currentTurnIndex]);
 
   const selected = turnsData.find((t) => t.turn === currentTurnId);
 
@@ -367,7 +374,13 @@ export default function TimelineBlock() {
         <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-950/20 px-2.5 py-1.5">
           <Clock className="h-3.5 w-3.5 shrink-0 text-cyan-300/80" strokeWidth={2} />
           <span className="text-[11px] font-medium tabular-nums text-cyan-100/95">
-            Planner turn {currentTurnId} ·{" "}
+            {currentTurnCombatName ? (
+              <>
+                <span className="font-semibold text-cyan-50/95">{currentTurnCombatName}</span>
+                <span className="font-normal text-slate-500"> · </span>
+              </>
+            ) : null}
+            Turn {currentTurnId} ·{" "}
             {turnPhase === "start"
               ? "Start (relics / draw / ST)"
               : turnPhase === "player"
@@ -406,6 +419,7 @@ export default function TimelineBlock() {
                     <button
                       type="button"
                       onClick={() => setCurrentTurn(row.id)}
+                      title={`${row.combatName} · Turn ${row.id}`}
                       className={`w-full max-w-full rounded-xl border-2 p-2.5 text-left transition-all duration-200 ${
                         isActive && currentTurnHasUnsavedChanges
                           ? "border-amber-400/75 bg-linear-to-b from-amber-950/70 via-amber-950/45 to-slate-950/90 text-slate-100 shadow-md shadow-amber-950/35 ring-1 ring-amber-300/30"
@@ -427,7 +441,10 @@ export default function TimelineBlock() {
                               }`}
                               strokeWidth={2}
                             />
-                            <span className="text-sm font-bold tabular-nums text-slate-100">Turn {row.id}</span>
+                            <span className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-sm font-bold text-slate-100">
+                              <span className="min-w-0 truncate">{row.combatName}</span>
+                              <span className="shrink-0 tabular-nums text-slate-400">· Turn {row.id}</span>
+                            </span>
                             {isActive ? (
                               <span className="rounded-md bg-cyan-500/20 px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-cyan-200">
                                 Active
@@ -554,7 +571,7 @@ export default function TimelineBlock() {
                         className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-cyan-600/40 bg-cyan-950/25 py-1.5 text-[11px] font-semibold text-cyan-200/95 transition hover:bg-cyan-900/35 hover:text-cyan-50"
                       >
                         <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
-                        Copy state → Turn {plannerRows[index + 1]!.id}
+                        Copy state → {plannerRows[index + 1]!.combatName} · Turn {plannerRows[index + 1]!.id}
                       </button>
                     ) : null}
                   </div>

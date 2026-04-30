@@ -102,6 +102,8 @@ interface GameContextType {
   loadGameData: (filePath?: string) => Promise<void>;
   loadGameDataFromJson: (data: CombatData) => Promise<void>;
   saveGameData: (key?: string) => void;
+  /** Download the same planner snapshot {@link saveGameData} writes to storage, as a `.json` file. */
+  downloadPlannerSaveJson: () => void;
   loadSavedGame: (key?: string) => boolean;
   toggleRelic: (relicName: string) => void;
   toggleCardSelection: (location: string, index: number) => void;
@@ -574,18 +576,64 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const saveGameData = (key: string = DEFAULT_SAVE_KEY) => {
-    if (turns.length > 0) {
-      saveToLocalStorage(key, {
-        turns,
-        currentTurnIndex,
-        turnPhase,
-        decisionNodes,
-        activeDecisionNodeId,
-        decisionTimelinePositions,
-      });
+  const saveGameData = useCallback(
+    (key: string = DEFAULT_SAVE_KEY) => {
+      if (turns.length > 0) {
+        saveToLocalStorage(key, {
+          turns,
+          currentTurnIndex,
+          turnPhase,
+          decisionNodes,
+          activeDecisionNodeId,
+          decisionTimelinePositions,
+        });
+      }
+    },
+    [turns, currentTurnIndex, turnPhase, decisionNodes, activeDecisionNodeId, decisionTimelinePositions],
+  );
+
+  const downloadPlannerSaveJson = useCallback(() => {
+    if (turns.length === 0) {
+      toast('Nothing to export yet — load combat first.', 'info');
+      return;
     }
-  };
+    const payload = {
+      turns,
+      currentTurnIndex,
+      turnPhase,
+      decisionNodes,
+      activeDecisionNodeId,
+      decisionTimelinePositions,
+      exportedAt: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sts-planner-save-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast('Save exported as JSON', 'success');
+  }, [turns, currentTurnIndex, turnPhase, decisionNodes, activeDecisionNodeId, decisionTimelinePositions]);
+
+  /** Debounced persist of planner rows, timeline tree, and canvas positions to browser storage. */
+  useEffect(() => {
+    if (isLoading || turns.length === 0) return;
+    const t = window.setTimeout(() => saveGameData(), 520);
+    return () => window.clearTimeout(t);
+  }, [
+    isLoading,
+    turns,
+    currentTurnIndex,
+    turnPhase,
+    decisionNodes,
+    activeDecisionNodeId,
+    decisionTimelinePositions,
+    saveGameData,
+  ]);
 
   const toggleRelic = (relicName: string) => {
     setGameState((prevState) => {
@@ -1968,6 +2016,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         loadGameData,
         loadGameDataFromJson,
         saveGameData,
+        downloadPlannerSaveJson,
         loadSavedGame,
         toggleRelic,
         toggleCardSelection,
