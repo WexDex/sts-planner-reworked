@@ -241,6 +241,15 @@ export default function TutorialHub() {
             </span>
             <span className="mt-1 block font-semibold text-slate-100">Opens the interactive preview app route</span>
           </Link>
+          <Link
+            href="/card-workbench/cards"
+            className="rounded-xl border border-fuchsia-500/40 bg-fuchsia-950/20 p-4 text-sm shadow-sm transition hover:border-fuchsia-400/60 hover:bg-fuchsia-950/40"
+          >
+            <span className="block text-[11px] font-bold uppercase tracking-wide text-fuchsia-300">Card workbench</span>
+            <span className="mt-1 block font-semibold text-fuchsia-50">
+              Browse bundled <code className="font-mono text-fuchsia-100/90">STS_CARDS_DB.json</code>; patch records; copy export
+            </span>
+          </Link>
         </div>
         <div className="flex flex-wrap gap-2 pt-2 text-xs">
           <Link
@@ -254,6 +263,12 @@ export default function TutorialHub() {
             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 px-3 py-1.5 font-medium text-slate-300 hover:bg-slate-900"
           >
             <GitBranch className="h-3.5 w-3.5" aria-hidden /> Open Decision timeline →
+          </Link>
+          <Link
+            href="/card-workbench/cards"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-fuchsia-800/60 px-3 py-1.5 font-medium text-fuchsia-200/95 hover:bg-fuchsia-950/40"
+          >
+            Card workbench →
           </Link>
           <Link
             href="/theme-wrapper"
