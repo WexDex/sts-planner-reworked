@@ -866,29 +866,55 @@ export function PlannerCardWorkbenchView({
       <article
         className={`rounded-3xl border p-[1px] ${shellForCharacters(selectedRaw.characters ?? selectedRaw.character)}`}
       >
-        <div className="rounded-[23px] p-6 sm:p-8">
-          <header className="flex flex-wrap items-start gap-2">
-            <span
-              className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 uppercase ${badgeForCharacters(selectedRaw.characters ?? selectedRaw.character)}`}
-            >
-              {String(selectedRaw.characters ?? selectedRaw.character ?? "—")}
-            </span>
-            <span
-              className={`rounded-full px-2.5 py-1 text-[10px] font-medium capitalize ring-1 ${rarityChip(selectedRaw.rarity)}`}
-            >
-              {String(selectedRaw.rarity ?? "—")}
-            </span>
-            <span className="ml-auto rounded-lg bg-black/53 px-2.5 py-1 font-mono text-[11px] text-slate-200 ring-1 ring-white/15 tabular-nums">
-              Cost {costBadge(selectedRaw)}
-            </span>
+        <div className="rounded-[23px] p-4 sm:p-8">
+          <header className="flex flex-col gap-2 justify-center items-center">
+            {n > 0 ?
+              <div
+                className="flex mb-4 w-fit min-h-[3.75rem] min-w-[5.5rem] flex-shrink-0 flex-col justify-center gap-1 rounded-xl border-2 border-white/25 bg-black/70 px-3 py-2 font-mono tabular-nums shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-white/15 sm:min-w-[6.5rem] sm:px-4"
+                title="Position in sorted bundle list"
+              >
+                <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-500">
+                  Index
+                </span>
+                <div className="flex items-baseline gap-1.5 leading-none">
+                  <span className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+                    {index + 1}
+                  </span>
+                  <span className="text-xl font-bold text-slate-500 sm:text-2xl">
+                    /
+                  </span>
+                  <span className="text-2xl font-bold text-slate-200 sm:text-3xl">
+                    {n}
+                  </span>
+                </div>
+              </div>
+            : null}
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className="inline-flex max-w-full truncate rounded-md bg-black/52 px-2 py-1 text-[10px] font-semibold capitalize leading-none text-violet-100 ring-1 ring-white/14"
+                title={cardTypeLabel(selectedRaw)}
+              >
+                {cardTypeLabel(selectedRaw)}
+              </span>
+              <span
+                className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 uppercase ${badgeForCharacters(selectedRaw.characters ?? selectedRaw.character)}`}
+              >
+                {String(selectedRaw.characters ?? selectedRaw.character ?? "—")}
+              </span>
+              <span
+                className={`rounded-full px-2.5 py-1 text-[10px] font-medium capitalize ring-1 ${rarityChip(selectedRaw.rarity)}`}
+              >
+                {String(selectedRaw.rarity ?? "—")}
+              </span>
+              <span className="ml-auto rounded-lg bg-black/53 px-2.5 py-1 font-mono text-[11px] text-slate-200 ring-1 ring-white/15 tabular-nums">
+                Cost {costBadge(selectedRaw)}
+              </span>
+            </div>
           </header>
 
           <h1 className="mt-6 text-balance bg-linear-to-br from-white via-white to-violet-200/88 bg-clip-text text-2xl font-semibold tracking-tight text-transparent sm:text-3xl">
             {String(selectedRaw.name ?? selectedId)}
           </h1>
-          <p className="mt-1 font-mono text-[11px] tracking-wide text-violet-200/76">
-            {String(selectedRaw.type ?? "Card")}
-          </p>
 
           <div className="mt-8 grid gap-4">
             <div className="rounded-2xl border border-white/[0.06] bg-black/35 px-4 py-3 backdrop-blur-sm">
