@@ -17,15 +17,16 @@
       "multiHitCount": "Per-tier hit count when not energy-scaling.",
       "multiHitEnergyScaling": "X-cost: repeat count follows spent energy (no multiHitCount) — damage (Skewer) or block (Reinforced Body).",
       "selfExhaustOnPlay": "Per tier: base and upgraded booleans — whether playing that copy exhausts the card.",
-      "appliesDebuffs": "vulnerable, weak, poison, etc. with base/upgraded stacks; optional per-entry or root `target` tier { base/upgraded: \"all enemies\" } → AoE icon before that debuff cluster(s).",
+      "appliesDebuffs": "vulnerable, weak, poison, etc. with base/upgraded stacks; optional per-entry `random` or `randomTarget` (boolean) adds random-target icon beside that debuff; optional per-entry or root `target` tier { base/upgraded: \"all enemies\" } → AoE icon before that debuff cluster(s).",
       "heal": "Tiered HP healed — card face + [HEAL] placeholder.",
       "focus": "Defect Focus (+/- orbs) — card face + [FOCUS] placeholder.",
       "mantra": "Watcher Mantra — use [MANTRA] or [W] when card.mantra is set; [W] falls back to Weak if mantra absent.",
       "unplayable": "If true, cost orb is hidden (curses / specials).",
       "retain": "Tiered boolean — retain in hand.",
       "canAddCards": "Boolean — true when the card adds or inserts cards (hand / draw pile / discard): \"Add …\", \"Put … into your hand\", token shuffle into pile; false for recycle-only shuffles (Deep Breath, Reboot), self-shuffle (Tantrum), or reorder-only moves.",
-      "bonusDamage": "Extra damage instance (e.g. Bane): same tiers as damage; conditioned + optional trigger string for glyph label.",
-      "bonusBlock": "Extra block instance (e.g. Halt in Wrath): tiers + conditioned + trigger; rendered as a second block cluster on the card."
+      "bonusDamage": "Extra damage instance (e.g. Bane): same tiers as damage; conditioned + optional trigger string for glyph label; optional `random` / `randomTarget` on tier object.",
+      "bonusBlock": "Extra block instance (e.g. Halt in Wrath): tiers + conditioned + trigger; optional `random` / `randomTarget` on tier object.",
+      "randomTargeting": "On tier objects `{ base?, upgraded?, … }`: `random: true` or `randomTarget: true` (same meaning) shows the shuffle icon in the gallery (appliesDebuffs entries, damage, block, draw, heal, focus, energy, scry, HP cost, bonus rows, `addCard`, `orbInteractions` rows, discardEffect already supported)."
     }
   },
   "iconCatalog": {
@@ -809,7 +810,8 @@
       },
       "appliesDebuffs": {
         "poison": {
-          "base": 3
+          "base": 3,
+          "random": true
         }
       },
       "multiHit": {

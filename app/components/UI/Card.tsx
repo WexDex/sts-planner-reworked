@@ -30,11 +30,21 @@ import {
   inferGalleryCardEffects,
   multihitBlockRowLeadingSegments,
   multihitDamageRowLeadingSegments,
+  singleHitDamageRowLeadingSegments,
   type GalleryGlyph,
   type GalleryGlyphSegment,
   type GallerySuppressedStats,
 } from "@/app/card-design-gallery/galleryStsGlyphs";
 import { resolveGameCardChromeStyle } from "@/app/card-design-gallery/galleryCharacterCardStyles";
+
+/** Shown inline inside damage cluster shell instead of prefix row (non-multihit stat strip). */
+const INLINE_DAMAGE_MODIFIER_PREFIX_IDS = new Set([
+  "damage-random-simple",
+  "damage-combo",
+  "structured-dmg",
+  /** AoE + optional random/cond; same modifiers as single-hit leading segments in the stat shell. */
+  "structured-aoe-dmg",
+]);
 
 export type STSCardSize = "small" | "medium" | "large" | "preview";
 
@@ -336,7 +346,7 @@ export default function STSCard({
   const prefixDamageGlyphs = stat
     ? rawGalleryGlyphs.filter((g) => g.prefixDamageRow)
     : [];
-  const prefixDamageGlyphsFiltered = prefixDamageGlyphs.filter(
+  const prefixDamageGlyphsNoXmht = prefixDamageGlyphs.filter(
     (g) =>
       !(
         g.id === "multi-hit" &&
@@ -389,6 +399,21 @@ export default function STSCard({
 
   const showDamageStatBlock =
     card.damage !== undefined && !mergedSuppressStats?.damage;
+  const singleHitDamageLeadSegs =
+    stat && showDamageStatBlock && multihitHitLabel == null
+      ? singleHitDamageRowLeadingSegments(card)
+      : [];
+  const prefixDamageGlyphsFiltered = prefixDamageGlyphsNoXmht.filter((g) => {
+    if (
+      showDamageStatBlock &&
+      multihitHitLabel == null &&
+      INLINE_DAMAGE_MODIFIER_PREFIX_IDS.has(g.id) &&
+      singleHitDamageLeadSegs.length > 0
+    ) {
+      return false;
+    }
+    return true;
+  });
   const showDamageRow =
     showDamageStatBlock || prefixDamageGlyphsFiltered.length > 0;
   const unifiedDamageAoE = galleryDamageRowIsAoE(card) && showDamageRow;
@@ -569,6 +594,12 @@ export default function STSCard({
                       className={`${galleryDamageClusterShellClass} inline-flex max-w-full flex-row items-center gap-x-0.5 ${stat.statMain}`}
                       title={damageStatTooltip}
                     >
+                      {singleHitDamageLeadSegs.length > 0
+                        ? renderLeadingGlyphSegments(
+                            singleHitDamageLeadSegs,
+                            stat.galleryIcon,
+                          )
+                        : null}
                       <span
                         className={`inline-flex items-center gap-0.5 text-lg ${getEffectDisplay("damage").color}`}
                       >
@@ -593,6 +624,24 @@ export default function STSCard({
                         title="Weak + Vulnerable"
                       >
                         {attackDamageBreakdown.both}
+                      </span>
+                    </span>
+                  ) : singleHitDamageLeadSegs.length > 0 ? (
+                    <span
+                      title={damageStatTooltip}
+                      className={`${galleryDamageClusterShellClass} inline-flex max-w-full flex-row items-center gap-x-0.5 ${stat.statMain}`}
+                    >
+                      {renderLeadingGlyphSegments(
+                        singleHitDamageLeadSegs,
+                        stat.galleryIcon,
+                      )}
+                      <span
+                        className={`inline-flex items-center gap-0.5 text-lg ${getEffectDisplay("damage").color}`}
+                      >
+                        {React.createElement(getEffectDisplay("damage").icon, {
+                          className: `${stat.statIcon} inline shrink-0`,
+                        })}
+                        {damageStatLabel ?? "?"}
                       </span>
                     </span>
                   ) : (

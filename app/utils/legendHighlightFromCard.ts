@@ -8,6 +8,7 @@ import {
   energyGainNode,
   galleryAppliesDebuffsIsAoE,
   galleryBlockRowIsConditional,
+  galleryCardDeclaresRandomTargeting,
   galleryDamageIsConditional,
   galleryDamageRowIsAoE,
   galleryDrawIsConditional,
@@ -205,6 +206,10 @@ export function computeLegendHighlightIds(
   addDiscardLegendKeys(card, ids);
   addOrbLegendKeys(card, ids);
   addGlyphLegendHints(card, glyphs, ids);
+
+  if (galleryCardDeclaresRandomTargeting(card)) {
+    ids.add("RANDOM_ICON");
+  }
 
   if (damageMultihitInlineHitLabel(card) != null) ids.add("AOE_DAMAGE");
   if (blockMultihitInlineHitLabel(card) != null) ids.add("AOE_DAMAGE");

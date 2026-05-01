@@ -289,10 +289,60 @@ export function cardSelfExhaustsOnPlay(card: Card): boolean {
   return false;
 }
 
-function discardIsRandom(
-  discard: { randomTarget?: boolean; random?: boolean },
-): boolean {
-  return discard.randomTarget === true || discard.random === true;
+/** True when a tier / effect payload marks random targeting or random choice (enemy, card, hit, …). */
+export function galleryTierOrEffectHasRandomFlag(node: unknown): boolean {
+  if (node == null || typeof node !== "object" || Array.isArray(node)) return false;
+  const o = node as Record<string, unknown>;
+  return o.random === true || o.randomTarget === true;
+}
+
+function discardIsRandom(discard: { randomTarget?: boolean; random?: boolean }): boolean {
+  return galleryTierOrEffectHasRandomFlag(discard);
+}
+
+/** Scan common card JSON blobs for `@link galleryTierOrEffectHasRandomFlag` (legend / hints). */
+export function galleryCardDeclaresRandomTargeting(card: Card): boolean {
+  const c = card as Record<string, unknown>;
+  const discard = c.discardEffect as { random?: boolean; randomTarget?: boolean } | undefined;
+
+  const debuffs = c.appliesDebuffs as Record<string, unknown> | undefined;
+  if (debuffs && typeof debuffs === "object") {
+    for (const [k, val] of Object.entries(debuffs)) {
+      if (k === "target") continue;
+      if (galleryTierOrEffectHasRandomFlag(val)) return true;
+    }
+  }
+
+  const tierFields: unknown[] = [
+    card.damage,
+    card.block,
+    card.draw,
+    energyGainNode(card),
+    c.heal,
+    c.focus,
+    card.takeDamage,
+    c.bonusDamage,
+    c.bonusBlock,
+    c.hpcost,
+    c.hpCost,
+    c.scry,
+  ];
+  for (const n of tierFields) {
+    if (galleryTierOrEffectHasRandomFlag(n)) return true;
+  }
+
+  if (discardIsRandom(discard ?? {})) return true;
+
+  const addCardRaw = c.addCard;
+  if (addCardRaw && typeof addCardRaw === "object" && !Array.isArray(addCardRaw)) {
+    if (galleryTierOrEffectHasRandomFlag(addCardRaw)) return true;
+  }
+
+  for (const entry of orbInteractionEntries(c)) {
+    if (galleryTierOrEffectHasRandomFlag(entry)) return true;
+  }
+
+  return false;
 }
 
 /**
@@ -336,9 +386,10 @@ function buildDamageLegacyGlyph(card: Card): GalleryGlyph | null {
     card.damage && typeof card.damage === "object" && !Array.isArray(card.damage)
       ? (card.damage as Record<string, unknown>)
       : undefined;
+  const dmgRandom = galleryTierOrEffectHasRandomFlag(dRaw ?? card.damage);
   const trigger = typeof dRaw?.trigger === "string" ? String(dRaw.trigger) : undefined;
 
-  if (!hasSub) {
+  if (!hasSub && !dmgRandom) {
     return {
       id: "damage",
       label: "Damage",
@@ -347,10 +398,22 @@ function buildDamageLegacyGlyph(card: Card): GalleryGlyph | null {
     };
   }
 
+  if (!hasSub && dmgRandom) {
+    return {
+      id: "damage-random-simple",
+      label: trigger ? `Random · Damage — ${trigger}` : "Random · Damage",
+      clusterClass: clusterShellField("damage"),
+      segments: [segmentRandom()],
+      prefixDamageRow: true,
+    };
+  }
+
   const segments: GalleryGlyphSegment[] = [];
+  if (dmgRandom) segments.push(segmentRandom());
   if (galleryDamageIsConditional(card)) segments.push(segmentConditional());
   if (damageRowIsAoE(card)) segments.push(segmentAoe());
   const labelParts: string[] = [];
+  if (dmgRandom) labelParts.push("Random");
   if (galleryDamageIsConditional(card)) labelParts.push("Conditional");
   if (damageRowIsAoE(card)) labelParts.push("AoE");
   labelParts.push("Damage");
@@ -465,10 +528,33 @@ export function debuffPoisonMultihitHitLabel(card: Card): string | null {
   return n != null ? String(n) : null;
 }
 
-/** Conditional + AoE icons placed before damage inside the unified multihit damage cluster. */
+/** Conditional + random + AoE icons placed before damage inside the unified multihit damage cluster. */
 export function multihitDamageRowLeadingSegments(card: Card): GalleryGlyphSegment[] {
   if (damageMultihitInlineHitLabel(card) == null) return [];
+  const dmgObj =
+    card.damage && typeof card.damage === "object" && !Array.isArray(card.damage)
+      ? card.damage
+      : undefined;
   const segs: GalleryGlyphSegment[] = [];
+  if (galleryTierOrEffectHasRandomFlag(dmgObj ?? card.damage)) {
+    segs.push(segmentRandom());
+  }
+  if (galleryDamageIsConditional(card)) segs.push(segmentConditional());
+  if (damageRowIsAoE(card)) segs.push(segmentAoe());
+  return segs;
+}
+
+/** Same leading icons as {@link multihitDamageRowLeadingSegments} for single-hit damage rows (inside stat shell). */
+export function singleHitDamageRowLeadingSegments(card: Card): GalleryGlyphSegment[] {
+  if (damageMultihitInlineHitLabel(card) != null) return [];
+  const dmgObj =
+    card.damage && typeof card.damage === "object" && !Array.isArray(card.damage)
+      ? card.damage
+      : undefined;
+  const segs: GalleryGlyphSegment[] = [];
+  if (galleryTierOrEffectHasRandomFlag(dmgObj ?? card.damage)) {
+    segs.push(segmentRandom());
+  }
   if (galleryDamageIsConditional(card)) segs.push(segmentConditional());
   if (damageRowIsAoE(card)) segs.push(segmentAoe());
   return segs;
@@ -721,7 +807,20 @@ function tryStructuredGalleryGlyphs(
           ? String((egNode as Record<string, unknown>).trigger)
           : undefined;
 
+    const dmgO =
+      card.damage && typeof card.damage === "object" && !Array.isArray(card.damage)
+        ? (card.damage as Record<string, unknown>)
+        : undefined;
+    const dmgRand = galleryTierOrEffectHasRandomFlag(dmgO ?? card.damage);
+    const drawRand = galleryTierOrEffectHasRandomFlag(dRaw);
+    const egO =
+      egNode != null && typeof egNode === "object" && !Array.isArray(egNode)
+        ? (egNode as Record<string, unknown>)
+        : undefined;
+    const egRand = galleryTierOrEffectHasRandomFlag(egO ?? egNode);
+
     const dmgSegs: GalleryGlyphSegment[] = [];
+    if (dmgRand) dmgSegs.push(segmentRandom());
     if (galleryDamageIsConditional(card)) dmgSegs.push(segmentConditional());
     if (damageRowIsAoE(card)) dmgSegs.push(segmentAoe());
     const glyphs: GalleryGlyph[] = [];
@@ -740,6 +839,7 @@ function tryStructuredGalleryGlyphs(
         label: trigger ? `Draw when ${trigger}` : "Conditional draw",
         clusterClass: clusterShellField("draw"),
         segments: [
+          ...(drawRand ? [segmentRandom()] : []),
           { Icon: condMeta.Icon, iconClass: condMeta.iconClass },
           { Icon: drawVis.icon, iconClass: drawVis.color },
           {
@@ -753,6 +853,7 @@ function tryStructuredGalleryGlyphs(
         label: trigger ? `Energy when ${trigger}` : "Conditional energy",
         clusterClass: clusterShellField("energy"),
         segments: [
+          ...(egRand ? [segmentRandom()] : []),
           { Icon: condMeta.Icon, iconClass: condMeta.iconClass },
           { Icon: enD.icon, iconClass: enD.color },
           {
@@ -780,7 +881,13 @@ function tryStructuredGalleryGlyphs(
     const rand = STS_ICON_GLYPH.RANDOM_ICON;
     const dis = STS_ICON_GLYPH.DISCARD_ICON;
     const dCount = galleryDiscardDisplayCount(card);
+    const dmgForRand =
+      card.damage && typeof card.damage === "object" && !Array.isArray(card.damage)
+        ? card.damage
+        : undefined;
+    const dmgRandFlag = galleryTierOrEffectHasRandomFlag(dmgForRand ?? card.damage);
     const aoeDmgSegs: GalleryGlyphSegment[] = [];
+    if (dmgRandFlag) aoeDmgSegs.push(segmentRandom());
     if (galleryDamageIsConditional(card)) aoeDmgSegs.push(segmentConditional());
     aoeDmgSegs.push({ Icon: aoe.Icon, iconClass: aoe.iconClass });
     const rndDiscSegs: GalleryGlyphSegment[] = [];
@@ -868,6 +975,8 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
         : undefined;
     const trigger = typeof dRaw?.trigger === "string" ? dRaw.trigger : undefined;
 
+    const drawRandFlag = galleryTierOrEffectHasRandomFlag(dRaw ?? card.draw);
+
     if (drawCond) {
       const condM = STS_ICON_GLYPH.CONDITIONAL_MARKER;
       const drawVis = getEffectDisplay("draw");
@@ -877,6 +986,7 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
         label: trigger ? `Draw — ${trigger}` : "Draw (conditional)",
         clusterClass: clusterShellField("draw"),
         segments: [
+          ...(drawRandFlag ? [segmentRandom()] : []),
           { Icon: condM.Icon, iconClass: condM.iconClass },
           { Icon: drawVis.icon, iconClass: drawVis.color },
           {
@@ -884,6 +994,24 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
             textClass: `${drawVis.color} font-bold tabular-nums leading-none`,
           },
         ],
+      });
+    } else if (drawRandFlag) {
+      const drawVis = getEffectDisplay("draw");
+      const drawN = galleryNumericField(card, "draw");
+      const rndSeg = segmentRandom();
+      const segs: GalleryGlyphSegment[] = [rndSeg, { Icon: drawVis.icon, iconClass: drawVis.color }];
+      if (drawN != null) {
+        segs.push({
+          text: String(drawN),
+          textClass: `${drawVis.color} font-bold tabular-nums leading-none`,
+        });
+      }
+      push({
+        id: "draw-main-random",
+        label:
+          drawN != null ? `Random · Draw ${drawN}` : "Random · Draw",
+        clusterClass: clusterShellField("draw"),
+        segments: segs,
       });
     } else {
       const dm =
@@ -959,10 +1087,12 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
     const isEvoke = /^evoke/i.test(verb);
 
     if (isChannel) {
-      const segs: GalleryGlyphSegment[] = [
+      const segs: GalleryGlyphSegment[] = [];
+      if (galleryTierOrEffectHasRandomFlag(e)) segs.push(segmentRandom());
+      segs.push(
         plusSegment(),
         { Icon: orbMeta.Icon, iconClass: orbMeta.iconClass },
-      ];
+      );
       if (orbAmt != null) {
         segs.push({
           text: String(orbAmt),
@@ -982,10 +1112,12 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
 
     if (isEvoke) {
       const ev = STS_ICON_GLYPH.EVOKE_ICON;
-      const segs: GalleryGlyphSegment[] = [
+      const segs: GalleryGlyphSegment[] = [];
+      if (galleryTierOrEffectHasRandomFlag(e)) segs.push(segmentRandom());
+      segs.push(
         { Icon: ev.Icon, iconClass: ev.iconClass },
         { Icon: orbMeta.Icon, iconClass: orbMeta.iconClass },
-      ];
+      );
       if (orbAmt != null) {
         segs.push({
           text: String(orbAmt),
@@ -1034,13 +1166,16 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
     const cond = egObj?.conditioned === true;
     const trigger = typeof egObj?.trigger === "string" ? egObj.trigger : undefined;
     const egDisplay = getEffectDisplay("energygain");
+    const egRand = galleryTierOrEffectHasRandomFlag(egObj ?? eg);
     if (cond) {
       const condM = STS_ICON_GLYPH.CONDITIONAL_MARKER;
       const en = galleryTierNumber(card, energyGainNode(card));
-      const segs: GalleryGlyphSegment[] = [
+      const segs: GalleryGlyphSegment[] = [];
+      if (egRand) segs.push(segmentRandom());
+      segs.push(
         { Icon: condM.Icon, iconClass: condM.iconClass },
         { Icon: egDisplay.icon, iconClass: egDisplay.color },
-      ];
+      );
       if (en != null) {
         segs.push({
           text: String(en),
@@ -1061,11 +1196,22 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
           label: `Gain ${en} energy`,
           clusterClass: clusterShellField("energy"),
           segments: [
+            ...(egRand ? [segmentRandom()] : []),
             { Icon: egDisplay.icon, iconClass: egDisplay.color },
             {
               text: String(en),
               textClass: `${egDisplay.color} font-bold tabular-nums leading-none`,
             },
+          ],
+        });
+      } else if (egRand) {
+        push({
+          id: "gain-energy-main",
+          label: "Random · Gain energy",
+          clusterClass: clusterShellField("energy"),
+          segments: [
+            segmentRandom(),
+            { Icon: egDisplay.icon, iconClass: egDisplay.color },
           ],
         });
       } else {
@@ -1082,29 +1228,48 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
   const healRaw = c.heal;
   if (healRaw != null) {
     const h = getEffectDisplay("heal");
-    push({
-      id: "heal-main",
-      label: "Heal",
-      Icon: h.icon,
-      iconClass: h.color,
-    });
+    if (galleryTierOrEffectHasRandomFlag(healRaw)) {
+      push({
+        id: "heal-main",
+        label: "Random · Heal",
+        clusterClass: clusterShellField("neutral"),
+        segments: [segmentRandom(), { Icon: h.icon, iconClass: h.color }],
+      });
+    } else {
+      push({
+        id: "heal-main",
+        label: "Heal",
+        Icon: h.icon,
+        iconClass: h.color,
+      });
+    }
   }
 
   const focusRaw = c.focus;
   if (focusRaw != null) {
     const f = getEffectDisplay("focus");
-    push({
-      id: "focus-main",
-      label: "Focus",
-      Icon: f.icon,
-      iconClass: f.color,
-    });
+    if (galleryTierOrEffectHasRandomFlag(focusRaw)) {
+      push({
+        id: "focus-main",
+        label: "Random · Focus",
+        clusterClass: clusterShellField("neutral"),
+        segments: [segmentRandom(), { Icon: f.icon, iconClass: f.color }],
+      });
+    } else {
+      push({
+        id: "focus-main",
+        label: "Focus",
+        Icon: f.icon,
+        iconClass: f.color,
+      });
+    }
   }
 
   const scryRaw = c.scry;
   if (scryRaw != null) {
     const sn = galleryTierNumber(card, scryRaw);
     const sc = STS_ICON_GLYPH.SCRY_ICON;
+    const scryRand = galleryTierOrEffectHasRandomFlag(scryRaw);
     if (sn != null) {
       push({
         id: "scry-n",
@@ -1112,12 +1277,21 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
         label: `Scry ${sn}`,
         clusterClass: clusterShellField("neutral"),
         segments: [
+          ...(scryRand ? [segmentRandom()] : []),
           { Icon: sc.Icon, iconClass: sc.iconClass },
           {
             text: String(sn),
             textClass: `${sc.iconClass} font-bold tabular-nums leading-none`,
           },
         ],
+      });
+    } else if (scryRand) {
+      push({
+        id: "scry",
+        catalogKey: "SCRY_ICON",
+        label: "Random · Scry",
+        clusterClass: clusterShellField("neutral"),
+        segments: [segmentRandom(), { Icon: sc.Icon, iconClass: sc.iconClass }],
       });
     } else {
       push({
@@ -1134,6 +1308,7 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
   if (hpCostRaw != null) {
     const hn = galleryTierNumber(card, hpCostRaw);
     const hpMeta = STS_ICON_GLYPH.HP_COST;
+    const hpRand = galleryTierOrEffectHasRandomFlag(hpCostRaw);
     if (hn != null) {
       push({
         id: "hp-cost-n",
@@ -1141,12 +1316,21 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
         label: `HP cost ${hn}`,
         clusterClass: clusterShellField("neutral"),
         segments: [
+          ...(hpRand ? [segmentRandom()] : []),
           { Icon: hpMeta.Icon, iconClass: hpMeta.iconClass },
           {
             text: String(hn),
             textClass: `${hpMeta.iconClass} font-bold tabular-nums leading-none`,
           },
         ],
+      });
+    } else if (hpRand) {
+      push({
+        id: "hp-cost",
+        catalogKey: "HP_COST",
+        label: "Random · HP cost",
+        clusterClass: clusterShellField("neutral"),
+        segments: [segmentRandom(), { Icon: hpMeta.Icon, iconClass: hpMeta.iconClass }],
       });
     } else {
       push({
@@ -1206,10 +1390,13 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
           ? ac.cardName
           : undefined;
     const addMeta = STS_ICON_GLYPH.ADD_CARD;
-    const segs: GalleryGlyphSegment[] = [
+    const addRand = galleryTierOrEffectHasRandomFlag(addCardRaw);
+    const segs: GalleryGlyphSegment[] = [];
+    if (addRand) segs.push(segmentRandom());
+    segs.push(
       plusSegment(),
       { Icon: addMeta.Icon, iconClass: addMeta.iconClass },
-    ];
+    );
     if (addN != null) {
       segs.push({
         text: String(addN),
@@ -1241,13 +1428,16 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
 
       if (kind === "losestrength") {
         const stacks = galleryTierNumber(card, raw);
+        const debuffRand = galleryTierOrEffectHasRandomFlag(raw);
         const m = STS_ICON_GLYPH.LOSE_STRENGTH;
-        const pfx = debuffAoe ? "AoE · " : "";
+        const pfx =
+          `${debuffAoe ? "AoE · " : ""}${debuffRand ? "Random · " : ""}`;
         const label =
           stacks != null ? `${pfx}Lose Strength ${stacks}` : `${pfx}Lose Strength`;
         if (stacks != null) {
           const segs: GalleryGlyphSegment[] = [];
           if (debuffAoe) segs.push(segmentAoe());
+          if (debuffRand) segs.push(segmentRandom());
           segs.push(
             { Icon: m.Icon, iconClass: m.iconClass },
             {
@@ -1263,13 +1453,29 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
             segments: segs,
           });
         } else {
-          if (debuffAoe) {
+          if (debuffAoe && debuffRand) {
+            push({
+              id: "debuff-losestrength",
+              catalogKey: "LOSE_STRENGTH",
+              label,
+              clusterClass: clusterShellField("neutral"),
+              segments: [segmentAoe(), segmentRandom(), { Icon: m.Icon, iconClass: m.iconClass }],
+            });
+          } else if (debuffAoe) {
             push({
               id: "debuff-losestrength",
               catalogKey: "LOSE_STRENGTH",
               label,
               clusterClass: clusterShellField("neutral"),
               segments: [segmentAoe(), { Icon: m.Icon, iconClass: m.iconClass }],
+            });
+          } else if (debuffRand) {
+            push({
+              id: "debuff-losestrength",
+              catalogKey: "LOSE_STRENGTH",
+              label,
+              clusterClass: clusterShellField("neutral"),
+              segments: [segmentRandom(), { Icon: m.Icon, iconClass: m.iconClass }],
             });
           } else {
             push({
@@ -1309,9 +1515,15 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
         const hitCount: number | "X" | undefined =
           hitFromMulti !== undefined ? hitFromMulti : hitsLegacy;
 
+        const debuffPoisonRand =
+          poisonObj != null
+            ? galleryTierOrEffectHasRandomFlag(poisonObj)
+            : galleryTierOrEffectHasRandomFlag(raw);
+
         const p = getEffectDisplay("poison");
         const segments: GalleryGlyphSegment[] = [];
         if (debuffAoe) segments.push(segmentAoe());
+        if (debuffPoisonRand) segments.push(segmentRandom());
         segments.push({ Icon: p.icon, iconClass: p.color });
         if (stacks != null) {
           segments.push({
@@ -1339,19 +1551,20 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
           });
         }
 
-        let label = `${debuffAoe ? "AoE · " : ""}Poison`;
+        const pfxPoison = `${debuffAoe ? "AoE · " : ""}${debuffPoisonRand ? "Random · " : ""}`;
+        let label = `${pfxPoison}Poison`;
         if (stacks != null) {
           label =
             showRepeat && hitCount !== undefined
               ? hitCount === "X"
-                ? `${debuffAoe ? "AoE · " : ""}Poison ${stacks} × X`
-                : `${debuffAoe ? "AoE · " : ""}Poison ${stacks} × ${hitCount}`
-              : `${debuffAoe ? "AoE · " : ""}Poison ${stacks}`;
+                ? `${pfxPoison}Poison ${stacks} × X`
+                : `${pfxPoison}Poison ${stacks} × ${hitCount}`
+              : `${pfxPoison}Poison ${stacks}`;
         } else if (hitCount != null) {
           label =
             hitCount === "X"
-              ? `${debuffAoe ? "AoE · " : ""}Poison × X`
-              : `${debuffAoe ? "AoE · " : ""}Poison × ${hitCount}`;
+              ? `${pfxPoison}Poison × X`
+              : `${pfxPoison}Poison × ${hitCount}`;
         }
         push({
           id: "debuff-poison",
@@ -1367,11 +1580,13 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
         kind === "vulnerable" || kind === "weak" ? kind : ("wound" as const);
       const d = getEffectDisplay(eff);
       const stacks = galleryTierNumber(card, raw);
-      const pfx = debuffAoe ? "AoE · " : "";
+      const debuffRand = galleryTierOrEffectHasRandomFlag(raw);
+      const pfx = `${debuffAoe ? "AoE · " : ""}${debuffRand ? "Random · " : ""}`;
       const label = stacks != null ? `${pfx}${kind} ${stacks}` : `${pfx}${kind}`;
       if (stacks != null) {
         const segs: GalleryGlyphSegment[] = [];
         if (debuffAoe) segs.push(segmentAoe());
+        if (debuffRand) segs.push(segmentRandom());
         segs.push(
           { Icon: d.icon, iconClass: d.color },
           {
@@ -1385,12 +1600,26 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
           clusterClass: clusterShellField("neutral"),
           segments: segs,
         });
+      } else if (debuffAoe && debuffRand) {
+        push({
+          id: `debuff-${kind}`,
+          label,
+          clusterClass: clusterShellField("neutral"),
+          segments: [segmentAoe(), segmentRandom(), { Icon: d.icon, iconClass: d.color }],
+        });
       } else if (debuffAoe) {
         push({
           id: `debuff-${kind}`,
           label,
           clusterClass: clusterShellField("neutral"),
           segments: [segmentAoe(), { Icon: d.icon, iconClass: d.color }],
+        });
+      } else if (debuffRand) {
+        push({
+          id: `debuff-${kind}`,
+          label,
+          clusterClass: clusterShellField("neutral"),
+          segments: [segmentRandom(), { Icon: d.icon, iconClass: d.color }],
         });
       } else {
         push({
@@ -1412,6 +1641,12 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
 
   if (hasMulti && card.damage != undefined && !("multiHitCount" in (multi as object))) {
     const mhSegs: GalleryGlyphSegment[] = [];
+    const dmgRand =
+      card.damage !== undefined &&
+      typeof card.damage === "object" &&
+      !Array.isArray(card.damage) &&
+      galleryTierOrEffectHasRandomFlag(card.damage);
+    if (dmgRand) mhSegs.push(segmentRandom());
     if (galleryDamageIsConditional(card)) mhSegs.push(segmentConditional());
     if (damageRowIsAoE(card)) mhSegs.push(segmentAoe());
     const mhIcon = STS_ICON_GLYPH.AOE_DAMAGE;
@@ -1447,11 +1682,13 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
     } else if (typeof bonusRaw === "object" && !Array.isArray(bonusRaw)) {
       const bn = galleryTierNumber(card, bonusRaw);
       const condBonus = isConditionedField(bonusRaw);
+      const bonusRand = galleryTierOrEffectHasRandomFlag(bonusRaw);
       const bTrig =
         typeof (bonusRaw as Record<string, unknown>).trigger === "string"
           ? String((bonusRaw as Record<string, unknown>).trigger)
           : undefined;
       const segs: GalleryGlyphSegment[] = [];
+      if (bonusRand) segs.push(segmentRandom());
       if (condBonus) segs.push(segmentConditional());
       segs.push(
         { Icon: dmgVis.icon, iconClass: dmgVis.color },
@@ -1488,11 +1725,13 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
     } else if (typeof bonusBlkRaw === "object" && !Array.isArray(bonusBlkRaw)) {
       const bbN = galleryTierNumber(card, bonusBlkRaw);
       const condB = isConditionedField(bonusBlkRaw);
+      const bbRand = galleryTierOrEffectHasRandomFlag(bonusBlkRaw);
       const bbTrig =
         typeof (bonusBlkRaw as Record<string, unknown>).trigger === "string"
           ? String((bonusBlkRaw as Record<string, unknown>).trigger)
           : undefined;
       const bbSegs: GalleryGlyphSegment[] = [];
+      if (bbRand) bbSegs.push(segmentRandom());
       if (condB) bbSegs.push(segmentConditional());
       bbSegs.push(
         { Icon: blkVis.icon, iconClass: blkVis.color },
@@ -1512,6 +1751,11 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
 
   if (card.block != undefined) {
     const blk = getEffectDisplay("block");
+    const blockRand =
+      typeof card.block === "object" &&
+      card.block !== null &&
+      !Array.isArray(card.block) &&
+      galleryTierOrEffectHasRandomFlag(card.block);
     if (blockIsConditional(card)) {
       const bRaw =
         card.block && typeof card.block === "object" && !Array.isArray(card.block)
@@ -1520,10 +1764,9 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
       const bTrig =
         typeof bRaw?.trigger === "string" ? String(bRaw.trigger) : undefined;
       const blkN = galleryNumericField(card, "block");
-      const segs: GalleryGlyphSegment[] = [
-        segmentConditional(),
-        { Icon: blk.icon, iconClass: blk.color },
-      ];
+      const segs: GalleryGlyphSegment[] = [];
+      if (blockRand) segs.push(segmentRandom());
+      segs.push(segmentConditional(), { Icon: blk.icon, iconClass: blk.color });
       if (blkN != null) {
         segs.push({
           text: String(blkN),
@@ -1535,6 +1778,13 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
         label: bTrig ? `Block — ${bTrig}` : "Block (conditional)",
         clusterClass: clusterShellField("block"),
         segments: segs,
+      });
+    } else if (blockRand) {
+      push({
+        id: "block",
+        label: "Random · Block",
+        clusterClass: clusterShellField("block"),
+        segments: [segmentRandom(), { Icon: blk.icon, iconClass: blk.color }],
       });
     } else {
       push({
