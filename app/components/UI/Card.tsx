@@ -36,9 +36,11 @@ import {
 } from "@/app/card-design-gallery/galleryStsGlyphs";
 import { resolveGameCardChromeStyle } from "@/app/card-design-gallery/galleryCharacterCardStyles";
 
+export type STSCardSize = "small" | "medium" | "large" | "preview";
+
 interface GameCardProps {
   card: Card;
-  size?: "small" | "medium" | "large";
+  size?: STSCardSize;
   index: number;
   location: LOCATION;
   /** When false, no selection toggle and no hover “play” motion (for galleries / previews). */
@@ -154,6 +156,25 @@ const SIZE_STYLES = {
     galleryIcon: "h-4 w-4",
     galleryText: "text-[15px] font-bold",
   },
+  /** Hero / glossary rail: distinct from gameplay sizes; wider than {@link SIZE_STYLES.large}. */
+  preview: {
+    frame: "w-[13rem] h-[18.75rem] rounded-2xl",
+    costOrb: "h-11 w-11 -left-2 -top-2 ring-[3.5px] ring-slate-950/92",
+    costText: "text-xl font-extrabold tabular-nums",
+    bodyPad: "px-2.5 pb-2 pt-1",
+    nameBand: "mt-5 rounded-lg px-2.5 py-1.5",
+    name: "text-[14px] font-bold leading-snug tracking-tight",
+    upgradedBadge: "text-xs",
+    changedPill: "mt-1 px-2 py-0.5 text-[10px] font-bold tracking-wide",
+    statMain: "text-[17px] font-bold tabular-nums",
+    statSide: "text-[12px] font-semibold tabular-nums leading-none",
+    statIcon: "h-5 w-5 shrink-0",
+    midGap: "my-2 gap-1.5",
+    descBox: "rounded-lg px-2.5 py-2 text-[12px] font-medium leading-snug tracking-tight",
+    typeLabel: "pt-2 text-[11px] font-semibold uppercase tracking-[0.12em]",
+    galleryIcon: "h-5 w-5",
+    galleryText: "text-[17px] font-bold",
+  },
 } as const;
 
 /** Block + optional frail tier: dark clustered chip (aligned with gallery glyph fallback shell). */
@@ -241,10 +262,18 @@ export default function STSCard({
       ? SIZE_STYLES.small
       : size === "medium"
         ? SIZE_STYLES.medium
-        : SIZE_STYLES.large;
-  /** Stats + description typography (only for medium & large — small is name + type only). */
+        : size === "preview"
+          ? SIZE_STYLES.preview
+          : SIZE_STYLES.large;
+  /** Stats + description typography (only for medium, large & preview — small is name + type only). */
   const stat =
-    size === "small" ? null : size === "medium" ? SIZE_STYLES.medium : SIZE_STYLES.large;
+    size === "small"
+      ? null
+      : size === "medium"
+        ? SIZE_STYLES.medium
+        : size === "preview"
+          ? SIZE_STYLES.preview
+          : SIZE_STYLES.large;
 
   function getValue(
     field:

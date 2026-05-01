@@ -155,13 +155,18 @@ function addGlyphLegendHints(card: Card, glyphs: GalleryGlyph[], ids: Set<string
   }
 }
 
+export type LegendGalleryInferResult = ReturnType<typeof inferGalleryCardEffects>;
+
 /**
  * Legend chip ids (`stat-*` and STS catalog keys) that apply to this card at its
  * current upgrade tier — aligned with gallery inference and stat suppression.
  */
-export function computeLegendHighlightIds(card: Card): Set<string> {
+export function computeLegendHighlightIds(
+  card: Card,
+  precomputed?: LegendGalleryInferResult,
+): Set<string> {
   const ids = new Set<string>();
-  const { glyphs, suppressStats } = inferGalleryCardEffects(card);
+  const { glyphs, suppressStats } = precomputed ?? inferGalleryCardEffects(card);
   const c = card as Record<string, unknown>;
 
   if (card.damage !== undefined && !suppressStats.damage) ids.add("stat-damage");

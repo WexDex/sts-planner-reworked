@@ -4,7 +4,7 @@ export type CardGalleryFixtureRow = {
   id: string;
   title: string;
   card: Card;
-  size?: "small" | "medium" | "large";
+  size?: "small" | "medium" | "large" | "preview";
 };
 
 const ADJECTIVES = [

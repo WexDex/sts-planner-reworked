@@ -30,6 +30,7 @@ const SIZE_ORDER: Record<GalleryCardSize, number> = {
   small: 0,
   medium: 1,
   large: 2,
+  preview: 3,
 };
 
 function effectiveDisplaySize(
@@ -51,6 +52,7 @@ const SIZE_MODE_OPTIONS: { id: GallerySizeMode; label: string }[] = [
   { id: "small", label: "S" },
   { id: "medium", label: "M" },
   { id: "large", label: "L" },
+  { id: "preview", label: "P" },
 ];
 
 export default function CardDesignGalleryPage() {

@@ -79,6 +79,9 @@ const ICONS: Record<EffectType, LucideIcon> = {
   hpcost: Droplets,
 };
 
+/** Exhaustive list of planner effect/stat keys; keep in sync with `ICONS` / `getEffectDisplay` switch. */
+export const EFFECT_TYPES_ALL = Object.keys(ICONS) as EffectType[];
+
 export function getEffectDisplay(type: EffectType, value?: number): EffectDisplay {
   switch (type) {
     case 'weak':

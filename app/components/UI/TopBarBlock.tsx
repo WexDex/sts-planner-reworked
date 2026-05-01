@@ -12,7 +12,7 @@ import {
   getCardEffectLegendItems,
   type CardIconLegendItem,
 } from "@/app/components/UI/cardIconLegend";
-import { Activity, BookOpen, CalendarClock, ChevronDown, ChevronUp, GitBranch, Save } from "lucide-react";
+import { Activity, BookOpen, CalendarClock, ChevronDown, ChevronUp, CircleHelp, GitBranch, Save } from "lucide-react";
 
 const CARD_EFFECT_LEGEND = getCardEffectLegendItems();
 
@@ -273,6 +273,14 @@ export default function TopBarBlock() {
             >
               <GitBranch className="h-4 w-4 shrink-0 text-cyan-200" strokeWidth={2.25} aria-hidden />
               Timeline
+            </Link>
+            <Link
+              href="/tutorial"
+              className="inline-flex min-h-11 min-w-[6.75rem] flex-1 items-center justify-center gap-2 rounded-xl border-2 border-slate-600/65 bg-slate-900/70 px-3 py-2.5 text-sm font-semibold text-slate-100 shadow-md shadow-black/25 ring-1 ring-slate-500/20 transition hover:border-violet-400/45 hover:bg-slate-800/90 sm:flex-initial sm:min-w-[7.75rem]"
+              title="Tutorial — UI, saves, glossaries (glyphs, intents, buffs)"
+            >
+              <CircleHelp className="h-4 w-4 shrink-0 text-violet-300/95" strokeWidth={2.25} aria-hidden />
+              Tutorial
             </Link>
             <button
               type="button"
@@ -621,6 +629,13 @@ export default function TopBarBlock() {
                   >
                     <GitBranch className="h-4 w-4" strokeWidth={2.25} aria-hidden />
                   </Link>
+                  <Link
+                    href="/tutorial"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 border-slate-600/70 bg-slate-900/80 text-violet-300/95 shadow-sm ring-1 ring-slate-500/15 transition hover:border-violet-400/50 hover:bg-slate-800"
+                    title="Tutorial — glossary & UI reference"
+                  >
+                    <CircleHelp className="h-4 w-4" strokeWidth={2.25} aria-hidden />
+                  </Link>
                   <button
                     type="button"
                     disabled={savePlannerRowDisabled}
@@ -725,6 +740,15 @@ export default function TopBarBlock() {
             >
               <GitBranch className="h-5 w-5 shrink-0 text-cyan-200" strokeWidth={2.25} aria-hidden />
               Timeline
+            </Link>
+            <Link
+              href="/tutorial"
+              aria-label="Tutorial — planner guide and glossary"
+              className="inline-flex min-h-12 shrink-0 items-center justify-center gap-1.5 rounded-xl border-2 border-slate-600/70 bg-slate-900/80 px-2.5 py-3 text-xs font-bold text-violet-100 shadow-md shadow-black/20 ring-1 ring-slate-500/20 active:scale-[0.99] sm:gap-2 sm:px-3"
+              title="Tutorial — planner guide and glossary"
+            >
+              <CircleHelp className="h-5 w-5 shrink-0 text-violet-300" strokeWidth={2.25} aria-hidden />
+              <span className="hidden min-[420px]:inline">Tutorial</span>
             </Link>
             <button
               type="button"
