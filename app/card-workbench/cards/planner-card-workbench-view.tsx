@@ -17,7 +17,7 @@ import {
   pathForcedSortLast,
   type BranchSortMode,
 } from "../field-schema-editors";
-import type { PlannerCardWorkbenchViewProps } from "./planner-types";
+import { PlannerCardWorkbenchViewProps } from "./planner-types";
 
 /** Re-declare locally so importing page can pass inferred JSON root. */
 function isRecord(x: unknown): x is Record<string, unknown> {
