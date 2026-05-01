@@ -20,6 +20,7 @@ import {
   ChevronDown,
   ChevronRight,
   GitBranch,
+  Pencil,
   RotateCcw,
   Save,
   Skull,
@@ -104,45 +105,6 @@ function decisionTimelineBranchSummary(outCount: number): string {
   if (outCount <= 0) return "No further branches in Decision Timeline";
   if (outCount === 1) return "This turn continues in 1 branch";
   return `This turn branches into ${outCount} branches`;
-}
-
-/** Local draft + commit; remount via `key` when slot or committed label changes (avoids setState-in-effect). */
-function TimelineTurnNameField({
-  activeCanonicalLabel,
-  disabled,
-  placeholder,
-  title,
-  onCommit,
-}: {
-  activeCanonicalLabel: string;
-  disabled: boolean;
-  placeholder: string;
-  title: string;
-  onCommit: (trimmed: string) => void;
-}) {
-  const [draft, setDraft] = useState(activeCanonicalLabel);
-
-  const handleBlur = useCallback(() => {
-    onCommit(draft.trim());
-  }, [draft, onCommit]);
-
-  return (
-    <input
-      type="text"
-      value={draft}
-      disabled={disabled}
-      onChange={(e) => setDraft(e.target.value)}
-      onBlur={handleBlur}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          e.currentTarget.blur();
-        }
-      }}
-      placeholder={placeholder}
-      title={title}
-      className="mt-1 w-full rounded-lg border border-slate-600/80 bg-slate-900/90 px-2 py-1.5 text-[12px] font-medium text-slate-100 placeholder:text-slate-600 disabled:cursor-not-allowed disabled:opacity-55"
-    />
-  );
 }
 
 /** Combat snapshot for a given intent turn: frozen slot in the planner, except the active turn uses live gameState. */
@@ -434,6 +396,17 @@ export default function TimelineBlock() {
     ],
   );
 
+  const promptEditTurnNickname = useCallback(() => {
+    if (!canonicalNodeIdForCurrentSlot || typeof window === "undefined") return;
+    const current = activeCanonicalLabel.trim();
+    const next = window.prompt(
+      "Nickname for this turn on the Decision Timeline spine. Leave empty to use the default label.",
+      current,
+    );
+    if (next === null) return;
+    commitTurnName(next.trim());
+  }, [canonicalNodeIdForCurrentSlot, activeCanonicalLabel, commitTurnName]);
+
   if (!gameState) {
     return (
       <div className="flex h-full min-h-0 w-full flex-col overflow-y-auto border-r border-slate-800/90 bg-linear-to-b from-slate-950 via-slate-950 to-slate-900 [scrollbar-width:thin]">
@@ -454,8 +427,8 @@ export default function TimelineBlock() {
   return (
     <div className="flex h-full min-h-0 w-full flex-col overflow-y-auto border-r border-slate-800/90 bg-linear-to-b from-slate-950 via-slate-950 to-slate-900 [scrollbar-width:thin]">
       <header className="sticky top-0 z-10 shrink-0 border-b border-slate-800 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
-        <div className="flex items-center gap-2 text-slate-100">
-          <CalendarClock className="h-4 w-4 shrink-0 text-cyan-400/90" strokeWidth={2} />
+        <div className="flex items-start gap-2 text-slate-100">
+          <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-cyan-400/90" strokeWidth={2} />
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-sm font-semibold tracking-tight">Turn timeline</h2>
             <p className="truncate text-[11px] text-slate-500">
@@ -464,6 +437,20 @@ export default function TimelineBlock() {
               {timelineFilteredToLineage && turns.length !== plannerRows.length ? ` · ${turns.length} imported` : null}
             </p>
           </div>
+          <button
+            type="button"
+            disabled={!canonicalNodeIdForCurrentSlot}
+            onClick={promptEditTurnNickname}
+            title={
+              canonicalNodeIdForCurrentSlot
+                ? "Edit nickname for the selected turn (Decision Timeline spine)"
+                : "Requires an active decision branch with a spine node for this slot"
+            }
+            aria-label="Edit turn nickname"
+            className="mt-0.5 shrink-0 rounded-lg border border-slate-600/70 bg-slate-900/80 p-2 text-slate-300 transition-colors hover:border-violet-500/45 hover:bg-violet-950/35 hover:text-violet-100 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Pencil className="h-4 w-4" strokeWidth={2} aria-hidden />
+          </button>
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
@@ -526,25 +513,6 @@ export default function TimelineBlock() {
               </>
             ) : null}
           </div>
-          <label className="block text-[9px] font-semibold uppercase tracking-wider text-slate-500">
-            Turn name
-            <TimelineTurnNameField
-              key={`${currentTurnId}-${canonicalNodeIdForCurrentSlot ?? "none"}-${activeCanonicalLabel}`}
-              activeCanonicalLabel={activeCanonicalLabel}
-              disabled={!canonicalNodeIdForCurrentSlot}
-              placeholder={
-                canonicalNodeIdForCurrentSlot
-                  ? timelineTurnSubtitleByPlannerRowId.get(currentTurnId) ?? `Turn ${currentTurnId}`
-                  : "Open Decision Timeline path to edit"
-              }
-              title={
-                canonicalNodeIdForCurrentSlot
-                  ? "Saved on the Decision Timeline spine for this slot"
-                  : "Requires an active decision branch with a spine node for this slot"
-              }
-              onCommit={commitTurnName}
-            />
-          </label>
         </div>
       </header>
 

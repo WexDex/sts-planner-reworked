@@ -116,7 +116,6 @@ export default function MainFieldBlock() {
     turns,
     currentTurnIndex,
     saveCurrentTurn,
-    appendTestNoiseLogsForPlannerTurnIndex,
     combatTargetMode: targetMode,
     setCombatTargetMode,
     combatTargetEnemyIndices: selectedEnemyIndices,
@@ -780,22 +779,6 @@ export default function MainFieldBlock() {
               <Maximize2 className="h-3.5 w-3.5" strokeWidth={2} />
               Big view
             </button>
-            <button
-              type="button"
-              disabled={!plannerTurnReady}
-              title="TEST: append 8 synthetic log rows (tagged TEST) to the current planner turn"
-              className="rounded-xl border border-amber-600/55 bg-amber-950/75 px-2.5 py-2 text-[11px] font-semibold text-amber-100/95 transition hover:bg-amber-900/70 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              (TEST) Logs ×8
-            </button>
-            <button
-              type="button"
-              disabled={!plannerTurnReady}
-              title="TEST: append 24 synthetic log rows (tagged TEST) to the current planner turn"
-              className="rounded-xl border border-amber-600/55 bg-amber-950/75 px-2.5 py-2 text-[11px] font-semibold text-amber-100/95 transition hover:bg-amber-900/70 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              (TEST) Logs ×24
-            </button>
           </div>
         </div>
 
@@ -920,24 +903,6 @@ export default function MainFieldBlock() {
                             <ChevronRight className="h-4 w-4" strokeWidth={2} />
                           </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => appendTestNoiseLogsForPlannerTurnIndex(safeModalLogTurnIndex, { count: 8 })}
-                          disabled={!plannerTurnReady}
-                          title="TEST: append 8 synthetic rows to this turn’s stored log (the turn shown above)"
-                          className="rounded-lg border border-amber-600/50 bg-amber-950/60 px-2 py-1.5 text-[11px] font-semibold text-amber-100 transition-colors hover:bg-amber-900/55 disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          (TEST) ×8
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => appendTestNoiseLogsForPlannerTurnIndex(safeModalLogTurnIndex, { count: 24 })}
-                          disabled={!plannerTurnReady}
-                          title="TEST: append 24 synthetic rows to this turn’s stored log (the turn shown above)"
-                          className="rounded-lg border border-amber-600/50 bg-amber-950/60 px-2 py-1.5 text-[11px] font-semibold text-amber-100 transition-colors hover:bg-amber-900/55 disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          (TEST) ×24
-                        </button>
                         <button
                           type="button"
                           onClick={() => setActivityLogModalTurnIndex(currentTurnIndex)}

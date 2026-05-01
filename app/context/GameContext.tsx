@@ -36,7 +36,6 @@ import {
   buildDebuffLogEntry,
   buildDebuffRemovedLogEntry,
   formatPlayCardTargets,
-  generateTestNoiseActivityLogEntries,
 } from '@/app/utils/activityLogger';
 import defaultCombatFromFile from '@/app/data/EliteSlavers.json';
 import {
@@ -192,15 +191,6 @@ interface GameContextType {
   linkDecisionTimelineParent: (nodeId: string, newParentId: string) => void;
   /** Detach branch from parent (parentId → null — orphan until relinked). Not allowed for START. */
   unlinkDecisionTimelineBranch: (nodeId: string) => void;
-  /**
-   * TEST ONLY: picks a random valid parent for each branch checkpoint. **Remove before release** (search `REMOVE_BEFORE_SHIP`).
-   */
-  randomizeDecisionTimelineParentsForTesting: () => void;
-  /**
-   * TEST ONLY: append `(TEST)`-tagged synthetic rows to `turns[turnIndex].state.activityLog` (main planner).
-   * When `turnIndex` is the active turn, also updates live `gameState.activityLog`.
-   */
-  appendTestNoiseLogsForPlannerTurnIndex: (turnIndex: number, options?: { count?: number }) => void;
   /** Set planner phase marker on a turn checkpoint; writes a row to that node's snapshot log (and live log if active). */
   updateDecisionNodeTurnPhase: (nodeId: string, phase: CombatTurnPhase) => void;
 }
@@ -1454,61 +1444,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     ],
   );
 
-  // REMOVE_BEFORE_SHIP — dev-only tree stress; delete this callback + context field + UI button.
-  const randomizeDecisionTimelineParentsForTesting = useCallback(() => {
-    setDecisionNodes((prev) => {
-      const branchIds = prev
-        .filter((n) => n.timelineRole !== 'timeline_start' && n.parentId != null)
-        .map((n) => n.id);
-      const order = [...branchIds];
-      for (let i = order.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [order[i], order[j]] = [order[j]!, order[i]!];
-      }
-      let draft = prev;
-      for (const id of order) {
-        const eligible = eligibleDecisionReparentParents(draft, id);
-        if (eligible.length === 0) continue;
-        const pick = eligible[Math.floor(Math.random() * eligible.length)]!;
-        if (!isValidDecisionReparent(draft, id, pick.id)) continue;
-        draft = draft.map((n) => (n.id === id ? { ...n, parentId: pick.id } : n));
-      }
-      return normalizeDecisionNodePlannerSlots(draft, turns);
-    });
-    toast('TEST: randomized timeline parents (remove dev tool)', 'warning', { durationMs: 1500 });
-  }, [turns]);
-
-  const appendTestNoiseLogsForPlannerTurnIndex = useCallback(
-    (turnIndex: number, options?: { count?: number }) => {
-      if (turnIndex < 0 || turnIndex >= turns.length) {
-        toast('Invalid planner turn', 'warning');
-        return;
-      }
-      const count = Math.min(48, Math.max(1, options?.count ?? 12));
-      const entries = generateTestNoiseActivityLogEntries(count);
-      const slotId = turns[turnIndex]?.id;
-
-      setTurns((prev) =>
-        prev.map((t, i) => {
-          if (i !== turnIndex) return t;
-          const st = cloneGameData(t.state);
-          st.activityLog = [...st.activityLog, ...entries];
-          return { ...t, state: st };
-        }),
-      );
-
-      if (turnIndex === currentTurnIndexRef.current) {
-        setGameState((prev) => {
-          if (!prev) return prev;
-          return { ...prev, activityLog: [...prev.activityLog, ...entries] };
-        });
-      }
-
-      toast(`(TEST) Added ${count} lines to turn ${slotId ?? turnIndex + 1}`, 'info', { durationMs: 1400 });
-    },
-    [turns],
-  );
-
   const getSelectedCards = (state: CombatData) => {
     const locations = ['draw', 'discard', 'exhaust', 'hand', 'playedCards'];
     const selected: { card: Card; location: string; index: number }[] = [];
@@ -2394,8 +2329,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         isApplyDecisionBranchToPlannerSynced,
         linkDecisionTimelineParent,
         unlinkDecisionTimelineBranch,
-        randomizeDecisionTimelineParentsForTesting,
-        appendTestNoiseLogsForPlannerTurnIndex,
         updateDecisionNodeTurnPhase,
       }}
     >

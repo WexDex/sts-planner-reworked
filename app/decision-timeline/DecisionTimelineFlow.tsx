@@ -2146,7 +2146,6 @@ function DecisionTimelineCanvas({
     setDecisionTimelineNodePosition,
     mergeDecisionTimelinePositions,
     linkDecisionTimelineParent,
-    randomizeDecisionTimelineParentsForTesting,
     saveGameData,
   } = useGameManager();
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<DecisionFlowNodeData>>([]);
@@ -2832,23 +2831,11 @@ function DecisionTimelineCanvas({
       </div>
       <button
         type="button"
-        className="nodrag nopan w-full rounded-lg border border-emerald-500/45 bg-emerald-950/55 px-2 py-1.5 text-[10px] font-semibold text-emerald-100 transition-colors hover:bg-emerald-900/55"
+        className="nodrag nopan w-full rounded-lg border border-emerald-500/45 bg-emerald-950/55 px-2 py-5.5 text-xl font-bold text-emerald-100 transition-colors hover:bg-emerald-900/55"
         title={`Reset to compact ${organizeOrientation} tree (saved with the game)`}
         onClick={applyTimelineOrganize}
       >
         Organize
-      </button>
-      {/* REMOVE_BEFORE_SHIP: delete this block + randomizeDecisionTimelineParentsForTesting from GameContext */}
-      <button
-        type="button"
-        className="nodrag nopan w-full rounded-lg border border-amber-500/60 bg-amber-950/50 px-2 py-1.5 text-[10px] font-semibold text-amber-100 transition-colors hover:bg-amber-900/50"
-        title="DEV ONLY — random valid parent per branch (testing). Remove before ship (search REMOVE_BEFORE_SHIP)."
-        onClick={() => {
-          randomizeDecisionTimelineParentsForTesting();
-          pendingOrganizeAfterTopologyRef.current = true;
-        }}
-      >
-        Randomize links (TEST)
       </button>
     </>
   );
