@@ -1,20 +1,102 @@
-import type { DecisionNode, Turn } from '@/app/types/gameTypes';
-import { cloneGameData } from '@/app/utils/gameHelpers';
+import type { CombatData, CombatTurnPhase, DecisionNode, Turn } from '@/app/types/gameTypes';
+import { cloneGameData, combatSnapshotsEqual } from '@/app/utils/gameHelpers';
 import { plannerCombatPhaseCrumbAbbrev } from '@/app/utils/decisionTimelinePhaseUi';
+import { getNewLogEntriesForDecisionNode } from '@/app/utils/decisionNodePlays';
+import { collectEnemyIntentLinesForPlannerSlot } from '@/app/utils/decisionTimelineIntentSummaries';
 
 /** Horizontal footprint for timeline **branch / turn** cards — keep in sync with `DecisionTimelineFlow` card chrome. */
 export const DECISION_TIMELINE_BRANCH_CARD_W = 400;
 
-/** Branch card height in the timeline flow — keep in sync with `DecisionTimelineFlow` footprint; drives packed row spacing. */
-export const DECISION_TIMELINE_BRANCH_CARD_H = 400;
+/**
+ * Minimum branch-card height for RF + layout when estimation returns less (fallback).
+ * Most real cards exceed this once combat intel + intents + logs are counted — see {@link estimateDecisionTimelineBranchFootprint}.
+ */
+export const DECISION_TIMELINE_BRANCH_CARD_H = 520;
 
-/** START node width in the decision timeline flow. */
-export const DECISION_TIMELINE_START_CARD_W = 156;
+/** START (ROOT) stub width — minimal structural node in `DecisionTimelineFlow`. */
+export const DECISION_TIMELINE_START_CARD_W = 136;
 
-/** START node height — keep in sync with `DecisionTimelineFlow` footprint. */
-export const DECISION_TIMELINE_START_CARD_H = 118;
+/** START stub height — keep in sync with `DecisionTimelineFlow` footprint. */
+export const DECISION_TIMELINE_START_CARD_H = 62;
 
 export type DecisionTreePackOrientation = 'vertical' | 'horizontal';
+
+/** Matches `BRANCH_INTENT_PREVIEW_MAX` in `DecisionTimelineFlow` (collapsed intent list cap). */
+const TIMELINE_INTENT_PREVIEW_MAX = 4;
+
+function maxBranchFootprintHeight(nodes: DecisionNode[], turns: Turn[]): number {
+  let m = DECISION_TIMELINE_BRANCH_CARD_H;
+  for (const n of nodes) {
+    if (n.timelineRole === 'timeline_start') continue;
+    m = Math.max(m, estimateDecisionTimelineBranchFootprint(nodes, n, turns).h);
+  }
+  return m;
+}
+
+/**
+ * RF / pack spacing footprint for a timeline card — branch height scales with snapshot (intents, logs, nickname).
+ * Update slice constants when `DecisionBranchCard` / `DtlBranchCombatIntel` chrome changes.
+ */
+export function estimateDecisionTimelineBranchFootprint(
+  nodes: DecisionNode[],
+  n: DecisionNode,
+  turns: Turn[],
+): { w: number; h: number } {
+  if (n.timelineRole === 'timeline_start') {
+    return { w: DECISION_TIMELINE_START_CARD_W, h: DECISION_TIMELINE_START_CARD_H };
+  }
+
+  const w = DECISION_TIMELINE_BRANCH_CARD_W;
+  const slotId = effectivePlannerTurnSlotId(nodes, n, turns);
+  const parent = n.parentId ? nodes.find((x) => x.id === n.parentId) ?? null : null;
+  const peersSame = decisionNodesPeersSameTurnDepth(nodes, n.id);
+  const branchOrdinal = Math.max(1, peersSame.findIndex((x) => x.id === n.id) + 1);
+  const autoSlug = formatDecisionBreadcrumbSegment(slotId, branchOrdinal);
+  const customLabelRaw = n.label.trim();
+  const showNickname = customLabelRaw.length > 0 && customLabelRaw !== autoSlug;
+
+  const intentLines = collectEnemyIntentLinesForPlannerSlot(n.snapshot, slotId);
+  const logEntries = getNewLogEntriesForDecisionNode(n, parent);
+
+  /** Floating icon toolbar sits above the card; reserve space so packed layouts don’t vertically collide. */
+  const FLOAT_TOOLBAR_CLEARANCE = 56;
+  let h = FLOAT_TOOLBAR_CLEARANCE;
+
+  h += 22; // outer vertical padding (aligned with card pt/pb)
+  h += 34; // top MOVE grab rail on branch checkpoint cards
+  h += 34; // bottom MOVE grab rail
+  h += 42; // phase strip + slug / uid row
+  if (showNickname) h += 52;
+  h += 36; // `TurnPhaseTripleStrip`
+
+  // `DtlBranchCombatIntel`: stats grid, buff/enemy panels (enemy list max-h-40), collapsed hand/played rows, piles row
+  h += 400;
+
+  const intentHeader = 68;
+  if (intentLines.length === 0) {
+    h += intentHeader + 28;
+  } else if (intentLines.length <= TIMELINE_INTENT_PREVIEW_MAX) {
+    h += intentHeader + intentLines.length * 54 + 10;
+  } else {
+    h += intentHeader + 176 + 32; // max-h ~11rem scroll + expand control
+  }
+
+  const logHeader = 56;
+  if (logEntries.length === 0) {
+    h += logHeader + 36;
+  } else {
+    const rowApprox = 22;
+    h += logHeader + Math.min(176, Math.max(52, logEntries.length * rowApprox));
+  }
+
+  h += 48; // “Set Active” + breathing room
+
+  if (isDecisionTimelineOrphan(nodes, n)) h += 26;
+
+  h += 28; // slack for borders, line wraps, and RF rounding
+
+  return { w, h: Math.max(DECISION_TIMELINE_BRANCH_CARD_H, Math.ceil(h)) };
+}
 
 /** All node ids in the subtree rooted at `rootId` (including `rootId`). */
 export function collectSubtreeIds(nodes: DecisionNode[], rootId: string): Set<string> {
@@ -47,9 +129,10 @@ export function isDecisionTimelineOrphan(nodes: DecisionNode[], n: DecisionNode)
 /** Packed tree positions when no saved timeline coords exist — {@link layoutDecisionTreePacked} (default horizontal). */
 export function layoutDecisionTreeNodes(
   nodes: DecisionNode[],
+  turns: Turn[],
   orientation: DecisionTreePackOrientation = 'horizontal',
 ): Map<string, { x: number; y: number }> {
-  return layoutDecisionTreePacked(nodes, orientation);
+  return layoutDecisionTreePacked(nodes, turns, orientation);
 }
 
 function centerPackedPositions(positions: Map<string, { x: number; y: number }>): Map<string, { x: number; y: number }> {
@@ -75,7 +158,10 @@ function centerPackedPositions(positions: Map<string, { x: number; y: number }>)
 /**
  * Top→bottom tree: depth walks **Y**, sibling subtrees pack along **X**.
  */
-function layoutDecisionTreePackedVertical(nodes: DecisionNode[]): Map<string, { x: number; y: number }> {
+function layoutDecisionTreePackedVertical(
+  nodes: DecisionNode[],
+  turns: Turn[],
+): Map<string, { x: number; y: number }> {
   const positions = new Map<string, { x: number; y: number }>();
   const byParent = new Map<string | null, DecisionNode[]>();
   for (const n of nodes) {
@@ -91,10 +177,10 @@ function layoutDecisionTreePackedVertical(nodes: DecisionNode[]): Map<string, { 
   if (!root) return positions;
 
   const GAP_X = 120;
-  const LEVEL_Y = DECISION_TIMELINE_BRANCH_CARD_H + 48;
+  const LEVEL_Y = maxBranchFootprintHeight(nodes, turns) + 48;
 
   function nodeWidth(n: DecisionNode): number {
-    return n.timelineRole === 'timeline_start' ? DECISION_TIMELINE_START_CARD_W : DECISION_TIMELINE_BRANCH_CARD_W;
+    return estimateDecisionTimelineBranchFootprint(nodes, n, turns).w;
   }
 
   let leafCursor = 0;
@@ -130,7 +216,10 @@ function layoutDecisionTreePackedVertical(nodes: DecisionNode[]): Map<string, { 
 /**
  * Left→right tree: depth walks **X**, sibling subtrees pack along **Y**.
  */
-function layoutDecisionTreePackedHorizontal(nodes: DecisionNode[]): Map<string, { x: number; y: number }> {
+function layoutDecisionTreePackedHorizontal(
+  nodes: DecisionNode[],
+  turns: Turn[],
+): Map<string, { x: number; y: number }> {
   const positions = new Map<string, { x: number; y: number }>();
   const byParent = new Map<string | null, DecisionNode[]>();
   for (const n of nodes) {
@@ -145,12 +234,18 @@ function layoutDecisionTreePackedHorizontal(nodes: DecisionNode[]): Map<string, 
   const root = nodes.find((n) => n.parentId === null);
   if (!root) return positions;
 
-  /** Advance along X between depths — must clear branch card width. */
-  const LEVEL_X = DECISION_TIMELINE_BRANCH_CARD_W + 48;
+  let maxBranchW = DECISION_TIMELINE_BRANCH_CARD_W;
+  for (const n of nodes) {
+    if (n.timelineRole !== 'timeline_start') {
+      maxBranchW = Math.max(maxBranchW, estimateDecisionTimelineBranchFootprint(nodes, n, turns).w);
+    }
+  }
+  /** Advance along X between depth columns — clear widest branch footprint + gutter. */
+  const LEVEL_X = maxBranchW + 48;
   const GAP_Y = 120;
 
   function nodeHeight(n: DecisionNode): number {
-    return n.timelineRole === 'timeline_start' ? DECISION_TIMELINE_START_CARD_H : DECISION_TIMELINE_BRANCH_CARD_H;
+    return estimateDecisionTimelineBranchFootprint(nodes, n, turns).h;
   }
 
   let leafCursor = 0;
@@ -189,16 +284,20 @@ function layoutDecisionTreePackedHorizontal(nodes: DecisionNode[]): Map<string, 
  */
 export function layoutDecisionTreePacked(
   nodes: DecisionNode[],
+  turns: Turn[],
   orientation: DecisionTreePackOrientation = 'horizontal',
 ): Map<string, { x: number; y: number }> {
   if (orientation === 'horizontal') {
-    return layoutDecisionTreePackedHorizontal(nodes);
+    return layoutDecisionTreePackedHorizontal(nodes, turns);
   }
-  return layoutDecisionTreePackedVertical(nodes);
+  return layoutDecisionTreePackedVertical(nodes, turns);
 }
 
+/** Planner-turn id chip: `T1`, `T2`, or `T3.2` when this is the 2nd alternate at that row. */
 export function formatDecisionBreadcrumbSegment(plannerTurnSlotId: number, siblingOrdinal: number): string {
-  return `T${plannerTurnSlotId}·${siblingOrdinal}`;
+  const ord = Math.max(1, Math.floor(siblingOrdinal));
+  if (ord <= 1) return `T${plannerTurnSlotId}`;
+  return `T${plannerTurnSlotId}.${ord}`;
 }
 
 /** Ordered path from root to `nodeId` (inclusive). Empty if unknown. */
@@ -214,27 +313,90 @@ export function getDecisionPathFromRoot(nodes: DecisionNode[], nodeId: string): 
   return upwards;
 }
 
+/** Timeline anchor: explicit START role, else the sole `parentId === null` node when present. */
+export function decisionTimelineStartRootId(nodes: DecisionNode[]): string | null {
+  const tagged = nodes.find((n) => n.timelineRole === 'timeline_start');
+  if (tagged) return tagged.id;
+  const root = nodes.find((n) => n.parentId === null);
+  return root?.id ?? null;
+}
+
+/** True when at least one node lists START as its parent (path turns stay hidden until this exists). */
+export function decisionTimelineStartHasConnectedCheckpoint(nodes: DecisionNode[]): boolean {
+  const sid = decisionTimelineStartRootId(nodes);
+  if (!sid) return false;
+  return nodes.some((n) => n.parentId === sid);
+}
+
+/** Whether ROOT→`pinnedNodeId` walks up to the decision START root (excludes orphans / other roots). */
+export function pinnedDecisionLineageAnchoredAtStart(nodes: DecisionNode[], pinnedNodeId: string): boolean {
+  const sid = decisionTimelineStartRootId(nodes);
+  if (!sid) return false;
+  const path = getDecisionPathFromRoot(nodes, pinnedNodeId);
+  return path.length > 0 && path[0]!.id === sid;
+}
+
 /**
- * Checkpoint ids on the **loaded lineage** path used to pin branches as Active (disabled) vs Set Active.
- * START itself is pinned separately (see Decision timeline flow: `Boolean(activeNodeId)` for START cards).
+ * Preorder from START (START first, then descendants): siblings ordered by {@link DecisionNode.createdAt}
+ * then id — stable tree summary order.
+ */
+export function decisionNodesSubtreePreorderFromStart(nodes: DecisionNode[]): DecisionNode[] {
+  const startId = decisionTimelineStartRootId(nodes);
+  if (!startId) return [];
+  const byId = new Map(nodes.map((n) => [n.id, n] as const));
+  const byParent = new Map<string | null, DecisionNode[]>();
+  for (const n of nodes) {
+    const k = n.parentId;
+    if (!byParent.has(k)) byParent.set(k, []);
+    byParent.get(k)!.push(n);
+  }
+  for (const arr of byParent.values()) {
+    arr.sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
+  }
+  const out: DecisionNode[] = [];
+  function walk(id: string) {
+    const n = byId.get(id);
+    if (!n) return;
+    out.push(n);
+    for (const c of byParent.get(id) ?? []) walk(c.id);
+  }
+  walk(startId);
+  return out;
+}
+
+/**
+ * Checkpoints on ROOT→`pinnedNodeId` (excluding START) — exactly what the user has explicitly pinned as
+ * **Active** on Decision Timeline cards. Does not walk single-child continuations below the pin.
  *
  * When `pinnedNodeId` is null or missing from `nodes`, returns an empty set.
- *
- * 1. **Ancestors**: every checkpoint on {@link getDecisionPathFromRoot} from root to `pinnedNodeId`,
- *    excluding nodes with {@link DecisionNode.timelineRole} `timeline_start`.
- * 2. **Unique-child ladder downward**: from `pinnedNodeId`, repeatedly take the sole child until the parent
- *    has zero or ≥2 children among `nodes`; children ordered by {@link DecisionNode.createdAt} before picks.
  */
-export function getActiveLineageBranchIds(nodes: DecisionNode[], pinnedNodeId: string | null): Set<string> {
-  const activeLineageBranchIds = new Set<string>();
-  if (!pinnedNodeId) return activeLineageBranchIds;
+export function getPinnedAncestorCheckpointIds(nodes: DecisionNode[], pinnedNodeId: string | null): Set<string> {
+  const ids = new Set<string>();
+  if (!pinnedNodeId) return ids;
   const byId = new Map(nodes.map((n) => [n.id, n] as const));
-  if (!byId.has(pinnedNodeId)) return activeLineageBranchIds;
+  if (!byId.has(pinnedNodeId)) return ids;
 
   for (const step of getDecisionPathFromRoot(nodes, pinnedNodeId)) {
     if (step.timelineRole === 'timeline_start') continue;
-    activeLineageBranchIds.add(step.id);
+    ids.add(step.id);
   }
+
+  return ids;
+}
+
+/**
+ * From `pinnedNodeId`, repeatedly follow the sole child until there are zero or ≥2 children.
+ * Used for planner lineage ({@link getActiveLineageBranchIds}) and UI hints (sky **Set Active** button).
+ * Ordered by {@link DecisionNode.createdAt} among siblings when building `byParent`.
+ */
+export function getUniqueChildLadderDescendantIds(
+  nodes: DecisionNode[],
+  pinnedNodeId: string | null,
+): Set<string> {
+  const ids = new Set<string>();
+  if (!pinnedNodeId) return ids;
+  const byId = new Map(nodes.map((n) => [n.id, n] as const));
+  if (!byId.has(pinnedNodeId)) return ids;
 
   const byParent = new Map<string | null, DecisionNode[]>();
   for (const n of nodes) {
@@ -251,17 +413,34 @@ export function getActiveLineageBranchIds(nodes: DecisionNode[], pinnedNodeId: s
     const kids = byParent.get(tip.id) ?? [];
     if (kids.length !== 1) break;
     tip = kids[0]!;
-    activeLineageBranchIds.add(tip.id);
+    ids.add(tip.id);
   }
 
-  return activeLineageBranchIds;
+  return ids;
 }
 
 /**
- * Planner rows (`Turn`) that belong to the pinned Decision Timeline lineage — same nodes as
- * {@link getActiveLineageBranchIds} (root→pin checkpoints + unique-child ladder).
+ * Full lineage for planner rows / spine: {@link getPinnedAncestorCheckpointIds} ∪
+ * {@link getUniqueChildLadderDescendantIds}. Decision Timeline cards use ancestors only for **Active** pinning.
  *
- * Returns `null` when there is no pin, the pin is unknown, or lineage resolves empty (show full `turns` in UI).
+ * When `pinnedNodeId` is null or missing from `nodes`, returns an empty set.
+ */
+export function getActiveLineageBranchIds(nodes: DecisionNode[], pinnedNodeId: string | null): Set<string> {
+  const out = getPinnedAncestorCheckpointIds(nodes, pinnedNodeId);
+  for (const id of getUniqueChildLadderDescendantIds(nodes, pinnedNodeId)) {
+    out.add(id);
+  }
+  return out;
+}
+
+/**
+ * Planner rows (`Turn`) on the **explicit active chain**: checkpoints on ROOT→`pinnedNodeId`
+ * ({@link getPinnedAncestorCheckpointIds} only — no unique-child ladder below the pin).
+ * Matches which Decision Timeline cards show **Active** vs **Set Active** along that ancestry.
+ *
+ * Returns `null` when there is no pin, the pin is unknown, START has no child checkpoint, the pin is not
+ * anchored under START (e.g. orphan), or lineage resolves to zero planner slots.
+ * Callers with a Decision Timeline should treat `null` as “no visible lineage rows” (not “fall back to all turns”).
  */
 export function turnsVisibleForActiveDecisionLineage(
   nodes: DecisionNode[],
@@ -271,7 +450,10 @@ export function turnsVisibleForActiveDecisionLineage(
   if (!pinnedNodeId || nodes.length === 0) return null;
   if (!nodes.some((n) => n.id === pinnedNodeId)) return null;
 
-  const lineageIds = getActiveLineageBranchIds(nodes, pinnedNodeId);
+  if (!decisionTimelineStartHasConnectedCheckpoint(nodes)) return null;
+  if (!pinnedDecisionLineageAnchoredAtStart(nodes, pinnedNodeId)) return null;
+
+  const lineageIds = getPinnedAncestorCheckpointIds(nodes, pinnedNodeId);
   if (lineageIds.size === 0) return null;
 
   const byId = new Map(nodes.map((n) => [n.id, n] as const));
@@ -284,6 +466,87 @@ export function turnsVisibleForActiveDecisionLineage(
 
   const visible = turns.filter((t) => slotSet.has(t.id));
   return visible.length > 0 ? visible : null;
+}
+
+/**
+ * Per planner slot, the checkpoint on ROOT→`pinnedNodeId` that should drive labels/editing on the left Timeline
+ * ({@link getPinnedAncestorCheckpointIds}): deepest **ancestor-path** node per {@link effectivePlannerTurnSlotId}.
+ * Matches {@link turnsVisibleForActiveDecisionLineage} (no ladder below the pin).
+ */
+export function getActiveLineageCanonicalNodeIdBySlot(
+  nodes: DecisionNode[],
+  pinnedNodeId: string | null,
+  turns: Turn[],
+): Map<number, string> {
+  if (!pinnedNodeId || nodes.length === 0) return new Map();
+  if (!nodes.some((n) => n.id === pinnedNodeId)) return new Map();
+
+  if (!decisionTimelineStartHasConnectedCheckpoint(nodes)) return new Map();
+  if (!pinnedDecisionLineageAnchoredAtStart(nodes, pinnedNodeId)) return new Map();
+
+  const lineageIds = getPinnedAncestorCheckpointIds(nodes, pinnedNodeId);
+  if (lineageIds.size === 0) return new Map();
+
+  const byId = new Map(nodes.map((n) => [n.id, n] as const));
+  const best = new Map<number, { depth: number; nodeId: string }>();
+
+  for (const nid of lineageIds) {
+    const node = byId.get(nid);
+    if (!node || node.timelineRole === 'timeline_start' || node.parentId === null) continue;
+
+    const slot = effectivePlannerTurnSlotId(nodes, node, turns);
+    const depth = decisionNodeDepthFromRoot(nodes, nid);
+    const prev = best.get(slot);
+    if (!prev || depth > prev.depth) {
+      best.set(slot, { depth, nodeId: nid });
+      continue;
+    }
+    if (depth === prev.depth) {
+      const prevNode = byId.get(prev.nodeId);
+      if (prevNode && node.createdAt.localeCompare(prevNode.createdAt) > 0) {
+        best.set(slot, { depth, nodeId: nid });
+      }
+    }
+  }
+
+  return new Map([...best.entries()].map(([slot, v]) => [slot, v.nodeId]));
+}
+
+/**
+ * Walk from the tree root (START): follow the only child while unique; at a fork, prefer
+ * {@link DecisionNode.timelineRole} `turn_checkpoint` then earliest {@link DecisionNode.createdAt}.
+ * Repeat until a leaf — typical imported spine + deterministic “main chain”.
+ *
+ * Used to pin the active decision node id so {@link getActiveLineageBranchIds} still spans planner rows
+ * on load (ancestors ∪ unique-child ladder below that leaf).
+ */
+export function getForcedMainTimelineLeafFromStart(nodes: DecisionNode[]): string | null {
+  const root = nodes.find((n) => n.parentId === null);
+  if (!root) return null;
+
+  const byParent = new Map<string | null, DecisionNode[]>();
+  for (const n of nodes) {
+    const k = n.parentId;
+    if (!byParent.has(k)) byParent.set(k, []);
+    byParent.get(k)!.push(n);
+  }
+  for (const arr of byParent.values()) {
+    arr.sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
+  }
+
+  let tip = root;
+  for (;;) {
+    const kids = byParent.get(tip.id) ?? [];
+    if (kids.length === 0) return tip.id;
+    let next: DecisionNode;
+    if (kids.length === 1) {
+      next = kids[0]!;
+    } else {
+      const checkpoints = kids.filter((k) => k.timelineRole === 'turn_checkpoint');
+      next = checkpoints[0] ?? kids[0]!;
+    }
+    tip = next;
+  }
 }
 
 /**
@@ -343,6 +606,32 @@ export function normalizeDecisionNodePlannerSlots(nodes: DecisionNode[], turns: 
     ...n,
     plannerTurnSlotId: effectivePlannerTurnSlotId(nodes, n, turns),
   }));
+}
+
+/**
+ * After linking a branch under a parent: pin active on {@link linkedNodeId}, then walk down while that node has
+ * exactly one child (siblings ordered like {@link getForcedMainTimelineLeafFromStart}). Returns the deepest id.
+ */
+export function pinActiveAlongUniqueChildChainFromNode(
+  nodes: DecisionNode[],
+  linkedNodeId: string,
+): string {
+  const byParent = new Map<string | null, DecisionNode[]>();
+  for (const n of nodes) {
+    const k = n.parentId;
+    if (!byParent.has(k)) byParent.set(k, []);
+    byParent.get(k)!.push(n);
+  }
+  for (const arr of byParent.values()) {
+    arr.sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
+  }
+  let cur = linkedNodeId;
+  for (;;) {
+    const kids = byParent.get(cur) ?? [];
+    if (kids.length !== 1) break;
+    cur = kids[0]!.id;
+  }
+  return cur;
 }
 
 /**
@@ -421,7 +710,7 @@ export function getDecisionTimelineSpineMeta(
   return { pinnedPath, pathIds, spineEdgeKeys, canonicalNodeIdBySlot };
 }
 
-/** Breadcrumb segments and display string `"T1·1 › T2·1"`. */
+/** Breadcrumb segments and display string, e.g. `START → T1 → T2 → T3.2 · Main`. */
 export function getDecisionNodeBreadcrumb(
   nodes: DecisionNode[],
   nodeId: string,
@@ -449,17 +738,74 @@ export function getDecisionNodeBreadcrumb(
     segments.push(`${base}${phaseTag}`);
     i++;
   }
-  return { segments, display: segments.join(' › ') };
+  return { segments, display: segments.join(' → ') };
 }
 
-/** Default label tail for a new fork: e.g. `T3·2`. */
+/** Stable nickname `T1` / `T3.2` from topology (no combat-phase suffix). */
+export function computeDecisionCheckpointNickname(
+  nodes: DecisionNode[],
+  nodeId: string,
+  turns: Turn[],
+): string | null {
+  const n = nodes.find((x) => x.id === nodeId);
+  if (!n || n.timelineRole === 'timeline_start' || n.parentId === null) return null;
+  const slotId = effectivePlannerTurnSlotId(nodes, n, turns);
+  const peers = decisionNodesPeersSameTurnDepth(nodes, nodeId);
+  const idx = peers.findIndex((s) => s.id === nodeId);
+  const ord = idx >= 0 ? idx + 1 : 1;
+  return formatDecisionBreadcrumbSegment(slotId, ord);
+}
+
+/**
+ * Replace legacy default labels (`Turn 3`, empty) with {@link computeDecisionCheckpointNickname}.
+ * Custom user nicknames are left unchanged.
+ */
+export function migrateDecisionCheckpointLabelsToTurnSlugs(
+  nodes: DecisionNode[],
+  turns: Turn[],
+): DecisionNode[] {
+  return nodes.map((n) => {
+    if (n.timelineRole === 'timeline_start') return n;
+    const slug = computeDecisionCheckpointNickname(nodes, n.id, turns);
+    if (!slug) return n;
+    const raw = (n.label ?? '').trim();
+    if (raw === '' || /^Turn\s+\d+\s*$/i.test(raw)) return { ...n, label: slug };
+    return n;
+  });
+}
+
+/** Default nickname for a new branch checkpoint: `T3`, `T3.2`, … */
 export function defaultForkDecisionLabel(
   nodes: DecisionNode[],
   newNode: DecisionNode,
   turns: Turn[],
 ): string {
-  const { segments } = getDecisionNodeBreadcrumb(nodes, newNode.id, turns);
-  return segments[segments.length - 1] ?? 'Branch';
+  return computeDecisionCheckpointNickname(nodes, newNode.id, turns) ?? 'Branch';
+}
+
+/**
+ * Live planner `gameState` is only authoritative for {@link currentTurnIndex}'s row. When the active timeline pin
+ * maps to a different planner slot, its checkpoint must keep that slot's row snapshot — not live combat from
+ * another row (otherwise merges duplicate hands / logs across turns).
+ */
+export function activeDecisionCheckpointSnapshotFromPlanner(
+  activeNode: DecisionNode,
+  allNodes: DecisionNode[],
+  turnsScratch: Turn[],
+  currentTurnIndex: number,
+  gameState: CombatData,
+  turnPhase: CombatTurnPhase,
+): Pick<DecisionNode, 'snapshot' | 'turnPhase'> {
+  const activeSlotId = effectivePlannerTurnSlotId(allNodes, activeNode, turnsScratch);
+  const currentRowTurnId = turnsScratch[currentTurnIndex]?.id;
+  if (currentRowTurnId !== undefined && currentRowTurnId !== null && activeSlotId === currentRowTurnId) {
+    return { snapshot: cloneGameData(gameState), turnPhase };
+  }
+  const row = turnsScratch.find((t) => t.id === activeSlotId);
+  if (row) {
+    return { snapshot: cloneGameData(row.state), turnPhase };
+  }
+  return { snapshot: cloneGameData(gameState), turnPhase };
 }
 
 /**
@@ -482,6 +828,113 @@ export function buildTurnStatesFromBranchPath(nodes: DecisionNode[], targetNodeI
     if (!chosen) return { ...t, state: cloneGameData(t.state) };
     return { ...t, state: cloneGameData(chosen.snapshot) };
   });
+}
+
+function turnRowsSnapshotsAlign(a: Turn[], b: Turn[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i]!.id !== b[i]!.id) return false;
+    if (!combatSnapshotsEqual(a[i]!.state, b[i]!.state)) return false;
+  }
+  return true;
+}
+
+function decisionNodesApplyPayloadEqual(a: DecisionNode[], b: DecisionNode[]): boolean {
+  if (a.length !== b.length) return false;
+  const byId = new Map(a.map((n) => [n.id, n] as const));
+  for (const bn of b) {
+    const an = byId.get(bn.id);
+    if (!an) return false;
+    if (an.parentId !== bn.parentId) return false;
+    if (an.turnPhase !== bn.turnPhase) return false;
+    if (an.plannerTurnSlotId !== bn.plannerTurnSlotId) return false;
+    if ((an.label ?? '').trim() !== (bn.label ?? '').trim()) return false;
+    if (!combatSnapshotsEqual(an.snapshot, bn.snapshot)) return false;
+  }
+  return true;
+}
+
+/**
+ * Mirrors {@link applyDecisionBranchToPlanner} patch step (flush live combat into active node + slot)
+ * before merging path snapshots into planner rows.
+ */
+export function computeApplyDecisionBranchToPlannerProjection(
+  decisionNodes: DecisionNode[],
+  activeDecisionNodeId: string | null,
+  gameState: CombatData,
+  turns: Turn[],
+  currentTurnIndex: number,
+  turnPhase: CombatTurnPhase,
+  targetNodeId: string,
+): { nodesForPath: DecisionNode[]; mergedTurns: Turn[]; targetNode: DecisionNode } | null {
+  const targetNodeBare = decisionNodes.find((n) => n.id === targetNodeId);
+  if (!targetNodeBare) return null;
+
+  let nodesForPath = decisionNodes;
+  let turnsScratch = turns;
+
+  if (activeDecisionNodeId) {
+    turnsScratch = turns.map((t, i) =>
+      i === currentTurnIndex ? { ...t, state: cloneGameData(gameState) } : t,
+    );
+    nodesForPath = normalizeDecisionNodePlannerSlots(
+      decisionNodes.map((n) =>
+        n.id === activeDecisionNodeId
+          ? {
+              ...n,
+              ...activeDecisionCheckpointSnapshotFromPlanner(
+                n,
+                decisionNodes,
+                turnsScratch,
+                currentTurnIndex,
+                gameState,
+                turnPhase,
+              ),
+            }
+          : n,
+      ),
+      turns,
+    );
+  }
+
+  const mergedTurns = buildTurnStatesFromBranchPath(nodesForPath, targetNodeId, turnsScratch);
+  const targetNode = nodesForPath.find((n) => n.id === targetNodeId);
+  if (!targetNode) return null;
+  return { nodesForPath, mergedTurns, targetNode };
+}
+
+/**
+ * True when calling apply for `targetNodeId` would be a no-op (planner rows, decision payloads, live combat,
+ * phase, and active pin already match the merged branch).
+ */
+export function isApplyDecisionBranchToPlannerSynced(
+  decisionNodes: DecisionNode[],
+  activeDecisionNodeId: string | null,
+  gameState: CombatData | null,
+  turns: Turn[],
+  currentTurnIndex: number,
+  turnPhase: CombatTurnPhase,
+  targetNodeId: string,
+): boolean {
+  if (!gameState) return true;
+  const proj = computeApplyDecisionBranchToPlannerProjection(
+    decisionNodes,
+    activeDecisionNodeId,
+    gameState,
+    turns,
+    currentTurnIndex,
+    turnPhase,
+    targetNodeId,
+  );
+  if (!proj) return true;
+  const { nodesForPath, mergedTurns, targetNode } = proj;
+
+  if (activeDecisionNodeId !== targetNodeId) return false;
+  if (!combatSnapshotsEqual(gameState, targetNode.snapshot)) return false;
+  if (turnPhase !== targetNode.turnPhase) return false;
+  if (!turnRowsSnapshotsAlign(turns, mergedTurns)) return false;
+  if (!decisionNodesApplyPayloadEqual(decisionNodes, nodesForPath)) return false;
+  return true;
 }
 
 /** Allowed new parents when relinking node `nodeId` (cannot parent to own subtree → avoids cycles). */

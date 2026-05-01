@@ -4,6 +4,7 @@ import type {
   EnemyIntentActionStatus,
   PlayerData,
 } from "@/app/types/gameTypes";
+import { ENEMY_INTENT_ACTION_GLYPH } from "@/app/utils/enemyIntentGlyphs";
 import { getSingleAttackDamage } from "@/app/utils/enemyIntentActionHelpers";
 import { entityHasIntangible, findIntangibleBuff } from "@/app/utils/intangibleBuff";
 
@@ -95,39 +96,40 @@ function pushUnknown(parts: string[], action: EnemyIntentAction) {
 
 /** Builds intent text segments using the same rules as the timeline planner. */
 export function formatIntentActionParts(actions: EnemyIntentAction[] | undefined): string[] {
+  const g = ENEMY_INTENT_ACTION_GLYPH;
   const parts: string[] = [];
   for (const action of actions ?? []) {
     switch (action.type) {
       case "attack": {
         const d = getSingleAttackDamage(action);
-        parts.push(`⚔️ ${d}`);
+        parts.push(`${g.attack} ${d}`);
         break;
       }
       case "multi_attack":
-        parts.push(`⚔️ ${action.dmg}×${action.count}`);
+        parts.push(`${g.multi_attack} ${action.dmg}×${action.count}`);
         break;
       case "block":
-        parts.push(`🛡️ ${action.amount}`);
+        parts.push(`${g.block} ${action.amount}`);
         break;
       case "debuff":
-        parts.push(`❗ ${action.effect}${debuffStacksLabel(action.value)}`);
+        parts.push(`${g.debuff} ${action.effect}${debuffStacksLabel(action.value)}`);
         break;
       case "status":
         parts.push(
-          `❗ ${action.effect}×${action.value} · ${statusLocationShort(action.location)}`,
+          `${g.status} ${action.effect}×${action.value} · ${statusLocationShort(action.location)}`,
         );
         break;
       case "buff":
-        parts.push(`📈 ${action.effect} ${action.value}`);
+        parts.push(`${g.buff} ${action.effect} ${action.value}`);
         break;
       case "cowardly":
-        parts.push("🏃 Escape");
+        parts.push(`${g.cowardly} Escape`);
         break;
       case "stunned":
-        parts.push(`💫 Stunned ${action.value}`);
+        parts.push(`${g.stunned} Stunned ${action.value}`);
         break;
       case "no_action":
-        parts.push("No action");
+        parts.push(`${g.no_action} No action`);
         break;
       default:
         pushUnknown(parts, action as EnemyIntentAction);
@@ -140,18 +142,19 @@ export function formatIntentActionsLine(actions: EnemyIntentAction[] | undefined
   return formatIntentActionParts(actions).join(" · ");
 }
 
-/** Like {@link formatIntentActionsLine} but adjusts ⚔️ attack values for incoming damage; shows base in parens when modified. */
+/** Like {@link formatIntentActionsLine} but adjusts attack values for incoming damage; shows base in parens when modified. */
 export function formatIntentActionsLineIncoming(
   actions: EnemyIntentAction[] | undefined,
   ctx: IncomingDamageContext,
 ): string {
+  const g = ENEMY_INTENT_ACTION_GLYPH;
   const parts: string[] = [];
   for (const action of actions ?? []) {
     switch (action.type) {
       case "attack": {
         const base = getSingleAttackDamage(action);
         const mod = applyIncomingEnemyAttackDamage(base, ctx);
-        parts.push(mod !== base ? `⚔️ ${mod} (${base})` : `⚔️ ${base}`);
+        parts.push(mod !== base ? `${g.attack} ${mod} (${base})` : `${g.attack} ${base}`);
         break;
       }
       case "multi_attack": {
@@ -159,33 +162,33 @@ export function formatIntentActionsLineIncoming(
         const showsDetail = per !== action.dmg;
         parts.push(
           showsDetail
-            ? `⚔️ ${per}×${action.count} (${action.dmg}×${action.count})`
-            : `⚔️ ${action.dmg}×${action.count}`,
+            ? `${g.multi_attack} ${per}×${action.count} (${action.dmg}×${action.count})`
+            : `${g.multi_attack} ${action.dmg}×${action.count}`,
         );
         break;
       }
       case "block":
-        parts.push(`🛡️ ${action.amount}`);
+        parts.push(`${g.block} ${action.amount}`);
         break;
       case "debuff":
-        parts.push(`❗ ${action.effect}${debuffStacksLabel(action.value)}`);
+        parts.push(`${g.debuff} ${action.effect}${debuffStacksLabel(action.value)}`);
         break;
       case "status":
         parts.push(
-          `❗ ${action.effect}×${action.value} · ${statusLocationShort(action.location)}`,
+          `${g.status} ${action.effect}×${action.value} · ${statusLocationShort(action.location)}`,
         );
         break;
       case "buff":
-        parts.push(`📈 ${action.effect} ${action.value}`);
+        parts.push(`${g.buff} ${action.effect} ${action.value}`);
         break;
       case "cowardly":
-        parts.push("🏃 Escape");
+        parts.push(`${g.cowardly} Escape`);
         break;
       case "stunned":
-        parts.push(`💫 Stunned ${action.value}`);
+        parts.push(`${g.stunned} Stunned ${action.value}`);
         break;
       case "no_action":
-        parts.push("No action");
+        parts.push(`${g.no_action} No action`);
         break;
       default:
         pushUnknown(parts, action as EnemyIntentAction);

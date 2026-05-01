@@ -232,7 +232,21 @@ export interface ActivityLogEntry {
   before?: string;
   after?: string;
   details?: string;
-  type?: 'info' | 'action' | 'state-change' | 'damage' | 'heal' | 'block' | 'block-lost' | 'energy' | 'buff' | 'debuff' | 'card-action' | 'system';
+  type?:
+    | 'info'
+    | 'action'
+    | 'state-change'
+    | 'damage'
+    | 'heal'
+    | 'block'
+    | 'block-lost'
+    | 'energy'
+    | 'buff'
+    | 'debuff'
+    | 'card-action'
+    | 'system'
+    /** One explicit “this planner turn has begun” marker per row (phase bar). */
+    | 'turn-start';
   target?: 'player' | 'enemy';
   /** Cards involved in this event (colored by type in the UI). */
   cardsInvolved?: ActivityLogCardRef[];
@@ -245,8 +259,13 @@ export type CombatTurnPhase = "start" | "player" | "enemy";
 
 export interface Turn {
   id: number;
+  /** Stable row identity for tooling / logs / correlation (distinct from planner slot {@link Turn.id}). */
+  uid: string;
   state: CombatData;
 }
+
+/** Saved payloads may omit `uid` until `migrateTurnRowsWithUids` runs. */
+export type TurnRowMigrateInput = Omit<Turn, 'uid'> & { uid?: string };
 
 /** Decision timeline topology: anchored START vs imported planner row vs divergent fork. */
 export type DecisionTimelineRole = 'timeline_start' | 'turn_checkpoint' | 'branch';
@@ -262,6 +281,8 @@ export interface DecisionNode {
   snapshot: CombatData;
   /** Which planner turn slot (`Turn.id`); recomputed from depth below START (matches `turns[]` order). */
   plannerTurnSlotId: number;
+  /** Distinct chrome on timeline rows / minimap (`#RRGGBB`). Assigned on create/import; user-editable. */
+  timelineAccentHex?: string;
   turnPhase: CombatTurnPhase;
   createdAt: string;
 }

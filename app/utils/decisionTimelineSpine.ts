@@ -1,10 +1,12 @@
 import type { CombatData, DecisionNode, DecisionTimelineRole, Turn } from '@/app/types/gameTypes';
+import { assignDistinctTimelineAccentHexesSequential } from '@/app/utils/decisionTimelineAccent';
 import { cloneGameData } from '@/app/utils/gameHelpers';
+import { formatDecisionBreadcrumbSegment } from '@/app/utils/decisionTreeHelpers';
 
 export type ImportedTimelineSpineOptions = {
   /**
-   * Planner turn slot ({@link Turn.id}) whose checkpoint becomes the initially active timeline step.
-   * Defaults to {@link initialTurns}[0] when edits start on first row (typical ingest).
+   * When set, the checkpoint for this planner slot ({@link Turn.id}) becomes active.
+   * When omitted, **no** timeline pin — user chooses via Set Active on each checkpoint.
    */
   activePlannerTurnSlotId?: number;
 };
@@ -17,12 +19,13 @@ export function buildImportedDecisionTimelineSpine(
   withPiles: CombatData,
   createId: () => string,
   options?: ImportedTimelineSpineOptions,
-): { nodes: DecisionNode[]; activeNodeId: string } {
+): { nodes: DecisionNode[]; activeNodeId: string | null } {
   const base = Date.now();
   const ts = (tick: number) => new Date(base + tick).toISOString();
 
   const firstSlotId = initialTurns[0]?.id ?? 1;
   const startId = createId();
+  const accentPalette = assignDistinctTimelineAccentHexesSequential(1 + initialTurns.length);
   const startNode: DecisionNode = {
     id: startId,
     parentId: null,
@@ -30,6 +33,7 @@ export function buildImportedDecisionTimelineSpine(
     timelineRole: 'timeline_start',
     snapshot: cloneGameData(withPiles),
     plannerTurnSlotId: firstSlotId,
+    timelineAccentHex: accentPalette[0],
     turnPhase: 'start',
     createdAt: ts(0),
   };
@@ -43,24 +47,31 @@ export function buildImportedDecisionTimelineSpine(
     nodes.push({
       id: nid,
       parentId: prevId,
-      label: `Turn ${t.id}`,
+      label: formatDecisionBreadcrumbSegment(t.id, 1),
       timelineRole: 'turn_checkpoint',
       snapshot: cloneGameData(t.state),
       plannerTurnSlotId: t.id,
+      timelineAccentHex: accentPalette[i + 1],
       turnPhase: 'start',
       createdAt: ts((i + 1) * 10),
     });
     prevId = nid;
   }
 
-  const wantSlot =
-    options?.activePlannerTurnSlotId !== undefined ? options.activePlannerTurnSlotId : initialTurns[0]?.id;
+  const explicitSlot = options?.activePlannerTurnSlotId;
+  const useExplicitActiveSlot = explicitSlot !== undefined && explicitSlot !== null;
   const match =
-    wantSlot !== undefined && wantSlot !== null
-      ? nodes.find((n) => n.timelineRole === 'turn_checkpoint' && n.plannerTurnSlotId === wantSlot)
+    useExplicitActiveSlot
+      ? nodes.find((n) => n.timelineRole === 'turn_checkpoint' && n.plannerTurnSlotId === explicitSlot)
       : undefined;
-  const activeNodeId =
-    match?.id ?? nodes.find((n) => n.timelineRole === 'turn_checkpoint')?.id ?? startNode.id;
+
+  const spineLeafCheckpointId = prevId !== startId ? prevId : null;
+  const spineLeafCheckpoint =
+    spineLeafCheckpointId !== null ? nodes.find((n) => n.id === spineLeafCheckpointId) : undefined;
+
+  const activeNodeId = useExplicitActiveSlot
+    ? (match?.id ?? spineLeafCheckpoint?.id ?? null)
+    : null;
 
   return { nodes, activeNodeId };
 }

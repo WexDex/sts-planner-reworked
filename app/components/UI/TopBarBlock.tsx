@@ -1,17 +1,18 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { getEffectDisplay } from "@/app/utils/effectDisplay";
-import { getPlayerMaxEnergy, importGameData } from "@/app/utils/gameHelpers";
+import { getPlayerMaxEnergy, hasValidPlannerTurnSelection, importGameData, liveCombatDiffersFromPlannerRow } from "@/app/utils/gameHelpers";
 import { useGameManager } from "@/app/context/GameContext";
 import { useLegendHighlight } from "@/app/context/LegendHighlightContext";
 import CardDBModal from "@/app/components/CardDBModal";
+import PlannerPhaseActionsBar from "@/app/components/UI/PlannerPhaseActionsBar";
 import {
   getCardEffectLegendItems,
   type CardIconLegendItem,
 } from "@/app/components/UI/cardIconLegend";
-import { Activity, BookOpen, CalendarClock, ChevronDown, ChevronUp, GitBranch } from "lucide-react";
+import { Activity, BookOpen, CalendarClock, ChevronDown, ChevronUp, GitBranch, Save } from "lucide-react";
 
 const CARD_EFFECT_LEGEND = getCardEffectLegendItems();
 
@@ -94,7 +95,47 @@ export default function TopBarBlock() {
     loadGameDataFromJson,
     isLoading,
     error,
+    turns,
+    currentTurnIndex,
+    saveCurrentTurn,
   } = useGameManager();
+
+  const plannerTurnReady = useMemo(
+    () => hasValidPlannerTurnSelection(turns, currentTurnIndex),
+    [turns, currentTurnIndex],
+  );
+  /** Top bar combat vitals and row actions need loaded combat + a valid planner row. */
+  const plannerCombatAvailable = Boolean(gameState && plannerTurnReady);
+  const showNoPlannerTurn = !plannerCombatAvailable;
+  const noPlannerRows = turns.length === 0;
+  const addCardBlockedTitle = !gameState
+    ? "Load combat data first"
+    : !plannerTurnReady
+      ? noPlannerRows
+        ? "No data — add planner turns in Turns first"
+        : "Select or add a planner turn row in Turns first"
+      : "Add cards from the database";
+  const vitalsEmptyCompactLine = !gameState
+    ? "No data — load combat above"
+    : noPlannerRows
+      ? "No data — add planner rows in Turns"
+      : "No planner turn selected — open Turns";
+  const vitalsEmptyTitle = !gameState ? "No data" : noPlannerRows ? "No planner data" : "No planner turn selected";
+
+  const plannerRowNeedsSave = useMemo(
+    () => liveCombatDiffersFromPlannerRow(gameState, turns, currentTurnIndex),
+    [gameState, turns, currentTurnIndex],
+  );
+  const savePlannerRowDisabled = !gameState || !plannerTurnReady || !plannerRowNeedsSave;
+  const savePlannerRowTitle = savePlannerRowDisabled
+    ? !gameState
+      ? "Load combat first"
+      : !plannerTurnReady
+        ? noPlannerRows
+          ? "No data — add planner turns in Turns before saving"
+          : "Select or add a planner turn row in Turns before saving"
+        : "Live combat already matches this planner row — nothing to save"
+    : "Save live combat into this planner turn row (same as timeline quick action)";
   const { hoveredCard, highlightIds } = useLegendHighlight();
   const sortedLegend = useMemo(() => {
     if (!hoveredCard) return CARD_EFFECT_LEGEND;
@@ -109,7 +150,28 @@ export default function TopBarBlock() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
   const [mobileVitalsOpen, setMobileVitalsOpen] = useState(false);
+  const [topBarMinimized, setTopBarMinimized] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    try {
+      if (typeof window === "undefined") return;
+      const v = localStorage.getItem("sts-top-bar-minimized") === "1";
+      queueMicrotask(() => setTopBarMinimized(v));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("sts-top-bar-minimized", topBarMinimized ? "1" : "0");
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [topBarMinimized]);
 
   const playerHp = gameState?.player.hp ?? 0;
   const playerMaxHp = gameState?.player.maxHp ?? 0;
@@ -128,6 +190,12 @@ export default function TopBarBlock() {
   const hpPct = playerMaxHp > 0 ? clampPct((playerHp / playerMaxHp) * 100) : 0;
   const lowHp = playerMaxHp > 0 && (playerHp === 0 || (playerHp > 0 && hpPct < 30));
   const energyPct = energyMax > 0 ? clampPct((currentEnergy / energyMax) * 100) : 0;
+  /** Block bar uses max HP as scale; fill caps at 100% when block ≥ max HP. */
+  const blockVsMaxHpPct = playerMaxHp > 0 ? clampPct((currentBlock / playerMaxHp) * 100) : 0;
+  const blockOverMaxHp = playerMaxHp > 0 && currentBlock > playerMaxHp;
+  const blockBarFillCls = blockOverMaxHp
+    ? "h-full rounded-full bg-gradient-to-r from-cyan-200 via-sky-100 to-cyan-100 shadow-[0_0_20px_rgba(207,250,254,0.9)] transition-[width] duration-300"
+    : "h-full rounded-full bg-gradient-to-r from-sky-700 to-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.35)] transition-[width] duration-300";
   const showEnergyPips = energyMax > 0 && energyMax <= 9;
 
   const hpEffect = getEffectDisplay("health", playerHp);
@@ -165,7 +233,22 @@ export default function TopBarBlock() {
         aria-label="Load combat JSON file"
       />
       <div className="hidden md:block">
-        <div className="mx-auto flex max-w-[1600px] flex-col items-stretch gap-3 px-0 py-0">
+        <div className="mx-auto max-w-[1600px]">
+          <div
+            className={`grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none ${
+              topBarMinimized ? "grid-rows-[0fr]" : "grid-rows-[1fr]"
+            }`}
+            aria-hidden={topBarMinimized}
+          >
+            <div className="min-h-0 overflow-hidden">
+              <div
+                className={`transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none ${
+                  topBarMinimized
+                    ? "pointer-events-none -translate-y-1 opacity-0"
+                    : "translate-y-0 opacity-100"
+                }`}
+              >
+        <div className="flex w-full flex-col items-stretch gap-3 px-0 py-0">
           {/* Planner routes — separated from player combat stats for fast, obvious access */}
           <div
             className="flex flex-wrap items-center justify-center gap-2 border-b border-slate-700/50 bg-slate-900/40 px-1 py-2.5 sm:justify-start sm:px-0 sm:py-3"
@@ -191,6 +274,33 @@ export default function TopBarBlock() {
               <GitBranch className="h-4 w-4 shrink-0 text-cyan-200" strokeWidth={2.25} aria-hidden />
               Timeline
             </Link>
+            <button
+              type="button"
+              disabled={savePlannerRowDisabled}
+              onClick={() => saveCurrentTurn()}
+              title={savePlannerRowTitle}
+              aria-label={savePlannerRowTitle}
+              className={`inline-flex min-h-11 min-w-[8.5rem] flex-1 items-center justify-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-bold shadow-md ring-1 transition active:scale-[0.99] sm:flex-initial sm:min-w-[10rem] ${
+                savePlannerRowDisabled
+                  ? "cursor-not-allowed border-slate-600/55 bg-slate-900/55 text-slate-500 shadow-none shadow-black/0 ring-slate-700/40 opacity-55"
+                  : "border-amber-400/55 bg-amber-950/50 text-amber-50 shadow-amber-950/30 ring-amber-500/20 hover:border-amber-300/70 hover:bg-amber-900/45"
+              }`}
+            >
+              <Save className="h-4 w-4 shrink-0 text-amber-200/90" strokeWidth={2.25} aria-hidden />
+              Save row
+            </button>
+            <div className="ms-auto flex min-w-0 max-w-full items-center justify-end gap-1.5 pl-2 sm:pl-3 min-[1100px]:pl-4">
+              <PlannerPhaseActionsBar variant="inline" />
+              <button
+                type="button"
+                onClick={() => setTopBarMinimized(true)}
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-600/80 bg-slate-800/90 text-slate-300 transition hover:bg-slate-800 hover:text-slate-100"
+                title="Minimize header — compact strip"
+                aria-label="Minimize header"
+              >
+                <ChevronUp className="h-4 w-4" strokeWidth={2.25} aria-hidden />
+              </button>
+            </div>
           </div>
 
         <div className="flex w-full flex-col items-stretch gap-3 px-0 py-0 lg:flex-row lg:items-center lg:gap-4">
@@ -206,6 +316,39 @@ export default function TopBarBlock() {
             <Activity className="h-3 w-3 text-slate-500" strokeWidth={2.5} aria-hidden />
             Player
           </p>
+          {showNoPlannerTurn ? (
+            <div className="rounded-xl border border-amber-500/40 bg-amber-950/20 px-4 py-8 text-center shadow-inner shadow-black/20">
+              <p className="text-sm font-semibold text-amber-100">{vitalsEmptyTitle}</p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                {!gameState ? (
+                  <>
+                    Load combat using <span className="font-semibold text-slate-300">Load data</span>, then add planner
+                    rows in{" "}
+                    <Link href="/turn-maker" className="font-semibold text-amber-300/95 underline-offset-2 hover:underline">
+                      Turns
+                    </Link>
+                    . Vitals stay hidden until both are ready.
+                  </>
+                ) : noPlannerRows ? (
+                  <>
+                    Open{" "}
+                    <Link href="/turn-maker" className="font-semibold text-amber-300/95 underline-offset-2 hover:underline">
+                      Turns
+                    </Link>{" "}
+                    and add at least one planner row. Without rows there is no timeline snapshot to show.
+                  </>
+                ) : (
+                  <>
+                    Open{" "}
+                    <Link href="/turn-maker" className="font-semibold text-amber-300/95 underline-offset-2 hover:underline">
+                      Turns
+                    </Link>{" "}
+                    to add a row or select one. Numbers here follow the active planner row.
+                  </>
+                )}
+              </p>
+            </div>
+          ) : (
           <div className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-3 sm:gap-2.5">
             {/* HP */}
             <div
@@ -348,21 +491,28 @@ export default function TopBarBlock() {
                 </p>
               </div>
               <div
-                className={`h-1.5 w-full overflow-hidden rounded-full border ${
+                className={`h-2.5 w-full overflow-hidden rounded-full border ${
                   currentBlock > 0
                     ? "border-sky-800/50 bg-sky-950/80"
                     : "border-slate-700/40 bg-slate-900/50"
                 }`}
-                aria-hidden
+                role="progressbar"
+                aria-valuenow={currentBlock}
+                aria-valuemin={0}
+                aria-valuemax={playerMaxHp > 0 ? playerMaxHp : 0}
+                aria-label={
+                  blockOverMaxHp
+                    ? `Block ${currentBlock}, full bar — exceeds max HP (${playerMaxHp})`
+                    : `Block ${currentBlock} of ${playerMaxHp || 0} max hit points`
+                }
               >
-                {currentBlock > 0 ? (
-                  <div
-                    className="h-full w-full min-w-[20%] rounded-full bg-gradient-to-r from-sky-700 to-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.35)]"
-                  />
+                {playerMaxHp > 0 && currentBlock > 0 ? (
+                  <div className={blockBarFillCls} style={{ width: `${blockVsMaxHpPct}%` }} />
                 ) : null}
               </div>
             </div>
           </div>
+          )}
         </div>
 
         {/* Card icon legend + file actions (this-turn relics live under Combat tools → Player) */}
@@ -388,21 +538,23 @@ export default function TopBarBlock() {
                   {legendShowAllLabels ? "Icons only" : "Show all"}
                 </button>
               </div>
-              <div className="flex min-h-[4rem] min-w-0 flex-wrap content-start gap-1.5 px-0.5 pb-1">
-                {sortedLegend.map((item) => {
-                  const hoverSync = hoveredCard != null;
-                  const highlighted = highlightIds.has(item.id);
-                  return (
-                    <TopBarLegendChip
-                      key={item.id}
-                      item={item}
-                      hoverSync={hoverSync}
-                      highlighted={highlighted}
-                      showAllLabels={legendShowAllLabels}
-                      size="desktop"
-                    />
-                  );
-                })}
+              <div className="h-[calc(3*1.375rem+2*0.375rem)] min-w-0 shrink-0 overflow-y-auto overflow-x-hidden overscroll-contain px-0.5 pb-1 pr-1 [scrollbar-width:thin] [scrollbar-color:rgba(34,211,238,0.4)_rgba(15,23,42,0.65)]">
+                <div className="flex flex-wrap content-start gap-1.5">
+                  {sortedLegend.map((item) => {
+                    const hoverSync = hoveredCard != null;
+                    const highlighted = highlightIds.has(item.id);
+                    return (
+                      <TopBarLegendChip
+                        key={item.id}
+                        item={item}
+                        hoverSync={hoverSync}
+                        highlighted={highlighted}
+                        showAllLabels={legendShowAllLabels}
+                        size="desktop"
+                      />
+                    );
+                  })}
+                </div>
               </div>
             </div>
             <div className="flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-2 min-[1000px]:flex-col min-[1000px]:items-stretch min-[1000px]:justify-center min-[1000px]:self-center">
@@ -418,8 +570,9 @@ export default function TopBarBlock() {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(true)}
-                disabled={!gameState}
+                disabled={!gameState || showNoPlannerTurn}
                 className="rounded-xl border border-emerald-500/50 bg-emerald-700/85 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-emerald-950/40 transition hover:bg-emerald-600 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
+                title={addCardBlockedTitle}
               >
                 Add Card
               </button>
@@ -432,6 +585,120 @@ export default function TopBarBlock() {
           ) : null}
         </div>
         </div>
+        </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className={`grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none ${
+              topBarMinimized ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+            }`}
+            aria-hidden={!topBarMinimized}
+          >
+            <div className="min-h-0 overflow-hidden">
+              <div
+                className={`flex flex-col gap-1.5 px-2 py-1.5 transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none md:px-3 ${
+                  topBarMinimized ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-1 opacity-0"
+                }`}
+              >
+                <div
+                  className="flex flex-wrap items-center gap-1.5 border-b border-slate-700/50 bg-slate-900/35 pb-1.5"
+                  role="navigation"
+                  aria-label="Planner routes (compact)"
+                >
+                  <Link
+                    href="/turn-maker"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 border-amber-400/55 bg-amber-950/50 text-amber-200 shadow-sm ring-1 ring-amber-500/15 transition hover:border-amber-300/70 hover:bg-amber-900/45"
+                    title="Turns — edit planner rows"
+                  >
+                    <CalendarClock className="h-4 w-4" strokeWidth={2.25} aria-hidden />
+                  </Link>
+                  <Link
+                    href="/decision-timeline"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 border-cyan-400/55 bg-cyan-950/45 text-cyan-200 shadow-sm ring-1 ring-cyan-500/15 transition hover:border-cyan-300/70 hover:bg-cyan-900/40"
+                    title="Decision timeline"
+                  >
+                    <GitBranch className="h-4 w-4" strokeWidth={2.25} aria-hidden />
+                  </Link>
+                  <button
+                    type="button"
+                    disabled={savePlannerRowDisabled}
+                    onClick={() => saveCurrentTurn()}
+                    title={savePlannerRowTitle}
+                    aria-label={savePlannerRowTitle}
+                    className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 shadow-sm ring-1 transition active:scale-[0.99] ${
+                      savePlannerRowDisabled
+                        ? "cursor-not-allowed border-slate-600/55 bg-slate-900/55 text-slate-500 ring-slate-700/40 opacity-55"
+                        : "border-amber-400/55 bg-amber-950/50 text-amber-200 ring-amber-500/20 hover:border-amber-300/70 hover:bg-amber-900/45"
+                    }`}
+                  >
+                    <Save className="h-4 w-4 shrink-0" strokeWidth={2.25} aria-hidden />
+                  </button>
+                  <div className="ms-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-1">
+                    <PlannerPhaseActionsBar variant="inline" compact />
+                  </div>
+                </div>
+
+                <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+                  {showNoPlannerTurn ? (
+                    <p className="text-[11px] font-medium text-amber-200/90">{vitalsEmptyCompactLine}</p>
+                  ) : (
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[11px] tabular-nums">
+                      <span className="text-rose-200">
+                        HP {playerHp}/{playerMaxHp || "—"}
+                      </span>
+                      <span className="text-slate-600" aria-hidden>
+                        ·
+                      </span>
+                      <span className="text-amber-200">
+                        NRG {currentEnergy}/{energyMax || "—"}
+                      </span>
+                      <span className="text-slate-600" aria-hidden>
+                        ·
+                      </span>
+                      <span className="text-sky-200">Blk {currentBlock}</span>
+                    </div>
+                  )}
+                  <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+                    <button
+                      type="button"
+                      disabled={isLoading}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="rounded-lg border border-sky-500/45 bg-sky-800/80 px-2.5 py-1.5 text-[10px] font-semibold text-white shadow-sm transition hover:bg-sky-700 disabled:opacity-50"
+                      title="Load combat JSON"
+                    >
+                      {isLoading ? "…" : "Load"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsModalOpen(true)}
+                      disabled={!gameState || showNoPlannerTurn}
+                      title={addCardBlockedTitle}
+                      className="rounded-lg border border-emerald-500/50 bg-emerald-700/85 px-2.5 py-1.5 text-[10px] font-semibold text-white shadow-sm transition hover:bg-emerald-600 disabled:opacity-40"
+                    >
+                      +Card
+                    </button>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTopBarMinimized(false)}
+                  className="flex w-full min-h-9 items-center justify-center gap-2 rounded-lg border border-slate-600/80 bg-slate-800/90 py-2 text-[10px] font-semibold text-slate-300 shadow-sm transition hover:bg-slate-800 hover:text-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/45 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                  title="Expand full header — legend and detailed vitals"
+                  aria-label="Expand full header"
+                >
+                  <ChevronDown className="h-4 w-4 shrink-0" strokeWidth={2.25} aria-hidden />
+                  <span>Expand header</span>
+                </button>
+                {loadError ? (
+                  <p className="text-[10px] text-red-400" title={loadError}>
+                    {loadError}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -459,6 +726,21 @@ export default function TopBarBlock() {
               <GitBranch className="h-5 w-5 shrink-0 text-cyan-200" strokeWidth={2.25} aria-hidden />
               Timeline
             </Link>
+            <button
+              type="button"
+              disabled={savePlannerRowDisabled}
+              onClick={() => saveCurrentTurn()}
+              title={savePlannerRowTitle}
+              aria-label={savePlannerRowTitle}
+              className={`inline-flex min-h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border-2 px-3 py-3 text-sm font-bold shadow-md ring-1 active:scale-[0.99] ${
+                savePlannerRowDisabled
+                  ? "cursor-not-allowed border-slate-600/55 bg-slate-900/55 text-slate-500 shadow-none ring-slate-700/40 opacity-55"
+                  : "border-amber-400/55 bg-amber-950/50 text-amber-50 shadow-amber-950/25 ring-amber-500/20"
+              }`}
+            >
+              <Save className="h-5 w-5 shrink-0 text-amber-200/90" strokeWidth={2.25} aria-hidden />
+              Save row
+            </button>
           </nav>
 
           <div className="overflow-hidden rounded-2xl border-2 border-cyan-500/40 bg-slate-900/90 shadow-md shadow-cyan-950/30">
@@ -467,6 +749,11 @@ export default function TopBarBlock() {
                 <Activity className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
                 Player
               </p>
+              {showNoPlannerTurn ? (
+                <span className="text-[9px] font-semibold uppercase tracking-wide text-amber-400/90">
+                  {!gameState || noPlannerRows ? "No data" : "No row"}
+                </span>
+              ) : (
               <button
                 type="button"
                 onClick={() => setMobileVitalsOpen((o) => !o)}
@@ -486,9 +773,41 @@ export default function TopBarBlock() {
                   </>
                 )}
               </button>
+              )}
             </div>
 
-            {!mobileVitalsOpen ? (
+            {showNoPlannerTurn ? (
+              <div className="border-t border-amber-500/25 bg-amber-950/20 px-3 py-6 text-center">
+                <p className="text-sm font-semibold text-amber-100">{vitalsEmptyTitle}</p>
+                <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+                  {!gameState ? (
+                    <>
+                      Load combat with <span className="font-semibold text-slate-300">Load data</span>, then add rows in{" "}
+                      <Link href="/turn-maker" className="font-semibold text-amber-300/95 underline-offset-2 hover:underline">
+                        Turns
+                      </Link>
+                      .
+                    </>
+                  ) : noPlannerRows ? (
+                    <>
+                      Add at least one row in{" "}
+                      <Link href="/turn-maker" className="font-semibold text-amber-300/95 underline-offset-2 hover:underline">
+                        Turns
+                      </Link>{" "}
+                      — no planner data yet.
+                    </>
+                  ) : (
+                    <>
+                      Open{" "}
+                      <Link href="/turn-maker" className="font-semibold text-amber-300/95 underline-offset-2 hover:underline">
+                        Turns
+                      </Link>{" "}
+                      to add or choose a row.
+                    </>
+                  )}
+                </p>
+              </div>
+            ) : !mobileVitalsOpen ? (
               <div className="grid grid-cols-3 gap-1.5 p-2">
                 <div
                   className={`rounded-xl border px-1.5 py-1.5 ${
@@ -545,12 +864,30 @@ export default function TopBarBlock() {
                     Blk
                   </p>
                   <p
-                    className={`text-lg font-bold tabular-nums ${
+                    className={`text-sm font-bold tabular-nums ${
                       currentBlock > 0 ? "text-sky-100" : "text-slate-500"
                     }`}
                   >
                     {currentBlock}
                   </p>
+                  <div
+                    className={`mt-0.5 h-1 w-full overflow-hidden rounded-full ${
+                      currentBlock > 0 ? "bg-sky-950/80" : "bg-slate-900/60"
+                    }`}
+                    role="progressbar"
+                    aria-valuenow={currentBlock}
+                    aria-valuemin={0}
+                    aria-valuemax={playerMaxHp > 0 ? playerMaxHp : 0}
+                    aria-label={
+                      blockOverMaxHp
+                        ? `Block ${currentBlock}, full bar — exceeds max HP (${playerMaxHp})`
+                        : `Block ${currentBlock} of ${playerMaxHp || 0} max hit points`
+                    }
+                  >
+                    {playerMaxHp > 0 && currentBlock > 0 ? (
+                      <div className={blockBarFillCls} style={{ width: `${blockVsMaxHpPct}%` }} />
+                    ) : null}
+                  </div>
                 </div>
               </div>
             ) : (
@@ -629,12 +966,30 @@ export default function TopBarBlock() {
                       <p className="text-[9px] font-bold uppercase text-slate-400">Block</p>
                     </div>
                     <p
-                      className={`text-xl font-bold tabular-nums ${
+                      className={`text-right text-sm font-bold tabular-nums ${
                         currentBlock > 0 ? "text-sky-100" : "text-slate-500"
                       }`}
                     >
                       {currentBlock}
                     </p>
+                  </div>
+                  <div
+                    className={`h-2.5 w-full overflow-hidden rounded-full border ${
+                      currentBlock > 0 ? "border-sky-800/50 bg-sky-950/80" : "border-slate-700/40 bg-slate-900/50"
+                    }`}
+                    role="progressbar"
+                    aria-valuenow={currentBlock}
+                    aria-valuemin={0}
+                    aria-valuemax={playerMaxHp > 0 ? playerMaxHp : 0}
+                    aria-label={
+                      blockOverMaxHp
+                        ? `Block ${currentBlock}, full bar — exceeds max HP (${playerMaxHp})`
+                        : `Block ${currentBlock} of ${playerMaxHp || 0} max hit points`
+                    }
+                  >
+                    {playerMaxHp > 0 && currentBlock > 0 ? (
+                      <div className={blockBarFillCls} style={{ width: `${blockVsMaxHpPct}%` }} />
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -662,21 +1017,23 @@ export default function TopBarBlock() {
                   {legendShowAllLabels ? "Icons" : "All"}
                 </button>
               </div>
-              <div className="flex min-w-0 flex-wrap gap-1 px-0.5 pb-1">
-                {sortedLegend.map((item) => {
-                  const hoverSync = hoveredCard != null;
-                  const highlighted = highlightIds.has(item.id);
-                  return (
-                    <TopBarLegendChip
-                      key={item.id}
-                      item={item}
-                      hoverSync={hoverSync}
-                      highlighted={highlighted}
-                      showAllLabels={legendShowAllLabels}
-                      size="mobile"
-                    />
-                  );
-                })}
+              <div className="h-[calc(3*1.25rem+2*0.25rem)] min-w-0 shrink-0 overflow-y-auto overflow-x-hidden overscroll-contain px-0.5 pb-1 pr-1 [scrollbar-width:thin] [scrollbar-color:rgba(34,211,238,0.4)_rgba(15,23,42,0.65)]">
+                <div className="flex flex-wrap gap-1">
+                  {sortedLegend.map((item) => {
+                    const hoverSync = hoveredCard != null;
+                    const highlighted = highlightIds.has(item.id);
+                    return (
+                      <TopBarLegendChip
+                        key={item.id}
+                        item={item}
+                        hoverSync={hoverSync}
+                        highlighted={highlighted}
+                        showAllLabels={legendShowAllLabels}
+                        size="mobile"
+                      />
+                    );
+                  })}
+                </div>
               </div>
             </div>
             <div className="flex items-stretch gap-2">
@@ -691,7 +1048,8 @@ export default function TopBarBlock() {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(true)}
-                disabled={!gameState}
+                disabled={!gameState || showNoPlannerTurn}
+                title={addCardBlockedTitle}
                 className="min-h-12 min-w-0 flex-1 rounded-lg border border-emerald-500/50 bg-emerald-700/90 px-2 py-3 text-[11px] font-semibold text-white active:scale-[0.99] disabled:opacity-40"
               >
                 Add card

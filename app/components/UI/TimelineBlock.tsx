@@ -16,28 +16,28 @@ import {
 import { IntentIncomingChips } from "@/app/components/UI/IntentIncomingChips";
 import { enemyIntentSlotTone } from "@/app/utils/enemyIntentSlotTone";
 import {
-  ArrowRight,
   CalendarClock,
   ChevronDown,
   ChevronRight,
-  Clock,
   GitBranch,
-  History,
   RotateCcw,
   Save,
-  SkipForward,
+  Skull,
   Sparkles,
   Swords,
   User,
-  Skull,
 } from "lucide-react";
 import { toast } from "@/app/utils/toast";
-import { combatSnapshotsEqual } from "@/app/utils/gameHelpers";
+import { formatTurnUidShort, liveCombatDiffersFromPlannerRow } from "@/app/utils/gameHelpers";
 import {
-  getDecisionTimelineSpineMeta,
+  decisionTimelineStartHasConnectedCheckpoint,
+  decisionTimelineStartRootId,
+  getActiveLineageCanonicalNodeIdBySlot,
   outgoingDecisionBranchCountForPlannerSlot,
+  pinnedDecisionLineageAnchoredAtStart,
   turnsVisibleForActiveDecisionLineage,
 } from "@/app/utils/decisionTreeHelpers";
+import { resolvedDecisionTimelineAccentHex } from "@/app/utils/decisionTimelineAccent";
 
 interface EnemyIntentSummary {
   name: string;
@@ -101,9 +101,48 @@ function ActionBtn({
 const INTENT_PREVIEW_MAX = 4;
 
 function decisionTimelineBranchSummary(outCount: number): string {
-  if (outCount <= 0) return 'No further branches in Decision Timeline';
-  if (outCount === 1) return 'This turn continues in 1 branch';
+  if (outCount <= 0) return "No further branches in Decision Timeline";
+  if (outCount === 1) return "This turn continues in 1 branch";
   return `This turn branches into ${outCount} branches`;
+}
+
+/** Local draft + commit; remount via `key` when slot or committed label changes (avoids setState-in-effect). */
+function TimelineTurnNameField({
+  activeCanonicalLabel,
+  disabled,
+  placeholder,
+  title,
+  onCommit,
+}: {
+  activeCanonicalLabel: string;
+  disabled: boolean;
+  placeholder: string;
+  title: string;
+  onCommit: (trimmed: string) => void;
+}) {
+  const [draft, setDraft] = useState(activeCanonicalLabel);
+
+  const handleBlur = useCallback(() => {
+    onCommit(draft.trim());
+  }, [draft, onCommit]);
+
+  return (
+    <input
+      type="text"
+      value={draft}
+      disabled={disabled}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={handleBlur}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.currentTarget.blur();
+        }
+      }}
+      placeholder={placeholder}
+      title={title}
+      className="mt-1 w-full rounded-lg border border-slate-600/80 bg-slate-900/90 px-2 py-1.5 text-[12px] font-medium text-slate-100 placeholder:text-slate-600 disabled:cursor-not-allowed disabled:opacity-55"
+    />
+  );
 }
 
 /** Combat snapshot for a given intent turn: frozen slot in the planner, except the active turn uses live gameState. */
@@ -128,15 +167,12 @@ export default function TimelineBlock() {
     currentTurnIndex,
     turnPhase,
     setCurrentTurn,
-    beginTurn,
-    endPlayerTurn,
-    endEnemyTurn,
-    continueFromTurn,
     resetCurrentTurn,
     decisionNodes,
     activeDecisionNodeId,
     saveCurrentTurn,
     syncActiveDecisionNodeFromPlanner,
+    updateDecisionNodeLabel,
   } = useGameManager();
 
   /** Flush live board state into the planner turn row when this panel mounts (e.g. mobile timeline sheet). */
@@ -149,17 +185,57 @@ export default function TimelineBlock() {
 
   const { displayTurns, timelineFilteredToLineage } = useMemo(() => {
     const lineageTurns = turnsVisibleForActiveDecisionLineage(decisionNodes, activeDecisionNodeId, turns);
-    if (lineageTurns == null) {
-      return { displayTurns: turns, timelineFilteredToLineage: false };
-    }
-    return { displayTurns: lineageTurns, timelineFilteredToLineage: true };
+    const hasDecisionTimeline = decisionNodes.length > 0;
+    const displayTurnsResolved =
+      !hasDecisionTimeline ? turns : lineageTurns == null ? [] : lineageTurns;
+    const timelineFilteredToLineageResolved = hasDecisionTimeline;
+    return {
+      displayTurns: displayTurnsResolved,
+      timelineFilteredToLineage: timelineFilteredToLineageResolved,
+    };
   }, [decisionNodes, activeDecisionNodeId, turns]);
 
-  /** User-facing {@link DecisionNode.label} along the pinned path — deepest checkpoint per planner row (aligned with Decision timeline spine). */
+  /** Pulse empty “path turns” when planner has rows but this panel shows none (Decision Timeline setup needed). */
+  const pathTurnsSeekAttention = useMemo(() => {
+    if (!gameState) return false;
+    if (!timelineFilteredToLineage) return false;
+    if (turns.length === 0) return false;
+    return displayTurns.length === 0;
+  }, [gameState, timelineFilteredToLineage, turns.length, displayTurns.length]);
+
+  /** Explains why Path turns is empty under Decision Timeline filtering. */
+  const pathTurnsEmptyExplanation = useMemo(() => {
+    if (!timelineFilteredToLineage || turns.length === 0) return null;
+    if (displayTurns.length > 0) return null;
+    if (!decisionTimelineStartHasConnectedCheckpoint(decisionNodes)) {
+      return "Nothing branches from START yet. Open Decision Timeline and add or link a checkpoint under START.";
+    }
+    if (!activeDecisionNodeId) {
+      return "Set Active on a checkpoint under START on the Decision Timeline to load path turns here.";
+    }
+    const startId = decisionTimelineStartRootId(decisionNodes);
+    if (startId && activeDecisionNodeId === startId) {
+      return "Active pin is START — Set Active on a checkpoint below START to show planner rows on this path.";
+    }
+    if (!pinnedDecisionLineageAnchoredAtStart(decisionNodes, activeDecisionNodeId)) {
+      return "Active checkpoint is not connected to START (orphan or separate root). Relink under START or choose another branch.";
+    }
+    return "No planner rows on this path for the current pin.";
+  }, [
+    timelineFilteredToLineage,
+    turns.length,
+    displayTurns.length,
+    decisionNodes,
+    activeDecisionNodeId,
+  ]);
+
+  /** User-facing {@link DecisionNode.label} per planner slot — deepest checkpoint on the **active lineage** (aligned with visible timeline rows). */
   const decisionTimelineLabelBySlotId = useMemo(() => {
     const out = new Map<number, string>();
-    if (!activeDecisionNodeId || decisionNodes.length === 0) return out;
-    const { canonicalNodeIdBySlot } = getDecisionTimelineSpineMeta(
+    if (!activeDecisionNodeId || decisionNodes.length === 0) {
+      return out;
+    }
+    const canonicalNodeIdBySlot = getActiveLineageCanonicalNodeIdBySlot(
       decisionNodes,
       activeDecisionNodeId,
       turns,
@@ -168,6 +244,24 @@ export default function TimelineBlock() {
     for (const [slot, nodeId] of canonicalNodeIdBySlot) {
       const trimmed = byId.get(nodeId)?.label?.trim() ?? "";
       if (trimmed) out.set(slot, trimmed);
+    }
+    return out;
+  }, [activeDecisionNodeId, decisionNodes, turns]);
+
+  /** Per-slot accent matching the canonical lineage checkpoint (same mapping as turn names). */
+  const decisionTimelineAccentHexBySlotId = useMemo(() => {
+    const out = new Map<number, string>();
+    if (!activeDecisionNodeId || decisionNodes.length === 0) return out;
+    const canonicalNodeIdBySlot = getActiveLineageCanonicalNodeIdBySlot(
+      decisionNodes,
+      activeDecisionNodeId,
+      turns,
+    );
+    const byId = new Map(decisionNodes.map((n) => [n.id, n] as const));
+    const fallback = "#64748B";
+    for (const [slot, nodeId] of canonicalNodeIdBySlot) {
+      const node = byId.get(nodeId);
+      out.set(slot, node ? resolvedDecisionTimelineAccentHex(node, fallback) : fallback);
     }
     return out;
   }, [activeDecisionNodeId, decisionNodes, turns]);
@@ -256,17 +350,42 @@ export default function TimelineBlock() {
 
   const plannerRows = useMemo(() => {
     const hasTimeline = decisionNodes.length > 0;
+    const neutralStripe = "#475569";
     return displayTurns.map((t) => ({
       id: t.id,
-      combatName: (t.state?.player?.combatName ?? "").trim() || "Encounter",
+      uid: t.uid,
+      combatName: (t.state?.player?.combatName ?? '').trim() || 'Encounter',
       summary: summariesByTurn.get(t.id) ?? null,
       decisionBranchOutCount: hasTimeline
         ? outgoingDecisionBranchCountForPlannerSlot(decisionNodes, t.id, turns)
         : null,
+      timelineAccentHex: decisionTimelineAccentHexBySlotId.get(t.id) ?? neutralStripe,
     }));
-  }, [displayTurns, summariesByTurn, decisionNodes, turns]);
+  }, [displayTurns, summariesByTurn, decisionNodes, turns, decisionTimelineAccentHexBySlotId]);
 
   const currentTurnId = turns[currentTurnIndex]?.id ?? plannerRows[0]?.id ?? 1;
+  const currentTurnUid = turns[currentTurnIndex]?.uid ?? '';
+
+  const canonicalNodeIdForCurrentSlot = useMemo(() => {
+    if (!activeDecisionNodeId || decisionNodes.length === 0) return null;
+    const canonicalNodeIdBySlot = getActiveLineageCanonicalNodeIdBySlot(
+      decisionNodes,
+      activeDecisionNodeId,
+      turns,
+    );
+    const cid = canonicalNodeIdBySlot.get(currentTurnId) ?? null;
+    return cid;
+  }, [activeDecisionNodeId, decisionNodes, turns, currentTurnId]);
+
+  const activeCanonicalLabel = useMemo(() => {
+    if (!canonicalNodeIdForCurrentSlot) return "";
+    return decisionNodes.find((n) => n.id === canonicalNodeIdForCurrentSlot)?.label ?? "";
+  }, [canonicalNodeIdForCurrentSlot, decisionNodes]);
+
+  const currentTurnPathIndex = useMemo(() => {
+    const idx = plannerRows.findIndex((r) => r.id === currentTurnId);
+    return idx >= 0 ? idx + 1 : 1;
+  }, [plannerRows, currentTurnId]);
 
   const currentTurnCombatName = useMemo(() => {
     const row = turns[currentTurnIndex];
@@ -274,14 +393,10 @@ export default function TimelineBlock() {
     return name || null;
   }, [turns, currentTurnIndex]);
 
-  const selected = turnsData.find((t) => t.turn === currentTurnId);
-
-  const currentTurnHasUnsavedChanges = useMemo(() => {
-    if (!gameState || currentTurnIndex < 0 || currentTurnIndex >= turns.length) return false;
-    const slotState = turns[currentTurnIndex]?.state;
-    if (!slotState) return false;
-    return !combatSnapshotsEqual(gameState, slotState);
-  }, [gameState, turns, currentTurnIndex]);
+  const currentTurnHasUnsavedChanges = useMemo(
+    () => liveCombatDiffersFromPlannerRow(gameState, turns, currentTurnIndex),
+    [gameState, turns, currentTurnIndex],
+  );
 
   useEffect(() => {
     activeTurnRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -302,8 +417,22 @@ export default function TimelineBlock() {
   const handleReset = useCallback(() => {
     if (typeof window !== "undefined" && !window.confirm("Reset this turn to the initial combat snapshot?")) return;
     resetCurrentTurn();
-    toast('Turn reset', 'warning');
+    toast("Turn reset", "warning");
   }, [resetCurrentTurn]);
+
+  const commitTurnName = useCallback(
+    (trimmed: string) => {
+      if (!canonicalNodeIdForCurrentSlot) return;
+      const fallback = timelineTurnSubtitleByPlannerRowId.get(currentTurnId) ?? `Turn ${currentTurnId}`;
+      updateDecisionNodeLabel(canonicalNodeIdForCurrentSlot, trimmed || fallback);
+    },
+    [
+      canonicalNodeIdForCurrentSlot,
+      currentTurnId,
+      timelineTurnSubtitleByPlannerRowId,
+      updateDecisionNodeLabel,
+    ],
+  );
 
   if (!gameState) {
     return (
@@ -319,6 +448,9 @@ export default function TimelineBlock() {
 
   const player = gameState.player;
 
+  const phaseSummary =
+    turnPhase === "start" ? "Start" : turnPhase === "player" ? "Main" : "Enemy";
+
   return (
     <div className="flex h-full min-h-0 w-full flex-col overflow-y-auto border-r border-slate-800/90 bg-linear-to-b from-slate-950 via-slate-950 to-slate-900 [scrollbar-width:thin]">
       <header className="sticky top-0 z-10 shrink-0 border-b border-slate-800 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
@@ -329,119 +461,113 @@ export default function TimelineBlock() {
             <p className="truncate text-[11px] text-slate-500">
               {player.combatName} · Fl {player.floor} · {plannerRows.length} turn{plannerRows.length === 1 ? "" : "s"}
               {timelineFilteredToLineage ? " on active path" : " in planner"}
-              {timelineFilteredToLineage && turns.length !== plannerRows.length
-                ? ` · ${turns.length} imported`
-                : null}
+              {timelineFilteredToLineage && turns.length !== plannerRows.length ? ` · ${turns.length} imported` : null}
             </p>
           </div>
         </div>
-        <div className="mt-3 rounded-xl border-2 border-slate-600/50 bg-slate-950/80 p-1.5 shadow-inner shadow-black/20">
-          <p className="mb-1.5 px-1 text-center text-[9px] font-semibold uppercase tracking-wider text-slate-500">
-            Phase track
-          </p>
-          <div className="grid grid-cols-3 gap-1">
-            <div
-              className={`flex flex-col items-center justify-center gap-0.5 rounded-lg border-2 px-2 py-2 transition-colors ${
-                turnPhase === "start"
-                  ? "border-amber-500/60 bg-amber-950/40 shadow-md shadow-amber-950/25"
-                  : "border-transparent bg-slate-900/40 opacity-60"
-              }`}
-              title="Draw, Standby, start-of-turn relics & powers (YGO-style opening)"
-            >
-              <Sparkles
-                className={`h-4 w-4 ${turnPhase === "start" ? "text-amber-200" : "text-slate-500"}`}
-                strokeWidth={2}
-              />
-              <span className="text-center text-[9px] font-bold uppercase tracking-wide text-slate-200">Start</span>
-              <span className="text-center text-[8px] leading-tight text-slate-500">Draw · ST</span>
-              {turnPhase === "start" ? (
-                <span className="rounded bg-amber-500/25 px-1 py-px text-[8px] font-semibold text-amber-100">
-                  Active
-                </span>
-              ) : null}
-            </div>
-            <div
-              className={`flex flex-col items-center justify-center gap-0.5 rounded-lg border-2 px-2 py-2 transition-colors ${
-                turnPhase === "player"
-                  ? "border-emerald-500/60 bg-emerald-950/45 shadow-md shadow-emerald-950/20"
-                  : "border-transparent bg-slate-900/40 opacity-60"
-              }`}
-              title="Main phase — play cards, spend energy"
-            >
-              <User
-                className={`h-4 w-4 ${turnPhase === "player" ? "text-emerald-300" : "text-slate-500"}`}
-                strokeWidth={2}
-              />
-              <span className="text-center text-[9px] font-bold uppercase tracking-wide text-slate-200">Main</span>
-              <span className="text-center text-[8px] leading-tight text-slate-500">Play cards</span>
-              {turnPhase === "player" ? (
-                <span className="rounded bg-emerald-500/25 px-1 py-px text-[8px] font-semibold text-emerald-200">
-                  Active
-                </span>
-              ) : null}
-            </div>
-            <div
-              className={`flex flex-col items-center justify-center gap-0.5 rounded-lg border-2 px-2 py-2 transition-colors ${
-                turnPhase === "enemy"
-                  ? "border-rose-500/55 bg-rose-950/40 shadow-md shadow-rose-950/25"
-                  : "border-transparent bg-slate-900/40 opacity-60"
-              }`}
-              title="Enemy phase — resolve intents"
-            >
-              <Skull
-                className={`h-4 w-4 ${turnPhase === "enemy" ? "text-rose-300" : "text-slate-500"}`}
-                strokeWidth={2}
-              />
-              <span className="text-center text-[9px] font-bold uppercase tracking-wide text-slate-200">Enemy</span>
-              <span className="text-center text-[8px] leading-tight text-slate-500">Resolve</span>
-              {turnPhase === "enemy" ? (
-                <span className="rounded bg-rose-500/25 px-1 py-px text-[8px] font-semibold text-rose-200">
-                  Active
-                </span>
-              ) : null}
-            </div>
-          </div>
-          <div className="mt-1.5 flex items-center justify-center gap-0.5 px-1 text-[8px] text-slate-600">
-            <span>Start</span>
-            <ChevronRight className="h-3 w-3 shrink-0 opacity-70" strokeWidth={2} />
-            <span>Main</span>
-            <ChevronRight className="h-3 w-3 shrink-0 opacity-70" strokeWidth={2} />
-            <span>Enemy</span>
-            <span className="ml-1 text-slate-500">· similar to YGO flow</span>
-          </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          <span className="mr-1 text-[9px] font-semibold uppercase tracking-wider text-slate-500">Phase</span>
+          <span
+            className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-bold uppercase tracking-wide ${
+              turnPhase === "start"
+                ? "border-amber-500/55 bg-amber-950/45 text-amber-100"
+                : "border-slate-700/80 bg-slate-900/50 text-slate-500"
+            }`}
+          >
+            <Sparkles className="h-3 w-3" strokeWidth={2} aria-hidden />
+            Start
+          </span>
+          <span
+            className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-bold uppercase tracking-wide ${
+              turnPhase === "player"
+                ? "border-emerald-500/55 bg-emerald-950/45 text-emerald-100"
+                : "border-slate-700/80 bg-slate-900/50 text-slate-500"
+            }`}
+          >
+            <User className="h-3 w-3" strokeWidth={2} aria-hidden />
+            Main
+          </span>
+          <span
+            className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-bold uppercase tracking-wide ${
+              turnPhase === "enemy"
+                ? "border-rose-500/50 bg-rose-950/45 text-rose-100"
+                : "border-slate-700/80 bg-slate-900/50 text-slate-500"
+            }`}
+          >
+            <Skull className="h-3 w-3" strokeWidth={2} aria-hidden />
+            Enemy
+          </span>
+          <span className="ml-auto text-[10px] font-semibold tabular-nums text-cyan-200/90">{phaseSummary}</span>
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-950/20 px-2.5 py-1.5">
-          <Clock className="h-3.5 w-3.5 shrink-0 text-cyan-300/80" strokeWidth={2} />
-          <span className="text-[11px] font-medium tabular-nums text-cyan-100/95">
-            {currentTurnCombatName ? (
+
+        <div className="mt-3 space-y-1.5 rounded-xl border border-slate-700/70 bg-slate-950/70 px-2.5 py-2">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[11px] text-slate-300">
+            <span className="font-bold tabular-nums text-slate-100">Turn {currentTurnPathIndex}</span>
+            <span className="text-slate-600">·</span>
+            <span className="tabular-nums text-slate-500" title="Planner slot id">
+              slot {currentTurnId}
+            </span>
+            {currentTurnUid ? (
               <>
-                <span className="font-semibold text-cyan-50/95">{currentTurnCombatName}</span>
-                <span className="font-normal text-slate-500"> · </span>
+                <span className="text-slate-600">·</span>
+                <span
+                  className="font-mono text-[9px] font-semibold tabular-nums text-slate-500"
+                  title={currentTurnUid}
+                >
+                  {formatTurnUidShort(currentTurnUid)}
+                </span>
               </>
             ) : null}
-            Turn {currentTurnId} ·{" "}
-            {turnPhase === "start"
-              ? "Start (relics / draw / ST)"
-              : turnPhase === "player"
-                ? "Main phase"
-                : "Enemy phase"}
-            {selected?.totalDamage != null && selected.totalDamage > 0 ? (
-              <span className="font-normal text-slate-500"> · {selected.totalDamage} incoming atk</span>
+            {currentTurnCombatName ? (
+              <>
+                <span className="text-slate-600">·</span>
+                <span className="truncate text-slate-400">{currentTurnCombatName}</span>
+              </>
             ) : null}
-          </span>
+          </div>
+          <label className="block text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+            Turn name
+            <TimelineTurnNameField
+              key={`${currentTurnId}-${canonicalNodeIdForCurrentSlot ?? "none"}-${activeCanonicalLabel}`}
+              activeCanonicalLabel={activeCanonicalLabel}
+              disabled={!canonicalNodeIdForCurrentSlot}
+              placeholder={
+                canonicalNodeIdForCurrentSlot
+                  ? timelineTurnSubtitleByPlannerRowId.get(currentTurnId) ?? `Turn ${currentTurnId}`
+                  : "Open Decision Timeline path to edit"
+              }
+              title={
+                canonicalNodeIdForCurrentSlot
+                  ? "Saved on the Decision Timeline spine for this slot"
+                  : "Requires an active decision branch with a spine node for this slot"
+              }
+              onCommit={commitTurnName}
+            />
+          </label>
         </div>
       </header>
 
       <div className="flex flex-col gap-3 p-3">
         <div className={TIMELINE_ZONE}>
           <p className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-            <History className="h-3 w-3 text-cyan-500/80" strokeWidth={2} />
-            Intent preview{timelineFilteredToLineage ? ' · active path' : ''}
+            <GitBranch className="h-3 w-3 text-cyan-500/80" strokeWidth={2} />
+            Path turns
+            {timelineFilteredToLineage ? " · active lineage" : ""}
           </p>
 
           {plannerRows.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-slate-700/80 py-6 text-center text-[11px] text-slate-500">
-              No turns loaded yet.
+            <p
+              className={`rounded-xl border border-dashed py-6 text-center text-[11px] leading-relaxed transition-colors duration-300 ${
+                pathTurnsSeekAttention
+                  ? "animate-sts-seek-attention border-cyan-400/45 bg-cyan-950/20 text-cyan-100/95"
+                  : "border-slate-700/80 text-slate-500"
+              }`}
+            >
+              {timelineFilteredToLineage && turns.length > 0
+                ? pathTurnsEmptyExplanation ??
+                  "No turns on the active path. Use Decision Timeline to connect START and Set Active on a checkpoint."
+                : "No turns loaded yet."}
             </p>
           ) : (
             <div className="flex flex-col gap-2">
@@ -461,8 +587,8 @@ export default function TimelineBlock() {
                     <button
                       type="button"
                       onClick={() => setCurrentTurn(row.id)}
-                      title={`${row.combatName} · Turn ${turnCount} · ${turnSubtitle} · Planner row ${row.id}`}
-                      className={`w-full max-w-full rounded-xl border-2 p-2.5 text-left transition-all duration-200 ${
+                      title={`${row.combatName} · Turn ${turnCount} · ${turnSubtitle} · Planner row ${row.id} · uid ${row.uid}`}
+                      className={`relative w-full max-w-full overflow-hidden rounded-xl border-2 p-2.5 pl-3 text-left transition-all duration-200 ${
                         isActive && currentTurnHasUnsavedChanges
                           ? "border-amber-400/75 bg-linear-to-b from-amber-950/70 via-amber-950/45 to-slate-950/90 text-slate-100 shadow-md shadow-amber-950/35 ring-1 ring-amber-300/30"
                           : isActive
@@ -470,7 +596,12 @@ export default function TimelineBlock() {
                             : "border-slate-700/80 bg-slate-950/60 hover:border-slate-600 hover:bg-slate-900/50"
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-2">
+                      <span
+                        className="pointer-events-none absolute bottom-0 left-0 top-0 z-[1] w-1 rounded-l-[10px]"
+                        style={{ backgroundColor: row.timelineAccentHex }}
+                        aria-hidden
+                      />
+                      <div className="relative z-[2] flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
                             <Swords
@@ -512,7 +643,13 @@ export default function TimelineBlock() {
                             ) : null}
                           </div>
                           <p
-                            className={`mt-0.5 text-[10px] ${
+                            className="mt-0.5 font-mono text-[8px] font-medium tabular-nums text-slate-600"
+                            title={row.uid}
+                          >
+                            {formatTurnUidShort(row.uid)}
+                          </p>
+                          <p
+                            className={`text-[10px] ${
                               isActive && currentTurnHasUnsavedChanges ? "text-amber-200/80" : "text-slate-500"
                             }`}
                           >
@@ -542,7 +679,7 @@ export default function TimelineBlock() {
 
                       {lines.length > 0 ? (
                         <div
-                          className={`mt-2 space-y-1 border-t pt-2 ${
+                          className={`relative z-[2] mt-2 space-y-1 border-t pt-2 ${
                             isActive && currentTurnHasUnsavedChanges
                               ? "border-amber-700/50"
                               : "border-slate-800/80"
@@ -615,17 +752,6 @@ export default function TimelineBlock() {
                         </div>
                       ) : null}
                     </button>
-
-                    {index < plannerRows.length - 1 ? (
-                      <button
-                        type="button"
-                        onClick={() => continueFromTurn(row.id, plannerRows[index + 1]!.id)}
-                        className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-cyan-600/40 bg-cyan-950/25 py-1.5 text-[11px] font-semibold text-cyan-200/95 transition hover:bg-cyan-900/35 hover:text-cyan-50"
-                      >
-                        <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
-                        Copy state → {plannerRows[index + 1]!.combatName} · Turn {plannerRows[index + 1]!.id}
-                      </button>
-                    ) : null}
                   </div>
                 );
               })}
@@ -637,43 +763,21 @@ export default function TimelineBlock() {
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Quick actions</p>
           <div className="flex flex-col gap-2">
             <ActionBtn
-              tone="cyan"
-              icon={Sparkles}
-              onClick={beginTurn}
-              disabled={turnPhase !== "start"}
-            >
-              Start turn
-            </ActionBtn>
-            <ActionBtn
               tone="amber"
-              icon={SkipForward}
-              onClick={endPlayerTurn}
-              disabled={turnPhase !== "player"}
+              icon={Save}
+              onClick={saveCurrentTurn}
+              disabled={!currentTurnHasUnsavedChanges}
             >
-              End main phase
+              Save to planner row
             </ActionBtn>
-            <ActionBtn
-              tone="rose"
-              icon={Swords}
-              onClick={endEnemyTurn}
-              disabled={turnPhase !== "enemy"}
-            >
-              End enemy turn
-            </ActionBtn>
-            {currentTurnHasUnsavedChanges ? (
-              <ActionBtn tone="amber" icon={Save} onClick={saveCurrentTurn}>
-                Save to planner row
-              </ActionBtn>
-            ) : null}
             <ActionBtn tone="slate" icon={RotateCcw} onClick={handleReset}>
               Reset turn data
             </ActionBtn>
           </div>
           <p className="mt-2 text-[10px] leading-relaxed text-slate-600">
-            Tip: Each planner turn begins in Start — click Start turn to log and enter Main (play cards). End main phase →
-            Enemy. End enemy turn → next planner turn (Start again). “Copy state” uses the player-end snapshot during Enemy.
-            Reset restores the initial snapshot. The active turn turns yellow when the field differs from that row; switching
-            turns saves the previous row automatically.
+            Phase steps (Before start, End of start / main / enemy) live in the bar above the top strip. Logs and saves sync
+            to the Decision Timeline for the active branch. Yellow highlight means unsaved edits vs this row; switching
+            turns saves the previous slot automatically.
           </p>
         </div>
       </div>

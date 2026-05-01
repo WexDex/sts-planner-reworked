@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { useGameManager } from "@/app/context/GameContext";
 import STSCard from "./Card";
 import { LOCATION } from "@/app/types/types";
@@ -22,6 +23,7 @@ import {
 } from "@/app/utils/intentFormat";
 import { isEnemyTargetableInPlannerTurn } from "@/app/utils/enemyPlannerTurn";
 import { enemyIntentSlotTone } from "@/app/utils/enemyIntentSlotTone";
+import { formatTurnUidShort, hasValidPlannerTurnSelection } from "@/app/utils/gameHelpers";
 import {
   ChevronLeft,
   ChevronRight,
@@ -133,6 +135,11 @@ export default function MainFieldBlock() {
   const [enemyTargetLayout, setEnemyTargetLayout] = useState<TargetEnemyLayout>("tiles");
 
   const enemies = useMemo(() => gameState?.enemies ?? [], [gameState?.enemies]);
+
+  const plannerTurnReady = useMemo(
+    () => hasValidPlannerTurnSelection(turns, currentTurnIndex),
+    [turns, currentTurnIndex],
+  );
 
   const logEntriesNewestFirst = useMemo(() => [...(gameState?.activityLog ?? [])].reverse(), [gameState?.activityLog]);
 
@@ -256,6 +263,46 @@ export default function MainFieldBlock() {
   const setMode = useCallback((mode: TargetMode) => {
     setCombatTargetMode(mode);
   }, [setCombatTargetMode]);
+
+  if (!gameState || !plannerTurnReady) {
+    const noPlannerRows = turns.length === 0;
+    return (
+      <div id="sts-battle-focus" className="mx-auto w-full max-w-6xl scroll-mt-2 space-y-4">
+        <section className={`${SHELL} border-amber-500/30 ring-1 ring-amber-500/15`}>
+          <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
+            <p className="text-lg font-semibold text-amber-100">No data</p>
+            <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-400">
+              {!gameState ? (
+                <>
+                  Load combat from the header, then add planner rows in{" "}
+                  <Link href="/turn-maker" className="font-semibold text-amber-300/95 underline-offset-2 hover:underline">
+                    Turns
+                  </Link>
+                  . The board stays inactive until combat and a valid row are ready.
+                </>
+              ) : noPlannerRows ? (
+                <>
+                  Open{" "}
+                  <Link href="/turn-maker" className="font-semibold text-amber-300/95 underline-offset-2 hover:underline">
+                    Turns
+                  </Link>{" "}
+                  and add at least one planner row. Without rows there is no snapshot to target or edit.
+                </>
+              ) : (
+                <>
+                  The main field needs an active planner row. Open{" "}
+                  <Link href="/turn-maker" className="font-semibold text-amber-300/95 underline-offset-2 hover:underline">
+                    Turns
+                  </Link>{" "}
+                  to add a row or select one, then return here to play and edit that snapshot.
+                </>
+              )}
+            </p>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div id="sts-battle-focus" className="mx-auto w-full max-w-6xl scroll-mt-2 space-y-4">
@@ -727,7 +774,7 @@ export default function MainFieldBlock() {
                 setActivityLogModalTurnIndex(currentTurnIndex);
                 setActivityLogOpen(true);
               }}
-              disabled={!anyTurnHasLogEntries}
+              disabled={!plannerTurnReady || !anyTurnHasLogEntries}
               className="inline-flex items-center gap-2 rounded-xl border border-violet-500/40 bg-violet-950/50 px-3 py-2 text-xs font-semibold text-violet-100 shadow-sm transition-all hover:bg-violet-900/50 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Maximize2 className="h-3.5 w-3.5" strokeWidth={2} />
@@ -735,8 +782,7 @@ export default function MainFieldBlock() {
             </button>
             <button
               type="button"
-              disabled={turns.length === 0}
-              onClick={() => appendTestNoiseLogsForPlannerTurnIndex(currentTurnIndex, { count: 8 })}
+              disabled={!plannerTurnReady}
               title="TEST: append 8 synthetic log rows (tagged TEST) to the current planner turn"
               className="rounded-xl border border-amber-600/55 bg-amber-950/75 px-2.5 py-2 text-[11px] font-semibold text-amber-100/95 transition hover:bg-amber-900/70 disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -744,8 +790,7 @@ export default function MainFieldBlock() {
             </button>
             <button
               type="button"
-              disabled={turns.length === 0}
-              onClick={() => appendTestNoiseLogsForPlannerTurnIndex(currentTurnIndex, { count: 24 })}
+              disabled={!plannerTurnReady}
               title="TEST: append 24 synthetic log rows (tagged TEST) to the current planner turn"
               className="rounded-xl border border-amber-600/55 bg-amber-950/75 px-2.5 py-2 text-[11px] font-semibold text-amber-100/95 transition hover:bg-amber-900/70 disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -833,13 +878,29 @@ export default function MainFieldBlock() {
                             <ChevronLeft className="h-4 w-4" strokeWidth={2} />
                           </button>
                           <span
-                            className="min-w-[7.5rem] select-none text-center text-sm font-semibold tabular-nums text-slate-100"
-                            title={modalTurnMeta ? `Turn id ${modalTurnMeta.id}` : undefined}
+                            className="flex min-w-[7.5rem] flex-col items-center justify-center select-none text-center text-sm font-semibold tabular-nums text-slate-100"
+                            title={
+                              modalTurnMeta
+                                ? `Planner slot ${modalTurnMeta.id} · uid ${modalTurnMeta.uid}`
+                                : undefined
+                            }
                           >
-                            Turn {modalTurnMeta?.id ?? "—"}
-                            {turns.length > 1 ? ` · ${safeModalLogTurnIndex + 1}/${turns.length}` : null}
-                            {!isViewingCurrentTurnInModal && turns.length > 1 ? (
-                              <span className="ms-1 text-[10px] font-medium uppercase text-amber-400/90">(not current)</span>
+                            <span>
+                              Turn {modalTurnMeta?.id ?? "—"}
+                              {turns.length > 1 ? ` · ${safeModalLogTurnIndex + 1}/${turns.length}` : null}
+                              {!isViewingCurrentTurnInModal && turns.length > 1 ? (
+                                <span className="ms-1 text-[10px] font-medium uppercase text-amber-400/90">
+                                  (not current)
+                                </span>
+                              ) : null}
+                            </span>
+                            {modalTurnMeta?.uid ? (
+                              <span
+                                className="font-mono text-[9px] font-medium tabular-nums text-slate-500"
+                                title={modalTurnMeta.uid}
+                              >
+                                {formatTurnUidShort(modalTurnMeta.uid)}
+                              </span>
                             ) : null}
                           </span>
                           <button
@@ -862,7 +923,7 @@ export default function MainFieldBlock() {
                         <button
                           type="button"
                           onClick={() => appendTestNoiseLogsForPlannerTurnIndex(safeModalLogTurnIndex, { count: 8 })}
-                          disabled={turns.length === 0}
+                          disabled={!plannerTurnReady}
                           title="TEST: append 8 synthetic rows to this turn’s stored log (the turn shown above)"
                           className="rounded-lg border border-amber-600/50 bg-amber-950/60 px-2 py-1.5 text-[11px] font-semibold text-amber-100 transition-colors hover:bg-amber-900/55 disabled:cursor-not-allowed disabled:opacity-40"
                         >
@@ -871,7 +932,7 @@ export default function MainFieldBlock() {
                         <button
                           type="button"
                           onClick={() => appendTestNoiseLogsForPlannerTurnIndex(safeModalLogTurnIndex, { count: 24 })}
-                          disabled={turns.length === 0}
+                          disabled={!plannerTurnReady}
                           title="TEST: append 24 synthetic rows to this turn’s stored log (the turn shown above)"
                           className="rounded-lg border border-amber-600/50 bg-amber-950/60 px-2 py-1.5 text-[11px] font-semibold text-amber-100 transition-colors hover:bg-amber-900/55 disabled:cursor-not-allowed disabled:opacity-40"
                         >

@@ -17,6 +17,14 @@ export type ActivityLogInlineDensity = 'minimal' | 'detailed';
 
 type LogColors = (typeof ACTIVITY_LOG_COLORS)[keyof typeof ACTIVITY_LOG_COLORS];
 
+/** Extra chrome for phase-bar “turn started” milestones (amber spine + soft ring). */
+const TURN_START_LOG_CHROME =
+  'shadow-[inset_4px_0_0_rgba(251,191,36,0.92)] ring-1 ring-amber-400/25 ring-inset';
+
+function turnStartRowChrome(entry: ActivityLogEntry): string {
+  return entry.type === 'turn-start' ? TURN_START_LOG_CHROME : '';
+}
+
 export function getActivityLogColors(type?: ActivityLogType): LogColors {
   const logType = type || 'info';
   return (ACTIVITY_LOG_COLORS as Record<string, LogColors>)[logType] || ACTIVITY_LOG_COLORS.info;
@@ -109,7 +117,7 @@ export function ActivityLogRowMinimal({ entry }: { entry: ActivityLogEntry }) {
 
   return (
     <div
-      className={`group flex gap-2 border-b border-slate-800/50 border-l-2 py-2 pl-2 pr-2 transition-colors last:border-b-0 hover:bg-slate-900/35 ${colors.border}`}
+      className={`group flex gap-2 border-b border-slate-800/50 border-l-2 py-2 pl-2 pr-2 transition-colors last:border-b-0 hover:bg-slate-900/35 ${colors.border} ${turnStartRowChrome(entry)}`}
     >
       <div className="flex min-w-0 flex-1 items-start gap-2">
         <span className="shrink-0 text-sm leading-none opacity-90" aria-hidden>
@@ -242,7 +250,9 @@ export function ActivityLogRowExpanded({ entry }: { entry: ActivityLogEntry }) {
   const showDetails = shouldShowDetailsText(entry);
 
   return (
-    <article className={`rounded-2xl border-2 p-5 md:p-6 ${colors.border} ${colors.bg}`}>
+    <article
+      className={`rounded-2xl border-2 p-5 md:p-6 ${colors.border} ${colors.bg} ${turnStartRowChrome(entry)}`}
+    >
       <div className="flex flex-wrap items-start gap-3 border-b border-slate-700/50 pb-4">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-600/50 bg-slate-950/50 text-2xl shadow-inner">
           {icon}

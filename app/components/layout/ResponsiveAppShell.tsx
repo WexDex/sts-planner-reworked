@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useId, useState, useSyncExternalStore } from "react";
-import { GitBranch, Hand, LayoutDashboard, Swords, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, GitBranch, Hand, LayoutDashboard, Swords, X } from "lucide-react";
 import TopBarBlock from "@/app/components/UI/TopBarBlock";
 import TimelineBlock from "@/app/components/UI/TimelineBlock";
 import MainFieldBlock from "@/app/components/UI/MainFieldBlock";
@@ -26,11 +26,16 @@ function getMdUpSnapshot() {
   return window.matchMedia(MD_UP).matches;
 }
 
-const RAIL_INNER = "min-h-0 w-full min-w-0 max-w-md flex-1";
+const LS_RAIL_LEFT_COLLAPSED = "sts-shell-rail-left-collapsed";
+const LS_RAIL_RIGHT_COLLAPSED = "sts-shell-rail-right-collapsed";
+
+const RAIL_COLLAPSED_W = "w-11 min-w-11 max-w-11";
 const RAIL_L =
   "sticky top-0 z-20 h-[100dvh] max-h-[100dvh] shrink-0 flex-col overflow-hidden border-r-2 border-cyan-500/55 bg-linear-to-b from-gray-900 to-gray-950";
 const RAIL_R =
   "sticky top-0 z-20 h-[100dvh] max-h-[100dvh] shrink-0 flex-col overflow-hidden border-l-2 border-amber-600/70 bg-linear-to-b from-gray-900 to-gray-950";
+/** Fills the rail below the header controls; `min-h-0` lets nested panels scroll. */
+const RAIL_INNER = "flex min-h-0 w-full min-w-0 flex-1 flex-col";
 
 function scrollToAnchor(id: string) {
   requestAnimationFrame(() => {
@@ -42,6 +47,40 @@ export default function ResponsiveAppShell() {
   const isMdUp = useSyncExternalStore(subscribeMdUp, getMdUpSnapshot, () => false);
   const [panel, setPanel] = useState<MobilePanel>("none");
   const sheetTitleId = useId();
+  const [leftRailCollapsed, setLeftRailCollapsed] = useState(false);
+  const [rightRailCollapsed, setRightRailCollapsed] = useState(false);
+
+  useEffect(() => {
+    if (!isMdUp) return;
+    try {
+      const l = localStorage.getItem(LS_RAIL_LEFT_COLLAPSED) === "1";
+      const r = localStorage.getItem(LS_RAIL_RIGHT_COLLAPSED) === "1";
+      queueMicrotask(() => {
+        if (l) setLeftRailCollapsed(true);
+        if (r) setRightRailCollapsed(true);
+      });
+    } catch {
+      /* ignore */
+    }
+  }, [isMdUp]);
+
+  useEffect(() => {
+    if (!isMdUp) return;
+    try {
+      localStorage.setItem(LS_RAIL_LEFT_COLLAPSED, leftRailCollapsed ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }, [isMdUp, leftRailCollapsed]);
+
+  useEffect(() => {
+    if (!isMdUp) return;
+    try {
+      localStorage.setItem(LS_RAIL_RIGHT_COLLAPSED, rightRailCollapsed ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }, [isMdUp, rightRailCollapsed]);
 
   /** When desktop layout is active, sheets must not use `panel` (stale) state. */
   const mobileSheet: MobilePanel = isMdUp ? "none" : panel;
@@ -98,12 +137,45 @@ export default function ResponsiveAppShell() {
       <div className="flex h-[100dvh] max-h-[100dvh] min-h-0 flex-col overflow-hidden bg-slate-950 text-gray-100 md:flex-row">
         {showLeftRail ? (
           <aside
-            className={`${RAIL_L} flex w-[min(15rem,34vw)] shrink-0 sm:w-[min(16rem,32vw)] md:w-[min(17rem,30vw)] lg:w-[min(18rem,28vw)] xl:w-[min(19rem,26vw)] 2xl:w-80 2xl:max-w-[20rem]`}
+            className={`${RAIL_L} relative flex shrink-0 flex-col overflow-hidden transition-[width,min-width,max-width] duration-300 ease-in-out motion-reduce:transition-none ${
+              leftRailCollapsed
+                ? RAIL_COLLAPSED_W
+                : "w-[min(15rem,34vw)] sm:w-[min(16rem,32vw)] md:w-[min(17rem,30vw)] lg:w-[min(18rem,28vw)] xl:w-[min(19rem,26vw)] 2xl:w-80 2xl:max-w-[20rem]"
+            }`}
             aria-label="Turn timeline"
           >
-            <div className={`${RAIL_INNER} overflow-hidden`}>
+            {!leftRailCollapsed ? (
+              <button
+                type="button"
+                onClick={() => setLeftRailCollapsed(true)}
+                className="absolute right-1 top-2 z-30 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-500/45 bg-slate-950/95 text-cyan-200 shadow-md shadow-black/30 backdrop-blur-sm transition hover:border-cyan-400/60 hover:bg-slate-900"
+                title="Collapse timeline"
+                aria-label="Collapse timeline rail"
+              >
+                <ChevronLeft className="h-4 w-4" strokeWidth={2.25} aria-hidden />
+              </button>
+            ) : null}
+            <div
+              className={`${RAIL_INNER} relative min-h-0 flex-1 overflow-hidden transition-opacity duration-300 ease-in-out motion-reduce:transition-none ${
+                leftRailCollapsed ? "pointer-events-none opacity-0" : "opacity-100"
+              }`}
+            >
               <TimelineBlock />
             </div>
+            <button
+              type="button"
+              onClick={() => setLeftRailCollapsed(false)}
+              title="Expand timeline"
+              aria-label="Expand timeline rail"
+              className={`absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 border-r border-cyan-500/40 bg-linear-to-b from-slate-950 to-slate-900 text-cyan-200 transition-[opacity,background-color] duration-300 ease-in-out motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
+                leftRailCollapsed
+                  ? "pointer-events-auto cursor-e-resize opacity-100 hover:bg-cyan-500/[0.08] active:bg-cyan-500/[0.14]"
+                  : "pointer-events-none opacity-0"
+              }`}
+            >
+              <GitBranch className="h-5 w-5 shrink-0 drop-shadow-sm" strokeWidth={2.25} aria-hidden />
+              <ChevronRight className="h-4 w-4 shrink-0 opacity-85 drop-shadow-sm" strokeWidth={2.5} aria-hidden />
+            </button>
           </aside>
         ) : null}
 
@@ -114,7 +186,7 @@ export default function ResponsiveAppShell() {
               : "flex min-h-0 min-w-0 flex-1 flex-col md:ring-1 md:ring-cyan-500/[0.07] md:ring-inset"
           }
         >
-          <header className="z-40 shrink-0 border-b border-slate-800/80 bg-slate-950/80 shadow-md shadow-black/30 backdrop-blur-md supports-[backdrop-filter]:bg-slate-950/70 max-md:shadow-md max-md:shadow-cyan-950/20 max-md:backdrop-blur-md">
+          <header className="z-40 shrink-0 overflow-hidden border-b border-slate-800/80 bg-slate-950/80 shadow-md shadow-black/30 backdrop-blur-md transition-[box-shadow] duration-300 supports-[backdrop-filter]:bg-slate-950/70 max-md:shadow-md max-md:shadow-cyan-950/20 max-md:backdrop-blur-md">
             <TopBarBlock />
           </header>
 
@@ -133,12 +205,45 @@ export default function ResponsiveAppShell() {
 
         {showRightRail ? (
           <aside
-            className={`${RAIL_R} flex w-[min(16rem,36vw)] shrink-0 sm:w-[min(17rem,34vw)] md:w-[min(18.5rem,32vw)] lg:w-[min(20rem,30vw)] xl:min-w-[20rem] 2xl:w-[22rem] 2xl:max-w-[24rem]`}
+            className={`${RAIL_R} relative flex shrink-0 flex-col overflow-hidden transition-[width,min-width,max-width] duration-300 ease-in-out motion-reduce:transition-none ${
+              rightRailCollapsed
+                ? RAIL_COLLAPSED_W
+                : "w-[min(16rem,36vw)] sm:w-[min(17rem,34vw)] md:w-[min(18.5rem,32vw)] lg:w-[min(20rem,30vw)] xl:min-w-[20rem] 2xl:w-[22rem] 2xl:max-w-[24rem]"
+            }`}
             aria-label="Combat tools"
           >
-            <div className={`${RAIL_INNER} overflow-y-auto overflow-x-hidden`}>
+            {!rightRailCollapsed ? (
+              <button
+                type="button"
+                onClick={() => setRightRailCollapsed(true)}
+                className="absolute left-1 top-2 z-30 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-amber-500/45 bg-slate-950/95 text-amber-200 shadow-md shadow-black/30 backdrop-blur-sm transition hover:border-amber-400/60 hover:bg-slate-900"
+                title="Collapse combat tools"
+                aria-label="Collapse combat tools rail"
+              >
+                <ChevronRight className="h-4 w-4" strokeWidth={2.25} aria-hidden />
+              </button>
+            ) : null}
+            <div
+              className={`${RAIL_INNER} relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden transition-opacity duration-300 ease-in-out motion-reduce:transition-none ${
+                rightRailCollapsed ? "pointer-events-none opacity-0" : "opacity-100"
+              }`}
+            >
               <RightBlock />
             </div>
+            <button
+              type="button"
+              onClick={() => setRightRailCollapsed(false)}
+              title="Expand combat tools"
+              aria-label="Expand combat tools rail"
+              className={`absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 border-l border-amber-500/40 bg-linear-to-b from-slate-950 to-slate-900 text-amber-200 transition-[opacity,background-color] duration-300 ease-in-out motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
+                rightRailCollapsed
+                  ? "pointer-events-auto cursor-w-resize opacity-100 hover:bg-amber-500/[0.08] active:bg-amber-500/[0.14]"
+                  : "pointer-events-none opacity-0"
+              }`}
+            >
+              <Swords className="h-5 w-5 shrink-0 drop-shadow-sm" strokeWidth={2.25} aria-hidden />
+              <ChevronLeft className="h-4 w-4 shrink-0 opacity-85 drop-shadow-sm" strokeWidth={2.5} aria-hidden />
+            </button>
           </aside>
         ) : null}
       </div>

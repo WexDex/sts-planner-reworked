@@ -19,6 +19,8 @@ import {
   loadFromLocalStorage,
   LANTERN_RELIC_NAME,
   LANTERN_ENERGY_GIFT,
+  migrateTurnRowsWithUids,
+  newPlannerTurnUid,
 } from '@/app/utils/gameHelpers';
 import {
   buildActionLogEntry,
@@ -47,17 +49,29 @@ import {
 import { getStsCardsRecord } from '@/app/card-design-gallery/stsRecord';
 import { toast } from '@/app/utils/toast';
 import {
+  activeDecisionCheckpointSnapshotFromPlanner,
   buildTurnStatesFromBranchPath,
+  decisionNodeDepthFromRoot,
   defaultForkDecisionLabel,
   eligibleDecisionReparentParents,
   effectivePlannerTurnSlotId,
+  getDecisionPathFromRoot,
   isValidDecisionReparent,
   normalizeDecisionNodePlannerSlots,
+  migrateDecisionCheckpointLabelsToTurnSlugs,
+  getForcedMainTimelineLeafFromStart,
+  isApplyDecisionBranchToPlannerSynced as checkApplyDecisionBranchToPlannerSynced,
+  pinActiveAlongUniqueChildChainFromNode,
 } from '@/app/utils/decisionTreeHelpers';
 import {
   buildImportedDecisionTimelineSpine,
   migrateDecisionNodeTimelineRoles,
 } from '@/app/utils/decisionTimelineSpine';
+import {
+  ensureDecisionNodesTimelineAccents,
+  normalizeDecisionTimelineAccentHex,
+  pickDistinctTimelineAccentHex,
+} from '@/app/utils/decisionTimelineAccent';
 
 export type DecisionTimelinePositionMap = Record<string, { x: number; y: number }>;
 import {
@@ -145,8 +159,12 @@ interface GameContextType {
   /** Branching decision overlay (full snapshots per node). */
   decisionNodes: DecisionNode[];
   activeDecisionNodeId: string | null;
-  /** Save live state into the active node, then add a child copy (divergent branch). */
-  forkDecisionBranch: (label?: string) => void;
+  /**
+   * Adds a child under `forkParentCheckpointId`, or under {@link activeDecisionNodeId} when omitted/null.
+   * Copies that checkpoint’s snapshot (live combat when it is active) and appends `Copied from "<id>"` to the new branch log.
+   * Returns the new child node id, or null on failure.
+   */
+  forkDecisionBranch: (label?: string, forkParentCheckpointId?: string | null) => string | null;
   /** Restore combat + planner slot from a node’s snapshot (autosaves prior active node). */
   jumpToDecisionNode: (nodeId: string) => void;
   /**
@@ -158,11 +176,16 @@ interface GameContextType {
   /** Remove a node and all descendants (cannot delete root). */
   deleteDecisionBranch: (nodeId: string) => void;
   updateDecisionNodeLabel: (nodeId: string, label: string) => void;
-  /** Persisted React Flow coordinates for Decision Timeline (`Save game`). */
+  /** Per-node accent (`#RRGGBB`) for left timeline stripe + minimap when set. */
+  updateDecisionNodeTimelineAccent: (nodeId: string, hex: string) => void;
+  /** Pin active node to the deterministic main chain from START (checkpoint-first at forks); refreshes planner sync hint. */
+  forceActiveDecisionTimelineMainChain: () => void;
   decisionTimelinePositions: DecisionTimelinePositionMap;
   setDecisionTimelineNodePosition: (nodeId: string, position: { x: number; y: number }) => void;
   /** Merge many timeline positions in one update (e.g. scatter layout). */
   mergeDecisionTimelinePositions: (patch: DecisionTimelinePositionMap) => void;
+  /** True when apply would not change planner / active pin / live combat for this branch target. */
+  isApplyDecisionBranchToPlannerSynced: (targetNodeId: string | null) => boolean;
   /** Hydrate planner turn rows from root→node path; set active node + live combat to target. */
   applyDecisionBranchToPlanner: (nodeId: string) => void;
   /** Point an existing node's parent at another node (keeps START as root); no cycles. */
@@ -195,10 +218,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [currentTurnIndex, setCurrentTurnIndex] = useState(0);
   const currentTurnIndexRef = useRef(0);
   currentTurnIndexRef.current = currentTurnIndex;
-  /** Holds latest planner↔timeline sync impl so the sync effect avoids depending on unstable callback identity (`turns` churn). */
-  const syncActiveDecisionNodeFromPlannerRef = useRef<() => void>(() => {});
   const [turnPhase, setTurnPhase] = useState<CombatTurnPhase>('start');
   const [decisionNodes, setDecisionNodes] = useState<DecisionNode[]>([]);
+  const turnsRef = useRef<Turn[]>([]);
+  const decisionNodesRef = useRef<DecisionNode[]>([]);
+  turnsRef.current = turns;
+  decisionNodesRef.current = decisionNodes;
+  /** Holds latest planner↔timeline sync impl so the sync effect avoids unstable deps (`turns` churn); reads refs inside sync. */
+  const syncActiveDecisionNodeFromPlannerRef = useRef<() => void>(() => {});
   const [activeDecisionNodeId, setActiveDecisionNodeId] = useState<string | null>(null);
   const [decisionTimelinePositions, setDecisionTimelinePositions] = useState<DecisionTimelinePositionMap>({});
   const [combatTargetMode, setCombatTargetModeState] = useState<'single' | 'multi'>('single');
@@ -278,17 +305,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         enemy.intents?.forEach((intent) => turnNumbers.add(intent.turn)),
       );
       const uniqueTurns = Array.from(turnNumbers).sort((a, b) => a - b);
-      const initialTurns: Turn[] = uniqueTurns.map((id) => ({ id, state: cloneGameData(withPiles) }));
+      const initialTurns = migrateTurnRowsWithUids(
+        uniqueTurns.map((id) => ({ id, state: cloneGameData(withPiles) })),
+      );
       setTurns(initialTurns);
       setCurrentTurnIndex(0);
       setTurnPhase('start');
 
-      const spine = buildImportedDecisionTimelineSpine(
-        initialTurns,
-        withPiles,
-        () => crypto.randomUUID(),
-        { activePlannerTurnSlotId: initialTurns[0]?.id },
-      );
+      const spine = buildImportedDecisionTimelineSpine(initialTurns, withPiles, () => crypto.randomUUID());
       setDecisionNodes(normalizeDecisionNodePlannerSlots(spine.nodes, initialTurns));
       setActiveDecisionNodeId(spine.activeNodeId);
       setDecisionTimelinePositions({});
@@ -461,6 +485,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (nextIndex >= withSaved.length) {
         const newTurn: Turn = {
           id: withSaved.length > 0 ? Math.max(...withSaved.map((t) => t.id)) + 1 : 1,
+          uid: newPlannerTurnUid(),
           state: cloneGameData(initialData),
         };
         return [...withSaved, newTurn];
@@ -483,17 +508,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (!gameState || turnPhase !== 'start') return;
     const plannerTurnSlotId = turns[currentTurnIndex]?.id ?? currentTurnIndex + 1;
     const logEntry = createActivityLogEntry(
-      `Start phase — planner turn ${plannerTurnSlotId}`,
+      `End of start — entering Main · planner turn ${plannerTurnSlotId}`,
       undefined,
       undefined,
-      'Resolve start-of-turn relics, passive powers, and draw before playing cards (Main phase).',
+      'Start phase is complete; you are now in Main (play cards). Relics / draw / ST should already be logged above.',
       'system',
       {
         context: [
-          { label: 'Phase track', value: 'Start (Draw · Standby · relics) → Main' },
+          { label: 'Phase track', value: 'Start → Main' },
           {
-            label: 'Reminds',
-            value: 'Similar to YGO: finish start-of-turn triggers, then act in Main; End player turn enters Enemy.',
+            label: 'Tip',
+            value: 'Use “Turn start” before this when you want an explicit boundary line in the log.',
           },
         ],
       },
@@ -719,9 +744,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const loadSavedGame = (key: string = DEFAULT_SAVE_KEY): boolean => {
     const saved = loadFromLocalStorage(key);
     if (saved && saved.turns && Array.isArray(saved.turns)) {
-      setTurns(saved.turns);
+      const migratedTurns = migrateTurnRowsWithUids(saved.turns);
+      setTurns(migratedTurns);
       setCurrentTurnIndex(saved.currentTurnIndex || 0);
-      const slotState = saved.turns[saved.currentTurnIndex || 0]?.state;
+      const slotState = migratedTurns[saved.currentTurnIndex || 0]?.state;
       setGameState(slotState ? cloneGameData(slotState) : null);
       const phase = saved.turnPhase as CombatTurnPhase | undefined;
       setTurnPhase(
@@ -746,10 +772,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             snapshot: cloneGameData(n.snapshot),
           })),
         );
+        const normalizedNodes = migrateDecisionCheckpointLabelsToTurnSlugs(
+          normalizeDecisionNodePlannerSlots(cloned, migratedTurns),
+          migratedTurns,
+        );
+        const withAccents = ensureDecisionNodesTimelineAccents(normalizedNodes);
         const preferred = saved.activeDecisionNodeId as string | undefined;
         const active =
-          preferred && cloned.some((n) => n.id === preferred) ? preferred : cloned[0]!.id;
-        setDecisionNodes(normalizeDecisionNodePlannerSlots(cloned, saved.turns));
+          preferred && withAccents.some((n) => n.id === preferred)
+            ? preferred
+            : getForcedMainTimelineLeafFromStart(withAccents) ?? withAccents[0]!.id;
+        setDecisionNodes(withAccents);
         setActiveDecisionNodeId(active);
         const pos = saved.decisionTimelinePositions as DecisionTimelinePositionMap | undefined;
         setDecisionTimelinePositions(
@@ -757,7 +790,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         );
       } else {
         const idx = saved.currentTurnIndex || 0;
-        const slot = saved.turns[idx];
+        const slot = migratedTurns[idx];
         const phaseNow =
           saved.turnPhase === 'start' || saved.turnPhase === 'player' || saved.turnPhase === 'enemy'
             ? saved.turnPhase
@@ -772,6 +805,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               timelineRole: 'timeline_start',
               snapshot: cloneGameData(slot.state),
               plannerTurnSlotId: slot.id,
+              timelineAccentHex: pickDistinctTimelineAccentHex([]),
               turnPhase: phaseNow,
               createdAt: new Date().toISOString(),
             },
@@ -791,78 +825,141 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   };
 
   const forkDecisionBranch = useCallback(
-    (optionalLabel?: string) => {
+    (optionalLabel?: string, forkParentCheckpointId?: string | null): string | null => {
       if (!gameState) {
         toast('Load combat first', 'error');
-        return;
+        return null;
       }
 
-      const slotId = turns[currentTurnIndex]?.id ?? 1;
       const childId = crypto.randomUUID();
+      let nodes = [...decisionNodes];
+      let effectiveParentId =
+        forkParentCheckpointId !== undefined && forkParentCheckpointId !== null
+          ? forkParentCheckpointId
+          : activeDecisionNodeId;
 
-      setDecisionNodes((prevNodes) => {
-        let nodes = [...prevNodes];
-        let effectiveParentId = activeDecisionNodeId;
-
-        if (nodes.length === 0) {
-          const rootId = crypto.randomUUID();
-          nodes.push({
-            id: rootId,
-            parentId: null,
-            label: 'START',
-            timelineRole: 'timeline_start',
-            snapshot: cloneGameData(gameState),
-            plannerTurnSlotId: slotId,
-            turnPhase,
-            createdAt: new Date().toISOString(),
-          });
-          effectiveParentId = rootId;
-        } else {
-          const rootNode = nodes.find((n) => n.parentId === null);
-          if (!effectiveParentId && rootNode) effectiveParentId = rootNode.id;
-        }
-
-        if (!effectiveParentId) return prevNodes;
-
-        nodes = nodes.map((n) =>
-          n.id === effectiveParentId
-            ? {
-                ...n,
-                snapshot: cloneGameData(gameState),
-                turnPhase,
-              }
-            : n,
-        );
-
-        const pending: DecisionNode = {
-          id: childId,
-          parentId: effectiveParentId,
-          label: '',
-          timelineRole: 'branch',
+      if (nodes.length === 0) {
+        const rootId = crypto.randomUUID();
+        nodes.push({
+          id: rootId,
+          parentId: null,
+          label: 'START',
+          timelineRole: 'timeline_start',
           snapshot: cloneGameData(gameState),
-          plannerTurnSlotId: slotId,
+          plannerTurnSlotId: turns[0]?.id ?? 1,
+          timelineAccentHex: pickDistinctTimelineAccentHex([]),
           turnPhase,
           createdAt: new Date().toISOString(),
-        };
-        nodes.push(pending);
-        const auto = defaultForkDecisionLabel(nodes, pending, turns);
-        nodes[nodes.length - 1] = {
-          ...pending,
-          label: optionalLabel?.trim() || auto,
-        };
+        });
+        effectiveParentId = rootId;
+      } else {
+        const rootNode = nodes.find((n) => n.parentId === null);
+        if (!effectiveParentId && rootNode) effectiveParentId = rootNode.id;
+      }
 
-        return normalizeDecisionNodePlannerSlots(nodes, turns);
-      });
+      if (!effectiveParentId) {
+        toast('Click a timeline checkpoint to select it, or activate one on the path.', 'info');
+        return null;
+      }
 
-      setActiveDecisionNodeId(childId);
+      const parentNode = nodes.find((n) => n.id === effectiveParentId);
+      if (!parentNode) {
+        toast('Selected checkpoint not found.', 'error');
+        return null;
+      }
 
-      setTurns((prev) =>
-        prev.map((t, i) => (i === currentTurnIndex ? { ...t, state: cloneGameData(gameState) } : t)),
+      const parentSnapForChild =
+        effectiveParentId === activeDecisionNodeId
+          ? cloneGameData(gameState)
+          : cloneGameData(parentNode.snapshot);
+
+      /** Tree depth below START maps to planner row index `depth - 1`; extend rows so depth N uses slot `turns[N - 1]`. */
+      const parentDepth = decisionNodeDepthFromRoot(nodes, effectiveParentId);
+      const childDepth = parentDepth + 1;
+
+      let expandedTurns = [...turns];
+      while (expandedTurns.length < childDepth) {
+        const nextId =
+          expandedTurns.length > 0 ? Math.max(...expandedTurns.map((t) => t.id)) + 1 : 1;
+        expandedTurns.push({
+          id: nextId,
+          uid: newPlannerTurnUid(),
+          state: cloneGameData(parentSnapForChild),
+        });
+      }
+
+      nodes = nodes.map((n) =>
+        n.id === effectiveParentId
+          ? {
+              ...n,
+              snapshot: parentSnapForChild,
+              turnPhase:
+                effectiveParentId === activeDecisionNodeId ? turnPhase : n.turnPhase,
+            }
+          : n,
       );
 
+      const childPhase =
+        effectiveParentId === activeDecisionNodeId ? turnPhase : parentNode.turnPhase;
+
+      let childSnap = cloneGameData(parentSnapForChild);
+      childSnap.activityLog = [
+        ...(childSnap.activityLog ?? []),
+        createActivityLogEntry(
+          `Copied from "${parentNode.id}"`,
+          undefined,
+          undefined,
+          parentNode.label?.trim()
+            ? `Source checkpoint label: ${parentNode.label.trim()}`
+            : undefined,
+          'system',
+        ),
+      ];
+
+      const pending: DecisionNode = {
+        id: childId,
+        parentId: effectiveParentId,
+        label: '',
+        timelineRole: 'branch',
+        snapshot: childSnap,
+        plannerTurnSlotId: expandedTurns[0]?.id ?? 1,
+        timelineAccentHex: pickDistinctTimelineAccentHex(nodes.map((n) => n.timelineAccentHex ?? '')),
+        turnPhase: childPhase,
+        createdAt: new Date().toISOString(),
+      };
+      nodes.push(pending);
+      const auto = defaultForkDecisionLabel(nodes, pending, expandedTurns);
+      nodes[nodes.length - 1] = {
+        ...pending,
+        label: optionalLabel?.trim() || auto,
+      };
+
+      const normalized = normalizeDecisionNodePlannerSlots(nodes, expandedTurns);
+      const childRow = normalized.find((n) => n.id === childId);
+      if (!childRow) {
+        toast('Branch normalize failed.', 'error');
+        return null;
+      }
+
+      const turnIdxForChild = Math.max(
+        0,
+        expandedTurns.findIndex((t) => t.id === childRow.plannerTurnSlotId),
+      );
+      const expandedTurnsFinal = expandedTurns.map((t, i) =>
+        i === turnIdxForChild ? { ...t, state: cloneGameData(childSnap) } : t,
+      );
+
+      setTurns(expandedTurnsFinal);
+      setDecisionNodes(normalized);
+      setActiveDecisionNodeId(childId);
+      setCurrentTurnIndex(turnIdxForChild);
+      setGameState(cloneGameData(childSnap));
+      setTurnPhase(childPhase);
+
       toast('Branch created', 'success');
+      return childId;
     },
-    [gameState, activeDecisionNodeId, turns, currentTurnIndex, turnPhase],
+    [gameState, activeDecisionNodeId, turns, currentTurnIndex, turnPhase, decisionNodes],
   );
 
   const jumpToDecisionNode = useCallback(
@@ -876,14 +973,23 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (gameState && activeDecisionNodeId && activeDecisionNodeId !== nodeId) {
+        const turnsScratchForFlush = turns.map((t, i) =>
+          i === currentTurnIndex ? { ...t, state: cloneGameData(gameState) } : t,
+        );
         setDecisionNodes((prev) =>
           normalizeDecisionNodePlannerSlots(
             prev.map((n) =>
               n.id === activeDecisionNodeId
                 ? {
                     ...n,
-                    snapshot: cloneGameData(gameState),
-                    turnPhase,
+                    ...activeDecisionCheckpointSnapshotFromPlanner(
+                      n,
+                      prev,
+                      turnsScratchForFlush,
+                      currentTurnIndex,
+                      gameState,
+                      turnPhase,
+                    ),
                   }
                 : n,
             ),
@@ -913,67 +1019,148 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     [activeDecisionNodeId, decisionNodes, gameState, turns, currentTurnIndex, turnPhase],
   );
 
+  /**
+   * Keeps the Decision Timeline aligned with the main planner as {@link gameState} changes (plays, activity log, etc.).
+   * Mirrors {@link applyDecisionBranchToPlanner}: flush active checkpoint + merge ROOT→active path into planner rows,
+   * then write merged snapshots onto every checkpoint on that path so parent/child log diffs stay correct.
+   */
   const syncActiveDecisionNodeFromPlanner = useCallback(() => {
     if (!gameState) return;
 
-    if (activeDecisionNodeId) {
-      setDecisionNodes((prev) => {
-        const snap = cloneGameData(gameState);
-        const idx = currentTurnIndexRef.current;
-        const slotId = turns[idx]?.id;
+    const turnsNow = turnsRef.current;
+    const nodesNow = decisionNodesRef.current;
+    const idx = currentTurnIndexRef.current;
 
-        const byIdWalk = new Map(prev.map((x) => [x.id, x] as const));
-        const inActiveSubtree = (nodeId: string): boolean => {
-          let cur = byIdWalk.get(nodeId);
-          while (cur) {
-            if (cur.id === activeDecisionNodeId) return true;
-            cur = cur.parentId ? byIdWalk.get(cur.parentId) : undefined;
-          }
-          return false;
-        };
-
-        const nextNodes = prev.map((n) => {
-          if (n.timelineRole === 'timeline_start' || n.parentId === null) {
-            return n;
-          }
-          let patch = false;
-          if (
-            slotId != null &&
-            inActiveSubtree(n.id) &&
-            effectivePlannerTurnSlotId(prev, n, turns) === slotId
-          ) {
-            patch = true;
-          } else if (slotId == null && n.id === activeDecisionNodeId) {
-            patch = true;
-          }
-          if (patch) {
-            return { ...n, snapshot: snap, turnPhase };
-          }
-          return n;
-        });
-
-        return normalizeDecisionNodePlannerSlots(nextNodes, turns);
+    if (!activeDecisionNodeId || !nodesNow.some((n) => n.id === activeDecisionNodeId)) {
+      setTurns((prev) => {
+        if (idx < 0 || idx >= prev.length) return prev;
+        const slot = prev[idx];
+        if (combatSnapshotsEqual(slot.state, gameState)) return prev;
+        return prev.map((turn, i) =>
+          i === idx ? { ...turn, state: cloneGameData(gameState) } : turn,
+        );
       });
+      return;
     }
 
-    const idx = currentTurnIndexRef.current;
-    setTurns((prev) => {
-      if (idx < 0 || idx >= prev.length) return prev;
-      const slot = prev[idx];
-      if (combatSnapshotsEqual(slot.state, gameState)) return prev;
-      return prev.map((turn, i) =>
-        i === idx ? { ...turn, state: cloneGameData(gameState) } : turn,
-      );
+    const pathNodes = getDecisionPathFromRoot(nodesNow, activeDecisionNodeId);
+    const pathIdSet = new Set(pathNodes.map((p) => p.id));
+
+    let turnsScratch = turnsNow.map((t, i) =>
+      i === idx ? { ...t, state: cloneGameData(gameState) } : t,
+    );
+
+    /**
+     * Planner rows are source-of-truth for each slot the user edited. Previously only {@link activeDecisionNodeId}
+     * received {@link gameState}; `buildTurnStatesFromBranchPath` then overwrote other path slots with **stale**
+     * checkpoint snapshots (e.g. empty draw / log) after {@link setCurrentTurn}. Align every path checkpoint's
+     * snapshot from `turnsScratch` before merging so merged rows match saved planner state.
+     */
+    let nodesScratch = normalizeDecisionNodePlannerSlots(
+      nodesNow.map((n) => {
+        if (n.id === activeDecisionNodeId) {
+          return {
+            ...n,
+            ...activeDecisionCheckpointSnapshotFromPlanner(
+              n,
+              nodesNow,
+              turnsScratch,
+              idx,
+              gameState,
+              turnPhase,
+            ),
+          };
+        }
+        if (!pathIdSet.has(n.id) || n.timelineRole === 'timeline_start' || n.parentId === null) {
+          return n;
+        }
+        const slotId = effectivePlannerTurnSlotId(nodesNow, n, turnsScratch);
+        const row = turnsScratch.find((t) => t.id === slotId);
+        if (!row) return n;
+        return { ...n, snapshot: cloneGameData(row.state) };
+      }),
+      turnsScratch,
+    );
+
+    const mergedTurns = buildTurnStatesFromBranchPath(
+      nodesScratch,
+      activeDecisionNodeId,
+      turnsScratch,
+    );
+
+    const slotSnap = new Map<number, CombatData>();
+    for (const t of mergedTurns) {
+      slotSnap.set(t.id, cloneGameData(t.state));
+    }
+
+    const nextNodes = nodesScratch.map((n) => {
+      if (n.timelineRole === 'timeline_start' || n.parentId === null) return n;
+      if (!pathIdSet.has(n.id)) return n;
+      const slot = effectivePlannerTurnSlotId(nodesScratch, n, mergedTurns);
+      const snap = slotSnap.get(slot);
+      if (!snap) return n;
+      if (n.id === activeDecisionNodeId) {
+        return { ...n, snapshot: snap, turnPhase };
+      }
+      return { ...n, snapshot: snap };
     });
-  }, [gameState, activeDecisionNodeId, turnPhase, turns]);
+
+    const normalizedNext = normalizeDecisionNodePlannerSlots(nextNodes, mergedTurns);
+
+    let dirty =
+      mergedTurns.length !== turnsNow.length || normalizedNext.length !== nodesNow.length;
+    if (!dirty) {
+      for (let i = 0; i < mergedTurns.length; i++) {
+        const a = mergedTurns[i]!;
+        const b = turnsNow[i]!;
+        if (a.id !== b.id || !combatSnapshotsEqual(a.state, b.state)) {
+          dirty = true;
+          break;
+        }
+      }
+    }
+    if (!dirty) {
+      const prevById = new Map(nodesNow.map((n) => [n.id, n] as const));
+      for (const n of normalizedNext) {
+        const o = prevById.get(n.id);
+        if (
+          !o ||
+          o.turnPhase !== n.turnPhase ||
+          o.plannerTurnSlotId !== n.plannerTurnSlotId ||
+          !combatSnapshotsEqual(n.snapshot, o.snapshot)
+        ) {
+          dirty = true;
+          break;
+        }
+      }
+    }
+    if (!dirty) return;
+
+    setDecisionNodes(normalizedNext);
+    setTurns(mergedTurns);
+  }, [gameState, activeDecisionNodeId, turnPhase]);
 
   syncActiveDecisionNodeFromPlannerRef.current = syncActiveDecisionNodeFromPlanner;
 
-  /** Align `turns[currentTurnIndex]` + active subtree decision snapshots whenever live `gameState` changes (e.g. activity log). */
+  const forceActiveDecisionTimelineMainChain = useCallback(() => {
+    if (decisionNodes.length === 0) {
+      toast('No decision timeline nodes', 'info');
+      return;
+    }
+    const leaf = getForcedMainTimelineLeafFromStart(decisionNodes);
+    if (!leaf) {
+      toast('Could not resolve main chain from START', 'info');
+      return;
+    }
+    setActiveDecisionNodeId(leaf);
+    toast('Active path pinned to main chain', 'success');
+  }, [decisionNodes]);
+
+  /** Align planner rows + Decision Timeline path with live `gameState` (same outcome as Apply → planner, without switching pin). */
   useEffect(() => {
     if (isLoading || !gameState) return;
     syncActiveDecisionNodeFromPlannerRef.current();
-  }, [isLoading, gameState, turns, activeDecisionNodeId, turnPhase]);
+  }, [isLoading, gameState, activeDecisionNodeId, turnPhase]);
 
 
   const deleteDecisionBranch = useCallback(
@@ -1032,6 +1219,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     );
   }, []);
 
+  const updateDecisionNodeTimelineAccent = useCallback((nodeId: string, hex: string) => {
+    const normalized = normalizeDecisionTimelineAccentHex(hex);
+    if (!normalized) {
+      toast('Use a #RRGGBB color', 'error');
+      return;
+    }
+    setDecisionNodes((prev) =>
+      prev.map((n) => (n.id === nodeId ? { ...n, timelineAccentHex: normalized } : n)),
+    );
+  }, []);
+
   const updateDecisionNodeTurnPhase = useCallback(
     (nodeId: string, phase: CombatTurnPhase) => {
       const target = decisionNodes.find((n) => n.id === nodeId);
@@ -1043,17 +1241,31 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
       if (nodeId === activeDecisionNodeId && gameState) {
         setTurnPhase(phase);
-        setDecisionNodes((prev) =>
-          prev.map((n) =>
-            n.id === nodeId ? { ...n, turnPhase: phase, snapshot: cloneGameData(gameState) } : n,
-          ),
-        );
+        setDecisionNodes((prev) => {
+          const turnsScratch = turns.map((t, i) =>
+            i === currentTurnIndex ? { ...t, state: cloneGameData(gameState) } : t,
+          );
+          return prev.map((n) => {
+            if (n.id !== nodeId) return n;
+            return {
+              ...n,
+              ...activeDecisionCheckpointSnapshotFromPlanner(
+                n,
+                prev,
+                turnsScratch,
+                currentTurnIndex,
+                gameState,
+                phase,
+              ),
+            };
+          });
+        });
         return;
       }
 
       setDecisionNodes((prev) => prev.map((n) => (n.id === nodeId ? { ...n, turnPhase: phase } : n)));
     },
-    [decisionNodes, activeDecisionNodeId, gameState],
+    [decisionNodes, activeDecisionNodeId, gameState, turns, currentTurnIndex],
   );
 
   const setDecisionTimelineNodePosition = useCallback((nodeId: string, position: { x: number; y: number }) => {
@@ -1088,21 +1300,28 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       let turnsScratch = turns;
 
       if (activeDecisionNodeId) {
+        const turnsScratchApply = turns.map((t, i) =>
+          i === currentTurnIndex ? { ...t, state: cloneGameData(gameState) } : t,
+        );
         nodesForPath = normalizeDecisionNodePlannerSlots(
           decisionNodes.map((n) =>
             n.id === activeDecisionNodeId
               ? {
                   ...n,
-                  snapshot: cloneGameData(gameState),
-                  turnPhase,
+                  ...activeDecisionCheckpointSnapshotFromPlanner(
+                    n,
+                    decisionNodes,
+                    turnsScratchApply,
+                    currentTurnIndex,
+                    gameState,
+                    turnPhase,
+                  ),
                 }
               : n,
           ),
           turns,
         );
-        turnsScratch = turns.map((t, i) =>
-          i === currentTurnIndex ? { ...t, state: cloneGameData(gameState) } : t,
-        );
+        turnsScratch = turnsScratchApply;
       }
 
       const mergedTurns = buildTurnStatesFromBranchPath(nodesForPath, nodeId, turnsScratch);
@@ -1124,6 +1343,22 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     [decisionNodes, gameState, turns, currentTurnIndex, turnPhase, activeDecisionNodeId],
   );
 
+  const isApplyDecisionBranchToPlannerSynced = useCallback(
+    (targetNodeId: string | null) => {
+      if (!targetNodeId || !gameState) return true;
+      return checkApplyDecisionBranchToPlannerSynced(
+        decisionNodes,
+        activeDecisionNodeId,
+        gameState,
+        turns,
+        currentTurnIndex,
+        turnPhase,
+        targetNodeId,
+      );
+    },
+    [decisionNodes, activeDecisionNodeId, gameState, turns, currentTurnIndex, turnPhase],
+  );
+
   const linkDecisionTimelineParent = useCallback(
     (nodeId: string, newParentId: string) => {
       if (!isValidDecisionReparent(decisionNodes, nodeId, newParentId)) {
@@ -1134,14 +1369,35 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         decisionNodes.map((n) => (n.id === nodeId ? { ...n, parentId: newParentId } : n)),
         turns,
       );
+      const pinnedActiveId = pinActiveAlongUniqueChildChainFromNode(nextDecisionNodes, nodeId);
+      const targetNode = nextDecisionNodes.find((n) => n.id === pinnedActiveId);
+
+      let saveTurnIndex = currentTurnIndex;
+      let savePhase = turnPhase;
+      if (targetNode && targetNode.timelineRole !== 'timeline_start') {
+        const turnIndex = Math.max(0, turns.findIndex((t) => t.id === targetNode.plannerTurnSlotId));
+        saveTurnIndex = turnIndex;
+        savePhase = targetNode.turnPhase;
+        setTurns((prev) =>
+          prev.map((t, i) =>
+            i === turnIndex ? { ...t, state: cloneGameData(targetNode.snapshot) } : t,
+          ),
+        );
+        setCurrentTurnIndex(turnIndex);
+        setGameState(cloneGameData(targetNode.snapshot));
+        setTurnPhase(targetNode.turnPhase);
+      }
+
       setDecisionNodes(nextDecisionNodes);
+      setActiveDecisionNodeId(pinnedActiveId);
+
       if (turns.length > 0) {
         saveToLocalStorage(DEFAULT_SAVE_KEY, {
           turns,
-          currentTurnIndex,
-          turnPhase,
+          currentTurnIndex: saveTurnIndex,
+          turnPhase: savePhase,
           decisionNodes: nextDecisionNodes,
-          activeDecisionNodeId,
+          activeDecisionNodeId: pinnedActiveId,
           decisionTimelinePositions,
         });
       }
@@ -1152,7 +1408,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       turns,
       currentTurnIndex,
       turnPhase,
-      activeDecisionNodeId,
       decisionTimelinePositions,
     ],
   );
@@ -2128,12 +2383,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         forkDecisionBranch,
         jumpToDecisionNode,
         syncActiveDecisionNodeFromPlanner,
+        forceActiveDecisionTimelineMainChain,
         deleteDecisionBranch,
         updateDecisionNodeLabel,
+        updateDecisionNodeTimelineAccent,
         decisionTimelinePositions,
         setDecisionTimelineNodePosition,
         mergeDecisionTimelinePositions,
         applyDecisionBranchToPlanner,
+        isApplyDecisionBranchToPlannerSynced,
         linkDecisionTimelineParent,
         unlinkDecisionTimelineBranch,
         randomizeDecisionTimelineParentsForTesting,

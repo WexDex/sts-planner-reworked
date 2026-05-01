@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import type {
   Enemy,
   EnemyIntent,
@@ -16,23 +16,20 @@ import {
 } from "@/app/utils/enemyIntentActionHelpers";
 import eliteSample from "@/app/data/EliteSlavers.json";
 import {
-  BadgeAlert,
   ClipboardCopy,
   Footprints,
   GripVertical,
-  Layers,
   Minus,
   Plus,
-  Rabbit,
-  Shield,
-  Slash,
-  Sparkles,
-  Swords,
   Trash2,
-  TrendingDown,
-  TrendingUp,
   Upload,
 } from "lucide-react";
+import { getActiveLineageCanonicalNodeIdBySlot } from "@/app/utils/decisionTreeHelpers";
+import {
+  hslHueToAccentHex,
+  resolvedDecisionTimelineAccentHex,
+} from "@/app/utils/decisionTimelineAccent";
+import { ENEMY_INTENT_ACTION_GLYPH } from "@/app/utils/enemyIntentGlyphs";
 
 const ACTION_LABEL: Record<EnemyIntentAction["type"], string> = {
   attack: "Attack",
@@ -49,70 +46,61 @@ const ACTION_LABEL: Record<EnemyIntentAction["type"], string> = {
 /** Inactive chip + ring when selected (radio-card look). */
 const ACTION_TYPE_THEME: Record<
   EnemyIntentAction["type"],
-  { Icon: typeof Swords; ring: string; soft: string; label: string; glyph: string }
+  { ring: string; soft: string; label: string; glyph: string }
 > = {
   attack: {
-    Icon: Slash,
     ring: "ring-rose-400/55 border-rose-400/65 bg-rose-950/55 text-rose-50",
     soft: "border-rose-500/25 bg-rose-950/25 text-rose-100/85 hover:bg-rose-950/45",
     label: "text-rose-200/95",
-    glyph: "⚔️",
+    glyph: ENEMY_INTENT_ACTION_GLYPH.attack,
   },
   multi_attack: {
-    Icon: Swords,
     ring: "ring-orange-400/55 border-orange-400/65 bg-orange-950/55 text-orange-50",
     soft: "border-orange-500/25 bg-orange-950/25 text-orange-100/85 hover:bg-orange-950/45",
     label: "text-orange-200/95",
-    glyph: "⚔️×",
+    glyph: ENEMY_INTENT_ACTION_GLYPH.multi_attack,
   },
   block: {
-    Icon: Shield,
     ring: "ring-sky-400/55 border-sky-400/65 bg-sky-950/55 text-sky-50",
     soft: "border-sky-500/25 bg-sky-950/25 text-sky-100/85 hover:bg-sky-950/45",
     label: "text-sky-200/95",
-    glyph: "🛡️",
+    glyph: ENEMY_INTENT_ACTION_GLYPH.block,
   },
   debuff: {
-    Icon: TrendingDown,
     ring: "ring-violet-400/55 border-violet-400/65 bg-violet-950/55 text-violet-50",
     soft: "border-violet-500/25 bg-violet-950/25 text-violet-100/85 hover:bg-violet-950/45",
     label: "text-violet-200/95",
-    glyph: "❗",
+    glyph: ENEMY_INTENT_ACTION_GLYPH.debuff,
   },
   buff: {
-    Icon: TrendingUp,
     ring: "ring-emerald-400/55 border-emerald-400/65 bg-emerald-950/55 text-emerald-50",
     soft: "border-emerald-500/25 bg-emerald-950/25 text-emerald-100/85 hover:bg-emerald-950/45",
     label: "text-emerald-200/95",
-    glyph: "📈",
+    glyph: ENEMY_INTENT_ACTION_GLYPH.buff,
   },
   status: {
-    Icon: Layers,
     ring: "ring-cyan-400/55 border-cyan-400/65 bg-cyan-950/55 text-cyan-50",
     soft: "border-cyan-500/25 bg-cyan-950/25 text-cyan-100/85 hover:bg-cyan-950/45",
     label: "text-cyan-200/95",
-    glyph: "◎",
+    glyph: ENEMY_INTENT_ACTION_GLYPH.status,
   },
   cowardly: {
-    Icon: Rabbit,
     ring: "ring-amber-400/55 border-amber-400/65 bg-amber-950/55 text-amber-50",
     soft: "border-amber-500/25 bg-amber-950/25 text-amber-100/85 hover:bg-amber-950/45",
     label: "text-amber-200/95",
-    glyph: "🏃",
+    glyph: ENEMY_INTENT_ACTION_GLYPH.cowardly,
   },
   stunned: {
-    Icon: Sparkles,
     ring: "ring-indigo-400/55 border-indigo-400/65 bg-indigo-950/55 text-indigo-50",
     soft: "border-indigo-500/25 bg-indigo-950/25 text-indigo-100/85 hover:bg-indigo-950/45",
     label: "text-indigo-200/95",
-    glyph: "💫",
+    glyph: ENEMY_INTENT_ACTION_GLYPH.stunned,
   },
   no_action: {
-    Icon: Minus,
     ring: "ring-slate-400/55 border-slate-400/65 bg-slate-900/95 text-slate-50",
     soft: "border-slate-500/25 bg-slate-950/40 text-slate-200/85 hover:bg-slate-900/65",
     label: "text-slate-200/95",
-    glyph: "—",
+    glyph: ENEMY_INTENT_ACTION_GLYPH.no_action,
   },
 };
 
@@ -130,6 +118,10 @@ const STATUS_LOCATION_OPTIONS: { value: EnemyIntentStatusLocation; label: string
   { value: "draw", label: "Draw pile" },
   { value: "discard", label: "Discard pile" },
 ];
+
+/** Golden-angle hue step — matches {@link decisionTimelineAccent} spacing for fallback slot colors. */
+const SLOT_ACCENT_GOLDEN_DEG = 137.50776405003784;
+
 
 /** Field labels — sentence-style, readable size (avoid tiny all-caps alone). */
 const L = {
@@ -425,7 +417,6 @@ function ActionTypePickerGrid({
       {ENEMY_INTENT_ACTION_TYPES.map((t) => {
         const th = ACTION_TYPE_THEME[t];
         const active = value === t;
-        const Ico = th.Icon;
         return (
           <button
             key={t}
@@ -434,14 +425,13 @@ function ActionTypePickerGrid({
             aria-checked={active}
             onClick={() => onChange(t)}
             title={ACTION_LABEL[t]}
-            className={`flex min-h-[4.25rem] flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2 text-center shadow-sm transition-all active:scale-[0.98] ${
+            className={`flex min-h-[4.5rem] flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2.5 text-center shadow-sm transition-all active:scale-[0.98] ${
               active ? `${th.ring} ring-2 shadow-md shadow-black/30` : `${th.soft}`
             }`}
           >
-            <span className="text-base leading-none" aria-hidden>
+            <span className="text-[1.65rem] leading-none drop-shadow-sm [filter:none] select-none" aria-hidden>
               {th.glyph}
             </span>
-            <Ico className={`h-4 w-4 shrink-0 ${active ? "opacity-95" : "opacity-70"}`} strokeWidth={2} />
             <span className={`line-clamp-2 text-[11px] font-semibold leading-tight ${th.label}`}>
               {ACTION_LABEL[t]}
             </span>
@@ -757,7 +747,13 @@ function EnemyPickerCards({
 }
 
 export default function TurnMakerEditor() {
-  const { gameState, syncEnemyIntentsGlobally } = useGameManager();
+  const {
+    gameState,
+    syncEnemyIntentsGlobally,
+    turns,
+    decisionNodes,
+    activeDecisionNodeId,
+  } = useGameManager();
   const [enemies, setEnemies] = useState<Enemy[]>(() =>
     gameState?.enemies?.length
       ? cloneEnemies(gameState.enemies)
@@ -769,38 +765,70 @@ export default function TurnMakerEditor() {
   const [importDraft, setImportDraft] = useState("");
   /** Mobile: collapsible sections could use this later; keep expand for JSON */
   const [jsonOpen, setJsonOpen] = useState(true);
-  /** Editable planner turn index for this enemy’s selected intent (committed explicitly). */
-  const [plannerTurnDraft, setPlannerTurnDraft] = useState("1");
-  const [turnSlotRenameConflict, setTurnSlotRenameConflict] = useState<string | null>(null);
 
   const intentsSorted = useMemo(() => {
     const list = enemies[enemyIdx]?.intents ?? [];
     return [...list].sort((a, b) => a.turn - b.turn);
   }, [enemies, enemyIdx]);
 
-  useEffect(() => {
-    setIntentIdx((i) => Math.min(i, Math.max(0, intentsSorted.length - 1)));
-  }, [enemyIdx, intentsSorted.length]);
+  /** Accent by planner slot id (timeline lineage when a branch is active; else golden-angle fallback). */
+  const plannerSlotAccentById = useMemo(() => {
+    const meta = new Map<number, string>();
+    const accentBySlot = new Map<number, string>();
+    if (activeDecisionNodeId && decisionNodes.length > 0) {
+      const canonicalNodeIdBySlot = getActiveLineageCanonicalNodeIdBySlot(
+        decisionNodes,
+        activeDecisionNodeId,
+        turns,
+      );
+      const byId = new Map(decisionNodes.map((n) => [n.id, n] as const));
+      const fallback = "#64748B";
+      for (const [slot, nodeId] of canonicalNodeIdBySlot) {
+        const node = byId.get(nodeId);
+        accentBySlot.set(
+          slot,
+          node ? resolvedDecisionTimelineAccentHex(node, fallback) : fallback,
+        );
+      }
+    }
+
+    const slotIds = new Set<number>();
+    for (const t of turns) slotIds.add(t.id);
+    for (const it of intentsSorted) slotIds.add(it.turn);
+
+    for (const slot of slotIds) {
+      const accentHex =
+        accentBySlot.get(slot) ??
+        hslHueToAccentHex((Math.max(1, slot) - 1) * SLOT_ACCENT_GOLDEN_DEG);
+      meta.set(slot, accentHex);
+    }
+    return meta;
+  }, [turns, intentsSorted, decisionNodes, activeDecisionNodeId]);
+
+  const maxIntentIdx = Math.max(0, intentsSorted.length - 1);
+  const intentIdxResolved = Math.min(intentIdx, maxIntentIdx);
 
   const currentIntent =
-    intentsSorted[intentIdx] ??
+    intentsSorted[intentIdxResolved] ??
     intentsSorted[0] ??
     ({
       turn: 1,
       actions: [],
     } as EnemyIntent);
 
-  useEffect(() => {
-    setPlannerTurnDraft(String(currentIntent.turn));
-    setTurnSlotRenameConflict(null);
-  }, [enemyIdx, intentIdx, currentIntent.turn]);
+  const turnMakerIntentsMatchPlanner = useMemo(() => {
+    const live = gameState?.enemies;
+    if (!live?.length && enemies.length === 0) return true;
+    if (!live || live.length !== enemies.length) return false;
+    return JSON.stringify(live) === JSON.stringify(enemies);
+  }, [gameState?.enemies, enemies]);
 
   const syncFromPlanner = useCallback(() => {
     if (!gameState?.enemies?.length) return;
     setEnemies(cloneEnemies(gameState.enemies));
     setEnemyIdx(0);
     setIntentIdx(0);
-  }, [gameState?.enemies]);
+  }, [gameState]);
 
   const applyToPlanner = useCallback(() => {
     if (!gameState) return;
@@ -873,48 +901,6 @@ export default function TurnMakerEditor() {
     setIntentIdx(0);
   };
 
-  const commitPlannerTurnRename = useCallback(() => {
-    const raw = plannerTurnDraft.replace(/\D/g, "").trim();
-    const fromTurn = currentIntent.turn;
-    if (raw === "") {
-      setTurnSlotRenameConflict("Enter a planner turn number.");
-      setPlannerTurnDraft(String(fromTurn));
-      return;
-    }
-    const n = Math.floor(Number(raw));
-    if (!Number.isFinite(n) || n < 1 || n > 9999) {
-      setTurnSlotRenameConflict("Use a whole number from 1 to 9999.");
-      setPlannerTurnDraft(String(fromTurn));
-      return;
-    }
-    const e = enemies[enemyIdx];
-    if (!e?.intents.length) return;
-    if (n === fromTurn) {
-      setTurnSlotRenameConflict(null);
-      return;
-    }
-    if (e.intents.some((it) => it.turn !== fromTurn && it.turn === n)) {
-      setTurnSlotRenameConflict(`Turn ${n} already exists for this enemy — choose a different number.`);
-      setPlannerTurnDraft(String(fromTurn));
-      return;
-    }
-    const newIntents = e.intents.map((it) =>
-      it.turn === fromTurn ? { ...it, turn: n } : it,
-    );
-    patchEnemy(enemyIdx, { intents: newIntents });
-    const sorted = [...newIntents].sort((a, b) => a.turn - b.turn);
-    const newIdx = sorted.findIndex((it) => it.turn === n);
-    if (newIdx >= 0) setIntentIdx(newIdx);
-    setPlannerTurnDraft(String(n));
-    setTurnSlotRenameConflict(null);
-  }, [
-    plannerTurnDraft,
-    currentIntent.turn,
-    enemies,
-    enemyIdx,
-    patchEnemy,
-  ]);
-
   const previewLine = formatIntentActionsLine(currentIntent.actions);
 
   const peersAtPlannerTurn = useMemo(() => {
@@ -927,6 +913,9 @@ export default function TurnMakerEditor() {
       return { enemyIndex, name: en.name, rowLine };
     });
   }, [enemies, currentIntent.turn]);
+
+  const currentSlotAccentHex =
+    plannerSlotAccentById.get(currentIntent.turn) ?? "#64748b";
 
   const jsonExport = useMemo(() => JSON.stringify(enemies, null, 2), [enemies]);
 
@@ -957,9 +946,17 @@ export default function TurnMakerEditor() {
         <button
           type="button"
           onClick={applyToPlanner}
-          disabled={!gameState}
-          title="Writes enemy intents to combat, every planner turn slot, and all decision snapshots."
-          className="rounded-xl border border-emerald-400/55 bg-gradient-to-br from-emerald-800/92 to-teal-950/70 px-3 py-2 text-xs font-bold text-emerald-50 shadow-md shadow-black/25 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={!gameState || turnMakerIntentsMatchPlanner}
+          title={
+            turnMakerIntentsMatchPlanner
+              ? 'Enemy intents already match the planner — nothing to publish'
+              : 'Writes enemy intents to combat, every planner turn slot, and all decision snapshots.'
+          }
+          className={`rounded-xl border px-3 py-2 text-xs font-bold shadow-md shadow-black/25 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45 ${
+            turnMakerIntentsMatchPlanner
+              ? 'border-slate-600 bg-gradient-to-br from-slate-800/90 to-slate-900/85 text-slate-500'
+              : 'border-emerald-400/55 bg-gradient-to-br from-emerald-800/92 to-teal-950/70 text-emerald-50'
+          }`}
         >
           Apply planner
         </button>
@@ -977,65 +974,43 @@ export default function TurnMakerEditor() {
 
       <div className="flex min-h-[min(76vh,900px)] min-h-0 flex-1 flex-col gap-3 lg:flex-row lg:gap-4">
         {/* Left: planner turn slots */}
-        <aside className="flex w-full shrink-0 flex-col gap-3 rounded-2xl border border-teal-500/35 bg-gradient-to-b from-teal-950/50 to-slate-950/95 p-3 shadow-inner shadow-teal-950/40 lg:w-60 xl:w-[17.5rem]">
-          <div className="flex items-center gap-2 border-b border-teal-500/25 pb-2">
-            <BadgeAlert className="h-4 w-4 text-teal-400" strokeWidth={2} />
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-teal-200/95">
-              Planner turns
-            </p>
-          </div>
-          <div className="rounded-xl border border-teal-500/40 bg-teal-950/35 px-2.5 py-2 shadow-inner shadow-black/20">
-            <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-teal-100/92">
-              This slot&apos;s planner turn #
-            </label>
-            <div className="flex flex-wrap items-center gap-2">
-              <input
-                type="text"
-                inputMode="numeric"
-                value={plannerTurnDraft}
-                onChange={(e) => {
-                  setTurnSlotRenameConflict(null);
-                  setPlannerTurnDraft(e.target.value.replace(/\D/g, ""));
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    commitPlannerTurnRename();
-                  }
-                }}
-                className="min-h-[2.65rem] min-w-0 flex-1 rounded-lg border border-teal-500/45 bg-slate-950/80 px-3 py-2 text-center font-mono text-[18px] font-bold tabular-nums text-teal-50 outline-none ring-1 ring-teal-700/35 focus-visible:border-teal-400/65 focus-visible:ring-2 focus-visible:ring-teal-400/25"
-                aria-label="Planner turn number for the selected intent slot"
-                autoComplete="off"
-              />
-              <button
-                type="button"
-                onClick={commitPlannerTurnRename}
-                className="shrink-0 rounded-lg border border-teal-400/55 bg-teal-800/85 px-3 py-2 text-[11px] font-bold text-teal-50 transition hover:bg-teal-700/95"
-              >
-                Set
-              </button>
-            </div>
-            {turnSlotRenameConflict ? (
-              <p className="mt-2 text-[10px] leading-snug text-rose-300/95">{turnSlotRenameConflict}</p>
-            ) : (
-              <p className="mt-2 text-[10px] leading-snug text-teal-500/85">
-                Renames only this enemy&apos;s selected slot — each slot must use a distinct number here.
+        <aside className="flex w-full shrink-0 flex-col gap-3 rounded-2xl border border-teal-500/35 bg-gradient-to-b from-teal-950/50 to-slate-950/95 p-3 shadow-inner shadow-teal-950/40 lg:w-[17rem] xl:w-[19rem]">
+          <div className="flex items-start gap-2 border-b border-teal-500/25 pb-2.5">
+            <span
+              className="mt-0.5 flex h-8 w-8 shrink-0 select-none items-center justify-center text-lg leading-none"
+              aria-hidden
+            >
+              📋
+            </span>
+            <div className="min-w-0">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-teal-200/95">
+                Planner turns
               </p>
-            )}
+              <p className="mt-1 text-[10px] font-normal normal-case leading-snug tracking-normal text-teal-500/90">
+                Enemy intent slots by <span className="font-semibold text-teal-300/95">planner turn number</span>
+                {" — "}
+                <span className="font-semibold text-teal-300/95">colors</span> mirror timeline accents when a branch is
+                active (optional visual only).
+              </p>
+            </div>
           </div>
           <div
             role="radiogroup"
             aria-label="Select planner turn"
-            className="flex min-h-[8rem] max-h-[40vh] flex-col gap-2 overflow-y-auto pr-0.5 lg:max-h-none lg:flex-1"
+            className="flex min-h-[8rem] max-h-[40vh] flex-col gap-2.5 overflow-y-auto pr-0.5 lg:max-h-none lg:flex-1"
           >
             {intentsSorted.map((it, idx) => {
               const line = formatIntentActionsLine(it.actions);
-              const sel = intentIdx === idx;
+              const sel = intentIdxResolved === idx;
               const short = !line
                 ? ""
-                : line.length > (sel ? 120 : 52)
-                  ? `${line.slice(0, sel ? 118 : 50)}…`
+                : line.length > (sel ? 200 : 72)
+                  ? `${line.slice(0, sel ? 198 : 70)}…`
                   : line;
+              const ac = plannerSlotAccentById.get(it.turn) ?? "#64748b";
+              const nActs = it.actions.length;
+              const typeStrip = it.actions.slice(0, 5).map((a) => ACTION_TYPE_THEME[a.type].glyph);
+              const stepLabel = `${idx + 1} / ${intentsSorted.length}`;
               return (
                 <button
                   key={it.turn}
@@ -1043,23 +1018,71 @@ export default function TurnMakerEditor() {
                   role="radio"
                   aria-checked={sel}
                   onClick={() => setIntentIdx(idx)}
-                  title={line || "(empty)"}
-                  className={`group flex w-full flex-col rounded-xl border text-left transition-all active:scale-[0.99] ${
-                    sel
-                      ? "border-teal-200/65 bg-teal-900/72 px-4 py-4 ring-2 ring-teal-300/55 shadow-xl shadow-teal-950/50"
-                      : "border-teal-700/30 bg-slate-900/65 px-3 py-2.5 hover:border-teal-500/45 hover:bg-slate-800/85"
+                  title={line || "No intent line yet"}
+                  className={`group relative w-full overflow-hidden rounded-2xl border text-left transition-all duration-200 active:scale-[0.992] ${
+                    sel ? "shadow-lg shadow-black/45" : "hover:brightness-[1.03]"
                   }`}
+                  style={{
+                    borderColor: sel ? `${ac}aa` : "rgba(45, 212, 196, 0.22)",
+                    background: sel
+                      ? `linear-gradient(152deg, ${ac}38 0%, rgba(15,23,42,0.97) 38%, rgba(2,6,23,0.99) 100%)`
+                      : `linear-gradient(152deg, ${ac}18 0%, rgba(15,23,42,0.82) 45%, rgba(2,6,23,0.94) 100%)`,
+                    boxShadow: sel
+                      ? `inset 0 1px 0 rgba(255,255,255,0.06), 0 0 0 1px ${ac}44, 0 14px 36px rgba(0,0,0,0.42)`
+                      : `inset 0 1px 0 rgba(255,255,255,0.03)`,
+                  }}
                 >
-                  <span
-                    className={`font-black tracking-tight ${sel ? "text-2xl text-teal-50" : "text-[11px] font-bold tracking-wide text-teal-200/85"}`}
-                  >
-                    Turn {it.turn}
-                  </span>
-                  <span
-                    className={`mt-1 whitespace-pre-wrap break-words font-mono leading-snug ${sel ? "mt-2 text-[13px] text-teal-100/96" : "mt-0.5 text-[9px] text-slate-500 group-hover:text-slate-400"}`}
-                  >
-                    {short || "—"}
-                  </span>
+                  <div
+                    className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full opacity-[0.14] blur-2xl"
+                    style={{ backgroundColor: ac }}
+                    aria-hidden
+                  />
+                  <div className="relative flex gap-3 p-3 sm:p-3.5">
+                    <div
+                      className="flex h-[3.65rem] w-[3.65rem] shrink-0 flex-col items-center justify-center rounded-2xl border-2 shadow-inner"
+                      style={{
+                        borderColor: `${ac}bb`,
+                        background: `linear-gradient(165deg, ${ac}55 0%, rgba(15,23,42,0.98) 72%)`,
+                        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.14), 0 0 24px ${ac}28`,
+                      }}
+                    >
+                      <span className="text-[8px] font-extrabold uppercase tracking-[0.14em] text-white/65">
+                        Slot
+                      </span>
+                      <span className="mt-0.5 text-[1.35rem] font-black leading-none tabular-nums tracking-tight text-white drop-shadow-sm sm:text-2xl">
+                        {it.turn}
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="rounded-md border border-white/10 bg-black/28 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-teal-200/90">
+                          {stepLabel}
+                        </span>
+                        {nActs > 0 ? (
+                          <span className="ml-auto rounded-full border border-slate-600/50 bg-slate-950/40 px-2 py-px text-[9px] font-bold tabular-nums text-slate-400 group-hover:border-slate-500 group-hover:text-slate-300 sm:ml-0">
+                            {nActs}&nbsp;action{nActs === 1 ? "" : "s"}
+                          </span>
+                        ) : (
+                          <span className="ml-auto rounded-full border border-amber-500/35 bg-amber-950/35 px-2 py-px text-[9px] font-bold text-amber-200/90 sm:ml-0">
+                            Empty
+                          </span>
+                        )}
+                      </div>
+                      {typeStrip.length > 0 ? (
+                        <p className="mt-1.5 text-[11px] leading-none tracking-wide text-slate-400">
+                          {typeStrip.join("\u00A0\u00B7\u00A0")}
+                        </p>
+                      ) : null}
+                      <p
+                        className={`mt-2 line-clamp-2 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed ${
+                          sel ? "text-teal-100/95" : "text-slate-500 group-hover:text-slate-400"
+                        }`}
+                      >
+                        {short ||
+                          "No intent line yet — pick this slot and add actions in the center column."}
+                      </p>
+                    </div>
+                  </div>
                 </button>
               );
             })}
@@ -1070,7 +1093,9 @@ export default function TurnMakerEditor() {
               onClick={addIntent}
               className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-teal-400/50 bg-teal-950/35 py-2.5 text-[11px] font-bold text-teal-200 transition hover:bg-teal-950/55 hover:text-teal-50"
             >
-              <Plus className="h-4 w-4 text-teal-400" strokeWidth={2} />
+              <span className="text-sm leading-none select-none" aria-hidden>
+                ➕
+              </span>
               Add planner turn
             </button>
             <button
@@ -1080,7 +1105,9 @@ export default function TurnMakerEditor() {
               className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-rose-500/40 bg-rose-950/30 py-2 text-[11px] font-semibold text-rose-100/95 transition hover:bg-rose-950/50 disabled:opacity-40"
               title="Remove this planner turn"
             >
-              <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
+              <span className="text-sm leading-none select-none" aria-hidden>
+                🗑️
+              </span>
               Remove turn
             </button>
           </div>
@@ -1155,13 +1182,23 @@ export default function TurnMakerEditor() {
             </div>
           ) : null}
 
-          <div className="space-y-4">
-            <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-b border-slate-700/50 pb-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-300">
-              Intent actions
-              <span className="text-[11px] font-normal normal-case tracking-normal text-slate-500">
-                Stack multiple blocks for this planner turn if needed.
-              </span>
-            </p>
+            <div className="space-y-4">
+            <div className="flex flex-col gap-2 border-b border-slate-700/50 pb-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+              <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-300">
+                Intent actions
+                <span className="text-[11px] font-normal normal-case tracking-normal text-slate-500">
+                  Stack multiple blocks for this planner turn if needed.
+                </span>
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-600/70 bg-slate-900/80 px-2.5 py-1 text-[10px] font-bold tabular-nums text-slate-200"
+                  style={{ borderLeftWidth: 3, borderLeftColor: currentSlotAccentHex }}
+                >
+                  Slot {currentIntent.turn}
+                </span>
+              </div>
+            </div>
             <ul className="space-y-5">
               {currentIntent.actions.map((action, ai) => (
                 <li key={ai} className={`rounded-2xl border border-slate-700/55 border-l-[3px] p-4 shadow-md shadow-black/30 ${actionRowAccentClass(action.type)}`}>
@@ -1259,51 +1296,89 @@ export default function TurnMakerEditor() {
           </div>
         </div>
 
-        {/* Right: turn summary only (sticky on wide) */}
-        <div className="flex w-full shrink-0 flex-col lg:max-w-none lg:flex-[0_1_26rem] xl:flex-[0_1_28rem]">
-          <div className="overflow-hidden rounded-[1.25rem] border-2 border-cyan-400/45 bg-gradient-to-br from-cyan-950/70 via-slate-950/95 to-slate-950 p-5 shadow-2xl shadow-cyan-950/35 ring-1 ring-cyan-500/25 xl:sticky xl:top-3 xl:z-10 xl:max-h-[min(72dvh,calc(100dvh-5rem))] xl:overflow-y-auto xl:p-6">
-            <div className="flex flex-col gap-5 border-b border-cyan-600/22 pb-5 lg:flex-row lg:items-end lg:justify-between">
-              <div className="min-w-0 flex-1 space-y-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-cyan-300/95">
-                  Planner turn {currentIntent.turn}
-                </p>
-                <h2 className="break-words font-black leading-[1.08] tracking-tight text-fuchsia-50 drop-shadow-sm text-3xl lg:text-[2rem] xl:text-[2.25rem]">
-                  {enemies[enemyIdx]?.name ?? "—"}
-                </h2>
-                <p className="text-xs font-medium leading-relaxed text-slate-500 lg:text-[13px]">
-                  The middle column edits this enemy&apos;s scripted intent for this turn only. Below, compare every enemy at this same turn.
-                </p>
+        {/* Right: turn summary */}
+        <div className="flex w-full min-w-0 shrink-0 flex-col lg:max-w-none lg:flex-[0_1_22rem] xl:flex-[0_1_25rem]">
+          <div
+            className="flex min-h-0 flex-col gap-4 overflow-hidden rounded-2xl border border-slate-700/55 bg-gradient-to-b from-slate-900/90 via-slate-950/96 to-slate-950 p-4 shadow-2xl shadow-black/50 ring-1 ring-white/[0.06] xl:sticky xl:top-3 xl:z-10 xl:max-h-[min(72dvh,calc(100dvh-5rem))] xl:overflow-y-auto xl:p-5"
+            style={{ borderLeft: `4px solid ${currentSlotAccentHex}` }}
+          >
+            <header className="min-w-0 space-y-3 border-b border-slate-700/55 pb-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                    Turn summary
+                  </p>
+                  <p className="mt-1.5 inline-flex items-center rounded-md border border-teal-500/30 bg-teal-950/35 px-2 py-0.5 text-[11px] font-bold tabular-nums text-teal-100/95">
+                    Planner slot {currentIntent.turn}
+                  </p>
+                  <h2 className="mt-3 break-words text-2xl font-black leading-tight tracking-tight text-slate-50 xl:text-[1.6rem]">
+                    {enemies[enemyIdx]?.name ?? "—"}
+                  </h2>
+                  <p className="mt-2 max-w-prose text-[12px] leading-relaxed text-slate-500">
+                    Scripted intents for this enemy at the selected slot. Roster below shows every enemy at the same
+                    planner turn.
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2.5 rounded-xl border border-slate-600/55 bg-slate-950/70 px-3 py-2.5 shadow-inner shadow-black/30">
+                  <div
+                    className="h-10 w-10 shrink-0 rounded-lg border border-white/15 shadow-md shadow-black/40"
+                    style={{ backgroundColor: currentSlotAccentHex }}
+                    title={currentSlotAccentHex}
+                  />
+                  <div className="min-w-0">
+                    <p className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                      <span className="text-xs leading-none opacity-90" aria-hidden>
+                        🎨
+                      </span>
+                      Slot color
+                    </p>
+                    <p className="mt-0.5 font-mono text-[11px] font-semibold tabular-nums text-slate-200">
+                      {currentSlotAccentHex}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className="shrink-0 rounded-2xl border border-fuchsia-500/35 bg-fuchsia-950/30 px-3 py-2.5 text-right ring-1 ring-fuchsia-400/18">
-                <p className="text-[9px] font-bold uppercase tracking-widest text-fuchsia-300/90">Turn</p>
-                <p className="font-mono text-3xl font-black tabular-nums text-fuchsia-100 lg:text-4xl">{currentIntent.turn}</p>
-              </div>
-            </div>
 
-            <div className="mt-5">
-              <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.2em] text-cyan-400/90">Scripted line · this enemy</p>
-              <p className="break-words font-mono text-lg font-semibold leading-snug text-cyan-50 lg:text-xl xl:text-2xl">
-                {previewLine || "— no actions scripted yet —"}
+              <p className="text-[11px] leading-relaxed text-slate-500">
+                Hint colors follow the same turn <span className="font-medium text-slate-400">slot id</span> as the main
+                planner when a decision branch is active; they are not decision-node identities.
               </p>
-            </div>
+            </header>
 
-            <div className="mt-6 border-t border-slate-700/55 pt-5">
+            <section className="min-w-0">
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
+                Scripted line · this enemy
+              </p>
+              <p
+                className={`text-pretty font-sans text-[15px] leading-relaxed tracking-normal ${previewLine ? "text-slate-100/96" : "text-slate-600"}`}
+              >
+                {previewLine || "— No actions scripted yet —"}
+              </p>
+            </section>
+
+            <section className="border-t border-slate-700/55 pt-4">
               <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                Whole roster · planner turn {currentIntent.turn}
+                Whole roster · slot {currentIntent.turn}
               </p>
-              <ul className="space-y-2.5">
+              <ul className="space-y-2">
                 {peersAtPlannerTurn.map(({ enemyIndex, name, rowLine }) => {
                   const isActive = enemyIndex === enemyIdx;
                   return (
                     <li
                       key={`peer-${name}-${enemyIndex}`}
-                      className={`rounded-xl border px-3 py-2.5 transition sm:px-4 sm:py-3 ${
+                      className={`rounded-xl border px-3 py-2.5 transition sm:px-3.5 sm:py-3 ${
                         isActive
-                          ? "border-fuchsia-400/45 bg-gradient-to-r from-fuchsia-950/50 to-slate-950/35 ring-1 ring-fuchsia-500/30"
-                          : "border-slate-700/70 bg-slate-900/55 hover:border-slate-600"
+                          ? "border-fuchsia-400/40 bg-gradient-to-r from-fuchsia-950/40 to-slate-950/45 ring-1 ring-fuchsia-500/22"
+                          : "border-slate-700/75 bg-slate-900/40 hover:border-slate-600/90"
                       }`}
+                      style={{
+                        borderLeftWidth: 3,
+                        borderLeftColor: currentSlotAccentHex,
+                      }}
                     >
-                      <p className={`text-[13px] font-black tracking-tight md:text-sm ${isActive ? "text-fuchsia-100" : "text-slate-400"}`}>
+                      <p
+                        className={`text-[13px] font-bold tracking-tight ${isActive ? "text-fuchsia-100" : "text-slate-400"}`}
+                      >
                         {name}
                         {isActive ? (
                           <span className="ml-2 rounded-md border border-fuchsia-400/35 bg-fuchsia-950/55 px-1.5 py-px align-middle text-[8px] font-bold uppercase tracking-wide text-fuchsia-100/95">
@@ -1312,7 +1387,7 @@ export default function TurnMakerEditor() {
                         ) : null}
                       </p>
                       <p
-                        className={`mt-1.5 font-mono text-[11px] leading-relaxed lg:text-xs ${isActive ? "text-cyan-100/95" : "text-slate-500"}`}
+                        className={`mt-1.5 text-pretty font-sans text-[12px] leading-relaxed sm:text-[13px] ${isActive ? "text-slate-200/95" : "text-slate-500"}`}
                       >
                         {rowLine}
                       </p>
@@ -1320,7 +1395,7 @@ export default function TurnMakerEditor() {
                   );
                 })}
               </ul>
-            </div>
+            </section>
           </div>
         </div>
       </div>

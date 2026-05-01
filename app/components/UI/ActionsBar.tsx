@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   ArrowBigDown,
   ArrowBigUp,
@@ -22,6 +22,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useGameManager } from "@/app/context/GameContext";
+import { hasValidPlannerTurnSelection } from "@/app/utils/gameHelpers";
 import CardDBModal from "@/app/components/CardDBModal";
 
 const SECT = "rounded-xl border border-slate-800/90 bg-slate-950/50 p-3 ring-1 ring-slate-500/5";
@@ -33,6 +34,8 @@ const pill =
 export default function ActionsBar() {
   const {
     gameState,
+    turns,
+    currentTurnIndex,
     playSelectedCards,
     moveSelectedCards,
     removeSelectedCards,
@@ -47,6 +50,16 @@ export default function ActionsBar() {
     toggleChangedSelected,
     transformSelectedFromDatabase,
   } = useGameManager();
+
+  const plannerTurnReady = useMemo(
+    () => hasValidPlannerTurnSelection(turns, currentTurnIndex),
+    [turns, currentTurnIndex],
+  );
+  const actionsLocked = Boolean(gameState && !plannerTurnReady);
+  const actionsLockedHint =
+    turns.length === 0
+      ? "No data — add planner turns in Turns first"
+      : "Select a planner turn in Turns first";
 
   const [collapsed, setCollapsed] = useState(false);
   const [transformDbOpen, setTransformDbOpen] = useState(false);
@@ -98,8 +111,10 @@ export default function ActionsBar() {
           <div className="flex min-w-0 shrink-0 flex-nowrap items-center justify-end gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:thin] max-md:max-w-[55vw]">
             <button
               type="button"
+              disabled={actionsLocked}
               onClick={playSelectedCards}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-cyan-500/50 bg-cyan-950/50 px-3 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-900/50"
+              title={actionsLocked ? actionsLockedHint : undefined}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-cyan-500/50 bg-cyan-950/50 px-3 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-900/50 disabled:cursor-not-allowed disabled:opacity-40`}
             >
               <Play className="h-3.5 w-3.5" strokeWidth={2} />
               Play
@@ -138,6 +153,9 @@ export default function ActionsBar() {
             <div>
               <h2 className="text-sm font-bold tracking-tight text-slate-100">Card actions</h2>
               <p className="text-[10px] text-slate-500">Above the draw row · applies to the selected stack</p>
+              {actionsLocked ? (
+                <p className="mt-0.5 text-[10px] text-amber-400/95">{actionsLockedHint}</p>
+              ) : null}
             </div>
             <span className="shrink-0 rounded-lg border border-emerald-500/30 bg-emerald-950/40 px-2 py-1 text-xs font-bold tabular-nums text-emerald-300">
               {selectedCount} sel
@@ -173,8 +191,10 @@ export default function ActionsBar() {
             <div className="space-y-1.5">
               <button
                 type="button"
+                disabled={actionsLocked}
+                title={actionsLocked ? actionsLockedHint : undefined}
                 onClick={playSelectedCards}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-cyan-500/50 bg-cyan-950/45 py-2.5 text-sm font-bold text-cyan-50 shadow-md shadow-cyan-950/30 transition hover:bg-cyan-900/50"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-cyan-500/50 bg-cyan-950/45 py-2.5 text-sm font-bold text-cyan-50 shadow-md shadow-cyan-950/30 transition hover:bg-cyan-900/50 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Play className="h-4 w-4" strokeWidth={2} />
                 Play cards
@@ -182,9 +202,12 @@ export default function ActionsBar() {
               <button
                 type="button"
                 onClick={spendEnergyOnSelected}
-                disabled={!hasEnoughEnergy}
+                disabled={actionsLocked || !hasEnoughEnergy}
+                title={
+                  actionsLocked ? actionsLockedHint : !hasEnoughEnergy ? "Not enough energy" : undefined
+                }
                 className={`flex w-full items-center justify-center gap-2 rounded-xl border-2 py-2.5 text-sm font-bold transition ${
-                  hasEnoughEnergy
+                hasEnoughEnergy && !actionsLocked
                     ? "border-amber-500/55 bg-amber-950/40 text-amber-50 shadow-sm shadow-amber-950/25 hover:bg-amber-900/40"
                     : "cursor-not-allowed border-slate-700 bg-slate-900/50 text-slate-500"
                 }`}
@@ -203,6 +226,8 @@ export default function ActionsBar() {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
+                disabled={actionsLocked}
+                title={actionsLocked ? actionsLockedHint : undefined}
                 onClick={() => moveSelectedCards("hand")}
                 className={`${pill} border-emerald-500/40 bg-emerald-950/40 text-emerald-100 hover:bg-emerald-900/50`}
               >
@@ -211,6 +236,8 @@ export default function ActionsBar() {
               </button>
               <button
                 type="button"
+                disabled={actionsLocked}
+                title={actionsLocked ? actionsLockedHint : undefined}
                 onClick={() => moveSelectedCards("draw")}
                 className={`${pill} border-blue-500/45 bg-blue-950/50 text-blue-100 hover:bg-blue-900/50`}
               >
@@ -219,6 +246,8 @@ export default function ActionsBar() {
               </button>
               <button
                 type="button"
+                disabled={actionsLocked}
+                title={actionsLocked ? actionsLockedHint : undefined}
                 onClick={() => moveSelectedCards("discard")}
                 className={`${pill} border-rose-500/45 bg-rose-950/40 text-rose-100 hover:bg-rose-900/50`}
               >
@@ -227,6 +256,8 @@ export default function ActionsBar() {
               </button>
               <button
                 type="button"
+                disabled={actionsLocked}
+                title={actionsLocked ? actionsLockedHint : undefined}
                 onClick={() => moveSelectedCards("exhaust")}
                 className={`${pill} border-amber-500/40 bg-amber-950/40 text-amber-100 hover:bg-amber-900/50`}
               >
@@ -244,6 +275,8 @@ export default function ActionsBar() {
             <div className="grid grid-cols-1 gap-2">
               <button
                 type="button"
+                disabled={actionsLocked}
+                title={actionsLocked ? actionsLockedHint : undefined}
                 onClick={upgradeSelected}
                 className={`${pill} border-emerald-500/45 bg-emerald-950/50 text-emerald-50 ring-1 ring-inset ring-emerald-500/20 shadow-sm shadow-emerald-950/25 hover:bg-emerald-900/55 hover:ring-emerald-400/25`}
               >
@@ -252,6 +285,8 @@ export default function ActionsBar() {
               </button>
               <button
                 type="button"
+                disabled={actionsLocked}
+                title={actionsLocked ? actionsLockedHint : undefined}
                 onClick={downgradeSelected}
                 className={`${pill} border-rose-500/45 bg-rose-950/45 text-rose-50 ring-1 ring-inset ring-rose-500/20 shadow-sm shadow-rose-950/25 hover:bg-rose-900/50 hover:ring-rose-400/25`}
               >
@@ -260,6 +295,8 @@ export default function ActionsBar() {
               </button>
               <button
                 type="button"
+                disabled={actionsLocked}
+                title={actionsLocked ? actionsLockedHint : undefined}
                 onClick={duplicateSelected}
                 className={`${pill} border-cyan-500/40 bg-cyan-950/50 text-cyan-100 ring-1 ring-inset ring-cyan-500/15 shadow-sm shadow-cyan-950/20 hover:bg-cyan-900/50 hover:ring-cyan-400/20`}
               >
@@ -277,6 +314,8 @@ export default function ActionsBar() {
             <div className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-2">
               <button
                 type="button"
+                disabled={actionsLocked}
+                title={actionsLocked ? actionsLockedHint : undefined}
                 onClick={setSelectedCostZero}
                 className={`${pill} border-amber-500/40 bg-amber-950/45 text-amber-100 hover:bg-amber-900/50`}
               >
@@ -285,6 +324,8 @@ export default function ActionsBar() {
               </button>
               <button
                 type="button"
+                disabled={actionsLocked}
+                title={actionsLocked ? actionsLockedHint : undefined}
                 onClick={setSelectedCustomCost}
                 className={`${pill} border-lime-500/40 bg-lime-950/35 text-lime-100 hover:bg-lime-900/30`}
               >
@@ -293,6 +334,8 @@ export default function ActionsBar() {
               </button>
               <button
                 type="button"
+                disabled={actionsLocked}
+                title={actionsLocked ? actionsLockedHint : undefined}
                 onClick={transformSelectedType}
                 className={`${pill} border-fuchsia-500/40 bg-fuchsia-950/40 text-fuchsia-100 hover:bg-fuchsia-900/50`}
               >
@@ -301,6 +344,8 @@ export default function ActionsBar() {
               </button>
               <button
                 type="button"
+                disabled={actionsLocked}
+                title={actionsLocked ? actionsLockedHint : undefined}
                 onClick={toggleChangedSelected}
                 className={`${pill} border-slate-500/50 bg-slate-800/80 text-slate-200 hover:bg-slate-700`}
               >
@@ -309,9 +354,14 @@ export default function ActionsBar() {
               </button>
               <button
                 type="button"
+                disabled={actionsLocked}
+                title={
+                  actionsLocked
+                    ? actionsLockedHint
+                    : "Replace selected with a card from the database (marked changed)"
+                }
                 onClick={() => setTransformDbOpen(true)}
                 className={`${pill} col-span-full border-teal-500/45 bg-teal-950/40 text-teal-100 hover:bg-teal-900/50`}
-                title="Replace selected with a card from the database (marked changed)"
               >
                 <RefreshCw className="h-3.5 w-3.5" strokeWidth={2} />
                 Transform
@@ -327,8 +377,10 @@ export default function ActionsBar() {
             <div className="space-y-1.5">
               <button
                 type="button"
+                disabled={actionsLocked}
+                title={actionsLocked ? actionsLockedHint : undefined}
                 onClick={removeSelectedCards}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-rose-500/50 bg-rose-950/45 py-2.5 text-sm font-bold text-rose-50 shadow-sm shadow-rose-950/25 transition hover:bg-rose-900/50"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-rose-500/50 bg-rose-950/45 py-2.5 text-sm font-bold text-rose-50 shadow-sm shadow-rose-950/25 transition hover:bg-rose-900/50 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Trash2 className="h-4 w-4" strokeWidth={2} />
                 Remove

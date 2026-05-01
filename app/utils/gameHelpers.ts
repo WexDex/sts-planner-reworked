@@ -1,5 +1,41 @@
-import { CombatData, PlayerData, Card, Relic, ValueNode } from '@/app/types/gameTypes';
+import {
+  CombatData,
+  PlayerData,
+  Card,
+  Relic,
+  ValueNode,
+  Turn,
+  TurnRowMigrateInput,
+} from '@/app/types/gameTypes';
 import { migrateLegacyIntangibleFields } from '@/app/utils/intangibleBuff';
+
+/** Fresh planner-row UUID (works outside secure contexts via fallback). */
+export function newPlannerTurnUid(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `turn-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+}
+
+/** Ensures each planner row has a stable unique {@link Turn.uid}; fixes missing / duplicate ids from legacy saves or imports. */
+export function migrateTurnRowsWithUids(turns: readonly TurnRowMigrateInput[]): Turn[] {
+  const seen = new Set<string>();
+  return turns.map((t) => {
+    let uid = typeof t.uid === 'string' && t.uid.trim().length > 0 ? t.uid.trim() : '';
+    if (!uid || seen.has(uid)) {
+      uid = newPlannerTurnUid();
+    }
+    seen.add(uid);
+    return { ...t, uid };
+  });
+}
+
+/** Short monospace-friendly preview for UI chips (`xxxxxxxx…`). */
+export function formatTurnUidShort(uid: string): string {
+  const u = uid.trim();
+  if (u.length <= 8) return u;
+  return `${u.slice(0, 8)}…`;
+}
 
 function numericValue(value?: ValueNode): number {
   if (typeof value === 'number') return value;
@@ -243,6 +279,23 @@ export function combatSnapshotsEqual(
   if (a === b) return true;
   if (!a || !b) return false;
   return JSON.stringify(a) === JSON.stringify(b);
+}
+
+/** True when live combat differs from the frozen snapshot on the current planner turn row. */
+export function liveCombatDiffersFromPlannerRow(
+  gameState: CombatData | null,
+  turns: readonly Turn[],
+  currentTurnIndex: number,
+): boolean {
+  if (!gameState || currentTurnIndex < 0 || currentTurnIndex >= turns.length) return false;
+  const slotState = turns[currentTurnIndex]?.state;
+  if (!slotState) return false;
+  return !combatSnapshotsEqual(gameState, slotState);
+}
+
+/** `currentTurnIndex` references a real planner row from {@link Turn} list (Turn Maker). */
+export function hasValidPlannerTurnSelection(turns: readonly Turn[], currentTurnIndex: number): boolean {
+  return turns.length > 0 && currentTurnIndex >= 0 && currentTurnIndex < turns.length;
 }
 
 /**

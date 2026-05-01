@@ -47,6 +47,7 @@ function uniq<T>(xs: T[]): T[] {
 /** Rough phase hint from entry type (fallback when grouping). */
 export function inferPhaseFromEntryType(entry: ActivityLogEntry): CombatTurnPhase | null {
   const t = entry.type;
+  if (t === 'turn-start') return 'start';
   if (t === 'card-action' || t === 'energy' || (t === 'damage' && entry.target === 'enemy')) return 'player';
   if (t === 'damage' && entry.target === 'player') return 'enemy';
   if (t === 'buff' || t === 'debuff' || t === 'heal' || t === 'block') return null;

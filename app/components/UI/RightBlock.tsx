@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useGameManager } from '@/app/context/GameContext';
 import {
   LANTERN_RELIC_NAME,
   canTurnOffLantern,
   getPlayerMaxEnergy,
+  hasValidPlannerTurnSelection,
 } from '@/app/utils/gameHelpers';
 import type { Enemy } from '@/app/types/gameTypes';
 import { isEnemyTargetableInPlannerTurn } from '@/app/utils/enemyPlannerTurn';
@@ -180,6 +182,46 @@ export default function RightBlock() {
           <p className="text-[11px] text-slate-500">Load combat data to use this panel.</p>
         </header>
         <div className="flex flex-1 items-center justify-center p-6 text-sm text-slate-500">Loading…</div>
+      </div>
+    );
+  }
+
+  if (!hasValidPlannerTurnSelection(turns, currentTurnIndex)) {
+    const noPlannerRows = turns.length === 0;
+    return (
+      <div className="flex h-full min-h-0 w-full flex-col overflow-y-auto border-l border-slate-800/90 bg-linear-to-b from-slate-950 via-slate-950 to-slate-900 [scrollbar-width:thin]">
+        <header className="sticky top-0 z-10 shrink-0 border-b border-slate-800 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
+          <div className="flex items-center gap-2 text-slate-100">
+            <Swords className="h-4 w-4 shrink-0 text-cyan-500/90" />
+            <div className="min-w-0">
+              <h2 className="truncate text-sm font-semibold tracking-tight">Combat tools</h2>
+              <p className="truncate text-[11px] text-amber-400/95">
+                {noPlannerRows ? "No data" : "No planner turn selected"}
+              </p>
+            </div>
+          </div>
+        </header>
+        <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
+          <p className="max-w-xs text-sm leading-relaxed text-slate-400">
+            {noPlannerRows ? (
+              <>
+                Add at least one row in{" "}
+                <Link href="/turn-maker" className="font-semibold text-amber-300/95 underline-offset-2 hover:underline">
+                  Turns
+                </Link>{" "}
+                — there is no planner snapshot yet.
+              </>
+            ) : (
+              <>
+                Add or select a row in{" "}
+                <Link href="/turn-maker" className="font-semibold text-amber-300/95 underline-offset-2 hover:underline">
+                  Turns
+                </Link>
+                . Tools here apply to the active planner snapshot.
+              </>
+            )}
+          </p>
+        </div>
       </div>
     );
   }

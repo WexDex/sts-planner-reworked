@@ -17,7 +17,8 @@ export type ActivityLogType =
   | 'buff'
   | 'debuff'
   | 'card-action'
-  | 'system';
+  | 'system'
+  | 'turn-start';
 
 export interface CardNameWithTypeColor {
   name: string;
@@ -65,6 +66,28 @@ export const createActivityLogEntry = (
   type,
   ...extras,
 });
+
+/** Whether the live planner row already has a “turn started” marker (at most one per snapshot). */
+export function activityLogHasTurnStartLogged(log: ActivityLogEntry[] | undefined): boolean {
+  return Boolean(log?.some((e) => e.type === 'turn-start'));
+}
+
+/** Single-use per planner row: marks that this turn has begun (Start phase). */
+export function buildTurnStartBoundaryLogEntry(plannerTurnSlotId: number): ActivityLogEntry {
+  return createActivityLogEntry(
+    `Turn ${plannerTurnSlotId} — started`,
+    undefined,
+    undefined,
+    'Start-of-turn marker: use this once when the turn begins. Log relic hooks, draw, and setup underneath, then use End of start when you enter Main.',
+    'turn-start',
+    {
+      context: [
+        { label: 'Planner slot', value: String(plannerTurnSlotId) },
+        { label: 'Phase', value: 'Start' },
+      ],
+    },
+  );
+}
 
 export interface BuildActionLogExtras {
   context?: ActivityLogContextLine[];

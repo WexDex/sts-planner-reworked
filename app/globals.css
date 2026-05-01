@@ -179,6 +179,115 @@ body {
   animation: sts-panel-soft-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Timeline “path turns” empty state — gentle pulse to draw the eye toward Decision Timeline setup */
+@keyframes sts-seek-attention {
+  0%,
+  100% {
+    border-color: rgb(34 211 238 / 0.28);
+    background-color: rgb(8 47 73 / 0.14);
+    box-shadow: 0 0 0 0 rgb(34 211 238 / 0);
+  }
+  50% {
+    border-color: rgb(34 211 238 / 0.58);
+    background-color: rgb(8 51 68 / 0.26);
+    box-shadow: 0 0 22px -6px rgb(34 211 238 / 0.32);
+  }
+}
+
+.animate-sts-seek-attention {
+  animation: sts-seek-attention 2.35s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-sts-seek-attention {
+    animation: none;
+    border-color: rgb(34 211 238 / 0.4);
+    background-color: rgb(8 47 73 / 0.18);
+    box-shadow: none;
+  }
+}
+
+/* Decision Timeline START — urgent pulse when nothing hangs under START, or when the active pin’s
+   lineage does not reach START (same keyframes as orphan branch warning). */
+@keyframes sts-start-disconnected-pulse {
+  0%,
+  100% {
+    border-color: rgb(185 28 28 / 0.92);
+    background-color: rgb(15 23 42 / 1);
+    box-shadow:
+      inset 0 0 14px rgb(127 29 29 / 0.45),
+      0 0 16px -2px rgb(239 68 68 / 0.45),
+      0 0 0 0 rgb(239 68 68 / 0),
+      0 0 0 0 rgb(254 226 226 / 0);
+  }
+  /* Primary strike flash — bright ring + bloom */
+  9% {
+    border-color: rgb(254 252 252 / 0.98);
+    background-color: rgb(69 10 10 / 0.98);
+    box-shadow:
+      inset 0 0 32px rgb(248 113 113 / 0.72),
+      0 0 0 4px rgb(254 226 226 / 1),
+      0 0 0 12px rgb(239 68 68 / 0.98),
+      0 0 0 22px rgb(254 202 202 / 0.72),
+      0 0 56px 4px rgb(239 68 68 / 1),
+      0 0 104px 14px rgb(220 38 38 / 0.62),
+      0 0 0 34px rgb(239 68 68 / 0.38),
+      0 0 0 48px rgb(254 226 226 / 0.14);
+  }
+  /* Sustain ring — visible echo */
+  14% {
+    border-color: rgb(239 68 68 / 0.96);
+    background-color: rgb(30 10 12 / 0.98);
+    box-shadow:
+      inset 0 0 20px rgb(153 27 27 / 0.58),
+      0 0 0 2px rgb(254 226 226 / 0.85),
+      0 0 0 18px rgb(239 68 68 / 0.42),
+      0 0 48px -2px rgb(239 68 68 / 0.82),
+      0 0 0 36px rgb(239 68 68 / 0.14),
+      0 0 88px 10px rgb(185 28 28 / 0.38);
+  }
+  /* Secondary hit — reads like a second attack telegraph */
+  38% {
+    border-color: rgb(254 228 228 / 0.96);
+    background-color: rgb(52 12 14 / 0.97);
+    box-shadow:
+      inset 0 0 26px rgb(248 113 113 / 0.58),
+      0 0 0 5px rgb(239 68 68 / 1),
+      0 0 0 13px rgb(254 202 202 / 0.82),
+      0 0 44px 0 rgb(239 68 68 / 0.94),
+      0 0 84px 12px rgb(220 38 38 / 0.58),
+      0 0 0 30px rgb(239 68 68 / 0.28),
+      0 0 0 46px rgb(248 113 113 / 0.12);
+  }
+  48% {
+    border-color: rgb(220 38 38 / 0.88);
+    background-color: rgb(15 23 42 / 1);
+    box-shadow:
+      inset 0 0 14px rgb(127 29 29 / 0.48),
+      0 0 32px -2px rgb(239 68 68 / 0.52),
+      0 0 0 16px rgb(239 68 68 / 0.22),
+      0 0 0 28px rgb(239 68 68 / 0.06);
+  }
+}
+
+.animate-sts-start-disconnected {
+  animation: sts-start-disconnected-pulse 1s cubic-bezier(0.34, 0.07, 0.63, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-sts-start-disconnected {
+    animation: none;
+    border-color: rgb(220 38 38 / 1);
+    background-color: rgb(48 12 14 / 0.96);
+    box-shadow:
+      inset 0 0 18px rgb(127 29 29 / 0.58),
+      0 0 0 3px rgb(254 226 226 / 1),
+      0 0 0 10px rgb(239 68 68 / 0.72),
+      0 0 40px 2px rgb(239 68 68 / 0.85),
+      0 0 72px 12px rgb(185 28 28 / 0.42);
+  }
+}
+
 /* Mobile bottom sheets (combat layout) */
 @keyframes sts-mobile-sheet {
   from {

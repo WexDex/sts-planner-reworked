@@ -1,4 +1,5 @@
 import type { CombatTurnPhase, DecisionNode } from '@/app/types/gameTypes';
+import { normalizeDecisionTimelineAccentHex } from '@/app/utils/decisionTimelineAccent';
 
 /** STS `start` is start-of-turn / relics / draw before main combat. */
 export function plannerCombatPhaseLong(p: CombatTurnPhase): string {
@@ -48,6 +49,8 @@ export function minimapHexForDecisionNodePreview(
   isPinned: boolean,
   slotHot?: boolean,
 ): string {
+  const custom = normalizeDecisionTimelineAccentHex(n.timelineAccentHex);
+  if (custom) return custom;
   if (n.timelineRole === 'timeline_start') return '#f59e0b';
   if (isPinned) return '#22d3ee';
   if (slotHot) return '#22d3d4';

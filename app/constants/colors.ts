@@ -183,6 +183,12 @@ export const ACTIVITY_LOG_COLORS = {
     border: 'border-slate-500/30',
     badge: 'bg-slate-600/40',
   },
+  'turn-start': {
+    text: 'text-amber-100',
+    bg: 'bg-gradient-to-r from-amber-500/20 via-amber-400/12 to-cyan-500/15',
+    border: 'border-amber-400/45',
+    badge: 'bg-amber-500/50',
+  },
   info: {
     text: 'text-slate-300',
     bg: 'bg-slate-500/10',
@@ -203,6 +209,7 @@ export const ACTIVITY_LOG_ICONS: Record<string, string> = {
   action: '➡️',
   'state-change': '📊',
   system: '⚙️',
+  'turn-start': '🚩',
   info: 'ℹ️',
 } as const;
 
