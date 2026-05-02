@@ -4,6 +4,7 @@ import {
   BookOpen,
   CalendarClock,
   FileCode2,
+  FolderOpen,
   GitBranch,
   Hand,
   LayoutDashboard,
@@ -17,6 +18,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { TutorialPageShell } from "@/app/tutorial/TutorialScrollNav.client";
+import { TUTORIAL_DOC_UPDATE_CLASS } from "@/app/tutorial/docUpdateHighlight";
 
 const HUB_TOC = [
   { id: "overview", label: "Overview" },
@@ -60,9 +62,13 @@ export default function TutorialHub() {
 
       <section id="quick-start" className="scroll-mt-28 space-y-4">
         <h2 className="text-base font-bold text-slate-100">Quick start</h2>
-        <ol className="list-decimal space-y-2 ps-5 text-sm leading-relaxed text-slate-300">
+        <div className={TUTORIAL_DOC_UPDATE_CLASS}>
+          <ol className="list-decimal space-y-2 ps-5 text-sm leading-relaxed text-slate-300">
           <li>
-            Tap <strong className="text-slate-200">Load</strong> and pick combat JSON validated for this importer.
+            Open or create work in the planner: use header{" "}
+            <strong className="text-slate-200">Load project</strong> (full rows + decision timeline + layout),{" "}
+            <strong className="text-slate-200">Load data</strong> (combat JSON only), or continue from the last session if
+            the app restored one. There is no bundled default combat on first visit.
           </li>
           <li>
             Build or revise enemy scripts in{" "}
@@ -80,14 +86,20 @@ export default function TutorialHub() {
             ): press <strong className="text-slate-200">Save row</strong> before changing rows so snapshots stay truthful.
           </li>
           <li>
+            Use <strong className="text-slate-200">Save project</strong> for a named downloadable copy and to pin the session
+            in <code className="rounded bg-slate-950 px-1 font-mono text-[11px] text-slate-400">sts_planner_last_project_v1</code>
+            . <strong className="text-slate-200">Close project</strong> clears that slot and returns to an empty planner.
+          </li>
+          <li>
             When you fork ideas in{" "}
             <Link href="/decision-timeline" className="font-semibold text-cyan-200 underline-offset-2 hover:underline">
               Decision timeline
             </Link>
-            , periodically <strong className="text-slate-200">Download planner JSON</strong> — localStorage alone is not a
-            restore guarantee today.
+            , keep <strong className="text-slate-200">Export JSON</strong> / project files as backups — browser storage can be
+            cleared.
           </li>
         </ol>
+        </div>
       </section>
 
       <section id="phases" className="scroll-mt-28 space-y-4">
@@ -109,11 +121,13 @@ export default function TutorialHub() {
           Planner shell map
         </h2>
         <ul className="space-y-3 text-sm leading-relaxed text-slate-300">
-          <li className="flex gap-3">
+          <li className={`flex gap-3 ${TUTORIAL_DOC_UPDATE_CLASS}`}>
             <Activity className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" strokeWidth={2} aria-hidden />
             <span>
-              <strong className="text-slate-100">Top chrome</strong> — vitals, legend chips, minimized rail, Loads / Saves,
-              Turns &amp; Timeline shortcuts, Tutorial search.
+              <strong className="text-slate-100">Top chrome</strong> — vitals, legend chips, project name,{" "}
+              <strong className="text-slate-200">Save project</strong> / <strong className="text-slate-200">Load project</strong> /{" "}
+              <strong className="text-slate-200">Close project</strong>, combat <strong className="text-slate-200">Load data</strong>,{" "}
+              Save row, Turns &amp; Timeline shortcuts, tutorial search.
             </span>
           </li>
           <li className="flex gap-3">
@@ -165,6 +179,32 @@ export default function TutorialHub() {
           <Save className="h-4 w-4 text-amber-300" strokeWidth={2} aria-hidden />
           Saves quick reference
         </h2>
+        <div className={`space-y-4 ${TUTORIAL_DOC_UPDATE_CLASS}`}>
+          <div className="flex gap-3 text-sm text-slate-300">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-violet-500/35 bg-violet-950/40 text-violet-200">
+            <FolderOpen className="h-5 w-5" strokeWidth={2} aria-hidden />
+          </div>
+          <p>
+            <strong className="text-slate-100">Project file</strong> (
+            <code className="font-mono text-[11px] text-slate-400">format: sts-planner-project</code>,{" "}
+            <code className="font-mono text-[11px] text-slate-400">version: 1</code>) bundles planner rows, phases, decision
+            nodes, active checkpoint, timeline XY positions, and <code className="font-mono text-[11px] text-slate-400">projectMeta</code>{" "}
+            (name, timestamps). Header actions: <strong className="text-slate-200">Save project</strong>,{" "}
+            <strong className="text-slate-200">Load project</strong>, <strong className="text-slate-200">Close project</strong>. The
+            last session is stored under{" "}
+            <code className="font-mono text-[11px] text-slate-400">sts_planner_last_project_v1</code>; legacy planner-only JSON
+            exports still load and are upgraded in-memory.
+          </p>
+        </div>
+        <p className="text-xs leading-relaxed text-slate-500">
+          Prefer downloadable <strong className="text-slate-400">project</strong> or planner saves over relying only on{" "}
+          <code className="font-mono text-slate-400">sts_game_save</code> — see{" "}
+          <Link href="/tutorial/decision-timeline#persist" className="text-violet-300 underline-offset-2 hover:underline">
+            Timeline → Persistence
+          </Link>
+          .
+        </p>
+        </div>
         <div className="flex gap-3 text-sm text-slate-300">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-sky-500/35 bg-sky-950/40 text-sky-300">
             <Shuffle className="h-5 w-5" strokeWidth={2} aria-hidden />
@@ -182,13 +222,6 @@ export default function TutorialHub() {
             <strong className="text-slate-100">Planner JSON</strong> contains rows + timeline checkpoints + layout metadata.
           </p>
         </div>
-        <p className="text-xs leading-relaxed text-slate-500">
-          Prefer downloads over hoping <code className="font-mono text-slate-400">sts_game_save</code> survives refresh — see{" "}
-          <Link href="/tutorial/decision-timeline#persist" className="text-violet-300 underline-offset-2 hover:underline">
-            Timeline → Persistence
-          </Link>
-          .
-        </p>
       </section>
 
       <section id="topic-guides" className="scroll-mt-28 space-y-4">
@@ -213,10 +246,12 @@ export default function TutorialHub() {
           </Link>
           <Link
             href="/tutorial/decision-timeline"
-            className="rounded-xl border border-cyan-500/35 bg-cyan-950/20 p-4 text-sm shadow-sm transition hover:border-cyan-400/55 hover:bg-cyan-950/35"
+            className={`rounded-xl border border-cyan-500/35 bg-cyan-950/20 p-4 text-sm shadow-sm transition hover:border-cyan-400/55 hover:bg-cyan-950/35 ${TUTORIAL_DOC_UPDATE_CLASS}`}
           >
             <span className="block text-[11px] font-bold uppercase tracking-wide text-cyan-300">Timeline</span>
-            <span className="mt-1 block font-semibold text-cyan-50">Branches, apply, exports, autosave caveat</span>
+            <span className="mt-1 block font-semibold text-cyan-50">
+              Branches, apply, exports — named project files and browser persistence
+            </span>
           </Link>
           <Link
             href="/tutorial/cards"

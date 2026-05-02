@@ -56,7 +56,11 @@ export function estimateDecisionTimelineBranchFootprint(
   const showNickname = customLabelRaw.length > 0 && customLabelRaw !== autoSlug;
 
   const intentLines = collectEnemyIntentLinesForPlannerSlot(n.snapshot, slotId);
-  const logEntries = getNewLogEntriesForDecisionNode(n, parent);
+  const parentSlotId = parent ? effectivePlannerTurnSlotId(nodes, parent, turns) : slotId;
+  const logEntries = getNewLogEntriesForDecisionNode(n, parent, {
+    childSlot: slotId,
+    parentSlot: parentSlotId,
+  });
 
   /** Floating icon toolbar sits above the card; reserve space so packed layouts don’t vertically collide. */
   const FLOAT_TOOLBAR_CLEARANCE = 56;

@@ -4,6 +4,8 @@
 
 Plan "unwinnable" Slay the Spire combats like puzzles. Built with [Next.js](https://nextjs.org) ([`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app)).
 
+**Projects:** Use **Save project** / **Load project** in the planner header for a full `sts-planner-project` JSON (planner rows + decision timeline + layout). The app restores the last project from `localStorage` when you revisit; there is no bundled default combat on first load—load a project, prior autosave, or combat JSON.
+
 ## Getting Started
 
 First, run the development server:

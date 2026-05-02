@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { GitBranch, Network } from "lucide-react";
+import { TUTORIAL_DOC_UPDATE_CLASS } from "@/app/tutorial/docUpdateHighlight";
 import { TutorialPageShell } from "@/app/tutorial/TutorialScrollNav.client";
 
 export const metadata: Metadata = {
   title: "Tutorial · Decision timeline · Slay the Spire Combat Planner",
   description:
-    "Branching timelines, checkpoint apply vs unsync warnings, downloadable planner JSON autosave caveat.",
+    "Branching timelines, checkpoint apply vs unsync warnings, planner export, project file (sts-planner-project v1) and autosave keys.",
 };
 
 const TOC = [
@@ -14,7 +15,7 @@ const TOC = [
   { id: "apply-sync", label: "Apply & sync" },
   { id: "graph-layout", label: "Graph layout" },
   { id: "export-json", label: "Export payload" },
-  { id: "persist", label: "Persistence caveat" },
+  { id: "persist", label: "Persistence" },
 ] as const;
 
 export default function TutorialDecisionTimelinePage() {
@@ -73,12 +74,32 @@ export default function TutorialDecisionTimelinePage() {
           <li>Combat JSON stays separate — joining them intentionally manual.</li>
           <li>Filename pattern <code className="font-mono text-[11px]">sts-planner-save-*.json</code> aids versioning.</li>
         </ul>
+        <div className={`mt-4 space-y-2 ${TUTORIAL_DOC_UPDATE_CLASS}`}>
+          <p className="text-xs font-semibold uppercase tracking-wide text-amber-200/90">Project file (header)</p>
+          <p className="text-sm text-slate-300">
+            <strong className="text-slate-100">Save project</strong> downloads <code className="rounded bg-slate-950 px-1 font-mono text-[11px]">sts-planner-project</code>{" "}
+            v1: the same planner slice as above plus <code className="rounded bg-slate-950 px-1 font-mono text-[11px]">projectMeta</code> (name,
+            timestamps) and the embedded combat snapshot the session was using.
+          </p>
+        </div>
       </section>
 
-      <section id="persist" className="scroll-mt-28 space-y-4 rounded-xl border border-amber-500/25 bg-amber-950/10 p-5">
-        <h2 className="text-base font-bold text-amber-50">Autosave caveat</h2>
+      <section id="persist" className={`scroll-mt-28 space-y-4 ${TUTORIAL_DOC_UPDATE_CLASS}`}>
+        <h2 className="text-base font-bold text-amber-50">Persistence</h2>
         <p className="text-sm text-amber-100/85">
-          Browser key <code className="font-mono text-[11px] text-amber-200">sts_game_save</code> debounces ~520ms after planner mutations. Boot currently seeds bundled default combat, so pure refresh may discard rows unless exported JSON exists.
+          On load, the app tries <code className="font-mono text-[11px] text-amber-200">localStorage</code> key{" "}
+          <code className="font-mono text-[11px] text-amber-200">sts_planner_last_project_v1</code> first (full{" "}
+          <code className="font-mono text-[11px] text-amber-200">sts-planner-project</code> file). If absent, it may restore a
+          legacy snapshot from <code className="font-mono text-[11px] text-amber-200">sts_game_save</code>. There is no bundled
+          default combat on first visit — use header <strong className="text-amber-50">Load project</strong> or{" "}
+          <strong className="text-amber-50">Load data</strong>.
+        </p>
+        <p className="text-sm text-amber-100/85">
+          <code className="font-mono text-[11px] text-amber-200">sts_game_save</code> still debounces (~520ms) after planner
+          mutations. While a <strong className="text-amber-50">named</strong> project session is open, the same workflow is also
+          written back to <code className="font-mono text-[11px] text-amber-200">sts_planner_last_project_v1</code> so refresh
+          keeps parity. <strong className="text-amber-50">Close project</strong> clears the last-project key and autosave; keep
+          downloaded exports as backups.
         </p>
       </section>
 

@@ -46,7 +46,7 @@ const PROSE_BLOCKS: Omit<TutorialSearchEntry, "matchText">[] = [
     title: "Quick start — workflow",
     href: "/tutorial#quick-start",
     preview:
-      "Load JSON, Turn maker intents, Save row drift hints, Decision timeline exports; liveCombatDiffersFromPlannerRow.",
+      "Load project or combat JSON, Turn maker intents, Save row drift, Save project, Close project, decision timeline exports.",
     bucket: "Getting started",
   },
   {
@@ -75,10 +75,10 @@ const PROSE_BLOCKS: Omit<TutorialSearchEntry, "matchText">[] = [
   },
   {
     id: "prose-saves-hub",
-    title: "Saves teaser — combat vs planner JSON",
+    title: "Saves — project file, combat, planner JSON",
     href: "/tutorial#saves",
     preview:
-      "Combat file vs planner save; localStorage sts_game_save and loadSavedGame hydration caveat.",
+      "sts-planner-project v1, sts_planner_last_project_v1, combat JSON, planner export, sts_game_save debounce.",
     bucket: "Getting started",
   },
   {
@@ -137,10 +137,10 @@ const PROSE_BLOCKS: Omit<TutorialSearchEntry, "matchText">[] = [
   },
   {
     id: "prose-persist",
-    title: "localStorage sts_game_save debounced persist",
+    title: "Timeline persistence — last project and autosave",
     href: "/tutorial/decision-timeline#persist",
     preview:
-      "520ms debounced saveGameData; app boot uses default combat — export JSON as canonical backup.",
+      "sts_planner_last_project_v1 auto-restore; sts_game_save debounced; no default combat on boot; Close project clears storage.",
     bucket: "Decision timeline",
   },
   {

@@ -9,6 +9,11 @@ import {
   useRef,
   useState,
 } from "react";
+import {
+  TUTORIAL_DOC_PASS_VERSION,
+  TUTORIAL_DOC_UPDATE_NOTICE_CLASS,
+  tutorialNavHrefHasDocPassHighlights,
+} from "@/app/tutorial/docUpdateHighlight";
 import type { TutorialSearchEntry } from "@/app/tutorial/search-index";
 
 const NAV: { href: string; label: string }[] = [
@@ -147,7 +152,15 @@ export default function TutorialChrome({
             <span className="text-slate-600" aria-hidden>
               |
             </span>
-            <span className="text-sm font-bold text-slate-200">Tutorial</span>
+            <span className="inline-flex flex-wrap items-center gap-2">
+              <span className="text-sm font-bold text-slate-200">Tutorial</span>
+              <span
+                className="rounded-md border border-amber-600/40 bg-amber-950/35 px-2 py-0.5 font-mono text-[10px] font-semibold tracking-wide text-amber-200/95"
+                title="Tutorial doc pass revision id"
+              >
+                v{TUTORIAL_DOC_PASS_VERSION}
+              </span>
+            </span>
           </div>
           <nav
             className="flex flex-wrap gap-1.5 text-[11px] font-semibold sm:text-xs"
@@ -155,11 +168,14 @@ export default function TutorialChrome({
           >
             {NAV.map(({ href, label }) => {
               const active = navActive(pathname, href);
+              const docPassStripe = tutorialNavHrefHasDocPassHighlights(href);
               return (
                 <Link
                   key={href}
                   href={href}
                   className={`rounded-lg border px-2.5 py-1.5 transition sm:px-3 ${
+                    docPassStripe ? "tutorial-doc-update-nav-link " : ""
+                  }${
                     active
                       ? "border-violet-500/50 bg-violet-950/40 text-violet-100"
                       : "border-slate-700/70 bg-slate-900/50 text-slate-400 hover:border-slate-600 hover:text-slate-200"
@@ -176,6 +192,20 @@ export default function TutorialChrome({
         </div>
       </header>
       <div className="shrink-0" style={{ height: "var(--tutorial-header-h, 5.5rem)" }} aria-hidden />
+      <aside
+        className={`${TUTORIAL_DOC_UPDATE_NOTICE_CLASS} shrink-0 px-4`}
+        aria-label="Latest tutorial doc changes"
+      >
+        <div className="mx-auto max-w-6xl">
+          <strong className="font-semibold text-amber-100">Docs highlight (v{TUTORIAL_DOC_PASS_VERSION}):</strong> Panels with the
+          amber left stripe are new or revised in this pass — project files (
+          <code className="font-mono text-[10px] text-amber-200/90">sts-planner-project</code> v1), header Save/Load/Close
+          project, last-session restore, and persistence keys. The top of each guide page states whether it still has striped
+          sections; sidebar and nav show the same pass where applicable. Next doc update: remove old stripes, bump version, sync
+          route list in <code className="font-mono text-[10px] text-amber-200/90">docUpdateHighlight.ts</code>, then restripe only
+          what changed.
+        </div>
+      </aside>
       {children}
     </div>
   );

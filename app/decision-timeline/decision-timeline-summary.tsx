@@ -52,7 +52,7 @@ export default function DecisionTimelineSummary() {
     return (
       <div className="rounded-xl border border-slate-700/70 bg-slate-900/80 p-3 shadow-inner shadow-black/20">
         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Summary</p>
-        <p className="mt-2 text-[11px] leading-snug text-slate-500">Load combat and open this page to see the decision tree.</p>
+        <p className="mt-2 text-[11px] leading-snug text-slate-500">Load a project or combat JSON from the planner header, then open this page to see the decision tree.</p>
       </div>
     );
   }

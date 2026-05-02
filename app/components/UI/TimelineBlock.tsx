@@ -3,6 +3,7 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useGameManager } from "@/app/context/GameContext";
 import type { CombatData, EnemyIntentAction, Turn } from "@/app/types/gameTypes";
 import {
@@ -135,6 +136,7 @@ export default function TimelineBlock() {
     saveCurrentTurn,
     syncActiveDecisionNodeFromPlanner,
     updateDecisionNodeLabel,
+    isLoading,
   } = useGameManager();
 
   /** Flush live board state into the planner turn row when this panel mounts (e.g. mobile timeline sheet). */
@@ -408,13 +410,34 @@ export default function TimelineBlock() {
   }, [canonicalNodeIdForCurrentSlot, activeCanonicalLabel, commitTurnName]);
 
   if (!gameState) {
+    if (isLoading) {
+      return (
+        <div className="flex h-full min-h-0 w-full flex-col overflow-y-auto border-r border-slate-800/90 bg-linear-to-b from-slate-950 via-slate-950 to-slate-900 [scrollbar-width:thin]">
+          <header className="sticky top-0 z-10 shrink-0 border-b border-slate-800 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
+            <h2 className="text-sm font-semibold tracking-tight text-slate-100">Turn timeline</h2>
+            <p className="text-[11px] text-slate-500">Restoring session…</p>
+          </header>
+          <div className="flex flex-1 items-center justify-center p-6 text-sm text-slate-500">Loading…</div>
+        </div>
+      );
+    }
     return (
       <div className="flex h-full min-h-0 w-full flex-col overflow-y-auto border-r border-slate-800/90 bg-linear-to-b from-slate-950 via-slate-950 to-slate-900 [scrollbar-width:thin]">
         <header className="sticky top-0 z-10 shrink-0 border-b border-slate-800 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
           <h2 className="text-sm font-semibold tracking-tight text-slate-100">Turn timeline</h2>
-          <p className="text-[11px] text-slate-500">Load combat data to plan turns.</p>
+          <p className="text-[11px] leading-relaxed text-slate-500">
+            No project loaded. Use{" "}
+            <span className="font-semibold text-slate-300">Load project</span> or{" "}
+            <span className="font-semibold text-slate-300">Load data</span> in the header, then add rows in{" "}
+            <Link href="/turn-maker" className="font-semibold text-amber-300/95 underline-offset-2 hover:underline">
+              Turns
+            </Link>
+            .
+          </p>
         </header>
-        <div className="flex flex-1 items-center justify-center p-6 text-sm text-slate-500">Loading…</div>
+        <div className="flex flex-1 items-center justify-center p-6 text-center text-sm text-slate-500">
+          Open or start a project to see the turn stack.
+        </div>
       </div>
     );
   }

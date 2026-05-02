@@ -2,15 +2,34 @@ import type { ActivityLogEntry, CombatTurnPhase, DecisionNode } from '@/app/type
 
 const MAX_ROOT_LOG_TAIL = 20;
 
-/** Log lines to show as "plays" for this node vs parent (or tail for root). */
+/**
+ * Log lines to show as "plays" for this node vs parent (or tail for root).
+ *
+ * Cumulative diff vs parent only makes sense when child and parent represent the SAME planner row
+ * (e.g. fork alternates branching from the same slot — child's log is parent's log + new actions).
+ * When parent and node sit on **different** planner slots their `snapshot.activityLog`s are
+ * independent rows (per-row logs); the prefix-style diff returns nonsense (often `[]` when parent's
+ * row happens to have more entries than child's). Pass `slotContext` so the cross-slot case can
+ * fall back to the node's own log instead.
+ *
+ * Caller computes slots via `effectivePlannerTurnSlotId` to avoid a circular dep with
+ * `decisionTreeHelpers`.
+ */
 export function getNewLogEntriesForDecisionNode(
   node: DecisionNode,
   parent: DecisionNode | null,
+  slotContext?: { childSlot: number; parentSlot: number },
 ): ActivityLogEntry[] {
   const childLog = node.snapshot.activityLog ?? [];
-  if (parent) return diffActivityLog(parent.snapshot.activityLog, childLog);
-  if (childLog.length <= MAX_ROOT_LOG_TAIL) return [...childLog];
-  return childLog.slice(-MAX_ROOT_LOG_TAIL);
+  if (!parent) {
+    if (childLog.length <= MAX_ROOT_LOG_TAIL) return [...childLog];
+    return childLog.slice(-MAX_ROOT_LOG_TAIL);
+  }
+  if (slotContext && slotContext.childSlot !== slotContext.parentSlot) {
+    if (childLog.length <= MAX_ROOT_LOG_TAIL) return [...childLog];
+    return childLog.slice(-MAX_ROOT_LOG_TAIL);
+  }
+  return diffActivityLog(parent.snapshot.activityLog, childLog);
 }
 
 /** Entries in `childLog` appended after `parentLog` (append-only diff). Uses prefix length; ignores id mismatches beyond length defense. */

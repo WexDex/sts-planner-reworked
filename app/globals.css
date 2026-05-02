@@ -132,6 +132,58 @@ body {
   background-color: var(--scrollbar-thumb-hover);
 }
 
+/* Tutorial docs: mark the current revision’s new/changed copy (see app/tutorial/docUpdateHighlight.ts). */
+.tutorial-doc-update {
+  border-radius: 0.75rem;
+  border: 1px solid rgb(251 191 36 / 0.42);
+  background: rgb(69 26 3 / 0.3);
+  box-shadow: inset 4px 0 0 0 rgb(250 204 21 / 0.88);
+  padding: 1rem 1rem 1rem 1.15rem;
+}
+
+.tutorial-doc-update-notice {
+  border-bottom: 1px solid rgb(251 191 36 / 0.32);
+  background: rgb(120 53 15 / 0.38);
+  padding: 0.5rem 1rem;
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgb(254 243 199 / 0.95);
+}
+
+/* Sidebar “On this page” heading when this page has striped regions */
+.tutorial-doc-update-sidebar-heading {
+  border-radius: 0.375rem;
+  box-shadow: inset 3px 0 0 0 rgb(250 204 21 / 0.82);
+  padding-left: 0.55rem;
+  margin-left: -0.15rem;
+  background: rgb(69 26 3 / 0.22);
+  color: rgb(254 243 199 / 0.92);
+}
+
+/* Header tutorial nav links whose target route still has striped docs (stripe only — keeps active violet chrome) */
+.tutorial-doc-update-nav-link {
+  box-shadow: inset 3px 0 0 0 rgb(250 204 21 / 0.72);
+}
+
+/* Per-page status strip at top of article */
+.tutorial-doc-update-page-strip-yes {
+  border-radius: 0.75rem;
+  border: 1px solid rgb(251 191 36 / 0.42);
+  background: rgb(69 26 3 / 0.28);
+  box-shadow: inset 4px 0 0 0 rgb(250 204 21 / 0.82);
+}
+
+.tutorial-doc-update-page-strip-no {
+  border-radius: 0.5rem;
+  border: 1px solid rgb(51 65 85 / 0.55);
+  background: rgb(15 23 42 / 0.35);
+}
+
+/* TOC row: section contains a striped panel */
+.tutorial-doc-update-toc-link {
+  box-shadow: inset 2px 0 0 0 rgb(250 204 21 / 0.65);
+}
+
 /* Buff list & combat panel motion */
 @keyframes sts-buff-in {
   from {

@@ -179,7 +179,7 @@ export default function RightBlock() {
       <div className="flex h-full min-h-0 w-full flex-col overflow-y-auto border-l border-slate-800 bg-linear-to-b from-slate-950 to-slate-900">
         <header className="sticky top-0 z-10 shrink-0 border-b border-slate-800 bg-slate-950/95 px-4 py-3 backdrop-blur-md">
           <h2 className="text-sm font-semibold tracking-tight text-slate-100">Combat tools</h2>
-          <p className="text-[11px] text-slate-500">Load combat data to use this panel.</p>
+          <p className="text-[11px] text-slate-500">Load a project or combat data from the header to use this panel.</p>
         </header>
         <div className="flex flex-1 items-center justify-center p-6 text-sm text-slate-500">Loading…</div>
       </div>

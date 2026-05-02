@@ -80,6 +80,7 @@ import {
   formatDecisionBreadcrumbSegment,
 } from '@/app/utils/decisionTreeHelpers';
 import { getNewLogEntriesForDecisionNode } from '@/app/utils/decisionNodePlays';
+
 import {
   minimapHexForDecisionNodePreview,
   plannerPhaseStripClass,
@@ -974,14 +975,26 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
 
   const parentStepLogs = useMemo((): ActivityLogEntry[] | null => {
     if (!parentNode) return null;
-    return getNewLogEntriesForDecisionNode(parentNode, grandparentNode);
-  }, [parentNode, grandparentNode]);
+    const childSlot = effectivePlannerTurnSlotId(decisionNodes, parentNode, turns);
+    const parentSlot = grandparentNode
+      ? effectivePlannerTurnSlotId(decisionNodes, grandparentNode, turns)
+      : childSlot;
+    return getNewLogEntriesForDecisionNode(parentNode, grandparentNode, {
+      childSlot,
+      parentSlot,
+    });
+  }, [parentNode, grandparentNode, decisionNodes, turns]);
 
   const soleChildNode = childNodes.length === 1 ? childNodes[0]! : null;
   const childStepLogs = useMemo((): ActivityLogEntry[] | null => {
     if (!soleChildNode) return null;
-    return getNewLogEntriesForDecisionNode(soleChildNode, decisionNode);
-  }, [soleChildNode, decisionNode]);
+    const childSlot = effectivePlannerTurnSlotId(decisionNodes, soleChildNode, turns);
+    const parentSlot = effectivePlannerTurnSlotId(decisionNodes, decisionNode, turns);
+    return getNewLogEntriesForDecisionNode(soleChildNode, decisionNode, {
+      childSlot,
+      parentSlot,
+    });
+  }, [soleChildNode, decisionNode, decisionNodes, turns]);
 
   const onRename = useCallback(() => {
     const next = window.prompt('Branch label', decisionNode.label);
@@ -1956,12 +1969,18 @@ function buildFlowGraph(
     if (!isStart) {
       const peersSame = decisionNodesPeersSameTurnDepth(decisionNodes, n.id);
       const branchOrdinal = Math.max(1, peersSame.findIndex((x) => x.id === n.id) + 1);
+      const parentSlotForLog = parent
+        ? effectivePlannerTurnSlotId(decisionNodes, parent, turns)
+        : rowPlannerSlotId;
       branchDisplay = {
         treeDepth,
         branchOrdinal,
         branchPeerCount: peersSame.length,
         enemyIntentLines: collectEnemyIntentLinesForPlannerSlot(n.snapshot, rowPlannerSlotId),
-        logEntries: getNewLogEntriesForDecisionNode(n, parent),
+        logEntries: getNewLogEntriesForDecisionNode(n, parent, {
+          childSlot: rowPlannerSlotId,
+          parentSlot: parentSlotForLog,
+        }),
       };
     }
     return {

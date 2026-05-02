@@ -273,7 +273,8 @@ export default function MainFieldBlock() {
             <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-400">
               {!gameState ? (
                 <>
-                  Load combat from the header, then add planner rows in{" "}
+                  Use <span className="font-semibold text-slate-300">Load project</span> or{" "}
+                  <span className="font-semibold text-slate-300">Load data</span> in the header, then add planner rows in{" "}
                   <Link href="/turn-maker" className="font-semibold text-amber-300/95 underline-offset-2 hover:underline">
                     Turns
                   </Link>

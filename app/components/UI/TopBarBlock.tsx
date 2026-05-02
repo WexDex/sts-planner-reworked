@@ -12,7 +12,7 @@ import {
   getCardEffectLegendItems,
   type CardIconLegendItem,
 } from "@/app/components/UI/cardIconLegend";
-import { Activity, BookOpen, CalendarClock, ChevronDown, ChevronUp, CircleHelp, GitBranch, Save } from "lucide-react";
+import { Activity, BookOpen, CalendarClock, ChevronDown, ChevronUp, CircleHelp, FileDown, FolderOpen, GitBranch, Save, X } from "lucide-react";
 
 const CARD_EFFECT_LEGEND = getCardEffectLegendItems();
 
@@ -98,6 +98,10 @@ export default function TopBarBlock() {
     turns,
     currentTurnIndex,
     saveCurrentTurn,
+    activeProject,
+    saveProject,
+    loadProjectFromJsonText,
+    closeProject,
   } = useGameManager();
 
   const plannerTurnReady = useMemo(
@@ -109,14 +113,14 @@ export default function TopBarBlock() {
   const showNoPlannerTurn = !plannerCombatAvailable;
   const noPlannerRows = turns.length === 0;
   const addCardBlockedTitle = !gameState
-    ? "Load combat data first"
+    ? "Load project or combat data first"
     : !plannerTurnReady
       ? noPlannerRows
         ? "No data — add planner turns in Turns first"
         : "Select or add a planner turn row in Turns first"
       : "Add cards from the database";
   const vitalsEmptyCompactLine = !gameState
-    ? "No data — load combat above"
+    ? "No data — load project or combat in header"
     : noPlannerRows
       ? "No data — add planner rows in Turns"
       : "No planner turn selected — open Turns";
@@ -129,7 +133,7 @@ export default function TopBarBlock() {
   const savePlannerRowDisabled = !gameState || !plannerTurnReady || !plannerRowNeedsSave;
   const savePlannerRowTitle = savePlannerRowDisabled
     ? !gameState
-      ? "Load combat first"
+      ? "Load project or combat first"
       : !plannerTurnReady
         ? noPlannerRows
           ? "No data — add planner turns in Turns before saving"
@@ -152,6 +156,7 @@ export default function TopBarBlock() {
   const [mobileVitalsOpen, setMobileVitalsOpen] = useState(false);
   const [topBarMinimized, setTopBarMinimized] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const projectFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     try {
@@ -221,6 +226,22 @@ export default function TopBarBlock() {
     }
   };
 
+  const handleProjectFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setFileError(null);
+    try {
+      const text = await file.text();
+      const ok = loadProjectFromJsonText(text);
+      if (!ok) {
+        setFileError("Could not load project file");
+      }
+    } catch (err) {
+      setFileError(err instanceof Error ? err.message : "Could not read project file");
+    }
+  };
+
   return (
     <div className="border-b border-slate-800/90 bg-gradient-to-b from-slate-900/98 via-slate-950 to-slate-950/95 text-slate-200 shadow-md shadow-slate-950/40 max-md:border-b-2 max-md:border-cyan-500/35 max-md:bg-gradient-to-b max-md:from-cyan-950/45 max-md:via-slate-900 max-md:to-slate-950 max-md:shadow-md max-md:shadow-cyan-900/20 md:px-3 md:py-3">
       <input
@@ -231,6 +252,15 @@ export default function TopBarBlock() {
         onChange={handleJsonFile}
         tabIndex={-1}
         aria-label="Load combat JSON file"
+      />
+      <input
+        ref={projectFileInputRef}
+        type="file"
+        accept="application/json,.json"
+        className="fixed left-0 top-0 m-0 h-px w-px overflow-hidden border-0 p-0 opacity-0"
+        onChange={handleProjectFile}
+        tabIndex={-1}
+        aria-label="Load project JSON file"
       />
       <div className="hidden md:block">
         <div className="mx-auto max-w-[1600px]">
@@ -282,6 +312,43 @@ export default function TopBarBlock() {
               <CircleHelp className="h-4 w-4 shrink-0 text-violet-300/95" strokeWidth={2.25} aria-hidden />
               Tutorial
             </Link>
+            {activeProject ? (
+              <span
+                className="order-last hidden max-w-[11rem] truncate rounded-lg border border-violet-500/40 bg-violet-950/45 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-violet-100 sm:order-none sm:inline-flex sm:max-w-[14rem]"
+                title={`Project: ${activeProject.name}`}
+              >
+                Project: {activeProject.name}
+              </span>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => saveProject()}
+              disabled={turns.length === 0}
+              title="Save full project (planner + decision timeline) as JSON"
+              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl border-2 border-violet-500/50 bg-violet-950/45 px-3 py-2.5 text-xs font-bold text-violet-50 shadow-md ring-1 ring-violet-400/25 transition hover:border-violet-400/70 hover:bg-violet-900/40 disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              <FileDown className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
+              Save project
+            </button>
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={() => projectFileInputRef.current?.click()}
+              title="Load a saved project file"
+              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl border-2 border-fuchsia-500/45 bg-fuchsia-950/35 px-3 py-2.5 text-xs font-bold text-fuchsia-50 shadow-md ring-1 ring-fuchsia-400/20 transition hover:border-fuchsia-400/60 hover:bg-fuchsia-950/55 disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              <FolderOpen className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
+              Load project
+            </button>
+            <button
+              type="button"
+              onClick={() => closeProject()}
+              title="Close project and clear saved last project"
+              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl border-2 border-slate-600/80 bg-slate-900/80 px-3 py-2.5 text-xs font-bold text-slate-200 shadow-md transition hover:border-rose-500/45 hover:bg-rose-950/35 hover:text-rose-100"
+            >
+              <X className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
+              Close project
+            </button>
             <button
               type="button"
               disabled={savePlannerRowDisabled}
@@ -330,8 +397,8 @@ export default function TopBarBlock() {
               <p className="mt-2 text-xs leading-relaxed text-slate-400">
                 {!gameState ? (
                   <>
-                    Load combat using <span className="font-semibold text-slate-300">Load data</span>, then add planner
-                    rows in{" "}
+                    Use <span className="font-semibold text-slate-300">Load project</span> or{" "}
+                    <span className="font-semibold text-slate-300">Load data</span> in the header, then add planner rows in{" "}
                     <Link href="/turn-maker" className="font-semibold text-amber-300/95 underline-offset-2 hover:underline">
                       Turns
                     </Link>
@@ -806,7 +873,8 @@ export default function TopBarBlock() {
                 <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
                   {!gameState ? (
                     <>
-                      Load combat with <span className="font-semibold text-slate-300">Load data</span>, then add rows in{" "}
+                      Use <span className="font-semibold text-slate-300">Load project</span> or{" "}
+                      <span className="font-semibold text-slate-300">Load data</span>, then rows in{" "}
                       <Link href="/turn-maker" className="font-semibold text-amber-300/95 underline-offset-2 hover:underline">
                         Turns
                       </Link>

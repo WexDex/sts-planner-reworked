@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CalendarClock } from "lucide-react";
 import { TutorialIntentGlossary } from "@/app/tutorial/TutorialGlossaryChunks";
+import { TUTORIAL_DOC_UPDATE_CLASS } from "@/app/tutorial/docUpdateHighlight";
 import { TutorialPageShell } from "@/app/tutorial/TutorialScrollNav.client";
 
 export const metadata: Metadata = {
@@ -32,6 +33,14 @@ export default function TutorialTurnMakerPage() {
           <code className="font-mono text-[11px] text-slate-500">EnemyIntentAction</code> payloads.
         </p>
       </header>
+
+      <div className={`${TUTORIAL_DOC_UPDATE_CLASS} mt-6 space-y-2`}>
+        <p className="max-w-3xl text-sm text-slate-300">
+          After you land intents in the main planner, use header <strong className="text-slate-100">Save project</strong> if you want a
+          single file that restores rows, timeline, layout, and combat together; <strong className="text-slate-100">Load project</strong> /
+          last-session restore replaces starting from an empty shell.
+        </p>
+      </div>
 
       <section id="authoring" className="scroll-mt-28 space-y-4">
         <h2 className="text-base font-bold text-slate-100">Authoring loop</h2>

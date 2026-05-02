@@ -23,6 +23,17 @@ import {
   newPlannerTurnUid,
 } from '@/app/utils/gameHelpers';
 import {
+  buildProjectSaveFileV1,
+  clearLastProjectFromLocalStorage,
+  loadLastProjectFromLocalStorage,
+  normalizeToProjectV1,
+  parseProjectJsonString,
+  saveLastProjectToLocalStorage,
+  newProjectMeta,
+  type PlannerWorkflowSaveShape,
+  type ProjectMeta,
+} from '@/app/utils/projectSave';
+import {
   buildActionLogEntry,
   createActivityLogEntry,
   formatCardNames,
@@ -37,7 +48,6 @@ import {
   buildDebuffRemovedLogEntry,
   formatPlayCardTargets,
 } from '@/app/utils/activityLogger';
-import defaultCombatFromFile from '@/app/data/EliteSlavers.json';
 import {
   buildGameCardFromStsRaw,
   gameCardFromDatabaseId,
@@ -73,6 +83,7 @@ import {
 } from '@/app/utils/decisionTimelineAccent';
 
 export type DecisionTimelinePositionMap = Record<string, { x: number; y: number }>;
+
 import {
   decrementIntangibleStacks,
   entityHasIntangible,
@@ -81,9 +92,6 @@ import {
   migrateLegacyIntangibleFields,
 } from '@/app/utils/intangibleBuff';
 import { isEnemyTargetableInPlannerTurn } from '@/app/utils/enemyPlannerTurn';
-
-/** Default bundled combat — Elite Slavers payload (`app/data/EliteSlavers.json`). */
-const defaultCombatPayload = defaultCombatFromFile as unknown as CombatData;
 
 function cloneEnemyArrayDeep(enemies: Enemy[]): Enemy[] {
   return JSON.parse(JSON.stringify(enemies)) as Enemy[];
@@ -112,12 +120,20 @@ interface GameContextType {
   /** Push enemy intent scripts to live combat and every planner-slot / decision snapshot (Turn Maker). */
   syncEnemyIntentsGlobally: (enemies: Enemy[]) => void;
   resetGameState: () => void;
-  loadGameData: (filePath?: string) => Promise<void>;
+  loadGameData: (filePath: string) => Promise<void>;
   loadGameDataFromJson: (data: CombatData) => Promise<void>;
   saveGameData: (key?: string) => void;
   /** Download the same planner snapshot {@link saveGameData} writes to storage, as a `.json` file. */
   downloadPlannerSaveJson: () => void;
   loadSavedGame: (key?: string) => boolean;
+  /** Current named project session (Save/Load Project). Null after close or raw combat-only load. */
+  activeProject: ProjectMeta | null;
+  /** Prompt for name, download `.json`, persist to last-project storage. */
+  saveProject: () => void;
+  /** Parse full project or legacy planner export; restores workflow and sets active project. */
+  loadProjectFromJsonText: (text: string) => boolean;
+  /** Clear planner state and last-project storage (confirm in UI). */
+  closeProject: () => void;
   toggleRelic: (relicName: string) => void;
   toggleCardSelection: (location: string, index: number) => void;
   playSelectedCards: () => void;
@@ -221,6 +237,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [combatTargetMode, setCombatTargetModeState] = useState<'single' | 'multi'>('single');
   const [combatTargetEnemyIndices, setCombatTargetEnemyIndices] = useState<number[]>([]);
   const [combatTargetSelf, setCombatTargetSelf] = useState(false);
+  const [activeProject, setActiveProject] = useState<ProjectMeta | null>(null);
 
   const normalizeRelicEffects = (data: CombatData): CombatData => ({
     ...data,
@@ -273,6 +290,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const ingestCombatPayload = async (data: CombatData) => {
     try {
       setIsLoading(true);
+      clearLastProjectFromLocalStorage();
+      setActiveProject(null);
       const normalizedData = normalizeRelicEffects(data);
       const hydratedData = hydrateCombatData(normalizedData);
       const withPiles = {
@@ -318,21 +337,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const loadGameData = async (filePath?: string) => {
-    const data = filePath
-      ? await loadFromFile(filePath)
-      : cloneGameData(defaultCombatPayload);
+  const loadGameData = async (filePath: string) => {
+    const data = await loadFromFile(filePath);
     await ingestCombatPayload(data);
   };
 
   const loadGameDataFromJson = async (data: CombatData) => {
     await ingestCombatPayload(cloneGameData(data));
   };
-
-  useEffect(() => {
-    loadGameData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     const n = gameState?.enemies?.length ?? 0;
@@ -606,9 +618,29 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           activeDecisionNodeId,
           decisionTimelinePositions,
         });
+        if (activeProject) {
+          const planner: PlannerWorkflowSaveShape = {
+            turns,
+            currentTurnIndex,
+            turnPhase,
+            decisionNodes,
+            activeDecisionNodeId,
+            decisionTimelinePositions,
+          };
+          const file = buildProjectSaveFileV1(planner, activeProject);
+          saveLastProjectToLocalStorage(file);
+        }
       }
     },
-    [turns, currentTurnIndex, turnPhase, decisionNodes, activeDecisionNodeId, decisionTimelinePositions],
+    [
+      turns,
+      currentTurnIndex,
+      turnPhase,
+      decisionNodes,
+      activeDecisionNodeId,
+      decisionTimelinePositions,
+      activeProject,
+    ],
   );
 
   const downloadPlannerSaveJson = useCallback(() => {
@@ -731,88 +763,232 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const loadSavedGame = (key: string = DEFAULT_SAVE_KEY): boolean => {
-    const saved = loadFromLocalStorage(key);
-    if (saved && saved.turns && Array.isArray(saved.turns)) {
-      const migratedTurns = migrateTurnRowsWithUids(saved.turns);
-      setTurns(migratedTurns);
-      setCurrentTurnIndex(saved.currentTurnIndex || 0);
-      const slotState = migratedTurns[saved.currentTurnIndex || 0]?.state;
-      setGameState(slotState ? cloneGameData(slotState) : null);
-      const phase = saved.turnPhase as CombatTurnPhase | undefined;
-      setTurnPhase(
-        phase === 'start' || phase === 'player' || phase === 'enemy' ? phase : 'start',
+  const applyPlannerWorkflow = useCallback((saved: PlannerWorkflowSaveShape): boolean => {
+    if (!saved.turns || !Array.isArray(saved.turns)) {
+      return false;
+    }
+    const migratedTurns = migrateTurnRowsWithUids(saved.turns);
+    setTurns(migratedTurns);
+    setCurrentTurnIndex(saved.currentTurnIndex || 0);
+    const slotState = migratedTurns[saved.currentTurnIndex || 0]?.state;
+    setGameState(slotState ? cloneGameData(slotState) : null);
+    const phase = saved.turnPhase as CombatTurnPhase | undefined;
+    setTurnPhase(phase === 'start' || phase === 'player' || phase === 'enemy' ? phase : 'start');
+
+    setInitialData(
+      migratedTurns.length > 0 && migratedTurns[0]?.state
+        ? cloneGameData(migratedTurns[0].state)
+        : null,
+    );
+
+    const rawNodes = saved.decisionNodes;
+    if (
+      Array.isArray(rawNodes) &&
+      rawNodes.length > 0 &&
+      rawNodes.every(
+        (n: DecisionNode) =>
+          n &&
+          typeof n.id === 'string' &&
+          n.snapshot &&
+          typeof n.plannerTurnSlotId === 'number',
+      )
+    ) {
+      const cloned: DecisionNode[] = migrateDecisionNodeTimelineRoles(
+        rawNodes.map((n: DecisionNode) => ({
+          ...n,
+          snapshot: cloneGameData(n.snapshot),
+        })),
       );
-
-      const rawNodes = saved.decisionNodes;
-      if (
-        Array.isArray(rawNodes) &&
-        rawNodes.length > 0 &&
-        rawNodes.every(
-          (n: DecisionNode) =>
-            n &&
-            typeof n.id === 'string' &&
-            n.snapshot &&
-            typeof n.plannerTurnSlotId === 'number',
-        )
-      ) {
-        const cloned: DecisionNode[] = migrateDecisionNodeTimelineRoles(
-          rawNodes.map((n: DecisionNode) => ({
-            ...n,
-            snapshot: cloneGameData(n.snapshot),
-          })),
-        );
-        const normalizedNodes = migrateDecisionCheckpointLabelsToTurnSlugs(
-          normalizeDecisionNodePlannerSlots(cloned, migratedTurns),
-          migratedTurns,
-        );
-        const withAccents = ensureDecisionNodesTimelineAccents(normalizedNodes);
-        const preferred = saved.activeDecisionNodeId as string | undefined;
-        const active =
-          preferred && withAccents.some((n) => n.id === preferred)
-            ? preferred
-            : getForcedMainTimelineLeafFromStart(withAccents) ?? withAccents[0]!.id;
-        setDecisionNodes(withAccents);
-        setActiveDecisionNodeId(active);
-        const pos = saved.decisionTimelinePositions as DecisionTimelinePositionMap | undefined;
-        setDecisionTimelinePositions(
-          pos && typeof pos === 'object' && !Array.isArray(pos) ? pos : {},
-        );
+      const normalizedNodes = migrateDecisionCheckpointLabelsToTurnSlugs(
+        normalizeDecisionNodePlannerSlots(cloned, migratedTurns),
+        migratedTurns,
+      );
+      const withAccents = ensureDecisionNodesTimelineAccents(normalizedNodes);
+      const preferred = saved.activeDecisionNodeId as string | undefined;
+      const active =
+        preferred && withAccents.some((n) => n.id === preferred)
+          ? preferred
+          : getForcedMainTimelineLeafFromStart(withAccents) ?? withAccents[0]!.id;
+      setDecisionNodes(withAccents);
+      setActiveDecisionNodeId(active);
+      const pos = saved.decisionTimelinePositions as DecisionTimelinePositionMap | undefined;
+      setDecisionTimelinePositions(pos && typeof pos === 'object' && !Array.isArray(pos) ? pos : {});
+    } else {
+      const idx = saved.currentTurnIndex || 0;
+      const slot = migratedTurns[idx];
+      const phaseNow =
+        saved.turnPhase === 'start' || saved.turnPhase === 'player' || saved.turnPhase === 'enemy'
+          ? saved.turnPhase
+          : 'start';
+      if (slot) {
+        const rootId = crypto.randomUUID();
+        const [migrated] = migrateDecisionNodeTimelineRoles([
+          {
+            id: rootId,
+            parentId: null,
+            label: 'START',
+            timelineRole: 'timeline_start',
+            snapshot: cloneGameData(slot.state),
+            plannerTurnSlotId: slot.id,
+            timelineAccentHex: pickDistinctTimelineAccentHex([]),
+            turnPhase: phaseNow,
+            createdAt: new Date().toISOString(),
+          },
+        ]);
+        setDecisionNodes([migrated]);
+        setActiveDecisionNodeId(rootId);
       } else {
-        const idx = saved.currentTurnIndex || 0;
-        const slot = migratedTurns[idx];
-        const phaseNow =
-          saved.turnPhase === 'start' || saved.turnPhase === 'player' || saved.turnPhase === 'enemy'
-            ? saved.turnPhase
-            : 'start';
-        if (slot) {
-          const rootId = crypto.randomUUID();
-          const [migrated] = migrateDecisionNodeTimelineRoles([
-            {
-              id: rootId,
-              parentId: null,
-              label: 'START',
-              timelineRole: 'timeline_start',
-              snapshot: cloneGameData(slot.state),
-              plannerTurnSlotId: slot.id,
-              timelineAccentHex: pickDistinctTimelineAccentHex([]),
-              turnPhase: phaseNow,
-              createdAt: new Date().toISOString(),
-            },
-          ]);
-          setDecisionNodes([migrated]);
-          setActiveDecisionNodeId(rootId);
-        } else {
-          setDecisionNodes([]);
-          setActiveDecisionNodeId(null);
-        }
-        setDecisionTimelinePositions({});
+        setDecisionNodes([]);
+        setActiveDecisionNodeId(null);
       }
+      setDecisionTimelinePositions({});
+    }
+    setError(null);
+    return true;
+  }, []);
 
-      return true;
+  const loadSavedGame = (key: string = DEFAULT_SAVE_KEY): boolean => {
+    const savedUnknown = loadFromLocalStorage(key) as unknown;
+    if (
+      savedUnknown &&
+      typeof savedUnknown === 'object' &&
+      'turns' in savedUnknown &&
+      Array.isArray((savedUnknown as PlannerWorkflowSaveShape).turns)
+    ) {
+      return applyPlannerWorkflow(savedUnknown as PlannerWorkflowSaveShape);
     }
     return false;
   };
+
+  const loadProjectFromJsonText = useCallback(
+    (text: string): boolean => {
+      const proj = parseProjectJsonString(text, 'Imported project');
+      if (!proj) {
+        toast('Invalid project file', 'error');
+        return false;
+      }
+      if (!applyPlannerWorkflow(proj.planner)) {
+        toast('Project file is missing planner data', 'error');
+        return false;
+      }
+      setActiveProject(proj.projectMeta);
+      saveLastProjectToLocalStorage(proj);
+      toast(`Loaded project: ${proj.projectMeta.name}`, 'success');
+      return true;
+    },
+    [applyPlannerWorkflow],
+  );
+
+  const saveProject = useCallback(() => {
+    if (turns.length === 0) {
+      toast('Nothing to save — open or start a project first', 'info');
+      return;
+    }
+    const defaultName = activeProject?.name ?? 'Untitled project';
+    const nameInput = typeof window !== 'undefined' ? window.prompt('Project name', defaultName) : null;
+    if (nameInput === null) {
+      return;
+    }
+    const trimmed = nameInput.trim() || 'Untitled project';
+    const meta: ProjectMeta = activeProject
+      ? {
+          ...activeProject,
+          name: trimmed,
+          updatedAt: new Date().toISOString(),
+        }
+      : newProjectMeta(trimmed);
+    const planner: PlannerWorkflowSaveShape = {
+      turns,
+      currentTurnIndex,
+      turnPhase,
+      decisionNodes,
+      activeDecisionNodeId,
+      decisionTimelinePositions,
+    };
+    const file = buildProjectSaveFileV1(planner, meta);
+    const json = JSON.stringify(file, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sts-project-${trimmed.replace(/\s+/g, '-').slice(0, 48)}-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    saveLastProjectToLocalStorage(file);
+    setActiveProject(file.projectMeta);
+    toast('Project saved', 'success');
+  }, [
+    turns,
+    currentTurnIndex,
+    turnPhase,
+    decisionNodes,
+    activeDecisionNodeId,
+    decisionTimelinePositions,
+    activeProject,
+  ]);
+
+  const closeProject = useCallback(() => {
+    if (turns.length > 0 || gameState) {
+      if (typeof window !== 'undefined' && !window.confirm('Close project? Unsaved changes in this tab will be lost.')) {
+        return;
+      }
+    }
+    setGameState(null);
+    setInitialData(null);
+    setTurns([]);
+    setCurrentTurnIndex(0);
+    setTurnPhase('start');
+    setDecisionNodes([]);
+    setActiveDecisionNodeId(null);
+    setDecisionTimelinePositions({});
+    setActiveProject(null);
+    setError(null);
+    setCombatTargetEnemyIndices([]);
+    setCombatTargetSelf(false);
+    clearLastProjectFromLocalStorage();
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(DEFAULT_SAVE_KEY);
+      }
+    } catch {
+      /* ignore */
+    }
+    toast('Project closed', 'info');
+  }, [turns.length, gameState]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setIsLoading(true);
+      try {
+        const lastProject = loadLastProjectFromLocalStorage();
+        if (lastProject && !cancelled) {
+          if (applyPlannerWorkflow(lastProject.planner)) {
+            setActiveProject(lastProject.projectMeta);
+            toast(`Loaded project: ${lastProject.projectMeta.name}`, 'success');
+          }
+        } else if (!cancelled) {
+          const rawUnknown = loadFromLocalStorage(DEFAULT_SAVE_KEY) as unknown;
+          const legacy = normalizeToProjectV1(rawUnknown, 'Previous session');
+          if (legacy && applyPlannerWorkflow(legacy.planner)) {
+            setActiveProject(legacy.projectMeta);
+            saveLastProjectToLocalStorage(legacy);
+            toast(`Restored previous session: ${legacy.projectMeta.name}`, 'info');
+          }
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [applyPlannerWorkflow]);
 
   const forkDecisionBranch = useCallback(
     (optionalLabel?: string, forkParentCheckpointId?: string | null): string | null => {
@@ -1033,10 +1209,40 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    /**
+     * Decision tree must never be deeper than `turns.length`. Reparent / link operations grow the tree
+     * without touching `turns`, so depth-N nodes (N > turns.length) get clamped onto the last slot by
+     * {@link effectivePlannerTurnSlotId}. That collapses two distinct path nodes onto the same planner
+     * slot — {@link buildTurnStatesFromBranchPath}'s `bestBySlot` then drops the older snapshot's
+     * `activityLog`. Auto-extend planner rows here (mirroring the fork path) so every depth keeps a
+     * unique slot.
+     */
+    let maxDecisionDepth = 0;
+    for (const n of nodesNow) {
+      if (n.timelineRole === 'timeline_start' || n.parentId === null) continue;
+      const d = decisionNodeDepthFromRoot(nodesNow, n.id);
+      if (d > maxDecisionDepth) maxDecisionDepth = d;
+    }
+    let workingTurns = turnsNow;
+    if (maxDecisionDepth > workingTurns.length) {
+      const extended = [...workingTurns];
+      while (extended.length < maxDecisionDepth) {
+        const baseState = extended[extended.length - 1]?.state ?? gameState;
+        const nextId =
+          extended.length > 0 ? Math.max(...extended.map((t) => t.id)) + 1 : 1;
+        extended.push({
+          id: nextId,
+          uid: newPlannerTurnUid(),
+          state: cloneGameData(baseState),
+        });
+      }
+      workingTurns = extended;
+    }
+
     const pathNodes = getDecisionPathFromRoot(nodesNow, activeDecisionNodeId);
     const pathIdSet = new Set(pathNodes.map((p) => p.id));
 
-    let turnsScratch = turnsNow.map((t, i) =>
+    let turnsScratch = workingTurns.map((t, i) =>
       i === idx ? { ...t, state: cloneGameData(gameState) } : t,
     );
 
@@ -1355,35 +1561,76 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         toast('Cannot relink — invalid parent or would break START / create a cycle.', 'error');
         return;
       }
+
+      /**
+       * Reparent design (post-fix):
+       *   1. Compute the new tree.
+       *   2. Extend `turns` to fit the new max depth (mirrors {@link forkDecisionBranch}) so the deeper
+       *      node gets its OWN planner slot instead of clamping onto the existing last slot.
+       *   3. Rebuild every planner row's state from the canonical path node's `snapshot` via
+       *      {@link buildTurnStatesFromBranchPath}. This preserves each per-UID snapshot across the
+       *      relink — without it, the OLD active row's data would clobber the now-canonical
+       *      (formerly sibling) node's snapshot when the next sync overwrites path nodes from rows.
+       */
+      const reparentedNodes = decisionNodes.map((n) =>
+        n.id === nodeId ? { ...n, parentId: newParentId } : n,
+      );
+
+      let extendedTurns = [...turns];
+      let maxDepth = 0;
+      for (const n of reparentedNodes) {
+        if (n.timelineRole === 'timeline_start' || n.parentId === null) continue;
+        const d = decisionNodeDepthFromRoot(reparentedNodes, n.id);
+        if (d > maxDepth) maxDepth = d;
+      }
+      while (extendedTurns.length < maxDepth) {
+        const baseState =
+          extendedTurns[extendedTurns.length - 1]?.state ?? gameState ?? null;
+        const nextId =
+          extendedTurns.length > 0 ? Math.max(...extendedTurns.map((t) => t.id)) + 1 : 1;
+        extendedTurns.push({
+          id: nextId,
+          uid: newPlannerTurnUid(),
+          state: baseState ? cloneGameData(baseState) : (extendedTurns[0]?.state as never),
+        });
+      }
+
       const nextDecisionNodes = normalizeDecisionNodePlannerSlots(
-        decisionNodes.map((n) => (n.id === nodeId ? { ...n, parentId: newParentId } : n)),
-        turns,
+        reparentedNodes,
+        extendedTurns,
       );
       const pinnedActiveId = pinActiveAlongUniqueChildChainFromNode(nextDecisionNodes, nodeId);
       const targetNode = nextDecisionNodes.find((n) => n.id === pinnedActiveId);
 
+      const rebuiltTurns = buildTurnStatesFromBranchPath(
+        nextDecisionNodes,
+        pinnedActiveId,
+        extendedTurns,
+      );
+
       let saveTurnIndex = currentTurnIndex;
       let savePhase = turnPhase;
       if (targetNode && targetNode.timelineRole !== 'timeline_start') {
-        const turnIndex = Math.max(0, turns.findIndex((t) => t.id === targetNode.plannerTurnSlotId));
+        const turnIndex = Math.max(
+          0,
+          rebuiltTurns.findIndex((t) => t.id === targetNode.plannerTurnSlotId),
+        );
         saveTurnIndex = turnIndex;
         savePhase = targetNode.turnPhase;
-        setTurns((prev) =>
-          prev.map((t, i) =>
-            i === turnIndex ? { ...t, state: cloneGameData(targetNode.snapshot) } : t,
-          ),
-        );
+        setTurns(rebuiltTurns);
         setCurrentTurnIndex(turnIndex);
         setGameState(cloneGameData(targetNode.snapshot));
         setTurnPhase(targetNode.turnPhase);
+      } else {
+        setTurns(rebuiltTurns);
       }
 
       setDecisionNodes(nextDecisionNodes);
       setActiveDecisionNodeId(pinnedActiveId);
 
-      if (turns.length > 0) {
+      if (rebuiltTurns.length > 0) {
         saveToLocalStorage(DEFAULT_SAVE_KEY, {
-          turns,
+          turns: rebuiltTurns,
           currentTurnIndex: saveTurnIndex,
           turnPhase: savePhase,
           decisionNodes: nextDecisionNodes,
@@ -2279,6 +2526,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         saveGameData,
         downloadPlannerSaveJson,
         loadSavedGame,
+        activeProject,
+        saveProject,
+        loadProjectFromJsonText,
+        closeProject,
         toggleRelic,
         toggleCardSelection,
         playSelectedCards,
