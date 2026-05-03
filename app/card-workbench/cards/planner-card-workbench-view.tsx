@@ -191,12 +191,66 @@ function mergeCardsIntoBundle(
 const BUNDLE_DOWNLOAD_BUTTON_CLASS =
   "inline-flex shrink-0 items-center gap-1.5 rounded-2xl border border-emerald-400/38 bg-linear-to-br from-emerald-500/88 to-teal-600/94 px-3 py-2 text-[11px] font-semibold text-white shadow-lg shadow-emerald-950/50 hover:from-emerald-400 hover:to-teal-500";
 
+const LOCALSTORAGE_PREFIX = "sts-card-workbench-";
+
 function galleryFieldKeysFromBundle(bundle: Record<string, unknown>): string[] {
   const meta = bundle._meta;
   if (!isRecord(meta)) return [];
   const g = meta.galleryFieldGuide;
   if (!isRecord(g)) return [];
   return Object.keys(g);
+}
+
+/** Utility to load Set from localStorage */
+function loadSetFromStorage(key: string): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const stored = localStorage.getItem(LOCALSTORAGE_PREFIX + key);
+    return stored ? new Set(JSON.parse(stored) as string[]) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+/** Utility to save Set to localStorage */
+function saveSetToStorage(key: string, value: Set<string>): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(LOCALSTORAGE_PREFIX + key, JSON.stringify([...value]));
+  } catch {
+    // Silently fail if localStorage is unavailable
+  }
+}
+
+/** Utility to load string from localStorage */
+function loadStringFromStorage(key: string, defaultValue: string): string {
+  if (typeof window === "undefined") return defaultValue;
+  try {
+    return localStorage.getItem(LOCALSTORAGE_PREFIX + key) ?? defaultValue;
+  } catch {
+    return defaultValue;
+  }
+}
+
+/** Utility to save string to localStorage */
+function saveStringToStorage(key: string, value: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(LOCALSTORAGE_PREFIX + key, value);
+  } catch {
+    // Silently fail if localStorage is unavailable
+  }
+}
+
+/** Utility to load number from localStorage */
+function loadNumberFromStorage(key: string, defaultValue: number): number {
+  if (typeof window === "undefined") return defaultValue;
+  try {
+    const stored = localStorage.getItem(LOCALSTORAGE_PREFIX + key);
+    return stored !== null ? parseInt(stored, 10) : defaultValue;
+  } catch {
+    return defaultValue;
+  }
 }
 
 export function PlannerCardWorkbenchView({
@@ -208,7 +262,7 @@ export function PlannerCardWorkbenchView({
 
   const orderedIds = useMemo(() => sortedCardIds(cardMap), [cardMap]);
 
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(() => loadNumberFromStorage("selectedCardIndex", 0));
   const n = orderedIds.length;
   const selectedId =
     n > 0 ? (orderedIds[Math.min(Math.max(0, index), n - 1)] ?? "") : "";
@@ -246,11 +300,15 @@ useEffect(() => {
     [bundle],
   );
 
-  const [tagListFilter, setTagListFilter] = useState("");
-  const [pathFilters, setPathFilters] = useState<Set<string>>(() => new Set());
+  const [tagListFilter, setTagListFilter] = useState(() =>
+    loadStringFromStorage("tagListFilter", "")
+  );
+  const [pathFilters, setPathFilters] = useState<Set<string>>(() =>
+    loadSetFromStorage("pathFilters")
+  );
   const [fieldBranchesCollapsed, setFieldBranchesCollapsed] = useState<
     Set<string>
-  >(() => new Set());
+  >(() => loadSetFromStorage("fieldBranchesCollapsed"));
 
   const pathCatalog = useMemo(
     () => globalPathCatalog(cardMap, orderedIds, galleryFieldKeys),
@@ -275,10 +333,12 @@ useEffect(() => {
     return m;
   }, [cardMap, orderedIds]);
 
-  const [branchSortMode, setBranchSortMode] = useState<BranchSortMode>("alpha");
+  const [branchSortMode, setBranchSortMode] = useState<BranchSortMode>(
+    () => (loadStringFromStorage("branchSortMode", "alpha") as BranchSortMode)
+  );
 
   const [ignoredSortPrefixes, setIgnoredSortPrefixes] = useState<Set<string>>(
-    () => new Set(),
+    () => loadSetFromStorage("ignoredSortPrefixes")
   );
 
   const ignoredPrefixesSortedList = useMemo(
@@ -291,12 +351,15 @@ useEffect(() => {
       const next = new Set(prev);
       if (next.has(pathStr)) next.delete(pathStr);
       else next.add(pathStr);
+      // Persist to localStorage
+      saveSetToStorage("ignoredSortPrefixes", next);
       return next;
     });
   }, []);
 
   const clearIgnoredSortPrefixes = useCallback(() => {
     setIgnoredSortPrefixes(new Set());
+    saveSetToStorage("ignoredSortPrefixes", new Set());
   }, []);
 
   const sortedFilteredPathCatalog = useMemo(() => {
@@ -350,7 +413,9 @@ useEffect(() => {
     ignoredSortPrefixes,
   ]);
 
-  const [cardRailFilter, setCardRailFilter] = useState("");
+  const [cardRailFilter, setCardRailFilter] = useState(() =>
+    loadStringFromStorage("cardRailFilter", "")
+  );
 
   const filteredOrderedIds = useMemo(() => {
     const q = cardRailFilter.trim().toLowerCase();
@@ -363,6 +428,8 @@ useEffect(() => {
       const next = new Set(prev);
       if (next.has(pathStr)) next.delete(pathStr);
       else next.add(pathStr);
+      // Persist to localStorage
+      saveSetToStorage("fieldBranchesCollapsed", next);
       return next;
     });
   }, []);
@@ -386,6 +453,31 @@ useEffect(() => {
     setFieldBranchesCollapsed(new Set());
   }, [selectedId]);
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  /* Persist card index selection to localStorage */
+  useEffect(() => {
+    saveStringToStorage("selectedCardIndex", String(index));
+  }, [index]);
+
+  /* Persist tagListFilter to localStorage */
+  useEffect(() => {
+    saveStringToStorage("tagListFilter", tagListFilter);
+  }, [tagListFilter]);
+
+  /* Persist pathFilters to localStorage */
+  useEffect(() => {
+    saveSetToStorage("pathFilters", pathFilters);
+  }, [pathFilters]);
+
+  /* Persist cardRailFilter to localStorage */
+  useEffect(() => {
+    saveStringToStorage("cardRailFilter", cardRailFilter);
+  }, [cardRailFilter]);
+
+  /* Persist branchSortMode to localStorage */
+  useEffect(() => {
+    saveStringToStorage("branchSortMode", branchSortMode);
+  }, [branchSortMode]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -467,12 +559,15 @@ useEffect(() => {
       const next = new Set(prev);
       if (next.has(pathStr)) next.delete(pathStr);
       else next.add(pathStr);
+      // Persist to localStorage
+      saveSetToStorage("pathFilters", next);
       return next;
     });
   }, []);
 
   const clearPathFilters = useCallback(() => {
     setPathFilters(new Set());
+    saveSetToStorage("pathFilters", new Set());
   }, []);
 
   const updatePathForCard = useCallback(
@@ -1332,8 +1427,19 @@ useEffect(() => {
 
           <div className="min-h-0 min-w-0 flex-1">{fieldEditorPane}</div>
 
-          {/* Mobile / tablet: preview in document flow */}
-          <div className="w-full shrink-0 lg:hidden">{cardPane}</div>
+          {/* Mobile / tablet: preview in document flow with height constraint */}
+          <div className="w-full shrink-0 lg:hidden">
+            <div className="rounded-3xl border border-white/13 bg-black/30 overflow-hidden">
+              <div className="px-4 py-3 border-b border-white/10 bg-black/50">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  Card Preview
+                </p>
+              </div>
+              <div className="max-h-[55vh] overflow-y-auto">
+                {cardPane}
+              </div>
+            </div>
+          </div>
 
           {/* Desktop: spacer matches fixed preview width so layout stays balanced */}
           <div

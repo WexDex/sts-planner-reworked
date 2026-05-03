@@ -374,7 +374,9 @@ export function FieldEditorTree({
         return (
           <li key={pathStr}>
             <div
-              className={`rounded-lg border px-3 py-2.5 transition-colors ${
+              className={`rounded-lg border px-3 py-2.5 transition-colors
+                hover:bg-zinc-800/40 hover:ring-zinc-600/80 hover:ring-2
+                ${
                 filterHighlight
                   ? "border-sky-500/55 bg-sky-950/35 ring-1 ring-sky-500/30"
                   : exists
@@ -516,7 +518,7 @@ export function FieldEditorTree({
                 {depth === 0 && onToggleIgnoreSortPrefix ?
                   <div className="ml-auto mt-0.5 flex shrink-0 flex-col items-center gap-0.5 sm:ml-2 md:ml-auto">
                     <span className="select-none text-[8px] font-semibold uppercase tracking-wide text-rose-400/95">
-                      Later
+                      Ignore
                     </span>
                     <button
                       type="button"
