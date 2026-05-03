@@ -189,6 +189,18 @@ export const ACTIVITY_LOG_COLORS = {
     border: 'border-amber-400/45',
     badge: 'bg-amber-500/50',
   },
+  'phase-start': {
+    text: 'text-cyan-100',
+    bg: 'bg-cyan-950/55',
+    border: 'border-cyan-400/50',
+    badge: 'bg-cyan-600/45',
+  },
+  'phase-end': {
+    text: 'text-fuchsia-100',
+    bg: 'bg-fuchsia-950/50',
+    border: 'border-fuchsia-400/45',
+    badge: 'bg-fuchsia-600/45',
+  },
   info: {
     text: 'text-slate-300',
     bg: 'bg-slate-500/10',
@@ -210,6 +222,8 @@ export const ACTIVITY_LOG_ICONS: Record<string, string> = {
   'state-change': '📊',
   system: '⚙️',
   'turn-start': '🚩',
+  'phase-start': '▶',
+  'phase-end': '◀',
   info: 'ℹ️',
 } as const;
 

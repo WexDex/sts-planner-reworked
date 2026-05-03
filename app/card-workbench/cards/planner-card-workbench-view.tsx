@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUpToLine, ClipboardCopy, Download } from "lucide-react";
+import { ArrowDownToLine, ArrowUpToLine, ClipboardCopy, Download } from "lucide-react";
 import { toast } from "@/app/utils/toast";
 import {
   collectDottedPathsFromCard,
@@ -53,7 +53,9 @@ function cardsFromBundle(
   return out;
 }
 
-function sortedCardIds(cards: Record<string, Record<string, unknown>>): string[] {
+function sortedCardIds(
+  cards: Record<string, Record<string, unknown>>,
+): string[] {
   return Object.keys(cards).sort((a, b) =>
     a.localeCompare(b, undefined, { sensitivity: "base" }),
   );
@@ -69,9 +71,9 @@ function costBadge(raw: Record<string, unknown>): string {
 
 function shellForCharacters(charRaw: unknown): string {
   const primary =
-    typeof charRaw === "string" ?
-      charRaw.split(/[,\|]/)[0]?.trim().toLowerCase() ?? ""
-    : "";
+    typeof charRaw === "string"
+      ? (charRaw.split(/[,\|]/)[0]?.trim().toLowerCase() ?? "")
+      : "";
 
   const map: Record<string, string> = {
     ironclad:
@@ -90,12 +92,10 @@ function shellForCharacters(charRaw: unknown): string {
       "border-slate-600/35 bg-linear-to-br from-slate-800/80 via-slate-950 to-black",
     general:
       "border-fuchsia-500/30 bg-linear-to-br from-fuchsia-950/40 via-slate-950 to-slate-950",
-    red:
-      "border-rose-500/35 bg-linear-to-br from-rose-950/90 via-slate-950/95 to-slate-950",
+    red: "border-rose-500/35 bg-linear-to-br from-rose-950/90 via-slate-950/95 to-slate-950",
     green:
       "border-emerald-500/35 bg-linear-to-br from-emerald-950/70 via-slate-950/95 to-slate-950",
-    blue:
-      "border-sky-500/35 bg-linear-to-br from-sky-950/75 via-slate-950/95 to-slate-950",
+    blue: "border-sky-500/35 bg-linear-to-br from-sky-950/75 via-slate-950/95 to-slate-950",
     purple:
       "border-violet-500/35 bg-linear-to-br from-violet-950/80 via-slate-950/95 to-slate-950",
   };
@@ -108,8 +108,8 @@ function shellForCharacters(charRaw: unknown): string {
 }
 
 function primaryCharacterKey(charRaw: unknown): string {
-  return typeof charRaw === "string" ?
-      charRaw.split(/[,\|]/)[0]?.trim().toLowerCase() ?? ""
+  return typeof charRaw === "string"
+    ? (charRaw.split(/[,\|]/)[0]?.trim().toLowerCase() ?? "")
     : "";
 }
 
@@ -117,30 +117,19 @@ function primaryCharacterKey(charRaw: unknown): string {
 function railAccentForCharacters(charRaw: unknown): string {
   const k = primaryCharacterKey(charRaw);
   const map: Record<string, string> = {
-    ironclad:
-      "border-l-rose-500/85 bg-rose-950/28 hover:bg-rose-950/38",
-    silent:
-      "border-l-emerald-500/85 bg-emerald-950/28 hover:bg-emerald-950/38",
-    defect:
-      "border-l-sky-500/85 bg-sky-950/35 hover:bg-sky-950/45",
-    watcher:
-      "border-l-violet-500/85 bg-violet-950/38 hover:bg-violet-950/48",
-    colorless:
-      "border-l-slate-500/80 bg-slate-800/43 hover:bg-slate-800/52",
-    curse:
-      "border-l-zinc-500/95 bg-zinc-900/55 hover:bg-zinc-900/65",
-    status:
-      "border-l-slate-500 bg-slate-800/41 hover:bg-slate-800/52",
+    ironclad: "border-l-rose-500/85 bg-rose-950/28 hover:bg-rose-950/38",
+    silent: "border-l-emerald-500/85 bg-emerald-950/28 hover:bg-emerald-950/38",
+    defect: "border-l-sky-500/85 bg-sky-950/35 hover:bg-sky-950/45",
+    watcher: "border-l-violet-500/85 bg-violet-950/38 hover:bg-violet-950/48",
+    colorless: "border-l-slate-500/80 bg-slate-800/43 hover:bg-slate-800/52",
+    curse: "border-l-zinc-500/95 bg-zinc-900/55 hover:bg-zinc-900/65",
+    status: "border-l-slate-500 bg-slate-800/41 hover:bg-slate-800/52",
     general:
       "border-l-fuchsia-500/82 bg-fuchsia-950/30 hover:bg-fuchsia-950/40",
-    red:
-      "border-l-rose-500/85 bg-rose-950/28 hover:bg-rose-950/38",
-    green:
-      "border-l-emerald-500/85 bg-emerald-950/28 hover:bg-emerald-950/38",
-    blue:
-      "border-l-sky-500/85 bg-sky-950/35 hover:bg-sky-950/45",
-    purple:
-      "border-l-violet-500/85 bg-violet-950/38 hover:bg-violet-950/48",
+    red: "border-l-rose-500/85 bg-rose-950/28 hover:bg-rose-950/38",
+    green: "border-l-emerald-500/85 bg-emerald-950/28 hover:bg-emerald-950/38",
+    blue: "border-l-sky-500/85 bg-sky-950/35 hover:bg-sky-950/45",
+    purple: "border-l-violet-500/85 bg-violet-950/38 hover:bg-violet-950/48",
   };
   return (
     map[k] ??
@@ -202,9 +191,7 @@ function mergeCardsIntoBundle(
 const BUNDLE_DOWNLOAD_BUTTON_CLASS =
   "inline-flex shrink-0 items-center gap-1.5 rounded-2xl border border-emerald-400/38 bg-linear-to-br from-emerald-500/88 to-teal-600/94 px-3 py-2 text-[11px] font-semibold text-white shadow-lg shadow-emerald-950/50 hover:from-emerald-400 hover:to-teal-500";
 
-function galleryFieldKeysFromBundle(
-  bundle: Record<string, unknown>,
-): string[] {
+function galleryFieldKeysFromBundle(bundle: Record<string, unknown>): string[] {
   const meta = bundle._meta;
   if (!isRecord(meta)) return [];
   const g = meta.galleryFieldGuide;
@@ -224,9 +211,8 @@ export function PlannerCardWorkbenchView({
   const [index, setIndex] = useState(0);
   const n = orderedIds.length;
   const selectedId =
-    n > 0 ? orderedIds[Math.min(Math.max(0, index), n - 1)] ?? "" : "";
-  const selectedRaw =
-    selectedId ? cardMap[selectedId] : null;
+    n > 0 ? (orderedIds[Math.min(Math.max(0, index), n - 1)] ?? "") : "";
+  const selectedRaw = selectedId ? cardMap[selectedId] : null;
 
   const [cardJson, setCardJson] = useState("");
   const [cardJsonErr, setCardJsonErr] = useState<string | null>(null);
@@ -234,26 +220,26 @@ export function PlannerCardWorkbenchView({
   const [showScrollTop, setShowScrollTop] = useState(false);
   const bundleRef = useRef(bundle);
   bundleRef.current = bundle;
+useEffect(() => {
+  const el = scrollAreaRef.current;
 
-  useEffect(() => {
-    const el = scrollAreaRef.current;
-    const onScroll = () => {
-      const local = el?.scrollTop ?? 0;
-      const doc = document.documentElement.scrollTop;
-      const win =
-        window.scrollY ??
-        window.pageYOffset ??
-        (typeof doc === "number" ? doc : 0);
-      setShowScrollTop(local > 240 || win > 240);
-    };
-    onScroll();
-    el?.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      el?.removeEventListener("scroll", onScroll);
-      window.removeEventListener("scroll", onScroll);
-    };
-  }, []);
+  const onScroll = () => {
+    if (!el) return;
+
+    const local = el?.scrollTop ?? 0;
+    const doc2 = document.documentElement.scrollTop;
+    const win2 = window.scrollY ?? window.pageYOffset ?? (typeof doc2 === "number" ? doc2 : 0);
+    setShowScrollTop(local > 240 || win2 > 240);
+  };
+
+  el?.addEventListener("scroll", onScroll);
+  window.addEventListener("scroll", onScroll);
+
+  return () => {
+    el?.removeEventListener("scroll", onScroll);
+    window.removeEventListener("scroll", onScroll);
+  };
+}, []);
 
   const galleryFieldKeys = useMemo(
     () => galleryFieldKeysFromBundle(bundle),
@@ -289,12 +275,11 @@ export function PlannerCardWorkbenchView({
     return m;
   }, [cardMap, orderedIds]);
 
-  const [branchSortMode, setBranchSortMode] =
-    useState<BranchSortMode>("alpha");
+  const [branchSortMode, setBranchSortMode] = useState<BranchSortMode>("alpha");
 
-  const [ignoredSortPrefixes, setIgnoredSortPrefixes] = useState<
-    Set<string>
-  >(() => new Set());
+  const [ignoredSortPrefixes, setIgnoredSortPrefixes] = useState<Set<string>>(
+    () => new Set(),
+  );
 
   const ignoredPrefixesSortedList = useMemo(
     () => [...ignoredSortPrefixes].sort((a, b) => a.localeCompare(b)),
@@ -430,9 +415,9 @@ export function PlannerCardWorkbenchView({
           const next = m === "activeFirst" ? "alpha" : "activeFirst";
           queueMicrotask(() =>
             toast(
-              next === "activeFirst" ?
-                "Path order: active on this card first (D on)"
-              : "Path order: alphabetical (D off)",
+              next === "activeFirst"
+                ? "Path order: active on this card first (D on)"
+                : "Path order: alphabetical (D off)",
               "info",
             ),
           );
@@ -447,9 +432,9 @@ export function PlannerCardWorkbenchView({
           const next = m === "usageDesc" ? "alpha" : "usageDesc";
           queueMicrotask(() =>
             toast(
-              next === "usageDesc" ?
-                "Path order: most common across loaded cards first (S on)"
-              : "Path order: alphabetical (S off)",
+              next === "usageDesc"
+                ? "Path order: most common across loaded cards first (S on)"
+                : "Path order: alphabetical (S off)",
               "info",
             ),
           );
@@ -597,10 +582,7 @@ export function PlannerCardWorkbenchView({
       toast("Card merged into bundle (in-memory)", "success");
     } catch (err) {
       setCardJsonErr(err instanceof Error ? err.message : "Invalid JSON");
-      toast(
-        err instanceof Error ? err.message : "Invalid JSON",
-        "error",
-      );
+      toast(err instanceof Error ? err.message : "Invalid JSON", "error");
     }
   }, [cardJson, selectedId]);
 
@@ -634,7 +616,10 @@ export function PlannerCardWorkbenchView({
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      toast("Downloaded STS_CARDS_DB.json (does not overwrite repo file)", "success");
+      toast(
+        "Downloaded STS_CARDS_DB.json (does not overwrite repo file)",
+        "success",
+      );
     } catch {
       toast("Could not start download", "error");
     }
@@ -643,6 +628,21 @@ export function PlannerCardWorkbenchView({
   const scrollWorkbenchToTop = useCallback(() => {
     scrollAreaRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+  const scrollWorkbenchToBottom = useCallback(() => {
+    const el = scrollAreaRef.current;
+
+    if (el) {
+      el.scrollTo({
+        top: el.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: "smooth",
+    });
   }, []);
 
   const bundleDownloadButton = (
@@ -656,7 +656,7 @@ export function PlannerCardWorkbenchView({
   );
 
   const pathFilterRibbon =
-    pathFilters.size > 0 ?
+    pathFilters.size > 0 ? (
       <div className="mb-4 space-y-1.5 rounded-xl bg-teal-950/35 px-3 py-2 ring-1 ring-teal-500/25">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-[10px] font-semibold uppercase tracking-wide text-teal-200/90">
@@ -687,7 +687,7 @@ export function PlannerCardWorkbenchView({
           ))}
         </ul>
       </div>
-    : null;
+    ) : null;
 
   const fieldEditorPane = (
     <section
@@ -702,17 +702,15 @@ export function PlannerCardWorkbenchView({
             Structured paths · add field · tree
           </h2>
           <p className="mt-0.5 font-mono text-[11px] text-slate-500">
-            {selectedId ?
-              selectedId
-            : "Select a card — use Prev / Next"}
+            {selectedId ? selectedId : "Select a card — use Prev / Next"}
           </p>
         </div>
 
-        {!selectedRaw || !selectedId ?
+        {!selectedRaw || !selectedId ? (
           <p className="rounded-xl border border-dashed border-white/15 py-14 text-center text-sm text-slate-500">
             No card loaded.
           </p>
-        : (
+        ) : (
           <>
             {pathFilterRibbon}
             <details className="mb-4 rounded-xl border border-white/13 bg-black/52">
@@ -721,7 +719,8 @@ export function PlannerCardWorkbenchView({
                   Path catalog
                 </span>
                 <span className="ml-2 font-normal text-slate-600">
-                  — tap path to highlight tree · ◇ pushes path (and nested fields) to{" "}
+                  — tap path to highlight tree · ◇ pushes path (and nested
+                  fields) to{" "}
                   <span className="text-amber-200/85">sort last</span> (
                   {sortedFilteredPathCatalog.length}/{pathCatalog.length})
                 </span>
@@ -748,11 +747,11 @@ export function PlannerCardWorkbenchView({
                       <li key={pathStr}>
                         <div
                           className={`flex gap-1 rounded-lg px-1 py-0.5 ${
-                            sortMuted ?
-                              sortPinned ?
-                                "bg-amber-950/35 ring-1 ring-amber-500/25"
-                              : "opacity-92"
-                            : ""
+                            sortMuted
+                              ? sortPinned
+                                ? "bg-amber-950/35 ring-1 ring-amber-500/25"
+                                : "opacity-92"
+                              : ""
                           }`}
                         >
                           <button
@@ -760,9 +759,9 @@ export function PlannerCardWorkbenchView({
                             aria-pressed={active}
                             onClick={() => togglePathFilter(pathStr)}
                             className={`min-w-0 flex-1 items-start rounded-md px-2 py-1.5 text-left font-mono text-[10px] leading-snug transition-colors ${
-                              active ?
-                                "bg-violet-900/73 text-white ring-1 ring-violet-400/40"
-                              : "text-slate-500 hover:bg-white/9 hover:text-slate-200"
+                              active
+                                ? "bg-violet-900/73 text-white ring-1 ring-violet-400/40"
+                                : "text-slate-500 hover:bg-white/9 hover:text-slate-200"
                             }`}
                           >
                             <span className="break-all">{pathStr}</span>
@@ -776,9 +775,9 @@ export function PlannerCardWorkbenchView({
                               toggleIgnoreSortPrefix(pathStr);
                             }}
                             className={`shrink-0 self-start rounded-md px-1.5 py-1.5 text-[11px] font-semibold transition-colors ${
-                              sortMuted ?
-                                "text-amber-200 ring-1 ring-amber-500/45 hover:bg-amber-950/50"
-                              : "text-slate-600 hover:bg-white/8 hover:text-amber-200/95"
+                              sortMuted
+                                ? "text-amber-200 ring-1 ring-amber-500/45 hover:bg-amber-950/50"
+                                : "text-slate-600 hover:bg-white/8 hover:text-amber-200/95"
                             }`}
                           >
                             ◇
@@ -796,16 +795,16 @@ export function PlannerCardWorkbenchView({
               pathCatalog={pathCatalog}
               pathUsageCounts={pathUsageCounts}
               selectedRaw={selectedRaw}
-              onAdd={(fullPath, value) =>
-                addFieldForCard(fullPath, value)
-              }
+              onAdd={(fullPath, value) => addFieldForCard(fullPath, value)}
             />
 
             <div id="pw-field-anchor" className="mt-5 scroll-mt-28">
               <h3 className="text-sm font-semibold text-slate-200">Fields</h3>
               <p className="mt-1 text-[11px] text-slate-500">
-                Toggle paths, rename, edit primitives. Root rows: teal = on card · rose ={" "}
-                <span className="font-medium text-rose-300/90">Later</span> (sort subtree last).
+                Toggle paths, rename, edit primitives. Root rows: teal = on card
+                · rose ={" "}
+                <span className="font-medium text-rose-300/90">Later</span>{" "}
+                (sort subtree last).
               </p>
               <div className="mt-3 rounded-xl border border-white/13 bg-black/44 p-3 sm:p-4">
                 <FieldEditorTree
@@ -816,9 +815,7 @@ export function PlannerCardWorkbenchView({
                   onSetPath={(pathStr, present) =>
                     updatePathForCard(pathStr, present)
                   }
-                  onSetValue={(pathStr, v) =>
-                    setValueForPath(pathStr, v)
-                  }
+                  onSetValue={(pathStr, v) => setValueForPath(pathStr, v)}
                   onRenameLeaf={(pathStr, leaf) =>
                     renamePathForCard(pathStr, leaf)
                   }
@@ -848,11 +845,11 @@ export function PlannerCardWorkbenchView({
                 {key}
               </li>
             ))}
-            {Object.keys(bundle).length > topKeys.length ?
+            {Object.keys(bundle).length > topKeys.length ? (
               <li className="rounded-full px-2 py-1 text-[10px] text-slate-500">
                 +{Object.keys(bundle).length - topKeys.length} more
               </li>
-            : null}
+            ) : null}
           </ul>
         </div>
       </div>
@@ -871,8 +868,7 @@ export function PlannerCardWorkbenchView({
               Raw JSON (this card only)
             </h2>
             <p className="mt-0.5 font-mono text-[11px] text-slate-500">
-              {selectedId ||
-                "—"}
+              {selectedId || "—"}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -908,103 +904,103 @@ export function PlannerCardWorkbenchView({
             }
           }}
         />
-        {cardJsonErr ?
+        {cardJsonErr ? (
           <p className="mt-2 text-xs text-red-400">{cardJsonErr}</p>
-        : (
+        ) : (
           <p className="mt-2 text-[11px] text-slate-400">
             In-memory only · does not overwrite{" "}
-            <code className="font-mono text-slate-400">STS_CARDS_DB.json</code> —
-            use Download at the top or bottom, or paste from &quot;Copy all&quot;.
+            <code className="font-mono text-slate-400">STS_CARDS_DB.json</code>{" "}
+            — use Download at the top or bottom, or paste from &quot;Copy
+            all&quot;.
           </p>
         )}
       </div>
     </section>
   );
 
-  const cardPane =
-    selectedRaw ?
-      <article
-        className={`rounded-3xl border p-[1px] ${shellForCharacters(selectedRaw.characters ?? selectedRaw.character)}`}
-      >
-        <div className="rounded-[23px] p-4 sm:p-8">
-          <header className="flex flex-col gap-2 justify-center items-center">
-            {n > 0 ?
-              <div
-                className="flex mb-4 w-fit min-h-[3.75rem] min-w-[5.5rem] flex-shrink-0 flex-col justify-center gap-1 rounded-xl border-2 border-white/25 bg-black/70 px-3 py-2 font-mono tabular-nums shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-white/15 sm:min-w-[6.5rem] sm:px-4"
-                title="Position in sorted bundle list"
-              >
-                <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-500">
-                  Index
+  const cardPane = selectedRaw ? (
+    <article
+      className={`rounded-3xl border p-[1px] ${shellForCharacters(selectedRaw.characters ?? selectedRaw.character)}`}
+    >
+      <div className="rounded-[23px] p-4 sm:p-8">
+        <header className="flex flex-col gap-2 justify-center items-center">
+          {n > 0 ? (
+            <div
+              className="flex mb-4 w-fit min-h-[3.75rem] min-w-[5.5rem] flex-shrink-0 flex-col justify-center gap-1 rounded-xl border-2 border-white/25 bg-black/70 px-3 py-2 font-mono tabular-nums shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-white/15 sm:min-w-[6.5rem] sm:px-4"
+              title="Position in sorted bundle list"
+            >
+              <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-500">
+                Index
+              </span>
+              <div className="flex items-baseline gap-1.5 leading-none">
+                <span className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+                  {index + 1}
                 </span>
-                <div className="flex items-baseline gap-1.5 leading-none">
-                  <span className="text-3xl font-black tracking-tight text-white sm:text-4xl">
-                    {index + 1}
-                  </span>
-                  <span className="text-xl font-bold text-slate-500 sm:text-2xl">
-                    /
-                  </span>
-                  <span className="text-2xl font-bold text-slate-200 sm:text-3xl">
-                    {n}
-                  </span>
-                </div>
+                <span className="text-xl font-bold text-slate-500 sm:text-2xl">
+                  /
+                </span>
+                <span className="text-2xl font-bold text-slate-200 sm:text-3xl">
+                  {n}
+                </span>
               </div>
-            : null}
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className="inline-flex max-w-full truncate rounded-md bg-black/52 px-2 py-1 text-[10px] font-semibold capitalize leading-none text-violet-100 ring-1 ring-white/14"
-                title={cardTypeLabel(selectedRaw)}
-              >
-                {cardTypeLabel(selectedRaw)}
-              </span>
-              <span
-                className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 uppercase ${badgeForCharacters(selectedRaw.characters ?? selectedRaw.character)}`}
-              >
-                {String(selectedRaw.characters ?? selectedRaw.character ?? "—")}
-              </span>
-              <span
-                className={`rounded-full px-2.5 py-1 text-[10px] font-medium capitalize ring-1 ${rarityChip(selectedRaw.rarity)}`}
-              >
-                {String(selectedRaw.rarity ?? "—")}
-              </span>
-              <span className="ml-auto rounded-lg bg-black/53 px-2.5 py-1 font-mono text-[11px] text-slate-200 ring-1 ring-white/15 tabular-nums">
-                Cost {costBadge(selectedRaw)}
-              </span>
             </div>
-          </header>
+          ) : null}
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className="inline-flex max-w-full truncate rounded-md bg-black/52 px-2 py-1 text-[10px] font-semibold capitalize leading-none text-violet-100 ring-1 ring-white/14"
+              title={cardTypeLabel(selectedRaw)}
+            >
+              {cardTypeLabel(selectedRaw)}
+            </span>
+            <span
+              className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 uppercase ${badgeForCharacters(selectedRaw.characters ?? selectedRaw.character)}`}
+            >
+              {String(selectedRaw.characters ?? selectedRaw.character ?? "—")}
+            </span>
+            <span
+              className={`rounded-full px-2.5 py-1 text-[10px] font-medium capitalize ring-1 ${rarityChip(selectedRaw.rarity)}`}
+            >
+              {String(selectedRaw.rarity ?? "—")}
+            </span>
+            <span className="ml-auto rounded-lg bg-black/53 px-2.5 py-1 font-mono text-[11px] text-slate-200 ring-1 ring-white/15 tabular-nums">
+              Cost {costBadge(selectedRaw)}
+            </span>
+          </div>
+        </header>
 
-          <h1 className="mt-6 text-balance bg-linear-to-br from-white via-white to-violet-200/88 bg-clip-text text-2xl font-semibold tracking-tight text-transparent sm:text-3xl">
-            {String(selectedRaw.name ?? selectedId)}
-          </h1>
+        <h1 className="mt-6 text-balance bg-linear-to-br from-white via-white to-violet-200/88 bg-clip-text text-2xl font-semibold tracking-tight text-transparent sm:text-3xl">
+          {String(selectedRaw.name ?? selectedId)}
+        </h1>
 
-          <div className="mt-8 grid gap-4">
-            <div className="rounded-2xl border border-white/[0.06] bg-black/35 px-4 py-3 backdrop-blur-sm">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                Description
-              </p>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-100/93">
-                {typeof selectedRaw.description === "string" ?
-                  selectedRaw.description
+        <div className="mt-8 grid gap-4">
+          <div className="rounded-2xl border border-white/[0.06] bg-black/35 px-4 py-3 backdrop-blur-sm">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Description
+            </p>
+            <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-100/93">
+              {typeof selectedRaw.description === "string"
+                ? selectedRaw.description
                 : "—"}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-white/[0.06] bg-black/30 px-4 py-3 backdrop-blur-sm">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                Upgraded
-              </p>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-400">
-                {typeof selectedRaw.descriptionUpgraded === "string" ?
-                  selectedRaw.descriptionUpgraded
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/[0.06] bg-black/30 px-4 py-3 backdrop-blur-sm">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Upgraded
+            </p>
+            <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-400">
+              {typeof selectedRaw.descriptionUpgraded === "string"
+                ? selectedRaw.descriptionUpgraded
                 : "Same as base or not set"}
-              </p>
-            </div>
+            </p>
           </div>
         </div>
-      </article>
-    : (
-      <div className="flex min-h-[240px] flex-col items-center justify-center rounded-3xl border border-dashed border-white/15 bg-slate-900/92 p-12 text-center text-sm text-slate-500">
-        No card data.
       </div>
-    );
+    </article>
+  ) : (
+    <div className="flex min-h-[240px] flex-col items-center justify-center rounded-3xl border border-dashed border-white/15 bg-slate-900/92 p-12 text-center text-sm text-slate-500">
+      No card data.
+    </div>
+  );
 
   return (
     <main className="relative isolate flex min-h-0 flex-1 flex-col">
@@ -1041,11 +1037,11 @@ export function PlannerCardWorkbenchView({
             </summary>
             <dl className="mt-2 space-y-1 border-t border-white/10 pt-2 text-[11px] text-slate-400">
               <div>
-                ← / → or [ ] · cards ·{" "}
-                <span className="text-slate-500">G</span> add field ·{" "}
-                <span className="text-slate-500">F</span> fields ·{" "}
-                <span className="text-slate-500">D</span> active first (again A→Z) ·{" "}
-                <span className="text-slate-500">S</span> most-used (again A→Z) · Path catalog{" "}
+                ← / → or [ ] · cards · <span className="text-slate-500">G</span>{" "}
+                add field · <span className="text-slate-500">F</span> fields ·{" "}
+                <span className="text-slate-500">D</span> active first (again
+                A→Z) · <span className="text-slate-500">S</span> most-used
+                (again A→Z) · Path catalog{" "}
                 <span className="text-amber-500/90">◇</span> sort last
               </div>
             </dl>
@@ -1062,7 +1058,7 @@ export function PlannerCardWorkbenchView({
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-200/90">
                 Sort last
               </p>
-              {ignoredPrefixesSortedList.length > 0 ?
+              {ignoredPrefixesSortedList.length > 0 ? (
                 <button
                   type="button"
                   onClick={clearIgnoredSortPrefixes}
@@ -1070,14 +1066,16 @@ export function PlannerCardWorkbenchView({
                 >
                   Clear
                 </button>
-              : null}
+              ) : null}
             </div>
             <p className="mt-1 text-[10px] leading-snug text-slate-500">
               Prefixes from path catalog (◇). Nested paths follow the same rule.
             </p>
-            {ignoredPrefixesSortedList.length === 0 ?
-              <p className="mt-2 text-[11px] text-slate-500">None — use ◇ in Path catalog.</p>
-            : (
+            {ignoredPrefixesSortedList.length === 0 ? (
+              <p className="mt-2 text-[11px] text-slate-500">
+                None — use ◇ in Path catalog.
+              </p>
+            ) : (
               <ul className="mt-2 max-h-24 space-y-1 overflow-y-auto pr-0.5 font-mono text-[10px] leading-snug text-amber-100/95">
                 {ignoredPrefixesSortedList.map((p) => (
                   <li key={p} className="flex items-start gap-1">
@@ -1197,9 +1195,9 @@ export function PlannerCardWorkbenchView({
               );
             }}
             className={`rounded-2xl px-2.5 py-2 text-[11px] font-semibold sm:px-3 ${
-              branchSortMode === "activeFirst" ?
-                "bg-teal-600/85 text-white ring-1 ring-teal-400/60"
-              : "text-slate-400 ring-1 ring-white/12 hover:bg-white/8"
+              branchSortMode === "activeFirst"
+                ? "bg-teal-600/85 text-white ring-1 ring-teal-400/60"
+                : "text-slate-400 ring-1 ring-white/12 hover:bg-white/8"
             }`}
           >
             Active first · D
@@ -1213,17 +1211,17 @@ export function PlannerCardWorkbenchView({
               );
             }}
             className={`rounded-2xl px-2.5 py-2 text-[11px] font-semibold sm:px-3 ${
-              branchSortMode === "usageDesc" ?
-                "bg-indigo-600/85 text-white ring-1 ring-indigo-400/55"
-              : "text-slate-400 ring-1 ring-white/12 hover:bg-white/8"
+              branchSortMode === "usageDesc"
+                ? "bg-indigo-600/85 text-white ring-1 ring-indigo-400/55"
+                : "text-slate-400 ring-1 ring-white/12 hover:bg-white/8"
             }`}
           >
             Most used · S
           </button>
-          {branchSortMode === "alpha" ?
+          {branchSortMode === "alpha" ? (
             <span className="text-[10px] text-slate-500">A→Z</span>
-          : null}
-          {ignoredPrefixesSortedList.length > 0 ?
+          ) : null}
+          {ignoredPrefixesSortedList.length > 0 ? (
             <button
               type="button"
               onClick={clearIgnoredSortPrefixes}
@@ -1231,7 +1229,7 @@ export function PlannerCardWorkbenchView({
             >
               Clear sort-last ({ignoredPrefixesSortedList.length})
             </button>
-          : null}
+          ) : null}
         </div>
 
         {/* Left rail · wide field column · sticky preview column (shortcut panel sits bottom-right fixed) */}
@@ -1255,19 +1253,20 @@ export function PlannerCardWorkbenchView({
             />
             {cardRailFilter.trim() &&
             selectedId &&
-            !filteredOrderedIds.includes(selectedId) ?
+            !filteredOrderedIds.includes(selectedId) ? (
               <p className="text-[10px] text-amber-400/95">
                 Current card hidden by filter — clear search or pick another id.
               </p>
-            : null}
+            ) : null}
             <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-0.5">
               {filteredOrderedIds.map((id) => {
                 const selected = id === selectedId;
                 const listIndex = orderedIds.indexOf(id) + 1;
                 const rowRaw = cardMap[id];
-                const accent =
-                  rowRaw ?
-                    railAccentForCharacters(rowRaw.characters ?? rowRaw.character)
+                const accent = rowRaw
+                  ? railAccentForCharacters(
+                      rowRaw.characters ?? rowRaw.character,
+                    )
                   : "border-l-slate-600 bg-slate-900/50";
                 const typeStr = rowRaw ? cardTypeLabel(rowRaw) : "—";
                 const costStr = rowRaw ? costBadge(rowRaw) : "—";
@@ -1275,23 +1274,23 @@ export function PlannerCardWorkbenchView({
                   <li key={id}>
                     <button
                       type="button"
-                      data-planner-card-rail-selected={selected ? "true" : undefined}
-                      onClick={() =>
-                        setIndex(orderedIds.indexOf(id))
+                      data-planner-card-rail-selected={
+                        selected ? "true" : undefined
                       }
+                      onClick={() => setIndex(orderedIds.indexOf(id))}
                       title={id}
                       className={`flex w-full flex-col gap-1 rounded-lg border border-white/11 border-l-[3px] py-2 pl-2 pr-2 text-left text-[11px] transition-colors ${
-                        selected ?
-                          `${accent} text-white shadow-[inset_0_0_0_1px_rgba(167,139,250,0.35)] ring-2 ring-violet-400/55 ring-offset-2 ring-offset-slate-950`
-                        : `${accent} text-slate-300`
+                        selected
+                          ? `${accent} text-white shadow-[inset_0_0_0_1px_rgba(167,139,250,0.35)] ring-2 ring-violet-400/55 ring-offset-2 ring-offset-slate-950`
+                          : `${accent} text-slate-300`
                       }`}
                     >
                       <div className="flex items-stretch gap-2.5">
                         <span
                           className={`flex min-h-[2.75rem] min-w-[2.75rem] shrink-0 items-center justify-center rounded-xl border-2 font-mono text-lg font-bold tabular-nums leading-none shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] sm:min-w-[3rem] sm:text-xl ${
-                            selected ?
-                              "border-violet-300/75 bg-violet-950/95 text-white ring-2 ring-violet-400/50"
-                            : "border-white/25 bg-black/70 text-slate-50"
+                            selected
+                              ? "border-violet-300/75 bg-violet-950/95 text-white ring-2 ring-violet-400/50"
+                              : "border-white/25 bg-black/70 text-slate-50"
                           }`}
                           title={`#${listIndex} of ${n} in bundle order`}
                         >
@@ -1301,9 +1300,9 @@ export function PlannerCardWorkbenchView({
                           <div className="flex items-start gap-2">
                             <span
                               className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${
-                                selected ?
-                                  "bg-violet-200 shadow-[0_0_8px_rgba(196,181,253,0.9)]"
-                                : "bg-white/35"
+                                selected
+                                  ? "bg-violet-200 shadow-[0_0_8px_rgba(196,181,253,0.9)]"
+                                  : "bg-white/35"
                               }`}
                               aria-hidden
                             />
@@ -1361,7 +1360,9 @@ export function PlannerCardWorkbenchView({
                 Full imported snapshot
               </p>
               <p className="mt-1 text-[13px] font-medium text-slate-200">
-                <code className="font-mono text-violet-200/95">STS_CARDS_DB.json</code>{" "}
+                <code className="font-mono text-violet-200/95">
+                  STS_CARDS_DB.json
+                </code>{" "}
                 after in-memory merges
               </p>
             </div>
@@ -1384,18 +1385,27 @@ export function PlannerCardWorkbenchView({
         </section>
       </div>
 
-      {showScrollTop ?
         <button
           type="button"
           aria-label="Scroll workbench to top"
           title="Scroll to top"
           onClick={scrollWorkbenchToTop}
-          className="fixed bottom-6 left-4 z-[41] inline-flex items-center gap-2 rounded-full border border-white/18 bg-slate-950/92 px-3 py-2.5 text-[11px] font-semibold tracking-wide text-slate-100 shadow-[0_22px_50px_-20px_rgba(0,0,0,0.65)] backdrop-blur-md ring-1 ring-white/12 hover:bg-slate-900/95 sm:left-6"
+          className="fixed bottom-30 left-4 z-[41] inline-flex items-center gap-2 rounded-full border border-white/18 bg-slate-950/92 px-3 py-2.5 text-[11px] font-semibold tracking-wide text-slate-100 shadow-[0_22px_50px_-20px_rgba(0,0,0,0.65)] backdrop-blur-md ring-1 ring-white/12 hover:bg-slate-900/95 sm:left-6"
         >
           <ArrowUpToLine className="h-4 w-4 shrink-0" aria-hidden />
           Top
         </button>
-      : null}
+
+        <button
+          type="button"
+          aria-label="Scroll workbench to bottom"
+          title="Scroll to bottom"
+          onClick={scrollWorkbenchToBottom}
+          className="fixed bottom-18 left-4 z-[41] inline-flex items-center gap-2 rounded-full border border-white/18 bg-slate-950/92 px-3 py-2.5 text-[11px] font-semibold tracking-wide text-slate-100 shadow-[0_22px_50px_-20px_rgba(0,0,0,0.65)] backdrop-blur-md ring-1 ring-white/12 hover:bg-slate-900/95 sm:left-6"
+        >
+          <ArrowDownToLine className="h-4 w-4 shrink-0" aria-hidden />
+          Bottom
+        </button>
     </main>
   );
 }

@@ -2,7 +2,9 @@ import type {
   ActivityLogEntry,
   ActivityLogContextLine,
   Card,
+  CombatTurnPhase,
 } from '@/app/types/gameTypes';
+import { plannerCombatPhaseLong } from '@/app/utils/decisionTimelinePhaseUi';
 import { CARD_TYPE_COLORS } from '@/app/constants/colors';
 
 export type ActivityLogType =
@@ -18,7 +20,9 @@ export type ActivityLogType =
   | 'debuff'
   | 'card-action'
   | 'system'
-  | 'turn-start';
+  | 'turn-start'
+  | 'phase-start'
+  | 'phase-end';
 
 export interface CardNameWithTypeColor {
   name: string;
@@ -47,7 +51,9 @@ export const formatCardNamesWithTypeColor = (cards: Card[]): CardNameWithTypeCol
       (card.type && CARD_TYPE_COLORS[card.type as keyof typeof CARD_TYPE_COLORS]) || 'text-slate-300',
   }));
 
-type LogExtras = Partial<Pick<ActivityLogEntry, 'cardsInvolved' | 'context' | 'target'>>;
+type LogExtras = Partial<
+  Pick<ActivityLogEntry, 'cardsInvolved' | 'context' | 'target' | 'phaseMarker'>
+>;
 
 export const createActivityLogEntry = (
   title: string,
@@ -85,6 +91,44 @@ export function buildTurnStartBoundaryLogEntry(plannerTurnSlotId: number): Activ
         { label: 'Planner slot', value: String(plannerTurnSlotId) },
         { label: 'Phase', value: 'Start' },
       ],
+    },
+  );
+}
+
+/** Written when leaving a planner combat phase (next line is usually `phase-start` for the following phase). */
+export function buildPhaseBoundaryEndEntry(
+  phaseEnded: CombatTurnPhase,
+  plannerTurnSlotId: number,
+): ActivityLogEntry {
+  const label = plannerCombatPhaseLong(phaseEnded);
+  return createActivityLogEntry(
+    `End of ${label} phase — planner turn ${plannerTurnSlotId}`,
+    undefined,
+    undefined,
+    `Closed ${label}. Next line opens the following phase when you used a phase button.`,
+    'phase-end',
+    {
+      phaseMarker: phaseEnded,
+      context: [{ label: 'Planner slot', value: String(plannerTurnSlotId) }],
+    },
+  );
+}
+
+/** Written when entering a planner combat phase (often immediately after a `phase-end` from the phase bar). */
+export function buildPhaseBoundaryStartEntry(
+  phaseStarted: CombatTurnPhase,
+  plannerTurnSlotId: number,
+): ActivityLogEntry {
+  const label = plannerCombatPhaseLong(phaseStarted);
+  return createActivityLogEntry(
+    `Start of ${label} phase — planner turn ${plannerTurnSlotId}`,
+    undefined,
+    undefined,
+    `Opened ${label}. Log actions for this phase below until you press the next “End of …” control.`,
+    'phase-start',
+    {
+      phaseMarker: phaseStarted,
+      context: [{ label: 'Planner slot', value: String(plannerTurnSlotId) }],
     },
   );
 }

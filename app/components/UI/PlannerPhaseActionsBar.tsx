@@ -5,6 +5,7 @@ import { useCallback, useMemo } from "react";
 import { useGameManager } from "@/app/context/GameContext";
 import {
   activityLogHasTurnStartLogged,
+  buildPhaseBoundaryStartEntry,
   buildTurnStartBoundaryLogEntry,
 } from "@/app/utils/activityLogger";
 import { hasValidPlannerTurnSelection } from "@/app/utils/gameHelpers";
@@ -100,6 +101,7 @@ export default function PlannerPhaseActionsBar({
     if (activityLogHasTurnStartLogged(gameState.activityLog)) return;
     const plannerTurnSlotId = turns[currentTurnIndex]?.id ?? currentTurnIndex + 1;
     addToActivityLog(buildTurnStartBoundaryLogEntry(plannerTurnSlotId));
+    addToActivityLog(buildPhaseBoundaryStartEntry("start", plannerTurnSlotId));
     toast("Turn start recorded in activity log", "info");
   }, [addToActivityLog, gameState, turnPhase, turns, currentTurnIndex]);
 

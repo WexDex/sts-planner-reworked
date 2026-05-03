@@ -216,6 +216,9 @@ export interface Enemy {
   intents: EnemyIntent[];
 }
 
+/** Turn flow: start-of-turn hooks (relics, draw, ST) → play cards → enemy resolves. */
+export type CombatTurnPhase = "start" | "player" | "enemy";
+
 /** Card references for rich log rendering (colors by card type). */
 export interface ActivityLogCardRef {
   name: string;
@@ -249,16 +252,19 @@ export interface ActivityLogEntry {
     | 'card-action'
     | 'system'
     /** One explicit “this planner turn has begun” marker per row (phase bar). */
-    | 'turn-start';
+    | 'turn-start'
+    /** Boundary when leaving a combat phase; `phaseMarker` is the phase that closed. */
+    | 'phase-end'
+    /** Boundary when entering a combat phase; `phaseMarker` is the phase that opened. */
+    | 'phase-start';
+  /** When `type` is `phase-start` / `phase-end`, which planner phase this line marks. */
+  phaseMarker?: CombatTurnPhase;
   target?: 'player' | 'enemy';
   /** Cards involved in this event (colored by type in the UI). */
   cardsInvolved?: ActivityLogCardRef[];
   /** Extra structured context (pile, hand size, reason, etc.). */
   context?: ActivityLogContextLine[];
 }
-
-/** Turn flow: start-of-turn hooks (relics, draw, ST) → play cards → enemy resolves. */
-export type CombatTurnPhase = "start" | "player" | "enemy";
 
 export interface Turn {
   id: number;

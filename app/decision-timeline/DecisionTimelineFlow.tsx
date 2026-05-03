@@ -11,6 +11,7 @@ import {
   useState,
   Fragment,
   type CSSProperties,
+  type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -80,6 +81,10 @@ import {
   formatDecisionBreadcrumbSegment,
 } from '@/app/utils/decisionTreeHelpers';
 import { getNewLogEntriesForDecisionNode } from '@/app/utils/decisionNodePlays';
+import {
+  activityLogHasPhaseBoundaryMarkers,
+  clusterActivityLogByPhaseBoundaries,
+} from '@/app/utils/activityLogPhaseClusters';
 
 import {
   minimapHexForDecisionNodePreview,
@@ -628,29 +633,53 @@ const PHASE_STRIP: readonly { phase: CombatTurnPhase; label: string; tint: strin
   { phase: 'enemy', label: 'Enemy', tint: 'border-rose-400/55 bg-rose-950/90 text-rose-100' },
 ];
 
+const PHASE_LOG_CLUSTER_FRAME: Record<CombatTurnPhase, string> = {
+  start: 'border-violet-500/45 bg-violet-950/30',
+  player: 'border-emerald-500/45 bg-emerald-950/28',
+  enemy: 'border-rose-500/45 bg-rose-950/28',
+};
+
+const PHASE_LOG_CLUSTER_LABEL: Record<CombatTurnPhase, string> = {
+  start: 'text-violet-200/95',
+  player: 'text-emerald-200/95',
+  enemy: 'text-rose-200/95',
+};
+
 function TurnPhaseTripleStrip({
-  activePhase,
-  onSelectPhase,
+  hintPhase,
+  mode,
 }: {
-  activePhase: CombatTurnPhase;
-  onSelectPhase?: (phase: CombatTurnPhase) => void;
+  /** Snapshot phase from the decision node (soft guide). */
+  hintPhase: CombatTurnPhase;
+  /** `readonly` = display only. `dtl-highlight` = tap cycles emphasis only (planner bar drives real phase). */
+  mode: 'readonly' | 'dtl-highlight';
 }) {
-  const editable = !!onSelectPhase;
+  const editable = mode === 'dtl-highlight';
+  const [focusPhase, setFocusPhase] = useState(hintPhase);
+  useEffect(() => {
+    setFocusPhase(hintPhase);
+  }, [hintPhase]);
+
   return (
     <div
       className="nodrag nopan mb-2 flex overflow-hidden rounded-lg border border-slate-600/55 shadow-inner shadow-black/30"
-        title={
-          editable
-          ? 'Click Draw / Main / Enemy to set this step’s phase (not written to combat activity logs)'
+      title={
+        editable
+          ? 'Planner phase is advanced with “End of start / main / enemy” in the main bar (writes Start/End lines in the activity log). Tap a cell to emphasize it in this strip only.'
           : 'Draw → Main → Enemy for this planner turn'
       }
       role={editable ? 'group' : undefined}
-      aria-label={editable ? 'Set timeline step phase' : undefined}
+      aria-label={editable ? 'Emphasize timeline phase (display only)' : undefined}
     >
       {PHASE_STRIP.map(({ phase, label, tint }) => {
-        const sel = activePhase === phase;
+        const isFocus = focusPhase === phase;
+        const isHint = hintPhase === phase;
         const cellCls = `${tint} ${
-          sel ? 'relative z-[1] shadow-[inset_0_0_0_2px_rgb(250_250_250/0.35)] brightness-105' : 'opacity-[0.82] saturate-[0.88]'
+          isFocus
+            ? 'relative z-[1] shadow-[inset_0_0_0_3px_rgba(250,250,250,0.55)] brightness-110 scale-[1.02]'
+            : isHint
+              ? 'shadow-[inset_0_0_0_1px_rgba(250,250,250,0.3)] opacity-[0.95] saturate-100'
+              : 'opacity-[0.82] saturate-[0.88]'
         } ${editable ? 'cursor-pointer hover:brightness-110 hover:saturate-100 active:brightness-95' : ''}`;
         const inner = (
           <>
@@ -673,10 +702,10 @@ function TurnPhaseTripleStrip({
             key={phase}
             type="button"
             className={`nodrag nopan flex min-h-[2.25rem] flex-1 flex-col items-center justify-center border-r border-slate-800/85 px-0.5 py-1 text-center last:border-r-0 ${cellCls}`}
-            aria-pressed={sel}
+            aria-pressed={isFocus}
             onClick={(e) => {
               e.stopPropagation();
-              onSelectPhase(phase);
+              setFocusPhase(phase);
             }}
           >
             {inner}
@@ -710,6 +739,70 @@ function formatDecisionTimelineRootIdLabel(id: string): string {
   return `${id.slice(0, 10)}…${id.slice(-6)}`;
 }
 
+/** `entries` oldest-first (same order as snapshot / delta helpers). */
+function renderDtlActivityLogBody(
+  entriesOldestFirst: ActivityLogEntry[],
+  density: ActivityLogInlineDensity,
+  stripe: 'modal' | 'inline' | 'none',
+): ReactNode {
+  const clustered = activityLogHasPhaseBoundaryMarkers(entriesOldestFirst);
+  const stripeLine =
+    stripe !== 'none' && density === 'detailed' ? (
+      <div
+        className={`pointer-events-none absolute bottom-0 left-[21px] w-px bg-slate-700/80 ${
+          stripe === 'modal' ? 'top-3' : 'top-2'
+        }`}
+        aria-hidden
+      />
+    ) : null;
+
+  if (clustered) {
+    const clusters = clusterActivityLogByPhaseBoundaries(entriesOldestFirst);
+    return (
+      <>
+        {stripeLine}
+        <div className="space-y-2 py-1">
+          {[...clusters].reverse().map((cluster) => (
+            <div
+              key={cluster.phase}
+              className={`rounded-lg border ${PHASE_LOG_CLUSTER_FRAME[cluster.phase]} px-1.5 py-1.5`}
+            >
+              <p
+                className={`mb-1 border-b border-white/10 px-0.5 pb-0.5 text-[8px] font-black uppercase tracking-widest ${PHASE_LOG_CLUSTER_LABEL[cluster.phase]}`}
+              >
+                {cluster.displayName} phase
+                <span className="ml-1 font-mono text-[7px] font-semibold opacity-70">
+                  ({cluster.entries.length})
+                </span>
+              </p>
+              <div className="space-y-0.5">
+                {cluster.entries.length === 0 ? (
+                  <p className="px-1 py-1 text-[9px] italic text-slate-600">No log lines in this phase.</p>
+                ) : (
+                  [...cluster.entries].reverse().map((entry) => (
+                    <ActivityLogRowInline key={entry.id} entry={entry} density={density} />
+                  ))
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {stripeLine}
+      <div className="space-y-1 py-1">
+        {[...entriesOldestFirst].reverse().map((entry) => (
+          <ActivityLogRowInline key={entry.id} entry={entry} density={density} />
+        ))}
+      </div>
+    </>
+  );
+}
+
 function DtlModalLogScroll({
   entries,
   density,
@@ -723,19 +816,7 @@ function DtlModalLogScroll({
     return <p className="px-3 py-10 text-center text-xs leading-snug text-slate-500">{emptyLabel}</p>;
   }
   return (
-    <div className="relative px-3 py-3">
-      {density === 'detailed' ? (
-        <div
-          className="pointer-events-none absolute bottom-0 left-[21px] top-3 w-px bg-slate-700/80"
-          aria-hidden
-        />
-      ) : null}
-      <div className="relative space-y-1 py-1">
-        {[...entries].reverse().map((entry) => (
-          <ActivityLogRowInline key={entry.id} entry={entry} density={density} />
-        ))}
-      </div>
-    </div>
+    <div className="relative px-3 py-3">{renderDtlActivityLogBody(entries, density, 'modal')}</div>
   );
 }
 
@@ -840,7 +921,6 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
     unlinkDecisionTimelineBranch,
     updateDecisionNodeLabel,
     updateDecisionNodeTimelineAccent,
-    updateDecisionNodeTurnPhase,
     decisionNodes,
     turns,
   } = useGameManager();
@@ -1335,8 +1415,9 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
         ) : null}
 
         <TurnPhaseTripleStrip
-          activePhase={decisionNode.turnPhase}
-          onSelectPhase={(phase) => updateDecisionNodeTurnPhase(decisionNode.id, phase)}
+          key={`${decisionNode.id}-phase-strip`}
+          hintPhase={decisionNode.turnPhase}
+          mode="dtl-highlight"
         />
 
         <DtlBranchCombatIntel
@@ -1528,21 +1609,11 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
             logEntries.length === 0 ? (
               <p className="py-2 text-center text-[10px] text-slate-600">No new log entries for this step.</p>
             ) : (
-              <div className="relative">
-                {inlineLogDensity === 'detailed' ? (
-                  <div
-                    className="pointer-events-none absolute bottom-0 left-[21px] top-2 w-px bg-slate-700/80"
-                    aria-hidden
-                  />
-                ) : null}
-                <div
-                  className="max-h-44 overflow-y-auto overscroll-contain py-1 pr-0.5 [scrollbar-width:thin]"
-                  onWheelCapture={stopWheelZoomOnPane}
-                >
-                  {[...logEntries].reverse().map((entry) => (
-                    <ActivityLogRowInline key={entry.id} entry={entry} density={inlineLogDensity} />
-                  ))}
-                </div>
+              <div
+                className="relative max-h-44 overflow-y-auto overscroll-contain py-1 pr-0.5 [scrollbar-width:thin]"
+                onWheelCapture={stopWheelZoomOnPane}
+              >
+                {renderDtlActivityLogBody(logEntries, inlineLogDensity, 'inline')}
               </div>
             )
           ) : (

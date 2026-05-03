@@ -35,6 +35,8 @@ import {
 } from '@/app/utils/projectSave';
 import {
   buildActionLogEntry,
+  buildPhaseBoundaryEndEntry,
+  buildPhaseBoundaryStartEntry,
   createActivityLogEntry,
   formatCardNames,
   formatPileLabel,
@@ -407,17 +409,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         buffsDebuffs: decrementIntangibleStacks(gameState.player.buffsDebuffs),
       },
     };
-    const logEntry = createActivityLogEntry(
-      `Player ended main phase — planner turn ${plannerTurnSlotId}`,
-      undefined,
-      undefined,
-      'Enemy phase: resolve intents and damage, then end enemy turn.',
-      'system',
-      { context: [{ label: 'Phase', value: 'Main → Enemy' }] },
-    );
+    const endMain = buildPhaseBoundaryEndEntry('player', plannerTurnSlotId);
+    const startEnemy = buildPhaseBoundaryStartEntry('enemy', plannerTurnSlotId);
     const stateAfterLog: CombatData = {
       ...stateAfterIntangibleTick,
-      activityLog: [...stateAfterIntangibleTick.activityLog, logEntry],
+      activityLog: [...stateAfterIntangibleTick.activityLog, endMain, startEnemy],
     };
     setGameState(stateAfterLog);
     setTurns((prev) =>
@@ -440,40 +436,66 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       ...gameState,
       ...(enemiesTicked ? { enemies: enemiesTicked } : {}),
     };
-    const logEntry = createActivityLogEntry(
-      `Enemy phase ended — planner turn ${plannerTurnSlotId}`,
-      undefined,
-      undefined,
-      'Advancing to the next planner turn. Use Start turn for relic / draw / ST, then Main.',
-      'system',
-      { context: [{ label: 'Phase', value: 'Enemy → Start (next planner turn)' }] },
-    );
+    const endEnemy = buildPhaseBoundaryEndEntry('enemy', plannerTurnSlotId);
     const stateAfterLog: CombatData = {
       ...stateAfterIntangibleTick,
-      activityLog: [...stateAfterIntangibleTick.activityLog, logEntry],
+      activityLog: [...stateAfterIntangibleTick.activityLog, endEnemy],
     };
+    const nextIndex = currentTurnIndex + 1;
+
     setTurns((prev) => {
       const withSaved = prev.map((turn, idx) =>
         idx === currentTurnIndex ? { ...turn, state: cloneGameData(stateAfterLog) } : turn,
       );
-      const nextIndex = currentTurnIndex + 1;
       if (nextIndex >= withSaved.length) {
+        const newId = withSaved.length > 0 ? Math.max(...withSaved.map((t) => t.id)) + 1 : 1;
+        const startDraw = buildPhaseBoundaryStartEntry('start', newId);
+        const newState = cloneGameData(initialData);
+        newState.activityLog = [...(newState.activityLog ?? []), startDraw];
         const newTurn: Turn = {
-          id: withSaved.length > 0 ? Math.max(...withSaved.map((t) => t.id)) + 1 : 1,
+          id: newId,
           uid: newPlannerTurnUid(),
-          state: cloneGameData(initialData),
+          state: newState,
         };
         return [...withSaved, newTurn];
       }
-      return withSaved;
+      const nextTurn = withSaved[nextIndex]!;
+      const nextState = cloneGameData(nextTurn.state);
+      const startDraw = buildPhaseBoundaryStartEntry('start', nextTurn.id);
+      const first = nextState.activityLog?.[0];
+      const alreadyStart =
+        first?.type === 'phase-start' &&
+        first.phaseMarker === 'start' &&
+        first.title.startsWith('Start of ');
+      nextState.activityLog = alreadyStart
+        ? [...(nextState.activityLog ?? [])]
+        : [startDraw, ...(nextState.activityLog ?? [])];
+      return withSaved.map((turn, idx) =>
+        idx === nextIndex ? { ...turn, state: nextState } : turn,
+      );
     });
-    const nextIndex = currentTurnIndex + 1;
+
     if (nextIndex >= turns.length) {
+      const newId = turns.length > 0 ? Math.max(...turns.map((t) => t.id)) + 1 : 1;
+      const startDraw = buildPhaseBoundaryStartEntry('start', newId);
+      const nextLive = cloneGameData(initialData);
+      nextLive.activityLog = [...(nextLive.activityLog ?? []), startDraw];
       setCurrentTurnIndex(nextIndex);
-      setGameState(cloneGameData(initialData));
+      setGameState(nextLive);
     } else {
+      const nextTurn = turns[nextIndex]!;
+      const nextState = cloneGameData(nextTurn.state);
+      const startDraw = buildPhaseBoundaryStartEntry('start', nextTurn.id);
+      const first = nextState.activityLog?.[0];
+      const alreadyStart =
+        first?.type === 'phase-start' &&
+        first.phaseMarker === 'start' &&
+        first.title.startsWith('Start of ');
+      nextState.activityLog = alreadyStart
+        ? [...(nextState.activityLog ?? [])]
+        : [startDraw, ...(nextState.activityLog ?? [])];
       setCurrentTurnIndex(nextIndex);
-      setGameState(cloneGameData(turns[nextIndex].state));
+      setGameState(nextState);
     }
     setTurnPhase('start');
     toast('Next planner turn', 'success');
@@ -482,25 +504,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const beginTurn = () => {
     if (!gameState || turnPhase !== 'start') return;
     const plannerTurnSlotId = turns[currentTurnIndex]?.id ?? currentTurnIndex + 1;
-    const logEntry = createActivityLogEntry(
-      `End of start — entering Main · planner turn ${plannerTurnSlotId}`,
-      undefined,
-      undefined,
-      'Start phase is complete; you are now in Main (play cards). Relics / draw / ST should already be logged above.',
-      'system',
-      {
-        context: [
-          { label: 'Phase track', value: 'Start → Main' },
-          {
-            label: 'Tip',
-            value: 'Use “Turn start” before this when you want an explicit boundary line in the log.',
-          },
-        ],
-      },
-    );
+    const endDraw = buildPhaseBoundaryEndEntry('start', plannerTurnSlotId);
+    const startMain = buildPhaseBoundaryStartEntry('player', plannerTurnSlotId);
     const stateAfterLog: CombatData = {
       ...gameState,
-      activityLog: [...gameState.activityLog, logEntry],
+      activityLog: [...gameState.activityLog, endDraw, startMain],
     };
     setGameState(stateAfterLog);
     setTurns((prev) =>

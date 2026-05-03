@@ -21,8 +21,24 @@ type LogColors = (typeof ACTIVITY_LOG_COLORS)[keyof typeof ACTIVITY_LOG_COLORS];
 const TURN_START_LOG_CHROME =
   'shadow-[inset_4px_0_0_rgba(251,191,36,0.92)] ring-1 ring-amber-400/25 ring-inset';
 
+const PHASE_START_LOG_CHROME =
+  'shadow-[inset_4px_0_0_rgba(34,211,238,0.72)] ring-1 ring-cyan-400/25 ring-inset';
+
+const PHASE_END_LOG_CHROME =
+  'shadow-[inset_4px_0_0_rgba(232,121,249,0.65)] ring-1 ring-fuchsia-400/22 ring-inset';
+
 function turnStartRowChrome(entry: ActivityLogEntry): string {
   return entry.type === 'turn-start' ? TURN_START_LOG_CHROME : '';
+}
+
+function phaseBoundaryRowChrome(entry: ActivityLogEntry): string {
+  if (entry.type === 'phase-start') return PHASE_START_LOG_CHROME;
+  if (entry.type === 'phase-end') return PHASE_END_LOG_CHROME;
+  return '';
+}
+
+function milestoneRowChrome(entry: ActivityLogEntry): string {
+  return `${turnStartRowChrome(entry)} ${phaseBoundaryRowChrome(entry)}`.trim();
 }
 
 export function getActivityLogColors(type?: ActivityLogType): LogColors {
@@ -117,7 +133,7 @@ export function ActivityLogRowMinimal({ entry }: { entry: ActivityLogEntry }) {
 
   return (
     <div
-      className={`group flex gap-2 border-b border-slate-800/50 border-l-2 py-2 pl-2 pr-2 transition-colors last:border-b-0 hover:bg-slate-900/35 ${colors.border} ${turnStartRowChrome(entry)}`}
+      className={`group flex gap-2 border-b border-slate-800/50 border-l-2 py-2 pl-2 pr-2 transition-colors last:border-b-0 hover:bg-slate-900/35 ${colors.border} ${milestoneRowChrome(entry)}`}
     >
       <div className="flex min-w-0 flex-1 items-start gap-2">
         <span className="shrink-0 text-sm leading-none opacity-90" aria-hidden>
@@ -165,7 +181,7 @@ export function ActivityLogRowDetailed({ entry }: { entry: ActivityLogEntry }) {
   );
 
   return (
-    <div className="group relative flex gap-3 py-2 pl-1 pr-2">
+    <div className={`group relative flex gap-3 py-2 pl-1 pr-2 ${milestoneRowChrome(entry)}`}>
       <div className="relative flex w-5 shrink-0 flex-col items-center pt-1">
         <span
           className={`z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-sm shadow-sm transition-transform duration-200 group-hover:scale-105 ${colors.border} ${colors.bg}`}
@@ -251,7 +267,7 @@ export function ActivityLogRowExpanded({ entry }: { entry: ActivityLogEntry }) {
 
   return (
     <article
-      className={`rounded-2xl border-2 p-5 md:p-6 ${colors.border} ${colors.bg} ${turnStartRowChrome(entry)}`}
+      className={`rounded-2xl border-2 p-5 md:p-6 ${colors.border} ${colors.bg} ${milestoneRowChrome(entry)}`}
     >
       <div className="flex flex-wrap items-start gap-3 border-b border-slate-700/50 pb-4">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-600/50 bg-slate-950/50 text-2xl shadow-inner">
