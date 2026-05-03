@@ -129,6 +129,10 @@ export function resolveGameCardChromeStyle(
   galleryChromeStyle?: CardTypeStyle,
 ): CardTypeStyle {
   if (galleryChromeStyle) return galleryChromeStyle;
+  /** Potions always use amber `cardTypeStyles.Potion` chrome, not character gradients. */
+  if (card.type === "Potion") {
+    return cardTypeStyles.Potion;
+  }
   const hasChar = typeof (card as Record<string, unknown>).character === "string";
   if (hasChar || card.type === "Curse" || card.type === "Status") {
     return getGalleryCharacterChromeStyle(card);

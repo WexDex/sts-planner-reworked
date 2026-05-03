@@ -14,7 +14,7 @@ import {
   createDefaultEnemyIntentAction,
   getSingleAttackDamage,
 } from "@/app/utils/enemyIntentActionHelpers";
-import eliteSample from "@/app/data/EliteSlavers.json";
+import eliteSample from "@/app/data/sample/EliteSlavers.json";
 import {
   ClipboardCopy,
   Footprints,

@@ -49,7 +49,7 @@ export default function TutorialGlyphsPage() {
           from <code className="rounded bg-slate-950 px-1 py-0.5 font-mono text-[11px]">getCardEffectLegendItems()</code>: a trimmed
           STS subset tuned for readability at a glance — most damage / block stats plus high-traffic keyword icons such as orb
           evoke markers, AoE overlays, ethereal/retain, etc. Anything missing there still binds through{" "}
-          <code className="rounded bg-slate-950 px-1 py-0.5 font-mono text-[11px]">STS_CARDS_DB.json</code>; every catalog key our
+          <code className="rounded bg-slate-950 px-1 py-0.5 font-mono text-[11px]">app/data/db/STS_CARDS_DB.json</code>; every catalog key our
           gallery knows how to rasterize Lucide glyphs for is enumerated in the tables below so you do not guess encoding names.
         </p>
       </section>

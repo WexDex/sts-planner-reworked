@@ -329,10 +329,11 @@ export default function STSCard({
     return getBlockStats(getValue("block"));
   }
 
-  /** Hide cost orb for curse / status / STS `unplayable` (Necronomicurse, etc.). */
+  /** Hide cost orb for curse / status / potions / STS `unplayable` (Necronomicurse, etc.). */
   const hideCostOrb =
     card.type === "Curse" ||
     card.type === "Status" ||
+    card.type === "Potion" ||
     (card as Record<string, unknown>).unplayable === true;
 
   const chrome = getCardVariantChrome({
@@ -824,10 +825,12 @@ export default function STSCard({
           </div>
         )}
 
-        <div
-          className={`${sz.typeLabel} ${styles.typeColor} mt-auto text-center opacity-80 ${chrome.typeLabelExtra}`}
-        >
-          {card.type}
+        <div className="mt-auto flex w-full flex-col items-center gap-0.5">
+          <div
+            className={`${sz.typeLabel} ${styles.typeColor} text-center opacity-80 ${chrome.typeLabelExtra}`}
+          >
+            {card.type}
+          </div>
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-import raw from "@/app/data/STS_CARDS_DB.json";
+import raw from "@/app/data/db/STS_CARDS_DB.json";
 
 type StsCardEntry = Record<string, unknown>;
 

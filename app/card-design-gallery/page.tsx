@@ -12,10 +12,12 @@ import type {
 } from "@/app/card-design-gallery/galleryTypes";
 import { GalleryQuickTemplateBar } from "@/app/card-design-gallery/GalleryQuickTemplateBar";
 import { galleryRowsFromTemplate } from "@/app/card-design-gallery/galleryQuickTemplates";
-import { galleryRowFromStsCardId } from "@/app/card-design-gallery/stsToGalleryRow";
+import { galleryRowFromPickerRef } from "@/app/card-design-gallery/galleryPickerRow";
 import { pickRandomStsCardIds } from "@/app/card-design-gallery/stsRecord";
+import { pickRandomPotionNames } from "@/app/data/db/potionsRecord";
 
 const RANDOM_CARD_COUNT = 10;
+const RANDOM_POTION_COUNT = 10;
 
 const GALLERY_VARIANTS = ["aurora", "neon"] as const satisfies readonly CardVisualVariant[];
 
@@ -84,7 +86,11 @@ export default function CardDesignGalleryPage() {
     setGridRows((prev) => {
       if (prev.length === 0) return prev;
       return prev
-        .map((row) => galleryRowFromStsCardId(row.card.name, { isUpgraded: v }))
+        .map((row) =>
+          row.card.type === "Potion"
+            ? galleryRowFromPickerRef(`potion|${row.card.name}`, { isUpgraded: v })
+            : galleryRowFromPickerRef(row.card.name, { isUpgraded: v }),
+        )
         .filter((r): r is GalleryDisplayRow => r != null);
     });
   }, []);
@@ -92,7 +98,17 @@ export default function CardDesignGalleryPage() {
   const loadRandomCards = useCallback(() => {
     const ids = pickRandomStsCardIds(RANDOM_CARD_COUNT);
     const rows = ids
-      .map((id) => galleryRowFromStsCardId(id, { isUpgraded: previewUpgraded }))
+      .map((id) => galleryRowFromPickerRef(id, { isUpgraded: previewUpgraded }))
+      .filter((r): r is GalleryDisplayRow => r != null);
+    setGridRows(rows);
+  }, [previewUpgraded]);
+
+  const loadRandomPotions = useCallback(() => {
+    const names = pickRandomPotionNames(RANDOM_POTION_COUNT);
+    const rows = names
+      .map((name) =>
+        galleryRowFromPickerRef(`potion|${name}`, { isUpgraded: previewUpgraded }),
+      )
       .filter((r): r is GalleryDisplayRow => r != null);
     setGridRows(rows);
   }, [previewUpgraded]);
@@ -107,7 +123,7 @@ export default function CardDesignGalleryPage() {
         onClose={() => setPickerOpen(false)}
         onApply={(ids) => {
           const rows = ids
-            .map((id) => galleryRowFromStsCardId(id, { isUpgraded: previewUpgraded }))
+            .map((id) => galleryRowFromPickerRef(id, { isUpgraded: previewUpgraded }))
             .filter((r): r is GalleryDisplayRow => r != null);
           setGridRows(rows);
           setPickerOpen(false);
@@ -123,9 +139,11 @@ export default function CardDesignGalleryPage() {
                   Card design gallery
                 </h1>
                 <p className="text-sm text-slate-400">
-                  Aurora & Neon · quick templates or pick from the database · effect icons in-card
-                  (see catalog →). Rarity appears only in the picker list. Size: Auto sorts small →
-                  large; S/M/L forces one size.
+                  Aurora & Neon · STS cards and{" "}
+                  <strong className="font-semibold text-slate-300">potions</strong> (POTIONS_DB) ·
+                  quick templates, random draws, or multi-select in the picker · effect &amp; potion
+                  tag icons in-card (see catalog →). Rarity in the list only. Size: Auto sorts
+                  small → large; S/M/L forces one size.
                 </p>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
@@ -174,10 +192,18 @@ export default function CardDesignGalleryPage() {
                   <button
                     type="button"
                     onClick={loadRandomCards}
-                    title={`Load ${RANDOM_CARD_COUNT} random cards from the current database`}
+                    title={`Load ${RANDOM_CARD_COUNT} random STS cards`}
                     className="rounded-lg border border-violet-500/45 bg-violet-500/10 px-4 py-2 text-sm font-semibold text-violet-100 transition hover:bg-violet-500/20"
                   >
-                    Random ({RANDOM_CARD_COUNT})
+                    Random STS ({RANDOM_CARD_COUNT})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={loadRandomPotions}
+                    title={`Load ${RANDOM_POTION_COUNT} random potions from POTIONS_DB`}
+                    className="rounded-lg border border-amber-500/45 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-100/95 transition hover:bg-amber-500/20"
+                  >
+                    Random potions ({RANDOM_POTION_COUNT})
                   </button>
                   <button
                     type="button"
@@ -211,9 +237,10 @@ export default function CardDesignGalleryPage() {
 
           {gridRows.length === 0 ? (
             <p className="rounded-xl border border-dashed border-slate-700 bg-slate-900/40 px-4 py-12 text-center text-sm text-slate-500">
-              No cards selected. Use a quick template above or{" "}
-              <strong className="text-slate-300">Select cards…</strong> to load previews from
-              STS_CARDS_DB.
+              Nothing in the grid. Use a quick template,{" "}
+              <strong className="text-slate-300">Random STS</strong> /{" "}
+              <strong className="text-slate-300">Random potions</strong>, or{" "}
+              <strong className="text-slate-300">Select cards…</strong> (STS + potions).
             </p>
           ) : (
             GALLERY_VARIANTS.map((variant) => (

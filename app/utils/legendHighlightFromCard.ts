@@ -17,6 +17,7 @@ import {
   inferGalleryCardEffects,
   orbInteractionEntries,
   resolveOrbCatalogKey,
+  slugPotionTagForGlyph,
 } from "@/app/card-design-gallery/galleryStsGlyphs";
 
 function isConditionedEnergyGain(card: Card): boolean {
@@ -91,6 +92,9 @@ function addGlyphLegendHints(card: Card, glyphs: GalleryGlyph[], ids: Set<string
         break;
       case "kw-retain":
         ids.add("KEY_RETAIN");
+        break;
+      case "kw-potion":
+        ids.add("KEY_POTION");
         break;
       case "multi-hit":
       case "structured-multihit":
@@ -195,11 +199,27 @@ export function computeLegendHighlightIds(
   if (galleryTieredBoolActive(card, c.innate ?? c.Innate)) ids.add("KEY_INNATE");
   if (galleryTieredBoolActive(card, c.ethereal ?? c.Ethereal)) ids.add("KEY_ETHEREAL");
   if (galleryTieredBoolActive(card, c.retain ?? c.Retain)) ids.add("KEY_RETAIN");
-  if (galleryTieredBoolActive(card, c.unplayable ?? c.Unplayable)) ids.add("KEY_UNPLAYABLE");
+  if (
+    card.type !== "Potion" &&
+    galleryTieredBoolActive(card, c.unplayable ?? c.Unplayable)
+  ) {
+    ids.add("KEY_UNPLAYABLE");
+  }
+  if (card.type === "Potion") {
+    ids.add("KEY_POTION");
+    const tags = (card as { potionTags?: string[] }).potionTags;
+    if (Array.isArray(tags)) {
+      for (const raw of tags) {
+        if (typeof raw !== "string" || !raw.trim()) continue;
+        ids.add(`PTAG_${slugPotionTagForGlyph(raw).toUpperCase()}`);
+      }
+    }
+  }
 
   if (c.costManipulation === true) ids.add("COST_MANIP");
   if (c.canUpgradeCards === true) ids.add("UPGRADE_CARD");
   if (galleryTieredBoolActive(card, c.canAddCards)) ids.add("CAN_ADD_CARDS");
+  if (galleryTieredBoolActive(card, c.canAddPotions)) ids.add("CAN_ADD_POTIONS");
 
   if (cardSelfExhaustsOnPlay(card)) ids.add("EXHAUST_SELF");
 

@@ -274,7 +274,9 @@ export default function TutorialHub() {
             <span className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
               <BookOpen className="h-3.5 w-3.5" aria-hidden /> Live gallery
             </span>
-            <span className="mt-1 block font-semibold text-slate-100">Opens the interactive preview app route</span>
+            <span className="mt-1 block font-semibold text-slate-100">
+              STS + potion previews, PTAG catalog, aurora/neon skins
+            </span>
           </Link>
           <Link
             href="/card-workbench/cards"
@@ -282,7 +284,7 @@ export default function TutorialHub() {
           >
             <span className="block text-[11px] font-bold uppercase tracking-wide text-fuchsia-300">Card workbench</span>
             <span className="mt-1 block font-semibold text-fuchsia-50">
-              Browse bundled <code className="font-mono text-fuchsia-100/90">STS_CARDS_DB.json</code>; patch records; copy export
+              Browse bundled <code className="font-mono text-fuchsia-100/90">app/data/db/STS_CARDS_DB.json</code>; patch records; copy export
             </span>
           </Link>
         </div>

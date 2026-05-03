@@ -4,7 +4,6 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import {
   CombatData,
   Card,
-  CardReference,
   ActivityLogEntry,
   Turn,
   CombatTurnPhase,
@@ -30,6 +29,7 @@ import {
   parseProjectJsonString,
   saveLastProjectToLocalStorage,
   newProjectMeta,
+  normalizePlannerWorkflowSave,
   type PlannerWorkflowSaveShape,
   type ProjectMeta,
 } from '@/app/utils/projectSave';
@@ -49,14 +49,12 @@ import {
   formatPlayCardTargets,
 } from '@/app/utils/activityLogger';
 import {
-  buildGameCardFromStsRaw,
   gameCardFromDatabaseId,
   playableCharacterSlug,
-  resolveStrikeDefendDatabaseId,
   stsTierDescriptionPatch,
 } from '@/app/data/gameCardFromSts';
-import { getStsCardsRecord } from '@/app/card-design-gallery/stsRecord';
 import { toast } from '@/app/utils/toast';
+import { buildCardFromPotion, getPotionByName } from '@/app/data/db/potionsRecord';
 import {
   activeDecisionCheckpointSnapshotFromPlanner,
   buildTurnStatesFromBranchPath,
@@ -89,9 +87,12 @@ import {
   entityHasIntangible,
   INTANGIBLE_BUFF_DESCRIPTION,
   INTANGIBLE_BUFF_NAME,
-  migrateLegacyIntangibleFields,
 } from '@/app/utils/intangibleBuff';
 import { isEnemyTargetableInPlannerTurn } from '@/app/utils/enemyPlannerTurn';
+import {
+  combatDataFromSaveable,
+  encodePlannerWorkflowForPersist,
+} from '@/app/utils/combatSaveCodec';
 
 function cloneEnemyArrayDeep(enemies: Enemy[]): Enemy[] {
   return JSON.parse(JSON.stringify(enemies)) as Enemy[];
@@ -251,40 +252,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     },
   });
 
-  const normalizeCard = (card: Card): Card => ({
-    ...card,
-    isChanged: card.isChanged ?? false,
-    isSelected: card.isSelected ?? false,
-  });
-
-  const hydrateCardEntry = (
-    entry: Card | CardReference,
-    playerCharacters?: string,
-  ): Card => {
-    if ('card_ID' in entry) {
-      const { card_ID, ...referenceFields } = entry;
-      const ref = referenceFields as CardReference;
-      const resolvedId = resolveStrikeDefendDatabaseId(card_ID, playerCharacters);
-      const raw =
-        getStsCardsRecord()[resolvedId] ?? getStsCardsRecord()[card_ID];
-      if (!raw) {
-        return Object.assign({ name: resolvedId }, referenceFields as Card);
-      }
-      const baseCard = buildGameCardFromStsRaw(resolvedId, raw as Record<string, unknown>, {
-        isUpgraded: ref.isUpgraded ?? false,
-      });
-      return Object.assign(baseCard, referenceFields as Card, { name: resolvedId });
-    }
-    return entry;
-  };
-
   const hydrateCombatData = (data: CombatData): CombatData => {
-    const migrated = migrateLegacyIntangibleFields(data);
-    const playerCharacters = playableCharacterSlug(migrated.player);
-    return {
-      ...migrated,
-      deck: migrated.deck.map((entry) => hydrateCardEntry(entry, playerCharacters)),
-    };
+    return combatDataFromSaveable(data);
   };
 
   const ingestCombatPayload = async (data: CombatData) => {
@@ -296,7 +265,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       const hydratedData = hydrateCombatData(normalizedData);
       const withPiles = {
         ...hydratedData,
-        draw: (hydratedData.deck as Card[]).map(normalizeCard),
+        draw: (hydratedData.deck as Card[]).map((card) => ({
+          ...card,
+          isChanged: card.isChanged ?? false,
+          isSelected: card.isSelected ?? false,
+        })),
         discard: [],
         exhaust: [],
         hand: [],
@@ -607,31 +580,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const saveGameData = useCallback(
-    (key: string = DEFAULT_SAVE_KEY) => {
-      if (turns.length > 0) {
-        saveToLocalStorage(key, {
-          turns,
-          currentTurnIndex,
-          turnPhase,
-          decisionNodes,
-          activeDecisionNodeId,
-          decisionTimelinePositions,
-        });
-        if (activeProject) {
-          const planner: PlannerWorkflowSaveShape = {
-            turns,
-            currentTurnIndex,
-            turnPhase,
-            decisionNodes,
-            activeDecisionNodeId,
-            decisionTimelinePositions,
-          };
-          const file = buildProjectSaveFileV1(planner, activeProject);
-          saveLastProjectToLocalStorage(file);
-        }
-      }
-    },
+  const buildPlannerWorkflow = useCallback(
+    (overrides?: Partial<PlannerWorkflowSaveShape>): PlannerWorkflowSaveShape => ({
+      turns: turns,
+      currentTurnIndex,
+      turnPhase,
+      decisionNodes,
+      activeDecisionNodeId,
+      decisionTimelinePositions,
+      ...overrides,
+    }),
     [
       turns,
       currentTurnIndex,
@@ -639,7 +597,71 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       decisionNodes,
       activeDecisionNodeId,
       decisionTimelinePositions,
+    ],
+  );
+
+  const savePlannerWorkflowToLocalStorage = useCallback(
+    (planner: PlannerWorkflowSaveShape, key: string = DEFAULT_SAVE_KEY) => {
+      saveToLocalStorage(key, encodePlannerWorkflowForPersist(planner));
+    },
+    [],
+  );
+
+  const buildProjectMetaForSave = useCallback(
+    (name: string): ProjectMeta => {
+      const existing: ProjectMeta = activeProject
+        ? {
+            ...activeProject,
+            name,
+            updatedAt: new Date().toISOString(),
+          }
+        : newProjectMeta(name);
+      const activeNode =
+        activeDecisionNodeId != null
+          ? decisionNodes.find((n) => n.id === activeDecisionNodeId)
+          : undefined;
+      const characterSource =
+        turns[currentTurnIndex]?.state ?? turns[0]?.state ?? gameState ?? null;
+      const character = characterSource ? playableCharacterSlug(characterSource.player) : undefined;
+      return {
+        ...existing,
+        appVersion: existing.appVersion,
+        summary: {
+          turnCount: turns.length,
+          decisionNodeCount: decisionNodes.length,
+          character,
+        },
+        lastActiveDecision: activeNode
+          ? {
+              id: activeNode.id,
+              label: activeNode.label,
+            }
+          : undefined,
+      };
+    },
+    [activeProject, activeDecisionNodeId, decisionNodes, turns, currentTurnIndex, gameState],
+  );
+
+  const saveGameData = useCallback(
+    (key: string = DEFAULT_SAVE_KEY) => {
+      if (turns.length > 0) {
+        const planner = buildPlannerWorkflow();
+        savePlannerWorkflowToLocalStorage(planner, key);
+        if (activeProject) {
+          const file = buildProjectSaveFileV1(
+            planner,
+            buildProjectMetaForSave(activeProject.name),
+          );
+          saveLastProjectToLocalStorage(file);
+        }
+      }
+    },
+    [
+      turns.length,
       activeProject,
+      buildPlannerWorkflow,
+      savePlannerWorkflowToLocalStorage,
+      buildProjectMetaForSave,
     ],
   );
 
@@ -648,15 +670,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       toast('Nothing to export yet — load combat first.', 'info');
       return;
     }
-    const payload = {
-      turns,
-      currentTurnIndex,
-      turnPhase,
-      decisionNodes,
-      activeDecisionNodeId,
-      decisionTimelinePositions,
+    const payload = encodePlannerWorkflowForPersist({
+      ...buildPlannerWorkflow(),
       exportedAt: new Date().toISOString(),
-    };
+    });
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -668,7 +685,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast('Save exported as JSON', 'success');
-  }, [turns, currentTurnIndex, turnPhase, decisionNodes, activeDecisionNodeId, decisionTimelinePositions]);
+  }, [turns.length, buildPlannerWorkflow]);
 
   /** Debounced persist of planner rows, timeline tree, and canvas positions to browser storage. */
   useEffect(() => {
@@ -767,7 +784,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (!saved.turns || !Array.isArray(saved.turns)) {
       return false;
     }
-    const migratedTurns = migrateTurnRowsWithUids(saved.turns);
+    const hydratedTurns = saved.turns.map((t) => ({
+      ...t,
+      state: hydrateCombatData(t.state),
+    }));
+    const migratedTurns = migrateTurnRowsWithUids(hydratedTurns);
     setTurns(migratedTurns);
     setCurrentTurnIndex(saved.currentTurnIndex || 0);
     const slotState = migratedTurns[saved.currentTurnIndex || 0]?.state;
@@ -796,7 +817,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       const cloned: DecisionNode[] = migrateDecisionNodeTimelineRoles(
         rawNodes.map((n: DecisionNode) => ({
           ...n,
-          snapshot: cloneGameData(n.snapshot),
+          snapshot: hydrateCombatData(cloneGameData(n.snapshot)),
         })),
       );
       const normalizedNodes = migrateDecisionCheckpointLabelsToTurnSlugs(
@@ -849,13 +870,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const loadSavedGame = (key: string = DEFAULT_SAVE_KEY): boolean => {
     const savedUnknown = loadFromLocalStorage(key) as unknown;
-    if (
-      savedUnknown &&
-      typeof savedUnknown === 'object' &&
-      'turns' in savedUnknown &&
-      Array.isArray((savedUnknown as PlannerWorkflowSaveShape).turns)
-    ) {
-      return applyPlannerWorkflow(savedUnknown as PlannerWorkflowSaveShape);
+    const normalized = normalizePlannerWorkflowSave(savedUnknown);
+    if (normalized) {
+      return applyPlannerWorkflow(normalized);
     }
     return false;
   };
@@ -872,7 +889,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
       setActiveProject(proj.projectMeta);
-      saveLastProjectToLocalStorage(proj);
+      saveLastProjectToLocalStorage(buildProjectSaveFileV1(proj.planner, proj.projectMeta));
       toast(`Loaded project: ${proj.projectMeta.name}`, 'success');
       return true;
     },
@@ -890,21 +907,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     const trimmed = nameInput.trim() || 'Untitled project';
-    const meta: ProjectMeta = activeProject
-      ? {
-          ...activeProject,
-          name: trimmed,
-          updatedAt: new Date().toISOString(),
-        }
-      : newProjectMeta(trimmed);
-    const planner: PlannerWorkflowSaveShape = {
-      turns,
-      currentTurnIndex,
-      turnPhase,
-      decisionNodes,
-      activeDecisionNodeId,
-      decisionTimelinePositions,
-    };
+    const meta: ProjectMeta = buildProjectMetaForSave(trimmed);
+    const planner: PlannerWorkflowSaveShape = buildPlannerWorkflow();
     const file = buildProjectSaveFileV1(planner, meta);
     const json = JSON.stringify(file, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
@@ -921,13 +925,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setActiveProject(file.projectMeta);
     toast('Project saved', 'success');
   }, [
-    turns,
-    currentTurnIndex,
-    turnPhase,
-    decisionNodes,
-    activeDecisionNodeId,
-    decisionTimelinePositions,
-    activeProject,
+    turns.length,
+    buildProjectMetaForSave,
+    buildPlannerWorkflow,
   ]);
 
   const closeProject = useCallback(() => {
@@ -975,7 +975,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           const legacy = normalizeToProjectV1(rawUnknown, 'Previous session');
           if (legacy && applyPlannerWorkflow(legacy.planner)) {
             setActiveProject(legacy.projectMeta);
-            saveLastProjectToLocalStorage(legacy);
+            saveLastProjectToLocalStorage(
+              buildProjectSaveFileV1(legacy.planner, legacy.projectMeta),
+            );
             toast(`Restored previous session: ${legacy.projectMeta.name}`, 'info');
           }
         }
@@ -1629,7 +1631,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setActiveDecisionNodeId(pinnedActiveId);
 
       if (rebuiltTurns.length > 0) {
-        saveToLocalStorage(DEFAULT_SAVE_KEY, {
+        savePlannerWorkflowToLocalStorage({
           turns: rebuiltTurns,
           currentTurnIndex: saveTurnIndex,
           turnPhase: savePhase,
@@ -1646,6 +1648,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       currentTurnIndex,
       turnPhase,
       decisionTimelinePositions,
+      savePlannerWorkflowToLocalStorage,
     ],
   );
 
@@ -1670,7 +1673,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       );
       setDecisionNodes(nextDecisionNodes);
       if (turns.length > 0) {
-        saveToLocalStorage(DEFAULT_SAVE_KEY, {
+        savePlannerWorkflowToLocalStorage({
           turns,
           currentTurnIndex,
           turnPhase,
@@ -1688,6 +1691,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       turnPhase,
       activeDecisionNodeId,
       decisionTimelinePositions,
+      savePlannerWorkflowToLocalStorage,
     ],
   );
 
@@ -2064,9 +2068,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   };
 
   const buildCardFromDatabase = (cardId: string, isUpgraded: boolean): Card | null => {
-    const card = gameCardFromDatabaseId(cardId, { isUpgraded });
-    if (!card) return null;
-    return { ...card, isChanged: true, isSelected: false };
+    const fromSts = gameCardFromDatabaseId(cardId, { isUpgraded });
+    if (fromSts) {
+      return { ...fromSts, isChanged: true, isSelected: false };
+    }
+    const potion = getPotionByName(cardId);
+    if (potion) {
+      return { ...buildCardFromPotion(potion), isChanged: true, isSelected: false };
+    }
+    return null;
   };
 
   const transformSelectedFromDatabase = (cardId: string, isUpgraded = false) => {

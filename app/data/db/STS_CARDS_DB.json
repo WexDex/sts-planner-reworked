@@ -4,7 +4,7 @@
     "generatedAt": "2026-04-28T22:16:03.754Z",
     "title": "Slay the Spire — card database (full export)",
     "sources": {
-      "primaryDb": "app/data/STS_CARDS_DB.json",
+      "primaryDb": "app/data/db/STS_CARDS_DB.json",
       "galleryOverlay": "app/data/card_design_gallery.json",
       "pipeline": "Slay the Spire Reference - Cards.csv → compile:sts-db → sts-description-enrichment"
     },
@@ -196,6 +196,7 @@
         "base": 1,
         "upgraded": 0
       },
+      "canAddPotions": true,
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true

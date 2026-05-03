@@ -1,11 +1,11 @@
 import type { GalleryDisplayRow } from "@/app/card-design-gallery/galleryTypes";
-import { galleryRowFromStsCardId } from "@/app/card-design-gallery/stsToGalleryRow";
+import { galleryRowFromPickerRef } from "@/app/card-design-gallery/galleryPickerRow";
 
 export type GalleryQuickTemplate = {
   id: string;
   title: string;
   blurb: string;
-  /** Real `STS_CARDS_DB.json` card keys. */
+  /** STS card keys and/or `potion|` + potion name (see `galleryPickerRow`). */
   cardIds: readonly string[];
 };
 
@@ -49,6 +49,18 @@ export const GALLERY_QUICK_TEMPLATES: GalleryQuickTemplate[] = [
     cardIds: ["Pommel Strike", "Acrobatics", "Evolve", "Dark Embrace", "Prepared", "Calculated Gamble", "Dagger Throw"],
   },
   {
+    id: "potions-tags",
+    title: "Potions (glyph tags)",
+    blurb: "POTIONS_DB — KEY_POTION + PTAG_* clusters",
+    cardIds: [
+      "potion|Block Potion",
+      "potion|Attack Potion",
+      "potion|Ancient Potion",
+      "potion|Blessing of the Forge",
+      "potion|Ambrosia",
+    ],
+  },
+  {
     id: "multihit",
     title: "Multi hit",
     blurb: "MULTIIII",
@@ -62,6 +74,6 @@ export function galleryRowsFromTemplate(
 ): GalleryDisplayRow[] {
   const isUpgraded = opts?.isUpgraded ?? false;
   return template.cardIds
-    .map((id) => galleryRowFromStsCardId(id, { isUpgraded }))
+    .map((id) => galleryRowFromPickerRef(id, { isUpgraded }))
     .filter((r): r is GalleryDisplayRow => r != null);
 }

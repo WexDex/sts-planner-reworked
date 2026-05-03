@@ -156,7 +156,7 @@ const PROSE_BLOCKS: Omit<TutorialSearchEntry, "matchText">[] = [
     title: "Card design gallery regression lab",
     href: "/tutorial/cards#gallery",
     preview:
-      "Open /card-design-gallery for templates, random STS pulls, rarity filters, aurora/neon skins.",
+      "Open /card-design-gallery for templates, random STS & potions, multi-select, aurora/neon skins, PTAG catalog.",
     bucket: "Cards",
   },
   {

@@ -47,7 +47,7 @@ export default function TutorialCardsPage() {
           STS JSON ingestion
         </h2>
         <p className="text-sm text-slate-300">
-          Bundled <code className="rounded bg-slate-950 px-1 font-mono text-[11px]">STS_CARDS_DB.json</code> contains iconCatalog prose,
+          Bundled <code className="rounded bg-slate-950 px-1 font-mono text-[11px]">app/data/db/STS_CARDS_DB.json</code> contains iconCatalog prose,
           rarity, strike/defend remaps, pooled effects — gallery + planner share loaders for parity fixes.
         </p>
         <div className={`mt-3 space-y-2 ${TUTORIAL_DOC_UPDATE_CLASS}`}>
@@ -61,8 +61,12 @@ export default function TutorialCardsPage() {
       <section id="gallery" className="scroll-mt-28 space-y-4">
         <h2 className="text-base font-bold text-slate-100">Design gallery ergonomics</h2>
         <ul className="list-disc space-y-2 ps-5 text-sm text-slate-300">
-          <li>Template rows plus random STS id draws stress glyphs.</li>
-          <li>Icon catalog inspectors compare exported keys versus rendered sprites.</li>
+          <li>
+            Templates, random STS pulls, random potions, or multi-select — potions use{" "}
+            <code className="text-slate-400">potion|Name</code> refs and show KEY_POTION + PTAG tag
+            glyphs.
+          </li>
+          <li>Icon catalog inspectors compare exported keys versus rendered clusters.</li>
           <li>Size modes validate cramped mobile rails.</li>
         </ul>
         <Link

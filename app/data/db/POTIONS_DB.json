@@ -1,0 +1,268 @@
+{
+  "potions": [
+    {
+      "name": "Ambrosia",
+      "rarity": "Rare",
+      "character": "Watcher",
+      "effect": "Enter Divinity",
+      "tags": ["RESOURCE", "BUFF"]
+    },
+    {
+      "name": "Ancient Potion",
+      "rarity": "Uncommon",
+      "effect": "Gain Artifact",
+      "tags": ["BUFF", "DEFENSE"]
+    },
+    {
+      "name": "Attack Potion",
+      "rarity": "Common",
+      "effect": "Generate attack cards",
+      "tags": ["CARD"]
+    },
+    {
+      "name": "Blessing of the Forge",
+      "rarity": "Common",
+      "effect": "Upgrade hand",
+      "tags": ["BUFF", "CARD"]
+    },
+    {
+      "name": "Block Potion",
+      "rarity": "Common",
+      "effect": "Gain block",
+      "tags": ["DEFENSE"]
+    },
+    {
+      "name": "Blood Potion",
+      "rarity": "Common",
+      "character": "Ironclad",
+      "effect": "Heal %",
+      "tags": ["DEFENSE"]
+    },
+    {
+      "name": "Bottled Miracle",
+      "rarity": "Common",
+      "character": "Watcher",
+      "effect": "Generate miracles",
+      "tags": ["RESOURCE", "CARD"]
+    },
+    {
+      "name": "Colorless Potion",
+      "rarity": "Common",
+      "effect": "Generate colorless card",
+      "tags": ["CARD"]
+    },
+    {
+      "name": "Cultist Potion",
+      "rarity": "Rare",
+      "effect": "Gain Ritual",
+      "tags": ["BUFF", "SCALING"]
+    },
+    {
+      "name": "Cunning Potion",
+      "rarity": "Uncommon",
+      "character": "Silent",
+      "effect": "Generate shivs",
+      "tags": ["OFFENSE", "CARD"]
+    },
+    {
+      "name": "Dexterity Potion",
+      "rarity": "Common",
+      "effect": "Gain Dexterity",
+      "tags": ["BUFF"]
+    },
+    {
+      "name": "Distilled Chaos",
+      "rarity": "Uncommon",
+      "effect": "Play top cards",
+      "tags": ["CARD", "SPECIAL"]
+    },
+    {
+      "name": "Duplication Potion",
+      "rarity": "Uncommon",
+      "effect": "Duplicate next card",
+      "tags": ["CARD", "SPECIAL"]
+    },
+    {
+      "name": "Elixir",
+      "rarity": "Uncommon",
+      "character": "Ironclad",
+      "effect": "Exhaust cards",
+      "tags": ["CARD", "SPECIAL"]
+    },
+    {
+      "name": "Energy Potion",
+      "rarity": "Common",
+      "effect": "Gain energy",
+      "tags": ["ENERGY"]
+    },
+    {
+      "name": "Entropic Brew",
+      "rarity": "Rare",
+      "effect": "Generate potions",
+      "tags": ["SPECIAL", "RESOURCE"]
+    },
+    {
+      "name": "Essence of Darkness",
+      "rarity": "Rare",
+      "character": "Defect",
+      "effect": "Channel dark orbs",
+      "tags": ["RESOURCE", "OFFENSE"]
+    },
+    {
+      "name": "Essence of Steel",
+      "rarity": "Uncommon",
+      "effect": "Gain plated armor",
+      "tags": ["DEFENSE", "BUFF"]
+    },
+    {
+      "name": "Explosive Potion",
+      "rarity": "Common",
+      "effect": "AOE damage",
+      "tags": ["OFFENSE"]
+    },
+    {
+      "name": "Fairy in a Bottle",
+      "rarity": "Rare",
+      "effect": "Revive on death",
+      "tags": ["DEFENSE", "SPECIAL"]
+    },
+    {
+      "name": "Fear Potion",
+      "rarity": "Common",
+      "effect": "Apply vulnerable",
+      "tags": ["DEBUFF"]
+    },
+    {
+      "name": "Fire Potion",
+      "rarity": "Common",
+      "effect": "Deal damage",
+      "tags": ["OFFENSE"]
+    },
+    {
+      "name": "Focus Potion",
+      "rarity": "Common",
+      "character": "Defect",
+      "effect": "Gain focus",
+      "tags": ["BUFF", "RESOURCE"]
+    },
+    {
+      "name": "Fruit Juice",
+      "rarity": "Rare",
+      "effect": "Gain max HP",
+      "tags": ["RESOURCE", "DEFENSE"]
+    },
+    {
+      "name": "Gambler's Brew",
+      "rarity": "Uncommon",
+      "effect": "Discard and draw",
+      "tags": ["CARD"]
+    },
+    {
+      "name": "Ghost in a Jar",
+      "rarity": "Rare",
+      "character": "Silent",
+      "effect": "Gain intangible",
+      "tags": ["DEFENSE", "SPECIAL"]
+    },
+    {
+      "name": "Heart of Iron",
+      "rarity": "Rare",
+      "character": "Ironclad",
+      "effect": "Gain metallicize",
+      "tags": ["DEFENSE", "BUFF"]
+    },
+    {
+      "name": "Liquid Bronze",
+      "rarity": "Uncommon",
+      "effect": "Gain thorns",
+      "tags": ["DEFENSE", "OFFENSE"]
+    },
+    {
+      "name": "Liquid Memories",
+      "rarity": "Uncommon",
+      "effect": "Return card from discard",
+      "tags": ["CARD"]
+    },
+    {
+      "name": "Poison Potion",
+      "rarity": "Common",
+      "character": "Silent",
+      "effect": "Apply poison",
+      "tags": ["OFFENSE", "DEBUFF"]
+    },
+    {
+      "name": "Potion of Capacity",
+      "rarity": "Uncommon",
+      "character": "Defect",
+      "effect": "Gain orb slots",
+      "tags": ["RESOURCE"]
+    },
+    {
+      "name": "Power Potion",
+      "rarity": "Common",
+      "effect": "Generate power card",
+      "tags": ["CARD"]
+    },
+    {
+      "name": "Regen Potion",
+      "rarity": "Uncommon",
+      "effect": "Gain regeneration",
+      "tags": ["DEFENSE", "BUFF"]
+    },
+    {
+      "name": "Skill Potion",
+      "rarity": "Common",
+      "effect": "Generate skill card",
+      "tags": ["CARD"]
+    },
+    {
+      "name": "Smoke Bomb",
+      "rarity": "Uncommon",
+      "effect": "Escape combat",
+      "tags": ["SPECIAL"]
+    },
+    {
+      "name": "Snecko Oil",
+      "rarity": "Uncommon",
+      "effect": "Draw + randomize costs",
+      "tags": ["CARD", "SPECIAL"]
+    },
+    {
+      "name": "Speed Potion",
+      "rarity": "Common",
+      "effect": "Temporary dexterity",
+      "tags": ["BUFF", "SPECIAL"]
+    },
+    {
+      "name": "Stance Potion",
+      "rarity": "Uncommon",
+      "character": "Watcher",
+      "effect": "Change stance",
+      "tags": ["RESOURCE"]
+    },
+    {
+      "name": "Flex Potion",
+      "rarity": "Common",
+      "effect": "Temporary strength",
+      "tags": ["BUFF", "SPECIAL"]
+    },
+    {
+      "name": "Strength Potion",
+      "rarity": "Common",
+      "effect": "Gain strength",
+      "tags": ["BUFF"]
+    },
+    {
+      "name": "Swift Potion",
+      "rarity": "Common",
+      "effect": "Draw cards",
+      "tags": ["CARD"]
+    },
+    {
+      "name": "Weak Potion",
+      "rarity": "Common",
+      "effect": "Apply weak",
+      "tags": ["DEBUFF"]
+    }
+  ]
+}

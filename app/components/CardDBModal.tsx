@@ -4,8 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { gameCardFromDatabaseId } from '@/app/data/gameCardFromSts';
 import { getStsCardsRecord } from '@/app/card-design-gallery/stsRecord';
+import {
+  buildCardFromPotion,
+  getPotionByName,
+  getPotionsList,
+  type PotionDbEntry,
+} from '@/app/data/db/potionsRecord';
 import STSCard from './UI/Card';
-import { LOCATION, cardTypeStyles } from '@/app/types/types';
+import { LOCATION, POTION_CATEGORIES, cardTypeStyles } from '@/app/types/types';
 import type { CardTypeStyle } from '@/app/components/UI/cardVisualVariants';
 import { Check, Minus, Plus, Search, X } from 'lucide-react';
 
@@ -99,6 +105,12 @@ const TYPE_SURFACE: Record<string, TileSurface> = {
     tileBorder: 'border-slate-600/60',
     selectedRing: 'ring-slate-300/80',
   },
+  Potion: {
+    bar: 'bg-amber-500',
+    tileBg: 'bg-amber-950/35',
+    tileBorder: 'border-amber-900/45',
+    selectedRing: 'ring-amber-400/85',
+  },
 };
 
 const CHARACTER_SURFACE: Record<string, TileSurface> = {
@@ -166,6 +178,16 @@ function cardTileSurface(
     : characterSurface(cardData.characters);
 }
 
+function potionTileSurface(
+  colorMode: 'character' | 'type',
+  entry: PotionDbEntry,
+): TileSurface {
+  if (colorMode === 'type') {
+    return typeSurface('Potion');
+  }
+  return characterSurface(entry.character);
+}
+
 function typeBadgeClass(type?: string) {
   switch (type) {
     case 'Attack':
@@ -178,6 +200,8 @@ function typeBadgeClass(type?: string) {
       return 'bg-orange-950/90 text-orange-200 border-orange-800/60';
     case 'Status':
       return 'bg-slate-800 text-slate-200 border-slate-600/60';
+    case 'Potion':
+      return 'bg-amber-950/90 text-amber-100 border-amber-700/55';
     default:
       return 'bg-slate-800 text-slate-300 border-slate-600/60';
   }
@@ -256,6 +280,8 @@ export default function CardDBModal({
   const [colorMode, setColorMode] = useState<'character' | 'type'>('character');
   /** Copies of each selected id (add mode). */
   const [copiesPerCard, setCopiesPerCard] = useState(1);
+  /** STS card DB vs bundled potion list (`app/data/db/POTIONS_DB.json`). */
+  const [catalogMode, setCatalogMode] = useState<'cards' | 'potions'>('cards');
 
   useEffect(() => {
     setMounted(true);
@@ -267,6 +293,8 @@ export default function CardDBModal({
     setIsUpgraded(false);
     setColorMode('character');
     setCopiesPerCard(1);
+    setCatalogMode('cards');
+    setSelectedType('all');
     if (variant === 'add') {
       setSelectedCardIds(new Set());
       setSelectedCard(null);
@@ -277,8 +305,9 @@ export default function CardDBModal({
   }, [isOpen, variant]);
 
   const stsCards = useMemo(() => getStsCardsRecord(), []);
+  const potionsCatalog = useMemo(() => getPotionsList(), []);
 
-  const cardEntries = useMemo(() => {
+  const filteredCardEntries = useMemo(() => {
     return Object.entries(stsCards).filter(([cardId, cardData]) => {
       const desc = String((cardData as { description?: string }).description ?? '');
       const matchesSearch =
@@ -290,6 +319,21 @@ export default function CardDBModal({
     });
   }, [stsCards, searchTerm, selectedType]);
 
+  const filteredPotions = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    return potionsCatalog.filter((p) => {
+      const matchesSearch =
+        q === '' ||
+        p.name.toLowerCase().includes(q) ||
+        p.effect.toLowerCase().includes(q) ||
+        p.tags.some((t) => t.toLowerCase().includes(q));
+      const matchesTag =
+        selectedType === 'all' ||
+        p.tags.some((t) => t.toLowerCase() === selectedType.toLowerCase());
+      return matchesSearch && matchesTag;
+    });
+  }, [potionsCatalog, searchTerm, selectedType]);
+
   const cardTypes = useMemo(() => {
     const types = new Set<string>();
     Object.values(stsCards).forEach((card) => {
@@ -299,10 +343,25 @@ export default function CardDBModal({
     return Array.from(types).sort();
   }, [stsCards]);
 
-  const typeRadioOptions = useMemo(
-    () => [{ value: 'all', label: 'All' }, ...cardTypes.map((t) => ({ value: t.toLowerCase(), label: t }))],
-    [cardTypes],
+  const potionTagFilterOptions = useMemo(
+    () => POTION_CATEGORIES.map((c) => ({ value: c.toLowerCase(), label: c })),
+    [],
   );
+
+  const typeRadioOptions = useMemo(() => {
+    if (catalogMode === 'potions') {
+      return [{ value: 'all', label: 'All' }, ...potionTagFilterOptions];
+    }
+    return [{ value: 'all', label: 'All' }, ...cardTypes.map((t) => ({ value: t.toLowerCase(), label: t }))];
+  }, [catalogMode, cardTypes, potionTagFilterOptions]);
+
+  const switchCatalog = useCallback((mode: 'cards' | 'potions') => {
+    setCatalogMode(mode);
+    setSelectedType('all');
+    setIsUpgraded(false);
+    setSelectedCardIds(new Set());
+    setSelectedCard(null);
+  }, []);
 
   const selectedCount = variant === 'add' ? selectedCardIds.size : selectedCard ? 1 : 0;
   const copiesSafe = Math.max(1, Math.min(COPIES_MAX, Math.floor(copiesPerCard) || 1));
@@ -317,10 +376,19 @@ export default function CardDBModal({
 
   const previewCard = useMemo(() => {
     if (!previewCardId) return null;
+    if (catalogMode === 'potions') {
+      const p = getPotionByName(previewCardId);
+      if (!p) return null;
+      return {
+        ...buildCardFromPotion(p),
+        isChanged: variant === 'transform',
+        isSelected: false,
+      };
+    }
     const c = gameCardFromDatabaseId(previewCardId, { isUpgraded });
     if (!c) return null;
     return { ...c, isChanged: variant === 'transform', isSelected: false };
-  }, [previewCardId, isUpgraded, variant]);
+  }, [previewCardId, isUpgraded, variant, catalogMode]);
 
   /** Match grid “Tile color” toggle: type chrome vs character / curse / status chrome. */
   const previewChromeStyle = useMemo((): CardTypeStyle | undefined => {
@@ -413,12 +481,12 @@ export default function CardDBModal({
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
               <h2 id="card-db-modal-title" className="text-lg font-bold tracking-tight text-white sm:text-xl">
-                {variant === 'transform' ? 'Transform into…' : 'Add card'}
+                {variant === 'transform' ? 'Transform into…' : 'Add card or potion'}
               </h2>
               <p className="mt-0.5 text-xs text-slate-500">
                 {variant === 'transform'
-                  ? 'Choose a card from the database. Selected cards in play become that card (marked changed).'
-                  : 'Tiles use character colors by default; toggle type coloring. Set copies per selected card.'}
+                  ? 'Choose a card or potion from the database. Selected cards in play become that entry (marked changed).'
+                  : 'Switch between STS cards and potions. Tiles use character colors by default; toggle type coloring. Set copies per selected card.'}
               </p>
             </div>
             <button
@@ -430,12 +498,45 @@ export default function CardDBModal({
             </button>
           </div>
 
+          <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="Database catalog">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={catalogMode === 'cards'}
+              onClick={() => switchCatalog('cards')}
+              className={`rounded-xl border px-3 py-2 text-xs font-bold uppercase tracking-wide transition ${
+                catalogMode === 'cards'
+                  ? 'border-cyan-500/70 bg-cyan-950/50 text-cyan-100 shadow-md shadow-cyan-950/30'
+                  : 'border-slate-600/80 bg-slate-900/60 text-slate-400 hover:border-slate-500 hover:text-slate-200'
+              }`}
+            >
+              Cards (STS)
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={catalogMode === 'potions'}
+              onClick={() => switchCatalog('potions')}
+              className={`rounded-xl border px-3 py-2 text-xs font-bold uppercase tracking-wide transition ${
+                catalogMode === 'potions'
+                  ? 'border-amber-500/75 bg-amber-950/45 text-amber-100 shadow-md shadow-amber-950/35'
+                  : 'border-slate-600/80 bg-slate-900/60 text-slate-400 hover:border-slate-500 hover:text-slate-200'
+              }`}
+            >
+              Potions
+            </button>
+          </div>
+
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
             <div className="relative min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
               <input
                 type="search"
-                placeholder="Search by name or description…"
+                placeholder={
+                  catalogMode === 'potions'
+                    ? 'Search potions by name, effect, or tag…'
+                    : 'Search cards by name or description…'
+                }
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full rounded-xl border border-slate-600/80 bg-slate-950/80 py-2.5 pl-10 pr-3 text-sm text-white placeholder:text-slate-500 outline-none ring-0 transition focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20"
@@ -443,10 +544,12 @@ export default function CardDBModal({
             </div>
 
             <div className="shrink-0">
-              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Type</p>
+              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                {catalogMode === 'potions' ? 'Tag filter' : 'Card type'}
+              </p>
               <div
                 role="radiogroup"
-                aria-label="Filter by card type"
+                aria-label={catalogMode === 'potions' ? 'Filter potions by category tag' : 'Filter by card type'}
                 className="flex flex-wrap gap-1.5 rounded-xl border border-slate-700/80 bg-slate-950/50 p-1.5"
               >
                 {typeRadioOptions.map((opt) => {
@@ -603,43 +706,55 @@ export default function CardDBModal({
               </div>
 
               <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
-                <div className="flex flex-col gap-1">
-                  <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">
-                    Version
-                  </span>
-                  <div
-                    className="inline-flex items-center rounded-lg border border-slate-600/80 bg-slate-900/90 p-0.5 shadow-inner"
-                    role="tablist"
-                    aria-label="Base or upgraded"
-                  >
-                    <button
-                      type="button"
-                      role="tab"
-                      aria-selected={!isUpgraded}
-                      onClick={() => setIsUpgraded(false)}
-                      className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
-                        !isUpgraded
-                          ? 'bg-slate-200 text-slate-900 shadow-sm'
-                          : 'text-slate-500 hover:text-slate-300'
-                      }`}
+                {catalogMode === 'cards' ? (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+                      Version
+                    </span>
+                    <div
+                      className="inline-flex items-center rounded-lg border border-slate-600/80 bg-slate-900/90 p-0.5 shadow-inner"
+                      role="tablist"
+                      aria-label="Base or upgraded"
                     >
-                      Base
-                    </button>
-                    <button
-                      type="button"
-                      role="tab"
-                      aria-selected={isUpgraded}
-                      onClick={() => setIsUpgraded(true)}
-                      className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
-                        isUpgraded
-                          ? 'bg-violet-500 text-white shadow-sm shadow-violet-950/50'
-                          : 'text-slate-500 hover:text-slate-300'
-                      }`}
-                    >
-                      Upgraded
-                    </button>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={!isUpgraded}
+                        onClick={() => setIsUpgraded(false)}
+                        className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                          !isUpgraded
+                            ? 'bg-slate-200 text-slate-900 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-300'
+                        }`}
+                      >
+                        Base
+                      </button>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={isUpgraded}
+                        onClick={() => setIsUpgraded(true)}
+                        className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                          isUpgraded
+                            ? 'bg-violet-500 text-white shadow-sm shadow-violet-950/50'
+                            : 'text-slate-500 hover:text-slate-300'
+                        }`}
+                      >
+                        Upgraded
+                      </button>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex max-w-[220px] flex-col gap-0.5">
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+                      Potions
+                    </span>
+                    <p className="text-[11px] leading-snug text-slate-400">
+                      Single-tier entries from <code className="font-mono text-amber-200/90">POTIONS_DB.json</code>{' '}
+                      — no base/upgraded variant.
+                    </p>
+                  </div>
+                )}
 
                 {variant === 'add' ? (
                   <div className="flex flex-col gap-1">
@@ -707,80 +822,149 @@ export default function CardDBModal({
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {cardEntries.map(([cardId, raw]) => {
-              const cardData = raw as {
-                type?: string;
-                description?: string;
-                cost?: unknown;
-                rarity?: string;
-                characters?: string;
-              };
-              const picked =
-                variant === 'transform' ? selectedCard === cardId : selectedCardIds.has(cardId);
-              const desc = String(cardData.description ?? '');
-              const snippet = desc.slice(0, 72);
-              const ellipsize = desc.length > 72;
-              const cost = cardData.cost;
-              const surf = cardTileSurface(colorMode, cardData);
-              const charAbbr = characterAccentLabel(cardData.characters);
-              return (
-                <button
-                  key={cardId}
-                  type="button"
-                  onClick={() => toggleCardPick(cardId)}
-                  className={`relative rounded-xl border-2 p-3 pl-3.5 text-left transition ${
-                    picked
-                      ? `bg-cyan-950/15 shadow-md shadow-cyan-950/25 ring-2 ${surf.selectedRing} ${surf.tileBorder}`
-                      : `${surf.tileBg} ${surf.tileBorder} hover:border-slate-500/80 hover:brightness-110`
-                  }`}
-                >
-                  <span
-                    className={`absolute bottom-0 left-0 top-0 w-1 rounded-l-lg ${surf.bar} opacity-90`}
-                    aria-hidden
-                  />
-                  {picked ? (
-                    <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500 text-white shadow-md">
-                      <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
-                    </span>
-                  ) : null}
-                  <div className="mb-1.5 pr-7 font-medium leading-tight text-white">{cardId}</div>
-                  <div className="mb-2 flex flex-wrap items-center gap-1.5">
-                    <span
-                      className={`inline-block rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${typeBadgeClass(cardData.type)}`}
+            {catalogMode === 'cards'
+              ? filteredCardEntries.map(([cardId, raw]) => {
+                  const cardData = raw as {
+                    type?: string;
+                    description?: string;
+                    cost?: unknown;
+                    rarity?: string;
+                    characters?: string;
+                  };
+                  const picked =
+                    variant === 'transform' ? selectedCard === cardId : selectedCardIds.has(cardId);
+                  const desc = String(cardData.description ?? '');
+                  const snippet = desc.slice(0, 72);
+                  const ellipsize = desc.length > 72;
+                  const cost = cardData.cost;
+                  const surf = cardTileSurface(colorMode, cardData);
+                  const charAbbr = characterAccentLabel(cardData.characters);
+                  return (
+                    <button
+                      key={cardId}
+                      type="button"
+                      onClick={() => toggleCardPick(cardId)}
+                      className={`relative rounded-xl border-2 p-3 pl-3.5 text-left transition ${
+                        picked
+                          ? `bg-cyan-950/15 shadow-md shadow-cyan-950/25 ring-2 ${surf.selectedRing} ${surf.tileBorder}`
+                          : `${surf.tileBg} ${surf.tileBorder} hover:border-slate-500/80 hover:brightness-110`
+                      }`}
                     >
-                      {cardData.type ?? '—'}
-                    </span>
-                    {cardData.rarity ? (
                       <span
-                        className={`rounded-md border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${rarityPillClass(cardData.rarity)}`}
-                      >
-                        {cardData.rarity}
-                      </span>
-                    ) : null}
-                    {charAbbr ? (
+                        className={`absolute bottom-0 left-0 top-0 w-1 rounded-l-lg ${surf.bar} opacity-90`}
+                        aria-hidden
+                      />
+                      {picked ? (
+                        <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500 text-white shadow-md">
+                          <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+                        </span>
+                      ) : null}
+                      <div className="mb-1.5 pr-7 font-medium leading-tight text-white">{cardId}</div>
+                      <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                        <span
+                          className={`inline-block rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${typeBadgeClass(cardData.type)}`}
+                        >
+                          {cardData.type ?? '—'}
+                        </span>
+                        {cardData.rarity ? (
+                          <span
+                            className={`rounded-md border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${rarityPillClass(cardData.rarity)}`}
+                          >
+                            {cardData.rarity}
+                          </span>
+                        ) : null}
+                        {charAbbr ? (
+                          <span
+                            className={`rounded border px-1.5 py-0.5 text-[9px] font-bold tabular-nums ${characterAccentStyles(cardData.characters)}`}
+                            title={cardData.characters ?? ''}
+                          >
+                            {charAbbr}
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="text-[11px] leading-snug text-slate-400">
+                        {snippet}
+                        {ellipsize ? '…' : ''}
+                      </p>
+                      {cost != null && (
+                        <div className="mt-2 text-[11px] font-mono tabular-nums text-amber-200/90">
+                          Cost{' '}
+                          {typeof cost === 'object' && cost !== null && 'base' in cost
+                            ? String((cost as { base: number }).base)
+                            : String(cost as number)}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })
+              : filteredPotions.map((p: PotionDbEntry) => {
+                  const picked =
+                    variant === 'transform' ? selectedCard === p.name : selectedCardIds.has(p.name);
+                  const surf = potionTileSurface(colorMode, p);
+                  const charAbbr = characterAccentLabel(p.character);
+                  const fx = p.effect;
+                  const snippet = fx.slice(0, 72);
+                  const ellipsize = fx.length > 72;
+                  return (
+                    <button
+                      key={p.name}
+                      type="button"
+                      onClick={() => toggleCardPick(p.name)}
+                      className={`relative rounded-xl border-2 p-3 pl-3.5 text-left transition ${
+                        picked
+                          ? `bg-cyan-950/15 shadow-md shadow-cyan-950/25 ring-2 ${surf.selectedRing} ${surf.tileBorder}`
+                          : `${surf.tileBg} ${surf.tileBorder} hover:border-slate-500/80 hover:brightness-110`
+                      }`}
+                    >
                       <span
-                        className={`rounded border px-1.5 py-0.5 text-[9px] font-bold tabular-nums ${characterAccentStyles(cardData.characters)}`}
-                        title={cardData.characters ?? ''}
-                      >
-                        {charAbbr}
-                      </span>
-                    ) : null}
-                  </div>
-                  <p className="text-[11px] leading-snug text-slate-400">
-                    {snippet}
-                    {ellipsize ? '…' : ''}
-                  </p>
-                  {cost != null && (
-                    <div className="mt-2 text-[11px] font-mono tabular-nums text-amber-200/90">
-                      Cost{' '}
-                      {typeof cost === 'object' && cost !== null && 'base' in cost
-                        ? String((cost as { base: number }).base)
-                        : String(cost as number)}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
+                        className={`absolute bottom-0 left-0 top-0 w-1 rounded-l-lg ${surf.bar} opacity-90`}
+                        aria-hidden
+                      />
+                      {picked ? (
+                        <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500 text-white shadow-md">
+                          <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+                        </span>
+                      ) : null}
+                      <div className="mb-1.5 pr-7 font-medium leading-tight text-white">{p.name}</div>
+                      <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                        <span
+                          className={`inline-block rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${typeBadgeClass('Potion')}`}
+                        >
+                          Potion
+                        </span>
+                        {p.rarity ? (
+                          <span
+                            className={`rounded-md border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${rarityPillClass(p.rarity)}`}
+                          >
+                            {p.rarity}
+                          </span>
+                        ) : null}
+                        {charAbbr ? (
+                          <span
+                            className={`rounded border px-1.5 py-0.5 text-[9px] font-bold tabular-nums ${characterAccentStyles(p.character)}`}
+                            title={p.character ?? ''}
+                          >
+                            {charAbbr}
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="mb-2 flex flex-wrap gap-1" aria-label="Potion tags">
+                        {p.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded border border-amber-500/45 bg-amber-950/55 px-1 py-px text-[8px] font-bold uppercase tracking-wide text-amber-100/95"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="text-[11px] leading-snug text-slate-400">
+                        {snippet}
+                        {ellipsize ? '…' : ''}
+                      </p>
+                    </button>
+                  );
+                })}
           </div>
         </div>
       </div>

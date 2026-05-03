@@ -218,6 +218,7 @@ export const CARD_TYPE_COLORS = {
   'Attack': 'text-red-500',
   'Skill': 'text-blue-500',
   'Power': 'text-purple-500',
+  'Potion': 'text-amber-400',
   'Status': 'text-gray-500',
   'Curse': 'text-red-700',
 } as const;
@@ -226,6 +227,7 @@ export const CARD_TYPE_BG = {
   'Attack': 'bg-red-500/20',
   'Skill': 'bg-blue-500/20',
   'Power': 'bg-purple-500/20',
+  'Potion': 'bg-amber-500/20',
   'Status': 'bg-gray-500/20',
   'Curse': 'bg-red-700/20',
 } as const;

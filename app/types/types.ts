@@ -20,6 +20,20 @@ type Position = {
 
 type CardType = "Attack" | "Skill" | "Power" | "Curse" | "Status" | "Potion";
 
+/** STS potion classifier tags (shown as glyphs on potion cards). */
+export const POTION_CATEGORIES = [
+  "OFFENSE",
+  "DEFENSE",
+  "CARD",
+  "ENERGY",
+  "BUFF",
+  "DEBUFF",
+  "SPECIAL",
+  "RESOURCE",
+] as const;
+
+export type PotionCategory = (typeof POTION_CATEGORIES)[number];
+
 type CardRarity = 'Common' | 'Uncommon' | 'Rare';
 
 

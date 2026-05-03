@@ -3,7 +3,7 @@
 
 // ============ FILE OPERATIONS ============
 
-// Load from external JSON file (public/combatData.json mirrors app/data/EliteSlavers.json)
+// Load from external JSON file (public/combatData.json mirrors app/data/sample/EliteSlavers.json)
 await loadFromFile('/combatData.json');
 
 // Save to browser localStorage
@@ -20,6 +20,16 @@ const imported = importGameData(jsonString);
 
 // Download as JSON file to computer
 downloadGameData(gameState, 'my-combat.json');
+
+// ============ CARD VS POTION DATABASES ============
+//
+// STS playable cards: `app/data/db/STS_CARDS_DB.json` — browsed in UI as "Cards (STS)".
+// Potions: `app/data/db/POTIONS_DB.json` — type `Potion`, amber chrome; category tags from
+// `POTION_CATEGORIES` in `@/app/types/types`. Add via the same "Add card / potion" modal → Potions tab.
+// Potion tag row on cards = `KEY_POTION` + per-tag PTAG_* glyphs (icons in `STS_ICON_GLYPH`).
+//
+// Card design gallery (`/card-design-gallery`): previews STS cards and potions side-by-side;
+// picker uses STS ids or `potion|` + exact potion name; random STS / random potions load from the DBs.
 
 // ============ PLAYER HEALTH ============
 

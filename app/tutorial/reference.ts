@@ -141,6 +141,7 @@ export const GLYPH_RELATED_FIELD: Record<string, string> = {
   UPGRADE_CARD: "canUpgradeCards",
   ADD_CARD: "addCard",
   CAN_ADD_CARDS: "canAddCards",
+  CAN_ADD_POTIONS: "canAddPotions",
   HP_COST: "hpcost · hpCost",
   GAIN_ENERGY_ICON: "energyGain",
 };

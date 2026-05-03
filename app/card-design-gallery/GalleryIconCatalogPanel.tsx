@@ -41,7 +41,10 @@ export function GalleryIconCatalogPanel({ className = "" }: { className?: string
         <p className="mt-1 text-[11px] leading-snug text-slate-500">
           Keys from <code className="text-slate-400">STS_CARDS_DB.json</code>{" "}
           <code className="text-slate-400">iconCatalog</code> when present, else the built-in
-          fallback. In-card clusters prepend{" "}
+          fallback.           <span className="text-amber-200/85">Potion</span> cards add{" "}
+          <code className="text-slate-400">KEY_POTION</code> +{" "}
+          <code className="text-slate-400">PTAG_*</code> tag icons from{" "}
+          <code className="text-slate-400">POTIONS_DB</code>. In-card clusters prepend{" "}
           <span className="text-amber-200/80">conditional</span>,{" "}
           <span className="text-rose-200/80">AoE</span>, or{" "}
           <span className="text-violet-200/80">random</span> when{" "}

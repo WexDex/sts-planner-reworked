@@ -1,28 +1,37 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Activity,
+  Ban,
   Bookmark,
   ChevronsUp,
   CircleDot,
   Coins,
   Copy,
+  CreditCard,
   Crosshair,
   Droplets,
   FileText,
+  FlaskConical,
   Ghost,
   HelpCircle,
   Layers,
   Library,
   Moon,
+  Package,
   Plus,
   ScanSearch,
+  Shield,
   Shuffle,
+  Skull,
   Snowflake,
   Sparkles,
   SquarePlus,
   Star,
+  Tags,
   Trash2,
   TrendingDown,
-  Ban,
+  TestTube,
+  Wand2,
   Zap,
   Flame,
   Swords,
@@ -30,7 +39,7 @@ import {
 } from "lucide-react";
 import type { Card } from "@/app/types/gameTypes";
 import { getEffectDisplay } from "@/app/utils/effectDisplay";
-import raw from "@/app/data/STS_CARDS_DB.json";
+import raw from "@/app/data/db/STS_CARDS_DB.json";
 
 export type GalleryGlyphSegment = {
   Icon?: LucideIcon;
@@ -90,11 +99,24 @@ export const STS_ICON_GLYPH: Record<
   KEY_INNATE: { Icon: Star, iconClass: "text-amber-200", shortLabel: "Innate" },
   KEY_ETHEREAL: { Icon: Ghost, iconClass: "text-slate-400", shortLabel: "Ethereal" },
   KEY_RETAIN: { Icon: Bookmark, iconClass: "text-lime-200", shortLabel: "Retain" },
+  KEY_POTION: { Icon: TestTube, iconClass: "text-amber-300", shortLabel: "Potion"},
+  /** Potion category tags from `POTIONS_DB.json`; unknown tags use `PTAG_UNKNOWN`. */
+  PTAG_DEFENSE: { Icon: Shield, iconClass: "text-emerald-300", shortLabel: "Tag: Defense" },
+  PTAG_RESOURCE: { Icon: Package, iconClass: "text-amber-200", shortLabel: "Tag: Resource" },
+  PTAG_CARD: { Icon: CreditCard, iconClass: "text-cyan-300", shortLabel: "Tag: Card" },
+  PTAG_OFFENSE: { Icon: Swords, iconClass: "text-rose-300", shortLabel: "Tag: Offense" },
+  PTAG_BUFF: { Icon: Sparkles, iconClass: "text-lime-300", shortLabel: "Tag: Buff" },
+  PTAG_SCALING: { Icon: Activity, iconClass: "text-violet-300", shortLabel: "Tag: Scaling" },
+  PTAG_SPECIAL: { Icon: Wand2, iconClass: "text-fuchsia-300", shortLabel: "Tag: Special" },
+  PTAG_ENERGY: { Icon: Zap, iconClass: "text-yellow-300", shortLabel: "Tag: Energy" },
+  PTAG_DEBUFF: { Icon: Skull, iconClass: "text-orange-400", shortLabel: "Tag: Debuff" },
+  PTAG_UNKNOWN: { Icon: Tags, iconClass: "text-amber-200/85", shortLabel: "Tag (other)" },
   KEY_UNPLAYABLE: { Icon: Ban, iconClass: "text-slate-500", shortLabel: "Unplayable" },
   COST_MANIP: { Icon: Coins, iconClass: "text-amber-300", shortLabel: "Cost" },
   UPGRADE_CARD: { Icon: ChevronsUp, iconClass: "text-violet-300", shortLabel: "Upgrade" },
   ADD_CARD: { Icon: SquarePlus, iconClass: "text-cyan-300", shortLabel: "Add card" },
   CAN_ADD_CARDS: { Icon: Library, iconClass: "text-teal-300", shortLabel: "Adds cards" },
+  CAN_ADD_POTIONS: { Icon: FlaskConical, iconClass: "text-lime-300", shortLabel: "Adds potions" },
   HP_COST: { Icon: Droplets, iconClass: "text-rose-400", shortLabel: "HP cost" },
   GAIN_ENERGY_ICON: { Icon: Orbit, iconClass: "text-yellow-300", shortLabel: "Gain energy" },
 };
@@ -114,6 +136,17 @@ const FALLBACK_ICON_CATALOG: Record<string, string> = {
   AOE_ICON: "All-enemies attack marker — grouped with the damage stat row (rose tint in gallery)",
   RANDOM_ICON: "Random choice (e.g. discard target, random hit)",
   CAN_ADD_CARDS: "Adds cards into hand — flagged on card data (spawn / generated cards)",
+  KEY_POTION: "Consumable potion (planner deck chrome — not a playable card)",
+  PTAG_DEFENSE: "Potion tag: block / mitigation themed",
+  PTAG_RESOURCE: "Potion tag: healing, gold, or generic resources",
+  PTAG_CARD: "Potion tag: generates or manipulates cards",
+  PTAG_OFFENSE: "Potion tag: damage or aggression",
+  PTAG_BUFF: "Potion tag: stat or combat buffs",
+  PTAG_SCALING: "Potion tag: scaling or growth effects",
+  PTAG_SPECIAL: "Potion tag: unusual / character-specific interactions",
+  PTAG_ENERGY: "Potion tag: energy manipulation",
+  PTAG_DEBUFF: "Potion tag: applies negative effects",
+  PTAG_UNKNOWN: "Potion tag not in the canonical set — generic tag icon",
 };
 
 export function readStsIconCatalog(): { key: string; description: string }[] {
@@ -571,9 +604,86 @@ export function galleryTieredBoolActive(card: Card, node: unknown): boolean {
   return false;
 }
 
+/** Safe id segment for potion tag glyphs / legend catalog keys. */
+export function slugPotionTagForGlyph(tag: string): string {
+  const t = tag.trim();
+  if (!t) return "TAG";
+  return t.replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_|_$/g, "") || "TAG";
+}
+
+const PTAG_NAME_TO_STS_KEY: Record<string, keyof typeof STS_ICON_GLYPH> = {
+  DEFENSE: "PTAG_DEFENSE",
+  RESOURCE: "PTAG_RESOURCE",
+  CARD: "PTAG_CARD",
+  OFFENSE: "PTAG_OFFENSE",
+  BUFF: "PTAG_BUFF",
+  SCALING: "PTAG_SCALING",
+  SPECIAL: "PTAG_SPECIAL",
+  ENERGY: "PTAG_ENERGY",
+  DEBUFF: "PTAG_DEBUFF",
+};
+
+function resolvePotionTagGlyphMeta(tag: string): {
+  catalogKey: string;
+  Icon: LucideIcon;
+  iconClass: string;
+  labelUpper: string;
+} {
+  const trimmed = typeof tag === "string" ? tag.trim() : "";
+  const labelUpper = trimmed.length > 0 ? trimmed.toUpperCase() : "TAG";
+  const slug = slugPotionTagForGlyph(trimmed);
+  const catalogKey = `PTAG_${slug.toUpperCase()}`;
+  const canon = slug.toUpperCase();
+  const stsKey = PTAG_NAME_TO_STS_KEY[canon] ?? "PTAG_UNKNOWN";
+  const m = STS_ICON_GLYPH[stsKey];
+  return {
+    catalogKey,
+    Icon: m.Icon,
+    iconClass: m.iconClass,
+    labelUpper,
+  };
+}
+
 function buildKeywordGlyphs(card: Card): GalleryGlyph[] {
   const c = card as Record<string, unknown>;
   const out: GalleryGlyph[] = [];
+
+  if (card.type === "Potion") {
+    const m = STS_ICON_GLYPH.KEY_POTION;
+    out.push({
+      id: "kw-potion",
+      catalogKey: "KEY_POTION",
+      label: "Potion",
+      Icon: m.Icon,
+      iconClass: m.iconClass,
+    });
+    const tags = (card as { potionTags?: string[] }).potionTags;
+    if (Array.isArray(tags)) {
+      for (const rawTag of tags) {
+        const tag = typeof rawTag === "string" ? rawTag.trim() : "";
+        if (!tag) continue;
+        const slug = slugPotionTagForGlyph(tag);
+        const meta = resolvePotionTagGlyphMeta(tag);
+        out.push({
+          id: `potion-tag-${slug}`,
+          catalogKey: meta.catalogKey,
+          label: meta.labelUpper,
+          segments: [
+            { Icon: meta.Icon, iconClass: meta.iconClass },
+            {
+              text: meta.labelUpper,
+              textClass:
+                "text-[8px] font-extrabold uppercase tracking-tight text-amber-100/95 leading-none",
+            },
+          ],
+          clusterClass:
+            "inline-flex items-center gap-0.5 rounded border border-amber-500/40 bg-amber-950/50 px-1 py-px shadow-sm shadow-amber-950/35",
+        });
+      }
+    }
+    return out;
+  }
+
   const innate = c.innate ?? c.Innate;
   const ethereal = c.ethereal ?? c.Ethereal;
   const retainField = c.retain ?? c.Retain;
@@ -661,6 +771,15 @@ const KEYWORD_PREFIX_IDS = new Set([
   "kw-unplayable",
 ]);
 
+/** Keyword / potion-tag chips peeled to the front of the stat strip (matches {@link finalizeGlyphDisplayOrder}). */
+function isKeywordLeadingGlyphId(id: string): boolean {
+  return (
+    KEYWORD_PREFIX_IDS.has(id) ||
+    id === "kw-potion" ||
+    id.startsWith("potion-tag-")
+  );
+}
+
 /**
  * Medium/large `Card` stat strip renders numeric rows (block, draw, …) in JSX before the
  * suffix glyph list; peel keyword glyphs so they can be painted first and match
@@ -670,8 +789,8 @@ export function galleryStatStripKeywordLeadingAndRest(glyphs: GalleryGlyph[]): {
   keywordLeading: GalleryGlyph[];
   rest: GalleryGlyph[];
 } {
-  const keywordLeading = glyphs.filter((g) => KEYWORD_PREFIX_IDS.has(g.id));
-  const rest = glyphs.filter((g) => !KEYWORD_PREFIX_IDS.has(g.id));
+  const keywordLeading = glyphs.filter((g) => isKeywordLeadingGlyphId(g.id));
+  const rest = glyphs.filter((g) => !isKeywordLeadingGlyphId(g.id));
   return { keywordLeading, rest };
 }
 
@@ -684,6 +803,8 @@ const GLYPH_DISPLAY_PRIORITY_EXHAUST = 9999;
 function glyphDisplayPriority(glyphId: string): number {
   if (EXHAUST_GLYPH_IDS.has(glyphId)) return GLYPH_DISPLAY_PRIORITY_EXHAUST;
   switch (glyphId) {
+    case "kw-potion":
+      return 0;
     case "kw-innate":
       return 1;
     case "kw-ethereal":
@@ -693,6 +814,7 @@ function glyphDisplayPriority(glyphId: string): number {
     case "kw-unplayable":
       return 4;
     default:
+      if (glyphId.startsWith("potion-tag-")) return 10;
       return 500;
   }
 }
@@ -707,7 +829,7 @@ function finalizeGlyphDisplayOrder(card: Card, glyphs: GalleryGlyph[]): GalleryG
   const exhaust: GalleryGlyph[] = [];
   for (const g of glyphs) {
     if (EXHAUST_GLYPH_IDS.has(g.id)) exhaust.push(g);
-    else if (!KEYWORD_PREFIX_IDS.has(g.id)) middle.push(g);
+    else if (!isKeywordLeadingGlyphId(g.id)) middle.push(g);
   }
   const combined = [...prefix, ...middle, ...exhaust];
   combined.sort(
@@ -1365,6 +1487,16 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
     });
   }
 
+  if (galleryTieredBoolActive(card, c.canAddPotions)) {
+    const ac = STS_ICON_GLYPH.CAN_ADD_POTIONS;
+    push({
+      id: "can-add-potions",
+      catalogKey: "CAN_ADD_POTIONS",
+      label: "Adds potions",
+      Icon: ac.Icon,
+      iconClass: ac.iconClass,
+    });
+  }
   if (galleryTieredBoolActive(card, c.canAddCards)) {
     const ac = STS_ICON_GLYPH.CAN_ADD_CARDS;
     push({
@@ -1835,6 +1967,13 @@ export function inferGalleryCardEffects(card: Card): {
   glyphs: GalleryGlyph[];
   suppressStats: GallerySuppressedStats;
 } {
+  if (card.type === "Potion") {
+    return {
+      glyphs: finalizeGlyphDisplayOrder(card, []),
+      suppressStats: {},
+    };
+  }
+
   const structured = tryStructuredGalleryGlyphs(card);
   if (structured) {
     return {

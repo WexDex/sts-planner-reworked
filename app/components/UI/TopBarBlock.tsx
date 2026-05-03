@@ -118,7 +118,7 @@ export default function TopBarBlock() {
       ? noPlannerRows
         ? "No data — add planner turns in Turns first"
         : "Select or add a planner turn row in Turns first"
-      : "Add cards from the database";
+      : "Add cards or potions from the database";
   const vitalsEmptyCompactLine = !gameState
     ? "No data — load project or combat in header"
     : noPlannerRows
@@ -649,7 +649,7 @@ export default function TopBarBlock() {
                 className="rounded-xl border border-emerald-500/50 bg-emerald-700/85 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-emerald-950/40 transition hover:bg-emerald-600 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
                 title={addCardBlockedTitle}
               >
-                Add Card
+                Add card / potion
               </button>
             </div>
           </div>
@@ -1144,7 +1144,7 @@ export default function TopBarBlock() {
                 title={addCardBlockedTitle}
                 className="min-h-12 min-w-0 flex-1 rounded-lg border border-emerald-500/50 bg-emerald-700/90 px-2 py-3 text-[11px] font-semibold text-white active:scale-[0.99] disabled:opacity-40"
               >
-                Add card
+                Add card / potion
               </button>
             </div>
           </div>

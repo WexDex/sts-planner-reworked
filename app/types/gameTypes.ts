@@ -26,6 +26,8 @@ export type DamageValueField =
 
 export interface Card {
   name: string;
+  /** When `type` is `Potion`, category tags from `POTION_CATEGORIES` / `POTIONS_DB.json`. */
+  potionTags?: string[];
   type?: string;
   isUpgraded?: boolean;
   isChanged?: boolean;
@@ -63,6 +65,7 @@ export interface Card {
   retain?: { base?: boolean; upgraded?: boolean };
   /** Adds generated/specific cards into hand (Blade Dance, powers that add each turn, etc.). */
   canAddCards?: boolean | { base?: boolean; upgraded?: boolean };
+  canAddPotions?: boolean | { base?: boolean; upgraded?: boolean };
   [key: string]: any;
 }
 

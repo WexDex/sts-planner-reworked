@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dbPath = path.join(__dirname, "../app/data/STS_CARDS_DB.json");
+const dbPath = path.join(__dirname, "../app/data/db/STS_CARDS_DB.json");
 const db = JSON.parse(fs.readFileSync(dbPath, "utf8"));
 const cards = db.cards;
 
