@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ClipboardCopy } from "lucide-react";
+import { ArrowUpToLine, ClipboardCopy, Download } from "lucide-react";
 import { toast } from "@/app/utils/toast";
 import {
   collectDottedPathsFromCard,
@@ -199,6 +199,9 @@ function mergeCardsIntoBundle(
   return { ...bundle, cards };
 }
 
+const BUNDLE_DOWNLOAD_BUTTON_CLASS =
+  "inline-flex shrink-0 items-center gap-1.5 rounded-2xl border border-emerald-400/38 bg-linear-to-br from-emerald-500/88 to-teal-600/94 px-3 py-2 text-[11px] font-semibold text-white shadow-lg shadow-emerald-950/50 hover:from-emerald-400 hover:to-teal-500";
+
 function galleryFieldKeysFromBundle(
   bundle: Record<string, unknown>,
 ): string[] {
@@ -227,8 +230,30 @@ export function PlannerCardWorkbenchView({
 
   const [cardJson, setCardJson] = useState("");
   const [cardJsonErr, setCardJsonErr] = useState<string | null>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const bundleRef = useRef(bundle);
   bundleRef.current = bundle;
+
+  useEffect(() => {
+    const el = scrollAreaRef.current;
+    const onScroll = () => {
+      const local = el?.scrollTop ?? 0;
+      const doc = document.documentElement.scrollTop;
+      const win =
+        window.scrollY ??
+        window.pageYOffset ??
+        (typeof doc === "number" ? doc : 0);
+      setShowScrollTop(local > 240 || win > 240);
+    };
+    onScroll();
+    el?.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el?.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
 
   const galleryFieldKeys = useMemo(
     () => galleryFieldKeysFromBundle(bundle),
@@ -595,6 +620,41 @@ export function PlannerCardWorkbenchView({
     }
   }, [fullBundlePretty]);
 
+  const downloadFullBundle = useCallback(() => {
+    try {
+      const blob = new Blob([fullBundlePretty], {
+        type: "application/json;charset=utf-8",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "STS_CARDS_DB.json";
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast("Downloaded STS_CARDS_DB.json (does not overwrite repo file)", "success");
+    } catch {
+      toast("Could not start download", "error");
+    }
+  }, [fullBundlePretty]);
+
+  const scrollWorkbenchToTop = useCallback(() => {
+    scrollAreaRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const bundleDownloadButton = (
+    <button
+      type="button"
+      onClick={downloadFullBundle}
+      className={BUNDLE_DOWNLOAD_BUTTON_CLASS}
+    >
+      <Download className="h-4 w-4" aria-hidden /> Download STS_CARDS_DB.json
+    </button>
+  );
+
   const pathFilterRibbon =
     pathFilters.size > 0 ?
       <div className="mb-4 space-y-1.5 rounded-xl bg-teal-950/35 px-3 py-2 ring-1 ring-teal-500/25">
@@ -854,7 +914,7 @@ export function PlannerCardWorkbenchView({
           <p className="mt-2 text-[11px] text-slate-400">
             In-memory only · does not overwrite{" "}
             <code className="font-mono text-slate-400">STS_CARDS_DB.json</code> —
-            paste from &quot;Copy all&quot; below if you replace the file.
+            use Download at the top or bottom, or paste from &quot;Copy all&quot;.
           </p>
         )}
       </div>
@@ -954,11 +1014,17 @@ export function PlannerCardWorkbenchView({
         className="pointer-events-none fixed inset-x-0 top-36 -z-10 h-[min(55vh,620px)] bg-[radial-gradient(ellipse_at_50%_0%,rgba(139,92,246,0.34),transparent_62%),radial-gradient(ellipse_at_80%_50%,rgba(232,121,249,0.15),transparent_48%)]"
       />
 
-      <div className="mx-auto flex w-full max-w-[min(112rem,calc(100vw-1.5rem))] min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 py-6 sm:px-6 lg:gap-6 lg:pb-8 xl:pr-10">
+      <div
+        ref={scrollAreaRef}
+        className="mx-auto flex w-full max-w-[min(112rem,calc(100vw-1.5rem))] min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 py-6 sm:px-6 lg:gap-6 lg:pb-8 xl:pr-10"
+      >
         <header className="shrink-0 space-y-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-fuchsia-300/88">
-            Planner · STS_CARDS_DB
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+            <p className="min-w-0 text-[11px] font-semibold uppercase tracking-[0.22em] text-fuchsia-300/88">
+              Planner · STS_CARDS_DB
+            </p>
+            {bundleDownloadButton}
+          </div>
           <div className="flex flex-wrap items-start justify-between gap-4 lg:max-w-[min(48rem,calc(100vw-26rem))]">
             <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
               Browse & patch cards
@@ -1299,13 +1365,16 @@ export function PlannerCardWorkbenchView({
                 after in-memory merges
               </p>
             </div>
-            <button
-              type="button"
-              onClick={copyFullBundle}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-2xl border border-white/20 bg-linear-to-br from-violet-400/94 to-indigo-500/98 px-3 py-2 text-[11px] font-semibold text-white shadow-xl shadow-violet-900/72 hover:from-violet-300 hover:to-indigo-400"
-            >
-              <ClipboardCopy className="h-4 w-4" aria-hidden /> Copy all
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              {bundleDownloadButton}
+              <button
+                type="button"
+                onClick={copyFullBundle}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-2xl border border-white/20 bg-linear-to-br from-violet-400/94 to-indigo-500/98 px-3 py-2 text-[11px] font-semibold text-white shadow-xl shadow-violet-900/72 hover:from-violet-300 hover:to-indigo-400"
+              >
+                <ClipboardCopy className="h-4 w-4" aria-hidden /> Copy all
+              </button>
+            </div>
           </div>
           <div className="relative max-h-[min(440px,calc(100dvh-16rem))] overflow-auto px-5 py-5">
             <pre className="whitespace-pre-wrap break-all font-mono text-[11px] leading-snug text-slate-300">
@@ -1314,6 +1383,19 @@ export function PlannerCardWorkbenchView({
           </div>
         </section>
       </div>
+
+      {showScrollTop ?
+        <button
+          type="button"
+          aria-label="Scroll workbench to top"
+          title="Scroll to top"
+          onClick={scrollWorkbenchToTop}
+          className="fixed bottom-6 left-4 z-[41] inline-flex items-center gap-2 rounded-full border border-white/18 bg-slate-950/92 px-3 py-2.5 text-[11px] font-semibold tracking-wide text-slate-100 shadow-[0_22px_50px_-20px_rgba(0,0,0,0.65)] backdrop-blur-md ring-1 ring-white/12 hover:bg-slate-900/95 sm:left-6"
+        >
+          <ArrowUpToLine className="h-4 w-4 shrink-0" aria-hidden />
+          Top
+        </button>
+      : null}
     </main>
   );
 }
