@@ -29,9 +29,10 @@ import {
   ChevronRight,
   Columns2,
   Crosshair,
+  GalleryHorizontal,
   GripHorizontal,
   Hand,
-  Layers,
+  LayoutDashboard,
   LayoutGrid,
   ListTree,
   Maximize2,
@@ -42,10 +43,14 @@ import {
   User,
   X,
 } from "lucide-react";
+
 import { toast } from "@/app/utils/toast";
 
 type TargetMode = "single" | "multi";
 type CardPileViewSize = "small" | "medium" | "large";
+type HandLayout = "legacy" | "scroll" | "fan";
+
+const HAND_LAYOUT_KEY = "sts-hand-layout-v1";
 
 function cyclePileViewSize(s: CardPileViewSize): CardPileViewSize {
   return s === "small" ? "medium" : s === "medium" ? "large" : "small";
@@ -79,6 +84,54 @@ function CardSizeCycleButton({
       />
       <span className="hidden sm:inline">Size</span>
     </button>
+  );
+}
+
+function HandFan({
+  hand,
+  size,
+  onToggleSelect,
+}: {
+  hand: import("@/app/types/gameTypes").Card[];
+  size: CardPileViewSize;
+  onToggleSelect: (location: string, index: number) => void;
+}) {
+  const n = hand.length;
+  const totalSpread = Math.min(60, n * 8);
+  const cardStep = size === "small" ? 72 : size === "large" ? 116 : 92;
+  const minHeight = size === "small" ? "11rem" : size === "large" ? "19rem" : "15rem";
+  return (
+    <div className="relative flex items-end justify-center overflow-x-auto" style={{ minHeight }}>
+      {hand.map((card, index) => {
+        const rotDeg = n > 1 ? totalSpread * (index - (n - 1) / 2) / (n - 1) : 0;
+        const yOffset = Math.abs(rotDeg) * 1.2;
+        const offsetX = (index - (n - 1) / 2) * cardStep;
+        return (
+          <div
+            key={`fan-${index}-${card.name}`}
+            className="absolute bottom-0 transition-[transform,z-index] duration-200 hover:z-50"
+            style={{
+              transform: `translateX(${offsetX}px) rotate(${rotDeg}deg) translateY(${yOffset}px)`,
+              zIndex: index + 1,
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLDivElement).style.transform = `translateX(${offsetX}px) rotate(${rotDeg}deg) translateY(-2rem)`;
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLDivElement).style.transform = `translateX(${offsetX}px) rotate(${rotDeg}deg) translateY(${yOffset}px)`;
+            }}
+          >
+            <STSCard
+              size={size}
+              card={card}
+              index={index}
+              location={LOCATION.HAND}
+              onToggleSelect={onToggleSelect}
+            />
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -116,6 +169,7 @@ export default function MainFieldBlock() {
     turns,
     currentTurnIndex,
     saveCurrentTurn,
+    toggleCardSelection,
     combatTargetMode: targetMode,
     setCombatTargetMode,
     combatTargetEnemyIndices: selectedEnemyIndices,
@@ -130,7 +184,7 @@ export default function MainFieldBlock() {
   const [activityLogDensity, setActivityLogDensity] = useState<ActivityLogInlineDensity>("detailed");
   const [mounted, setMounted] = useState(false);
   const [handCardSize, setHandCardSize] = useState<CardPileViewSize>("medium");
-  const [playedCardSize, setPlayedCardSize] = useState<CardPileViewSize>("small");
+  const [handLayout, setHandLayout] = useState<HandLayout>("legacy");
   const [enemyTargetLayout, setEnemyTargetLayout] = useState<TargetEnemyLayout>("tiles");
 
   const enemies = useMemo(() => gameState?.enemies ?? [], [gameState?.enemies]);
@@ -211,6 +265,23 @@ export default function MainFieldBlock() {
       /* ignore */
     }
   }, [enemyTargetLayout]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(HAND_LAYOUT_KEY);
+      if (raw === "legacy" || raw === "scroll" || raw === "fan") setHandLayout(raw);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(HAND_LAYOUT_KEY, handLayout);
+    } catch {
+      /* ignore */
+    }
+  }, [handLayout]);
 
   const setInlineLogDensity = useCallback((d: ActivityLogInlineDensity) => {
     setActivityLogDensity(d);
@@ -667,21 +738,53 @@ export default function MainFieldBlock() {
         )}
       </section>
 
-      {/* Hand + played */}
-      <div className="grid gap-4 xl:grid-cols-2">
-        <section className={`${SHELL}`}>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-500/25 bg-emerald-950/35 text-emerald-400">
-                <Hand className="h-4 w-4" strokeWidth={2} />
-              </span>
-              <div>
-                <h2 className="text-base font-semibold tracking-tight text-slate-100">Hand</h2>
-                <p className="text-[11px] text-slate-500">{(gameState?.hand ?? []).length} cards</p>
-              </div>
+      {/* Hand */}
+      <section className={`${SHELL}`}>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-500/25 bg-emerald-950/35 text-emerald-400">
+              <Hand className="h-4 w-4" strokeWidth={2} />
+            </span>
+            <div>
+              <h2 className="text-base font-semibold tracking-tight text-slate-100">Hand</h2>
+              <p className="text-[11px] text-slate-500">{(gameState?.hand ?? []).length} cards</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex rounded-xl border border-slate-700 bg-slate-900/80 p-0.5" role="group" aria-label="Hand layout">
+              <button
+                type="button"
+                onClick={() => setHandLayout("legacy")}
+                title="Wrap layout"
+                className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition-all ${handLayout === "legacy" ? "bg-emerald-600 text-white shadow-sm shadow-emerald-950/40" : "text-slate-400 hover:text-slate-200"}`}
+              >
+                <LayoutGrid className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                Wrap
+              </button>
+              <button
+                type="button"
+                onClick={() => setHandLayout("scroll")}
+                title="Horizontal scroll row"
+                className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition-all ${handLayout === "scroll" ? "bg-emerald-600 text-white shadow-sm shadow-emerald-950/40" : "text-slate-400 hover:text-slate-200"}`}
+              >
+                <GalleryHorizontal className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                Row
+              </button>
+              <button
+                type="button"
+                onClick={() => setHandLayout("fan")}
+                title="Fan / arc layout"
+                className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition-all ${handLayout === "fan" ? "bg-emerald-600 text-white shadow-sm shadow-emerald-950/40" : "text-slate-400 hover:text-slate-200"}`}
+              >
+                <LayoutDashboard className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                Fan
+              </button>
             </div>
             <CardSizeCycleButton size={handCardSize} onChange={setHandCardSize} />
           </div>
+        </div>
+
+        {handLayout === "legacy" && (
           <div className="flex flex-wrap gap-4">
             {(gameState?.hand ?? []).map((card, index) => (
               <STSCard
@@ -690,37 +793,36 @@ export default function MainFieldBlock() {
                 card={card}
                 index={index}
                 location={LOCATION.HAND}
+                onToggleSelect={toggleCardSelection}
               />
             ))}
           </div>
-        </section>
+        )}
 
-        <section className={`${SHELL}`}>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-violet-500/25 bg-violet-950/35 text-violet-400">
-                <Layers className="h-4 w-4" strokeWidth={2} />
-              </span>
-              <div>
-                <h2 className="text-base font-semibold tracking-tight text-slate-100">Played</h2>
-                <p className="text-[11px] text-slate-500">{(gameState?.playedCards ?? []).length} cards</p>
+        {handLayout === "scroll" && (
+          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [scrollbar-width:thin]">
+            {(gameState?.hand ?? []).map((card, index) => (
+              <div key={`hand-${index}-${card.name}`} className="shrink-0 snap-start">
+                <STSCard
+                  size={handCardSize}
+                  card={card}
+                  index={index}
+                  location={LOCATION.HAND}
+                  onToggleSelect={toggleCardSelection}
+                />
               </div>
-            </div>
-            <CardSizeCycleButton size={playedCardSize} onChange={setPlayedCardSize} />
-          </div>
-          <div className="flex flex-wrap gap-4">
-            {(gameState?.playedCards ?? []).map((card, index) => (
-              <STSCard
-                key={`played-${index}-${card.name}`}
-                size={playedCardSize}
-                card={card}
-                index={index}
-                location={LOCATION.PLAYED}
-              />
             ))}
           </div>
-        </section>
-      </div>
+        )}
+
+        {handLayout === "fan" && (
+          <HandFan
+            hand={gameState?.hand ?? []}
+            size={handCardSize}
+            onToggleSelect={toggleCardSelection}
+          />
+        )}
+      </section>
 
       {/* Activity log — compact + expand */}
       <section

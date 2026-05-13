@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   CombatData,
   Card,
@@ -220,7 +220,7 @@ const DEFAULT_SAVE_KEY = 'sts_game_save';
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const [gameState, setGameState] = useState<CombatData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [initialData, setInitialData] = useState<CombatData | null>(null);
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -385,7 +385,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     toast('Turn saved', 'success');
   }, [gameState, currentTurnIndex, turns.length]);
 
-  const setCurrentTurn = (turnId: number) => {
+  const setCurrentTurn = useCallback((turnId: number) => {
     const index = turns.findIndex((turn) => turn.id === turnId);
     if (index === -1 || index === currentTurnIndex || !gameState) return;
 
@@ -397,9 +397,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setGameState(cloneGameData(nextTurns[index]!.state));
     setTurnPhase('start');
     toast('Turn switched', 'success');
-  };
+  }, [turns, currentTurnIndex, gameState]);
 
-  const endPlayerTurn = () => {
+  const endPlayerTurn = useCallback(() => {
     if (!gameState || turnPhase !== 'player') return;
     const plannerTurnSlotId = turns[currentTurnIndex]?.id ?? currentTurnIndex + 1;
     const stateAfterIntangibleTick: CombatData = {
@@ -423,9 +423,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     );
     setTurnPhase('enemy');
     toast('Enemy turn', 'info');
-  };
+  }, [gameState, turnPhase, turns, currentTurnIndex]);
 
-  const endEnemyTurn = () => {
+  const endEnemyTurn = useCallback(() => {
     if (!gameState || !initialData || turnPhase !== 'enemy') return;
     const plannerTurnSlotId = turns[currentTurnIndex]?.id ?? currentTurnIndex + 1;
     const enemiesTicked = gameState.enemies?.map((e) => ({
@@ -499,9 +499,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
     setTurnPhase('start');
     toast('Next planner turn', 'success');
-  };
+  }, [gameState, initialData, turnPhase, turns, currentTurnIndex]);
 
-  const beginTurn = () => {
+  const beginTurn = useCallback(() => {
     if (!gameState || turnPhase !== 'start') return;
     const plannerTurnSlotId = turns[currentTurnIndex]?.id ?? currentTurnIndex + 1;
     const endDraw = buildPhaseBoundaryEndEntry('start', plannerTurnSlotId);
@@ -518,9 +518,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     );
     setTurnPhase('player');
     toast('Main phase', 'info');
-  };
+  }, [gameState, turnPhase, turns, currentTurnIndex]);
 
-  const continueFromTurn = (fromTurnId: number, toTurnId: number) => {
+  const continueFromTurn = useCallback((fromTurnId: number, toTurnId: number) => {
     const fromTurnIndex = turns.findIndex(turn => turn.id === fromTurnId);
     const toTurnIndex = turns.findIndex(turn => turn.id === toTurnId);
 
@@ -539,15 +539,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setCurrentTurnIndex(toTurnIndex);
     setGameState(cloneGameData(sourceState));
     setTurnPhase('start');
-  };
+  }, [turns, currentTurnIndex, turnPhase, gameState]);
 
-  const resetCurrentTurn = () => {
+  const resetCurrentTurn = useCallback(() => {
     if (!initialData) return;
     const resetState = cloneGameData(initialData);
     setGameState(resetState);
     setTurns(prev => prev.map((turn, idx) => idx === currentTurnIndex ? { ...turn, state: resetState } : turn));
     setTurnPhase('start');
-  };
+  }, [initialData, currentTurnIndex]);
 
   const updateGameState = (newState: Partial<CombatData>) => {
     setGameState((prevState) => {
@@ -1800,7 +1800,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     modifySelectedCards((card) => ({ ...card, isChanged: !card.isChanged }), 'Toggled changed flag');
   };
 
-  const playSelectedCards = () => {
+  const playSelectedCards = useCallback(() => {
     const enemyIndicesSnapshot = combatTargetEnemyIndices;
     const targetSelfSnapshot = combatTargetSelf;
     setGameState((prevState) => {
@@ -1841,7 +1841,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         ],
       };
     });
-  };
+  }, [combatTargetEnemyIndices, combatTargetSelf]);
 
   const moveSelectedCards = (toLocation: string) => {
     setGameState((prevState) => {
@@ -2520,87 +2520,114 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     addBuffDebuff(target, enemyIndex, name, 'buff', stacks);
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const contextValue = useMemo(() => ({
+    gameState,
+    turns,
+    currentTurnIndex,
+    turnPhase,
+    setCurrentTurn,
+    saveCurrentTurn,
+    endPlayerTurn,
+    beginTurn,
+    endEnemyTurn,
+    continueFromTurn,
+    resetCurrentTurn,
+    isLoading,
+    error,
+    updateGameState,
+    syncEnemyIntentsGlobally,
+    resetGameState,
+    loadGameData,
+    loadGameDataFromJson,
+    saveGameData,
+    downloadPlannerSaveJson,
+    loadSavedGame,
+    activeProject,
+    saveProject,
+    loadProjectFromJsonText,
+    closeProject,
+    toggleRelic,
+    toggleCardSelection,
+    playSelectedCards,
+    moveSelectedCards,
+    removeSelectedCards,
+    spendEnergyOnSelected,
+    deselectAllCards,
+    addToActivityLog,
+    drawCards,
+    upgradeSelected,
+    downgradeSelected,
+    duplicateSelected,
+    setSelectedCostZero,
+    setSelectedCustomCost,
+    transformSelectedType,
+    toggleChangedSelected,
+    transformSelectedFromDatabase,
+    addCardFromDB,
+    modifyPlayerHp,
+    modifyPlayerBlock,
+    modifyPlayerEnergy,
+    modifyEnemyHp,
+    modifyEnemyBlock,
+    addBuffDebuff,
+    removeBuffDebuff,
+    reduceBuffDebuff,
+    updateBuffDebuffStacks,
+    combatTargetMode,
+    setCombatTargetMode,
+    combatTargetEnemyIndices,
+    toggleCombatEnemyTarget,
+    combatTargetSelf,
+    toggleCombatTargetSelf,
+    clearCombatTargets,
+    decisionNodes,
+    activeDecisionNodeId,
+    forkDecisionBranch,
+    jumpToDecisionNode,
+    syncActiveDecisionNodeFromPlanner,
+    forceActiveDecisionTimelineMainChain,
+    deleteDecisionBranch,
+    updateDecisionNodeLabel,
+    updateDecisionNodeTimelineAccent,
+    decisionTimelinePositions,
+    setDecisionTimelineNodePosition,
+    mergeDecisionTimelinePositions,
+    applyDecisionBranchToPlanner,
+    isApplyDecisionBranchToPlannerSynced,
+    linkDecisionTimelineParent,
+    unlinkDecisionTimelineBranch,
+    updateDecisionNodeTurnPhase,
+  }), [
+    // State
+    gameState, turns, currentTurnIndex, turnPhase, isLoading, error, activeProject,
+    combatTargetMode, combatTargetEnemyIndices, combatTargetSelf,
+    decisionNodes, activeDecisionNodeId, decisionTimelinePositions,
+    // Newly-converted useCallbacks (Bucket A — read current state)
+    setCurrentTurn, endPlayerTurn, endEnemyTurn, beginTurn, continueFromTurn,
+    resetCurrentTurn, playSelectedCards,
+    // Existing useCallbacks (already stable refs)
+    saveCurrentTurn, syncEnemyIntentsGlobally, resetGameState,
+    loadGameData, loadGameDataFromJson, saveGameData, downloadPlannerSaveJson, loadSavedGame,
+    saveProject, loadProjectFromJsonText, closeProject,
+    setCombatTargetMode, toggleCombatEnemyTarget, toggleCombatTargetSelf, clearCombatTargets,
+    forkDecisionBranch, jumpToDecisionNode, syncActiveDecisionNodeFromPlanner,
+    forceActiveDecisionTimelineMainChain, deleteDecisionBranch,
+    updateDecisionNodeLabel, updateDecisionNodeTimelineAccent,
+    setDecisionTimelineNodePosition, mergeDecisionTimelinePositions,
+    applyDecisionBranchToPlanner, isApplyDecisionBranchToPlannerSynced,
+    linkDecisionTimelineParent, unlinkDecisionTimelineBranch, updateDecisionNodeTurnPhase,
+    // Bucket B plain functions (setGameState(prev=>) only — safe stale closures, intentionally omitted from deps)
+    // updateGameState, toggleRelic, toggleCardSelection, moveSelectedCards, removeSelectedCards,
+    // spendEnergyOnSelected, deselectAllCards, addToActivityLog, drawCards, upgradeSelected,
+    // downgradeSelected, duplicateSelected, setSelectedCostZero, setSelectedCustomCost,
+    // transformSelectedType, toggleChangedSelected, transformSelectedFromDatabase, addCardFromDB,
+    // modifyPlayerHp, modifyPlayerBlock, modifyPlayerEnergy, modifyEnemyHp, modifyEnemyBlock,
+    // addBuffDebuff, removeBuffDebuff, reduceBuffDebuff, updateBuffDebuffStacks
+  ]);
+
   return (
-    <GameContext.Provider
-      value={{
-        gameState,
-        turns,
-        currentTurnIndex,
-        turnPhase,
-        setCurrentTurn,
-        saveCurrentTurn,
-        endPlayerTurn,
-        beginTurn,
-        endEnemyTurn,
-        continueFromTurn,
-        resetCurrentTurn,
-        isLoading,
-        error,
-        updateGameState,
-        syncEnemyIntentsGlobally,
-        resetGameState,
-        loadGameData,
-        loadGameDataFromJson,
-        saveGameData,
-        downloadPlannerSaveJson,
-        loadSavedGame,
-        activeProject,
-        saveProject,
-        loadProjectFromJsonText,
-        closeProject,
-        toggleRelic,
-        toggleCardSelection,
-        playSelectedCards,
-        moveSelectedCards,
-        removeSelectedCards,
-        spendEnergyOnSelected,
-        deselectAllCards,
-        addToActivityLog,
-        drawCards,
-        upgradeSelected,
-        downgradeSelected,
-        duplicateSelected,
-        setSelectedCostZero,
-        setSelectedCustomCost,
-        transformSelectedType,
-        toggleChangedSelected,
-        transformSelectedFromDatabase,
-        addCardFromDB,
-        modifyPlayerHp,
-        modifyPlayerBlock,
-        modifyPlayerEnergy,
-        modifyEnemyHp,
-        modifyEnemyBlock,
-        addBuffDebuff,
-        removeBuffDebuff,
-        reduceBuffDebuff,
-        updateBuffDebuffStacks,
-        combatTargetMode,
-        setCombatTargetMode,
-        combatTargetEnemyIndices,
-        toggleCombatEnemyTarget,
-        combatTargetSelf,
-        toggleCombatTargetSelf,
-        clearCombatTargets,
-        decisionNodes,
-        activeDecisionNodeId,
-        forkDecisionBranch,
-        jumpToDecisionNode,
-        syncActiveDecisionNodeFromPlanner,
-        forceActiveDecisionTimelineMainChain,
-        deleteDecisionBranch,
-        updateDecisionNodeLabel,
-        updateDecisionNodeTimelineAccent,
-        decisionTimelinePositions,
-        setDecisionTimelineNodePosition,
-        mergeDecisionTimelinePositions,
-        applyDecisionBranchToPlanner,
-        isApplyDecisionBranchToPlannerSynced,
-        linkDecisionTimelineParent,
-        unlinkDecisionTimelineBranch,
-        updateDecisionNodeTurnPhase,
-      }}
-    >
+    <GameContext.Provider value={contextValue}>
       {children}
     </GameContext.Provider>
   );

@@ -1,18 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useId, useState, useSyncExternalStore } from "react";
-import { ChevronLeft, ChevronRight, GitBranch, Hand, LayoutDashboard, Swords, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, GitBranch, Hand, LayoutDashboard, Menu, Swords, X, Zap } from "lucide-react";
 import TopBarBlock from "@/app/components/UI/TopBarBlock";
 import TimelineBlock from "@/app/components/UI/TimelineBlock";
 import MainFieldBlock from "@/app/components/UI/MainFieldBlock";
 import BottomBlock from "@/app/components/UI/BottomBlock";
 import ActionsBar from "@/app/components/UI/ActionsBar";
 import RightBlock from "@/app/components/UI/RightBlock";
+import MobileNavPanel from "@/app/components/UI/MobileNavPanel";
 import { ToastStack } from "@/app/components/UI/NotificationProvider";
+import { useGameManager } from "@/app/context/GameContext";
 
 const MD_UP = "(min-width: 768px)";
 
-type MobilePanel = "none" | "timeline" | "tools";
+type MobilePanel = "none" | "timeline" | "tools" | "deck" | "actions" | "menu";
 
 function subscribeMdUp(onChange: () => void) {
   if (typeof window === "undefined") return () => {};
@@ -43,7 +45,22 @@ function scrollToAnchor(id: string) {
   });
 }
 
+function SheetNoData({ label }: { label: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
+      <p className="text-sm font-semibold text-slate-400">No data loaded</p>
+      <p className="text-xs leading-relaxed text-slate-600">
+        Load a project or combat data to use {label}.<br />
+        Use the <span className="font-semibold text-slate-500">Load data</span> or{" "}
+        <span className="font-semibold text-slate-500">Load proj</span> buttons in the top bar,
+        or open the <span className="font-semibold text-slate-500">Menu</span> tab below.
+      </p>
+    </div>
+  );
+}
+
 export default function ResponsiveAppShell() {
+  const { gameState } = useGameManager();
   const isMdUp = useSyncExternalStore(subscribeMdUp, getMdUpSnapshot, () => false);
   const [panel, setPanel] = useState<MobilePanel>("none");
   const sheetTitleId = useId();
@@ -95,14 +112,21 @@ export default function ResponsiveAppShell() {
     setPanel((p) => (p === "tools" ? "none" : "tools"));
   }, []);
 
+  const openDeck = useCallback(() => {
+    setPanel((p) => (p === "deck" ? "none" : "deck"));
+  }, []);
+
+  const openActions = useCallback(() => {
+    setPanel((p) => (p === "actions" ? "none" : "actions"));
+  }, []);
+
+  const openMenu = useCallback(() => {
+    setPanel((p) => (p === "menu" ? "none" : "menu"));
+  }, []);
+
   const goBoard = useCallback(() => {
     setPanel("none");
     scrollToAnchor("sts-battle-focus");
-  }, []);
-
-  const goDeck = useCallback(() => {
-    setPanel("none");
-    scrollToAnchor("sts-deck-zone");
   }, []);
 
   useEffect(() => {
@@ -131,6 +155,10 @@ export default function ResponsiveAppShell() {
   const showMobileBar = !isMdUp;
   const showTimelineSheet = mobileSheet === "timeline";
   const showToolsSheet = mobileSheet === "tools";
+  const showDeckSheet = mobileSheet === "deck";
+  const showActionsSheet = mobileSheet === "actions";
+  const showMenuSheet = mobileSheet === "menu";
+  const showAnySheet = showTimelineSheet || showToolsSheet || showDeckSheet || showActionsSheet || showMenuSheet;
 
   return (
     <>
@@ -194,12 +222,16 @@ export default function ResponsiveAppShell() {
             <MainFieldBlock />
           </div>
 
-          <div className="flex min-h-0 shrink-0 flex-col" data-bottom-deck-skip-outside>
+          {/* On desktop: ActionsBar + BottomBlock inline. On mobile: they live in sheets. */}
+          <div className="hidden md:flex min-h-0 shrink-0 flex-col" data-bottom-deck-skip-outside>
             <ActionsBar />
             <div className="relative z-30 shrink-0">
-              <ToastStack />
               <BottomBlock />
             </div>
+          </div>
+          {/* ToastStack always visible regardless of layout */}
+          <div className="relative z-30 shrink-0">
+            <ToastStack />
           </div>
         </div>
 
@@ -248,7 +280,7 @@ export default function ResponsiveAppShell() {
         ) : null}
       </div>
 
-      {showTimelineSheet || showToolsSheet ? (
+      {showAnySheet ? (
         <div
           className="fixed inset-0 z-50 flex h-[100dvh] max-h-[100dvh] flex-col md:hidden"
           role="dialog"
@@ -259,7 +291,13 @@ export default function ResponsiveAppShell() {
             className={`animate-sts-mobile-sheet flex min-h-0 w-full flex-1 flex-col border-x border-t-2 bg-slate-900 shadow-[0_0_0_1px_rgba(0,0,0,0.3)] ${
               showTimelineSheet
                 ? "border-cyan-500/50 shadow-[0_0_48px_-8px_rgba(34,211,238,0.25),inset_0_1px_0_0_rgba(34,211,238,0.2)]"
-                : "border-amber-500/50 shadow-[0_0_48px_-8px_rgba(245,158,11,0.2),inset_0_1px_0_0_rgba(245,158,11,0.2)]"
+                : showToolsSheet
+                  ? "border-amber-500/50 shadow-[0_0_48px_-8px_rgba(245,158,11,0.2),inset_0_1px_0_0_rgba(245,158,11,0.2)]"
+                  : showDeckSheet
+                    ? "border-violet-500/50 shadow-[0_0_48px_-8px_rgba(139,92,246,0.2),inset_0_1px_0_0_rgba(139,92,246,0.2)]"
+                    : showMenuSheet
+                      ? "border-slate-500/60 shadow-[0_0_48px_-8px_rgba(148,163,184,0.15),inset_0_1px_0_0_rgba(148,163,184,0.15)]"
+                      : "border-emerald-500/50 shadow-[0_0_48px_-8px_rgba(16,185,129,0.2),inset_0_1px_0_0_rgba(16,185,129,0.2)]"
             }`}
             style={{
               paddingTop: "max(0.5rem, env(safe-area-inset-top, 0px))",
@@ -267,8 +305,16 @@ export default function ResponsiveAppShell() {
             }}
           >
             <div
-              className={`shrink-0 border-b px-3 pb-2.5 pt-1 ${
-                showTimelineSheet ? "border-cyan-600/40 bg-cyan-950/50" : "border-amber-600/40 bg-amber-950/40"
+              className={`relative z-30 shrink-0 border-b px-3 pb-2.5 pt-1 ${
+                showTimelineSheet
+                  ? "border-cyan-600/40 bg-cyan-950/50"
+                  : showToolsSheet
+                    ? "border-amber-600/40 bg-amber-950/40"
+                    : showDeckSheet
+                      ? "border-violet-600/40 bg-violet-950/40"
+                      : showMenuSheet
+                        ? "border-slate-600/50 bg-slate-900/70"
+                        : "border-emerald-600/40 bg-emerald-950/40"
               }`}
             >
               <div className="mb-1.5 flex justify-center" aria-hidden>
@@ -280,13 +326,33 @@ export default function ResponsiveAppShell() {
                     <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-cyan-400/50 bg-cyan-950/70 text-cyan-300 shadow-lg shadow-cyan-950/40">
                       <GitBranch className="h-5 w-5" strokeWidth={2} />
                     </span>
-                  ) : (
+                  ) : showToolsSheet ? (
                     <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-amber-400/50 bg-amber-950/70 text-amber-300 shadow-lg shadow-amber-950/40">
                       <Swords className="h-5 w-5" strokeWidth={2} />
                     </span>
+                  ) : showDeckSheet ? (
+                    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-violet-400/50 bg-violet-950/70 text-violet-300 shadow-lg shadow-violet-950/40">
+                      <Hand className="h-5 w-5" strokeWidth={2} />
+                    </span>
+                  ) : showMenuSheet ? (
+                    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-slate-500/60 bg-slate-800/80 text-slate-200 shadow-lg shadow-black/30">
+                      <Menu className="h-5 w-5" strokeWidth={2} />
+                    </span>
+                  ) : (
+                    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-emerald-400/50 bg-emerald-950/70 text-emerald-300 shadow-lg shadow-emerald-950/40">
+                      <Zap className="h-5 w-5" strokeWidth={2} />
+                    </span>
                   )}
                   <h2 id={sheetTitleId} className="min-w-0 truncate text-base font-semibold text-slate-50">
-                    {showTimelineSheet ? "Turn timeline" : "Combat tools"}
+                    {showTimelineSheet
+                      ? "Turn timeline"
+                      : showToolsSheet
+                        ? "Combat tools"
+                        : showDeckSheet
+                          ? "Deck & Piles"
+                          : showMenuSheet
+                            ? "Navigation & Project"
+                            : "Card Actions"}
                   </h2>
                 </div>
                 <button
@@ -300,7 +366,17 @@ export default function ResponsiveAppShell() {
               </div>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-950/90 [scrollbar-width:thin]">
-              {showTimelineSheet ? <TimelineBlock /> : <RightBlock />}
+              {showTimelineSheet ? (
+                <TimelineBlock />
+              ) : showToolsSheet ? (
+                gameState ? <RightBlock /> : <SheetNoData label="Combat Tools" />
+              ) : showDeckSheet ? (
+                gameState ? <BottomBlock /> : <SheetNoData label="Deck & Piles" />
+              ) : showMenuSheet ? (
+                <MobileNavPanel />
+              ) : (
+                gameState ? <ActionsBar /> : <SheetNoData label="Card Actions" />
+              )}
             </div>
           </div>
         </div>
@@ -312,38 +388,60 @@ export default function ResponsiveAppShell() {
           style={{ paddingBottom: "max(0.35rem, env(safe-area-inset-bottom, 0px))" }}
           aria-label="Quick navigation"
         >
-          <ul className="mx-auto flex max-w-lg items-stretch justify-between gap-0 px-1 pt-1">
+          <ul className="mx-auto flex max-w-lg items-stretch justify-between gap-0 px-0.5 pt-1">
             <li className="min-w-0 flex-1">
               <button
                 type="button"
                 onClick={openTimeline}
-                className={`flex w-full touch-manipulation flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-semibold transition-colors ${
+                className={`flex w-full touch-manipulation flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[9px] font-semibold transition-colors ${
                   panel === "timeline"
                     ? "bg-cyan-500/25 text-cyan-100 ring-1 ring-cyan-400/50 shadow-[0_0_12px_rgba(34,211,238,0.25)]"
                     : "text-cyan-100/60 active:bg-cyan-950/40"
                 }`}
               >
-                <GitBranch className="h-5 w-5 shrink-0" strokeWidth={2} />
-                <span className="truncate">Turns</span>
+                <GitBranch className="h-4 w-4 shrink-0" strokeWidth={2} />
+                <span className="truncate">Timeline</span>
               </button>
             </li>
             <li className="min-w-0 flex-1">
               <button
                 type="button"
                 onClick={goBoard}
-                className="flex w-full touch-manipulation flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-semibold text-cyan-100/60 transition-colors active:bg-cyan-950/40"
+                className={`flex w-full touch-manipulation flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[9px] font-semibold transition-colors ${
+                  panel === "none"
+                    ? "bg-slate-500/20 text-slate-100 ring-1 ring-slate-400/40"
+                    : "text-slate-100/50 active:bg-slate-800/40"
+                }`}
               >
-                <LayoutDashboard className="h-5 w-5 shrink-0" strokeWidth={2} />
+                <LayoutDashboard className="h-4 w-4 shrink-0" strokeWidth={2} />
                 <span className="truncate">Board</span>
               </button>
             </li>
             <li className="min-w-0 flex-1">
               <button
                 type="button"
-                onClick={goDeck}
-                className="flex w-full touch-manipulation flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-semibold text-cyan-100/60 transition-colors active:bg-cyan-950/40"
+                onClick={openActions}
+                className={`flex w-full touch-manipulation flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[9px] font-semibold transition-colors ${
+                  panel === "actions"
+                    ? "bg-emerald-500/25 text-emerald-100 ring-1 ring-emerald-400/50 shadow-[0_0_12px_rgba(16,185,129,0.2)]"
+                    : "text-emerald-100/60 active:bg-emerald-950/40"
+                }`}
               >
-                <Hand className="h-5 w-5 shrink-0" strokeWidth={2} />
+                <Zap className="h-4 w-4 shrink-0" strokeWidth={2} />
+                <span className="truncate">Actions</span>
+              </button>
+            </li>
+            <li className="min-w-0 flex-1">
+              <button
+                type="button"
+                onClick={openDeck}
+                className={`flex w-full touch-manipulation flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[9px] font-semibold transition-colors ${
+                  panel === "deck"
+                    ? "bg-violet-500/25 text-violet-100 ring-1 ring-violet-400/50 shadow-[0_0_12px_rgba(139,92,246,0.2)]"
+                    : "text-violet-100/60 active:bg-violet-950/40"
+                }`}
+              >
+                <Hand className="h-4 w-4 shrink-0" strokeWidth={2} />
                 <span className="truncate">Deck</span>
               </button>
             </li>
@@ -351,14 +449,28 @@ export default function ResponsiveAppShell() {
               <button
                 type="button"
                 onClick={openTools}
-                className={`flex w-full touch-manipulation flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-semibold transition-colors ${
+                className={`flex w-full touch-manipulation flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[9px] font-semibold transition-colors ${
                   panel === "tools"
                     ? "bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/50 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
                     : "text-amber-100/60 active:bg-amber-950/40"
                 }`}
               >
-                <Swords className="h-5 w-5 shrink-0" strokeWidth={2} />
+                <Swords className="h-4 w-4 shrink-0" strokeWidth={2} />
                 <span className="truncate">Tools</span>
+              </button>
+            </li>
+            <li className="min-w-0 flex-1">
+              <button
+                type="button"
+                onClick={openMenu}
+                className={`flex w-full touch-manipulation flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[9px] font-semibold transition-colors ${
+                  panel === "menu"
+                    ? "bg-slate-500/25 text-slate-100 ring-1 ring-slate-400/45"
+                    : "text-slate-300 active:bg-slate-800/40"
+                }`}
+              >
+                <Menu className="h-4 w-4 shrink-0" strokeWidth={2} />
+                <span className="truncate">Menu</span>
               </button>
             </li>
           </ul>

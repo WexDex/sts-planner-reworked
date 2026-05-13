@@ -153,7 +153,6 @@ export default function TopBarBlock() {
   const [legendShowAllLabels, setLegendShowAllLabels] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [mobileVitalsOpen, setMobileVitalsOpen] = useState(false);
   const [topBarMinimized, setTopBarMinimized] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const projectFileInputRef = useRef<HTMLInputElement>(null);
@@ -784,377 +783,70 @@ export default function TopBarBlock() {
         </div>
       </div>
 
-      {/* Mobile: high-contrast strip + collapsible vitals */}
+      {/* Mobile: compact vitals strip */}
       <div className="md:hidden">
-        <div className="mx-auto max-w-2xl space-y-2 px-2 py-2">
-          <nav
-            className="flex gap-2"
-            role="navigation"
-            aria-label="Planner routes"
-          >
-            <Link
-              href="/turn-maker"
-              className="inline-flex min-h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-amber-400/55 bg-amber-950/50 px-3 py-3 text-sm font-bold text-amber-50 shadow-md shadow-amber-950/25 ring-1 ring-amber-500/20 active:scale-[0.99]"
-              title="Edit enemy turn intents"
-            >
-              <CalendarClock className="h-5 w-5 shrink-0 text-amber-200" strokeWidth={2.25} aria-hidden />
-              Turns
-            </Link>
-            <Link
-              href="/decision-timeline"
-              className="inline-flex min-h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-cyan-400/55 bg-cyan-950/45 px-3 py-3 text-sm font-bold text-cyan-50 shadow-md shadow-cyan-950/30 ring-1 ring-cyan-500/25 active:scale-[0.99]"
-              title="Decision timeline"
-            >
-              <GitBranch className="h-5 w-5 shrink-0 text-cyan-200" strokeWidth={2.25} aria-hidden />
-              Timeline
-            </Link>
-            <Link
-              href="/tutorial"
-              aria-label="Tutorial — planner guide and glossary"
-              className="inline-flex min-h-12 shrink-0 items-center justify-center gap-1.5 rounded-xl border-2 border-slate-600/70 bg-slate-900/80 px-2.5 py-3 text-xs font-bold text-violet-100 shadow-md shadow-black/20 ring-1 ring-slate-500/20 active:scale-[0.99] sm:gap-2 sm:px-3"
-              title="Tutorial — planner guide and glossary"
-            >
-              <CircleHelp className="h-5 w-5 shrink-0 text-violet-300" strokeWidth={2.25} aria-hidden />
-              <span className="hidden min-[420px]:inline">Tutorial</span>
-            </Link>
+        <div className="flex items-center gap-1.5 px-2.5 py-1.5">
+          {/* Status / vitals */}
+          <div className="flex min-w-0 flex-1 items-center">
+            {showNoPlannerTurn ? (
+              <span className="text-[10px] font-medium text-amber-300/75">
+                {!gameState ? "No data loaded" : noPlannerRows ? "No planner rows" : "No row selected"}
+              </span>
+            ) : (
+              <div className="flex min-w-0 flex-wrap items-center gap-x-2 text-[11px] tabular-nums">
+                <span className={lowHp ? "font-bold text-rose-300" : "text-rose-200"}>
+                  HP {playerHp}/{playerMaxHp || "—"}
+                </span>
+                <span className="text-slate-600" aria-hidden>·</span>
+                <span className="text-amber-200">NRG {currentEnergy}/{energyMax || "—"}</span>
+                <span className="text-slate-600" aria-hidden>·</span>
+                <span className={currentBlock > 0 ? "text-sky-200" : "text-slate-500"}>Blk {currentBlock}</span>
+              </div>
+            )}
+          </div>
+          {/* Actions: load buttons when no data, save row when data is loaded */}
+          {!gameState ? (
+            <>
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => fileInputRef.current?.click()}
+                title="Load combat JSON"
+                className="inline-flex h-8 shrink-0 items-center rounded-lg border border-sky-500/50 bg-sky-800/90 px-2.5 text-[10px] font-semibold text-white transition disabled:opacity-50"
+              >
+                {isLoading ? "…" : "Load data"}
+              </button>
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => projectFileInputRef.current?.click()}
+                title="Load saved project"
+                className="inline-flex h-8 shrink-0 items-center rounded-lg border border-fuchsia-500/45 bg-fuchsia-950/35 px-2.5 text-[10px] font-semibold text-fuchsia-50 transition disabled:opacity-50"
+              >
+                Load proj
+              </button>
+            </>
+          ) : (
             <button
               type="button"
               disabled={savePlannerRowDisabled}
               onClick={() => saveCurrentTurn()}
               title={savePlannerRowTitle}
               aria-label={savePlannerRowTitle}
-              className={`inline-flex min-h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border-2 px-3 py-3 text-sm font-bold shadow-md ring-1 active:scale-[0.99] ${
+              className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[10px] font-bold transition active:scale-[0.98] ${
                 savePlannerRowDisabled
-                  ? "cursor-not-allowed border-slate-600/55 bg-slate-900/55 text-slate-500 shadow-none ring-slate-700/40 opacity-55"
-                  : "border-amber-400/55 bg-amber-950/50 text-amber-50 shadow-amber-950/25 ring-amber-500/20"
+                  ? "cursor-not-allowed border-slate-600/55 bg-slate-900/55 text-slate-500 opacity-50"
+                  : "border-amber-400/55 bg-amber-950/55 text-amber-200 hover:bg-amber-900/60"
               }`}
             >
-              <Save className="h-5 w-5 shrink-0 text-amber-200/90" strokeWidth={2.25} aria-hidden />
-              Save row
+              <Save className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
+              <span className="hidden min-[360px]:inline">Save row</span>
             </button>
-          </nav>
-
-          <div className="overflow-hidden rounded-2xl border-2 border-cyan-500/40 bg-slate-900/90 shadow-md shadow-cyan-950/30">
-            <div className="flex items-center justify-between border-b border-cyan-800/30 bg-cyan-950/40 px-2.5 py-2">
-              <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-200/90">
-                <Activity className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
-                Player
-              </p>
-              {showNoPlannerTurn ? (
-                <span className="text-[9px] font-semibold uppercase tracking-wide text-amber-400/90">
-                  {!gameState || noPlannerRows ? "No data" : "No row"}
-                </span>
-              ) : (
-              <button
-                type="button"
-                onClick={() => setMobileVitalsOpen((o) => !o)}
-                className="inline-flex h-8 items-center gap-1 rounded-lg border border-cyan-600/50 bg-cyan-950/60 px-2.5 text-[10px] font-semibold text-cyan-200/90"
-                aria-expanded={mobileVitalsOpen}
-                aria-label={mobileVitalsOpen ? "Hide stat details" : "Show full stat details"}
-              >
-                {mobileVitalsOpen ? (
-                  <>
-                    <span>Less</span>
-                    <ChevronUp className="h-3.5 w-3.5" strokeWidth={2.5} />
-                  </>
-                ) : (
-                  <>
-                    <span>Details</span>
-                    <ChevronDown className="h-3.5 w-3.5" strokeWidth={2.5} />
-                  </>
-                )}
-              </button>
-              )}
-            </div>
-
-            {showNoPlannerTurn ? (
-              <div className="border-t border-amber-500/25 bg-amber-950/20 px-3 py-6 text-center">
-                <p className="text-sm font-semibold text-amber-100">{vitalsEmptyTitle}</p>
-                <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
-                  {!gameState ? (
-                    <>
-                      Use <span className="font-semibold text-slate-300">Load project</span> or{" "}
-                      <span className="font-semibold text-slate-300">Load data</span>, then rows in{" "}
-                      <Link href="/turn-maker" className="font-semibold text-amber-300/95 underline-offset-2 hover:underline">
-                        Turns
-                      </Link>
-                      .
-                    </>
-                  ) : noPlannerRows ? (
-                    <>
-                      Add at least one row in{" "}
-                      <Link href="/turn-maker" className="font-semibold text-amber-300/95 underline-offset-2 hover:underline">
-                        Turns
-                      </Link>{" "}
-                      — no planner data yet.
-                    </>
-                  ) : (
-                    <>
-                      Open{" "}
-                      <Link href="/turn-maker" className="font-semibold text-amber-300/95 underline-offset-2 hover:underline">
-                        Turns
-                      </Link>{" "}
-                      to add or choose a row.
-                    </>
-                  )}
-                </p>
-              </div>
-            ) : !mobileVitalsOpen ? (
-              <div className="grid grid-cols-3 gap-1.5 p-2">
-                <div
-                  className={`rounded-xl border px-1.5 py-1.5 ${
-                    lowHp ? "border-rose-500/45 bg-rose-950/40" : "border-rose-500/25 bg-rose-950/20"
-                  }`}
-                >
-                  <p className="text-[8px] font-bold uppercase text-rose-300/90">HP</p>
-                  <p className="text-center text-sm font-bold tabular-nums text-rose-50">
-                    {playerHp}
-                    <span className="text-[10px] font-medium text-rose-300/50">/{playerMaxHp || "—"}</span>
-                  </p>
-                  <div
-                    className="mt-0.5 h-1 w-full overflow-hidden rounded-full bg-rose-950/80"
-                    role="progressbar"
-                    aria-label={`Health ${Math.round(hpPct)}%`}
-                  >
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-rose-700 to-rose-500"
-                      style={{ width: `${hpPct}%` }}
-                    />
-                  </div>
-                </div>
-                <div className="rounded-xl border border-amber-500/30 bg-amber-950/25 px-1.5 py-1.5 text-center">
-                  <p className="text-[8px] font-bold uppercase text-amber-200/80">NRG</p>
-                  <p className="text-sm font-bold tabular-nums text-amber-50">
-                    {currentEnergy}
-                    <span className="text-[10px] text-amber-200/50">/{energyMax || "—"}</span>
-                  </p>
-                  {showEnergyPips && energyMax > 0 ? (
-                    <div className="mt-0.5 flex flex-wrap justify-center gap-0.5">
-                      {Array.from({ length: Math.min(5, energyPipSlots) }, (_, i) => (
-                        <span
-                          key={i}
-                          className={`h-1.5 w-1.5 rounded-sm border ${
-                            i < currentEnergy
-                              ? "border-amber-300 bg-amber-400"
-                              : "border-amber-800/50 bg-amber-950/60"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-                <div
-                  className={`rounded-xl border px-1.5 py-1.5 text-center ${
-                    currentBlock > 0 ? "border-sky-400/45 bg-sky-950/35" : "border-slate-600/50 bg-slate-900/50"
-                  }`}
-                >
-                  <p
-                    className={`text-[8px] font-bold uppercase ${
-                      currentBlock > 0 ? "text-sky-200/90" : "text-slate-500"
-                    }`}
-                  >
-                    Blk
-                  </p>
-                  <p
-                    className={`text-sm font-bold tabular-nums ${
-                      currentBlock > 0 ? "text-sky-100" : "text-slate-500"
-                    }`}
-                  >
-                    {currentBlock}
-                  </p>
-                  <div
-                    className={`mt-0.5 h-1 w-full overflow-hidden rounded-full ${
-                      currentBlock > 0 ? "bg-sky-950/80" : "bg-slate-900/60"
-                    }`}
-                    role="progressbar"
-                    aria-valuenow={currentBlock}
-                    aria-valuemin={0}
-                    aria-valuemax={playerMaxHp > 0 ? playerMaxHp : 0}
-                    aria-label={
-                      blockOverMaxHp
-                        ? `Block ${currentBlock}, full bar — exceeds max HP (${playerMaxHp})`
-                        : `Block ${currentBlock} of ${playerMaxHp || 0} max hit points`
-                    }
-                  >
-                    {playerMaxHp > 0 && currentBlock > 0 ? (
-                      <div className={blockBarFillCls} style={{ width: `${blockVsMaxHpPct}%` }} />
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="max-h-[70vh] space-y-2 overflow-y-auto p-2 [scrollbar-width:thin]">
-                <div
-                  className={`rounded-xl border p-2.5 ${
-                    lowHp
-                      ? "border-rose-500/50 bg-rose-950/35"
-                      : "border-rose-500/20 bg-rose-950/25"
-                  }`}
-                >
-                  <div className="mb-1.5 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <div
-                        className={`flex h-7 w-7 items-center justify-center rounded-lg border border-rose-500/30 bg-rose-950/50 ${
-                          lowHp ? "ring-1 ring-rose-400/30" : ""
-                        }`}
-                      >
-                        <HpIcon className={`${hpEffect.color} h-3.5 w-3.5`} />
-                      </div>
-                      <p className="text-[9px] font-bold uppercase text-rose-200/80">Health</p>
-                    </div>
-                    <p className="text-right text-sm font-bold tabular-nums text-rose-50">
-                      {playerHp}/{playerMaxHp || "—"}
-                    </p>
-                  </div>
-                  <div className="h-2.5 w-full overflow-hidden rounded-full border border-rose-900/50 bg-rose-950/80">
-                    <div className="h-full rounded-full bg-gradient-to-r from-rose-800 to-rose-500" style={{ width: `${hpPct}%` }} />
-                  </div>
-                </div>
-                <div className="rounded-xl border border-amber-500/25 bg-amber-950/30 p-2.5">
-                  <div className="mb-1 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-amber-500/35 bg-amber-950/50">
-                        <EnergyIcon className={`${energyEffect.color} h-3.5 w-3.5`} />
-                      </div>
-                      <p className="text-[9px] font-bold uppercase text-amber-200/90">Energy</p>
-                    </div>
-                    <p className="text-right text-sm font-bold tabular-nums text-amber-50">
-                      {currentEnergy}/{energyMax || "—"}
-                    </p>
-                  </div>
-                  {energyMax > 0 && showEnergyPips ? (
-                    <div className="flex flex-wrap justify-center gap-1">
-                      {Array.from({ length: energyPipSlots }, (_, i) => (
-                        <span
-                          key={i}
-                          className={`h-2 w-2 rounded-sm border-2 ${
-                            i < currentEnergy
-                              ? "border-amber-300 bg-amber-400"
-                              : "border-amber-700/50 bg-amber-950/60"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-                <div
-                  className={`rounded-xl border p-2.5 ${
-                    currentBlock > 0
-                      ? "border-sky-400/45 bg-sky-950/40"
-                      : "border-slate-600/50 bg-slate-900/40"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <div
-                        className={`flex h-7 w-7 items-center justify-center rounded-lg border ${
-                          currentBlock > 0
-                            ? "border-sky-500/40 bg-sky-950/55"
-                            : "border-slate-600/60 bg-slate-800/50"
-                        }`}
-                      >
-                        <BlockIcon className={`${blockEffect.color} h-3.5 w-3.5`} />
-                      </div>
-                      <p className="text-[9px] font-bold uppercase text-slate-400">Block</p>
-                    </div>
-                    <p
-                      className={`text-right text-sm font-bold tabular-nums ${
-                        currentBlock > 0 ? "text-sky-100" : "text-slate-500"
-                      }`}
-                    >
-                      {currentBlock}
-                    </p>
-                  </div>
-                  <div
-                    className={`h-2.5 w-full overflow-hidden rounded-full border ${
-                      currentBlock > 0 ? "border-sky-800/50 bg-sky-950/80" : "border-slate-700/40 bg-slate-900/50"
-                    }`}
-                    role="progressbar"
-                    aria-valuenow={currentBlock}
-                    aria-valuemin={0}
-                    aria-valuemax={playerMaxHp > 0 ? playerMaxHp : 0}
-                    aria-label={
-                      blockOverMaxHp
-                        ? `Block ${currentBlock}, full bar — exceeds max HP (${playerMaxHp})`
-                        : `Block ${currentBlock} of ${playerMaxHp || 0} max hit points`
-                    }
-                  >
-                    {playerMaxHp > 0 && currentBlock > 0 ? (
-                      <div className={blockBarFillCls} style={{ width: `${blockVsMaxHpPct}%` }} />
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <div
-              className="min-w-0 overflow-visible rounded-xl border border-cyan-500/40 bg-cyan-950/30 p-2.5 ring-1 ring-cyan-500/15"
-              role="region"
-              aria-label="Card effect icons legend"
-            >
-              <div className="mb-1.5 flex items-center justify-between gap-1.5">
-                <p className="flex min-w-0 items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-cyan-200/90">
-                  <BookOpen className="h-3 w-3 shrink-0 text-cyan-400/90" strokeWidth={2.5} aria-hidden />
-                  <span className="truncate">Symbols</span>
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setLegendShowAllLabels((v) => !v)}
-                  aria-pressed={legendShowAllLabels}
-                  aria-label={legendShowAllLabels ? "Collapse legend to icons only" : "Expand all legend names"}
-                  className="shrink-0 rounded-md border border-cyan-500/40 bg-cyan-950/55 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-cyan-100/95"
-                >
-                  {legendShowAllLabels ? "Icons" : "All"}
-                </button>
-              </div>
-              <div className="h-[calc(3*1.25rem+2*0.25rem)] min-w-0 shrink-0 overflow-y-auto overflow-x-hidden overscroll-contain px-0.5 pb-1 pr-1 [scrollbar-width:thin] [scrollbar-color:rgba(34,211,238,0.4)_rgba(15,23,42,0.65)]">
-                <div className="flex flex-wrap gap-1">
-                  {sortedLegend.map((item) => {
-                    const hoverSync = hoveredCard != null;
-                    const highlighted = highlightIds.has(item.id);
-                    return (
-                      <TopBarLegendChip
-                        key={item.id}
-                        item={item}
-                        hoverSync={hoverSync}
-                        highlighted={highlighted}
-                        showAllLabels={legendShowAllLabels}
-                        size="mobile"
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-            <div className="flex items-stretch gap-2">
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={() => fileInputRef.current?.click()}
-                className="min-h-12 min-w-0 flex-1 rounded-lg border border-sky-500/50 bg-sky-800/90 px-2 py-3 text-[11px] font-semibold text-white active:scale-[0.99] disabled:opacity-50"
-              >
-                {isLoading ? "…" : "Load data"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(true)}
-                disabled={!gameState || showNoPlannerTurn}
-                title={addCardBlockedTitle}
-                className="min-h-12 min-w-0 flex-1 rounded-lg border border-emerald-500/50 bg-emerald-700/90 px-2 py-3 text-[11px] font-semibold text-white active:scale-[0.99] disabled:opacity-40"
-              >
-                Add card / potion
-              </button>
-            </div>
-          </div>
-
-          {loadError ? (
-            <p className="text-center text-[10px] text-red-400" title={loadError}>
-              {loadError}
-            </p>
-          ) : null}
+          )}
         </div>
+        {loadError ? (
+          <p className="px-2.5 pb-1 text-[10px] text-red-400">{loadError}</p>
+        ) : null}
       </div>
 
       <CardDBModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAddCard={addCardFromDB} />

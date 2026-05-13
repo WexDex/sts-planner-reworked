@@ -14,6 +14,7 @@ import {
   Library,
   SquareStack,
   Trash2,
+  TableProperties,
 } from "lucide-react";
 
 type PileType = "draw" | "discard" | "exhaust" | "playedCards";
@@ -56,10 +57,11 @@ const PILES: {
 ];
 
 export default function BottomBlock() {
-  const { gameState, drawCards } = useGameManager();
+  const { gameState, drawCards, toggleCardSelection } = useGameManager();
   const [expandedPile, setExpandedPile] = useState<PileType | null>(null);
   const [drawAmount, setDrawAmount] = useState(5);
   const [show_size, setShowSize] = useState<"small" | "medium" | "large">("small");
+  const [expandLayout, setExpandLayout] = useState<"wrap" | "grid">("wrap");
 
   const toggleExpand = (pile: PileType) => {
     setExpandedPile((prev) => (prev === pile ? null : pile));
@@ -128,7 +130,7 @@ export default function BottomBlock() {
         }`}
       >
         <div className="min-h-0 overflow-hidden border-b border-slate-800/80">
-          <div className="max-h-[min(46vh,22rem)] overflow-y-auto px-4 pt-3">
+          <div className="max-h-[min(60vh,28rem)] overflow-y-auto px-4 pt-3 [scrollbar-width:thin]">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <h3 className="whitespace-nowrap text-sm font-semibold tracking-tight text-white">
                 {expandedLabel}{" "}
@@ -136,30 +138,65 @@ export default function BottomBlock() {
                   ({expandedPile ? getPileCount(expandedPile) : 0})
                 </span>
               </h3>
-              <button
-                type="button"
-                onClick={() =>
-                  setShowSize((s) => (s === "small" ? "medium" : s === "medium" ? "large" : "small"))
-                }
-                className="flex items-center gap-1.5 rounded-lg border border-slate-600/70 bg-slate-800/80 px-2.5 py-1.5 text-[11px] font-medium text-slate-300 transition hover:border-slate-500 hover:bg-slate-800"
-                title="Cycle card size: small → medium → large"
-              >
-                <LayoutGrid
-                  className={`h-4 w-4 ${show_size === "small" ? "text-cyan-300" : "text-slate-500"}`}
-                  strokeWidth={2}
-                />
-                <Columns2
-                  className={`h-4 w-4 ${show_size === "medium" ? "text-cyan-300" : "text-slate-500"}`}
-                  strokeWidth={2}
-                />
-                <SquareStack
-                  className={`h-4 w-4 ${show_size === "large" ? "text-cyan-300" : "text-slate-500"}`}
-                  strokeWidth={2}
-                />
-                <span className="hidden sm:inline">Size</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <div className="inline-flex rounded-lg border border-slate-700 bg-slate-900/80 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setExpandLayout("wrap")}
+                    title="Wrap layout"
+                    className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-semibold transition-all ${expandLayout === "wrap" ? "bg-slate-700 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"}`}
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                    Wrap
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setExpandLayout("grid")}
+                    title="Dense grid layout"
+                    className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-semibold transition-all ${expandLayout === "grid" ? "bg-slate-700 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"}`}
+                  >
+                    <TableProperties className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                    Grid
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowSize((s) => (s === "small" ? "medium" : s === "medium" ? "large" : "small"))
+                  }
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-600/70 bg-slate-800/80 px-2.5 py-1.5 text-[11px] font-medium text-slate-300 transition hover:border-slate-500 hover:bg-slate-800"
+                  title="Cycle card size: small → medium → large"
+                >
+                  <LayoutGrid
+                    className={`h-4 w-4 ${show_size === "small" ? "text-cyan-300" : "text-slate-500"}`}
+                    strokeWidth={2}
+                  />
+                  <Columns2
+                    className={`h-4 w-4 ${show_size === "medium" ? "text-cyan-300" : "text-slate-500"}`}
+                    strokeWidth={2}
+                  />
+                  <SquareStack
+                    className={`h-4 w-4 ${show_size === "large" ? "text-cyan-300" : "text-slate-500"}`}
+                    strokeWidth={2}
+                  />
+                  <span className="hidden sm:inline">Size</span>
+                </button>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2 pb-3">
+            <div
+              className={`pb-3 ${
+                expandLayout === "grid"
+                  ? `grid gap-2`
+                  : "flex flex-wrap gap-2"
+              }`}
+              style={
+                expandLayout === "grid"
+                  ? {
+                      gridTemplateColumns: `repeat(auto-fill, minmax(${show_size === "small" ? "6.5rem" : show_size === "large" ? "10.75rem" : "8.5rem"}, 1fr))`,
+                    }
+                  : undefined
+              }
+            >
               {expandedPile &&
                 getPileCards(expandedPile).map((card, index) => (
                   <STSCard
@@ -172,6 +209,7 @@ export default function BottomBlock() {
                         : LOCATION[expandedPile.toUpperCase() as keyof typeof LOCATION]
                     }
                     size={show_size}
+                    onToggleSelect={toggleCardSelection}
                   />
                 ))}
             </div>

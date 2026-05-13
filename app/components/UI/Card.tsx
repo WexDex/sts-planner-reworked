@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { memo, useMemo } from "react";
 import { Card } from "@/app/types/gameTypes";
 import { LOCATION } from "@/app/types/types";
 import { getEffectDisplay } from "@/app/utils/effectDisplay";
@@ -9,7 +9,6 @@ import {
   getDamageStats,
   getFormattedDescription,
 } from "@/app/utils/utils";
-import { useGameManager } from "@/app/context/GameContext";
 import { useLegendHighlight } from "@/app/context/LegendHighlightContext";
 import {
   DEFAULT_CARD_VISUAL_VARIANT,
@@ -68,6 +67,7 @@ interface GameCardProps {
   gallerySuppressStats?: GallerySuppressedStats;
   /** Card-design-gallery only: use character-based chrome instead of `card.type` colors. */
   galleryChromeStyle?: CardTypeStyle;
+  onToggleSelect?: (location: string, index: number) => void;
 }
 
 function usesEnergyScalingDamageMultihit(card: Card): boolean {
@@ -242,7 +242,7 @@ function renderGalleryGlyphCluster(
   return null;
 }
 
-export default function STSCard({
+function STSCard({
   card,
   index,
   location,
@@ -253,8 +253,8 @@ export default function STSCard({
   galleryEffectGlyphs,
   gallerySuppressStats,
   galleryChromeStyle,
+  onToggleSelect,
 }: GameCardProps) {
-  const { toggleCardSelection } = useGameManager();
   const { setHoveredLegendCard } = useLegendHighlight();
   const inferredGallery = useMemo(() => inferGalleryCardEffects(card), [card]);
   const mergedEffectGlyphs =
@@ -443,7 +443,7 @@ export default function STSCard({
         interactive
           ? (e) => {
               e.stopPropagation();
-              toggleCardSelection(location, index);
+              onToggleSelect?.(location, index);
             }
           : undefined
       }
@@ -456,9 +456,9 @@ export default function STSCard({
 
       {!hideCostOrb && (
         <div
-          className={`absolute z-10 flex items-center justify-center rounded-full border-2 border-slate-950 ${sz.costOrb} ${styles.costBg} ${styles.costGlow} shadow-lg ${chrome.costOrbExtra}`}
+          className={`absolute z-10 flex items-center justify-center rounded-full border-2 border-slate-950 ${sz.costOrb} ${styles.costBg} ${chrome.costOrbExtra}`}
         >
-          <span className={`${sz.costText} text-white drop-shadow-md`}>
+          <span className={`${sz.costText} text-white`}>
             {cardUsesXCostOrb(card) ? "X" : getValue("cost")}
           </span>
         </div>
@@ -466,7 +466,7 @@ export default function STSCard({
 
       <div className={`relative flex h-full min-h-0 flex-col overflow-hidden ${sz.bodyPad}`}>
         <div
-          className={`${styles.nameBg} ${sz.nameBand} border ${styles.accentBorder} backdrop-blur-sm transition-all duration-300 hover:brightness-125 ${chrome.nameBandExtra}`}
+          className={`${styles.nameBg} ${sz.nameBand} border ${styles.accentBorder} ${chrome.nameBandExtra}`}
         >
           <div
             className={`${sz.name} flex flex-col items-center justify-center text-center text-white`}
@@ -474,7 +474,7 @@ export default function STSCard({
             <span>
               <span
                 className={
-                  card.isUpgraded ? "text-emerald-300 animate-pulse" : ""
+                  card.isUpgraded ? "text-emerald-300" : ""
                 }
               >
                 {card.name}
@@ -487,7 +487,7 @@ export default function STSCard({
             </span>
             {card.isChanged && (
               <span
-                className={`${sz.changedPill} inline-block rounded-full bg-amber-400/25 text-amber-200 animate-bounce-pop`}
+                className={`${sz.changedPill} inline-block rounded-full bg-amber-400/25 text-amber-200`}
               >
                 CHANGED
               </span>
@@ -818,7 +818,7 @@ export default function STSCard({
         {stat && card.description && (
           <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <div
-              className={`${styles.nameBg} ${stat.descBox} border ${styles.accentBorder} max-h-full min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain break-words text-center text-slate-200/95 [overflow-wrap:anywhere] [scrollbar-width:thin] backdrop-blur-sm ${chrome.descBoxExtra}`}
+              className={`${styles.nameBg} ${stat.descBox} border ${styles.accentBorder} max-h-full min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain break-words text-center text-slate-200/95 [overflow-wrap:anywhere] [scrollbar-width:thin] ${chrome.descBoxExtra}`}
             >
               {getFormattedDescription(card.description, card)}
             </div>
@@ -838,3 +838,5 @@ export default function STSCard({
     </div>
   );
 }
+
+export default memo(STSCard);
