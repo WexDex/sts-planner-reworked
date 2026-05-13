@@ -51,7 +51,19 @@ export function getActivityLogIcon(type?: ActivityLogType): string {
   return (ACTIVITY_LOG_ICONS as Record<string, string>)[logType] || '•';
 }
 
-function cardTypeClasses(cardType?: string) {
+const CHARACTER_CHIP: Record<string, { text: string; bg: string }> = {
+  ironclad: { text: 'text-rose-300', bg: 'bg-rose-950/60' },
+  silent:   { text: 'text-teal-300', bg: 'bg-teal-950/60' },
+  defect:   { text: 'text-blue-300', bg: 'bg-blue-950/60' },
+  watcher:  { text: 'text-purple-300', bg: 'bg-purple-950/60' },
+  colorless:{ text: 'text-slate-300', bg: 'bg-slate-800/60' },
+};
+
+function cardTypeClasses(cardType?: string, character?: string) {
+  if (character) {
+    const c = CHARACTER_CHIP[character.toLowerCase()];
+    if (c) return c;
+  }
   const t = cardType as keyof typeof CARD_TYPE_COLORS | undefined;
   const text = (t && CARD_TYPE_COLORS[t]) || 'text-slate-200';
   const bg = (t && CARD_TYPE_BG[t]) || 'bg-slate-800/80';
@@ -63,16 +75,19 @@ export function ActivityLogCardChips({ cards, size = 'sm' }: { cards: ActivityLo
   return (
     <div className="flex flex-wrap gap-1.5" aria-label="Cards involved">
       {cards.map((c, i) => {
-        const { text, bg } = cardTypeClasses(c.cardType);
+        const { text, bg } = cardTypeClasses(c.cardType, c.character);
+        const label = c.character
+          ? c.character.charAt(0).toUpperCase() + c.character.slice(1)
+          : c.cardType;
         return (
           <span
             key={`${c.name}-${i}`}
-            title={c.cardType ? `${c.name} · ${c.cardType}` : c.name}
+            title={label ? `${c.name} · ${label}` : c.name}
             className={`inline-flex max-w-full items-baseline gap-1 truncate rounded-lg border border-white/10 font-semibold shadow-sm ${text} ${bg} ${md ? 'px-2.5 py-1 text-sm' : 'px-2 py-0.5 text-[11px]'}`}
           >
             <span className="truncate">{c.name}</span>
-            {c.cardType ? (
-              <span className="shrink-0 text-[9px] font-bold uppercase tracking-wide opacity-85">({c.cardType})</span>
+            {label ? (
+              <span className="shrink-0 text-[9px] font-bold uppercase tracking-wide opacity-85">({label})</span>
             ) : null}
           </span>
         );
@@ -147,7 +162,7 @@ export function ActivityLogRowMinimal({ entry }: { entry: ActivityLogEntry }) {
           {entry.cardsInvolved && entry.cardsInvolved.length > 0 ? (
             <p className="mt-0.5 min-w-0 truncate text-[11px] leading-tight">
               {entry.cardsInvolved.map((c, i) => {
-                const { text } = cardTypeClasses(c.cardType);
+                const { text } = cardTypeClasses(c.cardType, c.character);
                 return (
                   <span key={`${c.name}-${i}`} className={`font-medium ${text}`}>
                     {i > 0 ? <span className="font-normal text-slate-600">, </span> : null}

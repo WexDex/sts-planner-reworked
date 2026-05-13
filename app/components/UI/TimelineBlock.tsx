@@ -20,6 +20,7 @@ import {
   CalendarClock,
   ChevronDown,
   ChevronRight,
+  Copy,
   GitBranch,
   Pencil,
   RotateCcw,
@@ -136,6 +137,7 @@ export default function TimelineBlock() {
     saveCurrentTurn,
     syncActiveDecisionNodeFromPlanner,
     updateDecisionNodeLabel,
+    copyTurnStateToSlot,
     isLoading,
   } = useGameManager();
 
@@ -574,7 +576,8 @@ export default function TimelineBlock() {
                 const hiddenCount = lines.length - visibleLines.length;
 
                 return (
-                  <div key={row.id} ref={isActive ? activeTurnRef : undefined} className="w-full">
+                  <div key={row.id} className="flex w-full flex-col gap-2">
+                    <div ref={isActive ? activeTurnRef : undefined} className="w-full">
                     <button
                       type="button"
                       onClick={() => setCurrentTurn(row.id)}
@@ -743,6 +746,18 @@ export default function TimelineBlock() {
                         </div>
                       ) : null}
                     </button>
+                    </div>
+                    {index < plannerRows.length - 1 && (
+                      <button
+                        type="button"
+                        onClick={() => copyTurnStateToSlot(row.id, plannerRows[index + 1].id)}
+                        title={`Copy Turn ${turnCount} state into Turn ${turnCount + 1} (active variant)`}
+                        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-slate-700/60 bg-slate-950/40 py-1 text-[10px] font-medium text-slate-500 transition hover:border-cyan-500/40 hover:bg-cyan-950/20 hover:text-cyan-300"
+                      >
+                        <Copy className="h-3 w-3 shrink-0" strokeWidth={2} />
+                        Copy Turn {turnCount} → Turn {turnCount + 1}
+                      </button>
+                    )}
                   </div>
                 );
               })}

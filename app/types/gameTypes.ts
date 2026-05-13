@@ -223,6 +223,8 @@ export type CombatTurnPhase = "start" | "player" | "enemy";
 export interface ActivityLogCardRef {
   name: string;
   cardType?: string;
+  /** STS character class (ironclad | silent | defect | watcher | colorless). When present, chip uses character color. */
+  character?: string;
 }
 
 /** Structured key/value lines shown under a log entry (sources, piles, reasons). */

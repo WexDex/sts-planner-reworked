@@ -198,12 +198,11 @@ export default function TutorialChrome({
       >
         <div className="mx-auto max-w-6xl">
           <strong className="font-semibold text-amber-100">Docs highlight (v{TUTORIAL_DOC_PASS_VERSION}):</strong> Panels with the
-          amber left stripe are new or revised in this pass — project files (
-          <code className="font-mono text-[10px] text-amber-200/90">sts-planner-project</code> v1), header Save/Load/Close
-          project, last-session restore, and persistence keys. The top of each guide page states whether it still has striped
-          sections; sidebar and nav show the same pass where applicable. Next doc update: remove old stripes, bump version, sync
-          route list in <code className="font-mono text-[10px] text-amber-200/90">docUpdateHighlight.ts</code>, then restripe only
-          what changed.
+          amber left stripe are new or revised in this pass — Card Actions rail (left-rail swap, persistent selection), Quick
+          Actions per card (block, draw, energy, heal, focus, mantra, exhaust, Power apply/remove), and the new{" "}
+          <code className="font-mono text-[10px] text-amber-200/90">/card-actions-editor</code> route for configuring custom
+          per-card actions. Next doc update: remove old stripes, bump version, sync route list in{" "}
+          <code className="font-mono text-[10px] text-amber-200/90">docUpdateHighlight.ts</code>, then restripe only what changed.
         </div>
       </aside>
       {children}

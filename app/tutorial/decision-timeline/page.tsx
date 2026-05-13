@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { GitBranch, Network } from "lucide-react";
-import { TUTORIAL_DOC_UPDATE_CLASS } from "@/app/tutorial/docUpdateHighlight";
 import { TutorialPageShell } from "@/app/tutorial/TutorialScrollNav.client";
 
 export const metadata: Metadata = {
@@ -74,7 +73,7 @@ export default function TutorialDecisionTimelinePage() {
           <li>Combat JSON stays separate — joining them intentionally manual.</li>
           <li>Filename pattern <code className="font-mono text-[11px]">sts-planner-save-*.json</code> aids versioning.</li>
         </ul>
-        <div className={`mt-4 space-y-2 ${TUTORIAL_DOC_UPDATE_CLASS}`}>
+        <div className="mt-4 space-y-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-amber-200/90">Project file (header)</p>
           <p className="text-sm text-slate-300">
             <strong className="text-slate-100">Save project</strong> downloads <code className="rounded bg-slate-950 px-1 font-mono text-[11px]">sts-planner-project</code>{" "}
@@ -84,7 +83,7 @@ export default function TutorialDecisionTimelinePage() {
         </div>
       </section>
 
-      <section id="persist" className={`scroll-mt-28 space-y-4 ${TUTORIAL_DOC_UPDATE_CLASS}`}>
+      <section id="persist" className="scroll-mt-28 space-y-4">
         <h2 className="text-base font-bold text-amber-50">Persistence</h2>
         <p className="text-sm text-amber-100/85">
           On load, the app tries <code className="font-mono text-[11px] text-amber-200">localStorage</code> key{" "}

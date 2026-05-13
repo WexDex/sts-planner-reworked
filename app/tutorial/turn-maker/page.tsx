@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CalendarClock } from "lucide-react";
 import { TutorialIntentGlossary } from "@/app/tutorial/TutorialGlossaryChunks";
-import { TUTORIAL_DOC_UPDATE_CLASS } from "@/app/tutorial/docUpdateHighlight";
 import { TutorialPageShell } from "@/app/tutorial/TutorialScrollNav.client";
 
 export const metadata: Metadata = {
@@ -34,7 +33,7 @@ export default function TutorialTurnMakerPage() {
         </p>
       </header>
 
-      <div className={`${TUTORIAL_DOC_UPDATE_CLASS} mt-6 space-y-2`}>
+      <div className="mt-6 space-y-2">
         <p className="max-w-3xl text-sm text-slate-300">
           After you land intents in the main planner, use header <strong className="text-slate-100">Save project</strong> if you want a
           single file that restores rows, timeline, layout, and combat together; <strong className="text-slate-100">Load project</strong> /

@@ -49,6 +49,9 @@ import {
   buildDebuffLogEntry,
   buildDebuffRemovedLogEntry,
   formatPlayCardTargets,
+  sourceCardContext,
+  sourceCardRef,
+  type SourceCard,
 } from '@/app/utils/activityLogger';
 import {
   gameCardFromDatabaseId,
@@ -71,6 +74,7 @@ import {
   getForcedMainTimelineLeafFromStart,
   isApplyDecisionBranchToPlannerSynced as checkApplyDecisionBranchToPlannerSynced,
   pinActiveAlongUniqueChildChainFromNode,
+  getActiveLineageCanonicalNodeIdBySlot,
 } from '@/app/utils/decisionTreeHelpers';
 import {
   buildImportedDecisionTimelineSpine,
@@ -116,6 +120,8 @@ interface GameContextType {
   /** Enemy phase finished: logs, saves, advances to the next planner turn (start phase). */
   endEnemyTurn: () => void;
   continueFromTurn: (fromTurnId: number, toTurnId: number) => void;
+  /** Copy a source planner slot's state into a target slot + sync the active-lineage Decision Timeline node snapshot for that slot. Does NOT switch the active turn. */
+  copyTurnStateToSlot: (fromTurnId: number, toTurnId: number) => void;
   resetCurrentTurn: () => void;
   isLoading: boolean;
   error: string | null;
@@ -140,12 +146,13 @@ interface GameContextType {
   toggleRelic: (relicName: string) => void;
   toggleCardSelection: (location: string, index: number) => void;
   playSelectedCards: () => void;
+  useSelectedPower: () => void;
   moveSelectedCards: (toLocation: string) => void;
   removeSelectedCards: () => void;
   spendEnergyOnSelected: () => void;
   deselectAllCards: () => void;
   addToActivityLog: (entry: ActivityLogEntry | string) => void;
-  drawCards: (amount: number) => void;
+  drawCards: (amount: number, sourceCard?: SourceCard) => void;
   upgradeSelected: () => void;
   downgradeSelected: () => void;
   duplicateSelected: () => void;
@@ -156,12 +163,12 @@ interface GameContextType {
   /** Replace selected card(s) with a card from the database; sets isChanged. */
   transformSelectedFromDatabase: (cardId: string, isUpgraded?: boolean) => void;
   addCardFromDB: (cardId: string | string[], location: string, isUpgraded?: boolean) => void;
-  modifyPlayerHp: (delta: number) => void;
-  modifyPlayerBlock: (delta: number) => void;
-  modifyPlayerEnergy: (delta: number) => void;
+  modifyPlayerHp: (delta: number, sourceCard?: SourceCard) => void;
+  modifyPlayerBlock: (delta: number, sourceCard?: SourceCard) => void;
+  modifyPlayerEnergy: (delta: number, sourceCard?: SourceCard) => void;
   modifyEnemyHp: (enemyIndex: number, delta: number) => void;
   modifyEnemyBlock: (enemyIndex: number, delta: number) => void;
-  addBuffDebuff: (target: 'player' | 'enemy', enemyIndex: number, name: string, type: 'buff' | 'debuff', stacks: number, description?: string) => void;
+  addBuffDebuff: (target: 'player' | 'enemy', enemyIndex: number, name: string, type: 'buff' | 'debuff', stacks: number, description?: string, sourceCard?: SourceCard) => void;
   removeBuffDebuff: (target: 'player' | 'enemy', enemyIndex: number, name: string) => void;
   reduceBuffDebuff: (target: 'player' | 'enemy', enemyIndex: number, name: string) => void;
   updateBuffDebuffStacks: (target: 'player' | 'enemy', enemyIndex: number, name: string, stacks: number) => void;
@@ -540,6 +547,34 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setGameState(cloneGameData(sourceState));
     setTurnPhase('start');
   }, [turns, currentTurnIndex, turnPhase, gameState]);
+
+  const copyTurnStateToSlot = useCallback((fromTurnId: number, toTurnId: number) => {
+    const fromTurnIndex = turns.findIndex(t => t.id === fromTurnId);
+    const toTurnIndex = turns.findIndex(t => t.id === toTurnId);
+    if (fromTurnIndex === -1 || toTurnIndex === -1) return;
+
+    const fromCurrentPlanner = fromTurnIndex === currentTurnIndex;
+    const sourceState =
+      fromCurrentPlanner && turnPhase !== 'enemy' && gameState
+        ? cloneGameData(gameState)
+        : cloneGameData(turns[fromTurnIndex].state);
+
+    setTurns(prev =>
+      prev.map((turn, idx) => (idx === toTurnIndex ? { ...turn, state: cloneGameData(sourceState) } : turn)),
+    );
+
+    if (activeDecisionNodeId && decisionNodes.length > 0) {
+      const canonicalBySlot = getActiveLineageCanonicalNodeIdBySlot(decisionNodes, activeDecisionNodeId, turns);
+      const targetNodeId = canonicalBySlot.get(toTurnId);
+      if (targetNodeId) {
+        setDecisionNodes(prev =>
+          prev.map(n => (n.id === targetNodeId ? { ...n, snapshot: cloneGameData(sourceState) } : n)),
+        );
+      }
+    }
+
+    toast(`Copied Turn ${fromTurnId} → Turn ${toTurnId}`, 'success');
+  }, [turns, currentTurnIndex, turnPhase, gameState, activeDecisionNodeId, decisionNodes]);
 
   const resetCurrentTurn = useCallback(() => {
     if (!initialData) return;
@@ -1768,12 +1803,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         pile[index] = updater(pile[index]);
       });
 
-      const stateWithSelectionCleared = clearSelectionState(newState);
       const label =
         typeof actionLabel === 'function' ? actionLabel({ selected }) : actionLabel;
       return {
-        ...stateWithSelectionCleared,
-        activityLog: [...stateWithSelectionCleared.activityLog, buildActionLogEntry(label, selected)],
+        ...newState,
+        activityLog: [...newState.activityLog, buildActionLogEntry(label, selected)],
       };
     });
   };
@@ -1808,14 +1842,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       const selected = getSelectedCards(prevState);
       if (!selected.length) return prevState;
 
-      const newState = clearSelectionState({
+      const newState = {
         ...prevState,
         draw: [...prevState.draw],
         discard: [...prevState.discard],
         exhaust: [...prevState.exhaust],
         hand: [...prevState.hand],
         playedCards: [...prevState.playedCards],
-      });
+      };
       const newPlayedCards = [...newState.playedCards];
 
       const sortedSelected = sortSelectedForRemoval(selected);
@@ -1842,6 +1876,43 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       };
     });
   }, [combatTargetEnemyIndices, combatTargetSelf]);
+
+  const useSelectedPower = () => {
+    setGameState((prevState) => {
+      if (!prevState) return prevState;
+      const selected = getSelectedCards(prevState);
+      if (!selected.length) return prevState;
+
+      const newState = {
+        ...prevState,
+        draw: [...prevState.draw],
+        discard: [...prevState.discard],
+        exhaust: [...prevState.exhaust],
+        hand: [...prevState.hand],
+        playedCards: [...prevState.playedCards],
+      };
+
+      const newPlayedCards = [...newState.playedCards];
+      const sortedSelected = sortSelectedForRemoval(selected);
+
+      sortedSelected.forEach(({ card, location, index }) => {
+        const fromPile = (newState as any)[location] as Card[];
+        fromPile.splice(index, 1);
+        newPlayedCards.push({ ...card, isSelected: true });
+      });
+
+      return {
+        ...newState,
+        playedCards: newPlayedCards,
+        activityLog: [
+          ...newState.activityLog,
+          buildActionLogEntry('Used Power', selected, {
+            context: [{ label: 'Destination', value: 'Played area' }],
+          }),
+        ],
+      };
+    });
+  };
 
   const moveSelectedCards = (toLocation: string) => {
     setGameState((prevState) => {
@@ -1913,16 +1984,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       });
       if (prevState.player.currentEnergy! < totalCost) return prevState;
 
-      const newState = clearSelectionState(prevState);
+      const newEnergy = prevState.player.currentEnergy! - totalCost;
       return {
-        ...newState,
+        ...prevState,
         player: {
-          ...newState.player,
-          currentEnergy: newState.player.currentEnergy! - totalCost,
+          ...prevState.player,
+          currentEnergy: newEnergy,
         },
         activityLog: [
-          ...newState.activityLog,
-          buildEnergyLogEntry(prevState.player.currentEnergy ?? 0, newState.player.currentEnergy! - totalCost, {
+          ...prevState.activityLog,
+          buildEnergyLogEntry(prevState.player.currentEnergy ?? 0, newEnergy, {
             reason: `Paid ${totalCost} energy for ${selected.length} card(s)`,
             cards: selected.map(({ card }) => card),
           }),
@@ -1938,12 +2009,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const drawCards = (amount: number) => {
+  const drawCards = (amount: number, sourceCard?: SourceCard) => {
     setGameState((prevState) => {
       if (!prevState) return prevState;
       const cardsToDraw = prevState.draw.slice(0, amount);
       const remainingDraw = prevState.draw.slice(amount);
       const newHand = [...prevState.hand, ...cardsToDraw];
+      const titleSuffix = sourceCard ? ` · ${sourceCard.name}` : '';
       return {
         ...prevState,
         draw: remainingDraw,
@@ -1951,16 +2023,20 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         activityLog: [
           ...prevState.activityLog,
           createActivityLogEntry(
-            `Drew ${cardsToDraw.length} card${cardsToDraw.length === 1 ? '' : 's'}`,
+            `Drew ${cardsToDraw.length} card${cardsToDraw.length === 1 ? '' : 's'}${titleSuffix}`,
             `Draw pile: ${prevState.draw.length} cards`,
             `Draw pile: ${remainingDraw.length} cards`,
             `Drawn: ${formatCardNames(cardsToDraw)}`,
             'state-change',
             {
-              cardsInvolved: cardsToDraw.map((c) => ({ name: c.name, cardType: c.type })),
+              cardsInvolved: [
+                ...cardsToDraw.map((c) => ({ name: c.name, cardType: c.type })),
+                ...(sourceCard ? [sourceCardRef(sourceCard)] : []),
+              ],
               context: [
                 { label: 'Draw pile', value: `${prevState.draw.length} → ${remainingDraw.length}` },
                 { label: 'Hand size', value: `${prevState.hand.length} → ${newHand.length}` },
+                ...(sourceCard ? sourceCardContext(sourceCard) : []),
               ],
             },
           ),
@@ -1994,10 +2070,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           ...stsTierDescriptionPatch(name, true),
         };
       });
-      const stateWithSelectionCleared = clearSelectionState(newState);
       return {
-        ...stateWithSelectionCleared,
-        activityLog: [...stateWithSelectionCleared.activityLog, buildActionLogEntry('Upgraded', selected)],
+        ...newState,
+        activityLog: [...newState.activityLog, buildActionLogEntry('Upgraded', selected)],
       };
     });
   };
@@ -2027,10 +2102,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           ...stsTierDescriptionPatch(name, false),
         };
       });
-      const stateWithSelectionCleared = clearSelectionState(newState);
       return {
-        ...stateWithSelectionCleared,
-        activityLog: [...stateWithSelectionCleared.activityLog, buildActionLogEntry('Downgraded', selected)],
+        ...newState,
+        activityLog: [...newState.activityLog, buildActionLogEntry('Downgraded', selected)],
       };
     });
   };
@@ -2053,10 +2127,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         const pile = (newState as any)[location] as Card[];
         pile.push({ ...card, isSelected: false, isChanged: true });
       });
-      const stateWithSelectionCleared = clearSelectionState(newState);
       return {
-        ...stateWithSelectionCleared,
-        activityLog: [...stateWithSelectionCleared.activityLog, buildActionLogEntry('Duplicated', selected)],
+        ...newState,
+        activityLog: [...newState.activityLog, buildActionLogEntry('Duplicated', selected)],
       };
     });
   };
@@ -2153,7 +2226,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const modifyPlayerHp = (delta: number) => {
+  const modifyPlayerHp = (delta: number, sourceCard?: SourceCard) => {
     setGameState((prevState) => {
       if (!prevState) return prevState;
       const appliedDelta =
@@ -2162,14 +2235,22 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           : delta;
       const beforeHp = prevState.player.hp ?? 0;
       const newHp = Math.max(0, beforeHp + appliedDelta);
-      
+
       if (beforeHp === newHp) return prevState;
-      
+
       const maxHp = prevState.player.maxHp;
-      const logEntry =
+      const baseEntry =
         appliedDelta > 0
           ? buildHealLogEntry('player', appliedDelta, beforeHp, newHp, undefined, maxHp)
           : buildDamageLogEntry('player', Math.abs(appliedDelta), beforeHp, newHp, undefined, maxHp);
+      const logEntry = sourceCard
+        ? {
+            ...baseEntry,
+            title: `${baseEntry.title} · ${sourceCard.name}`,
+            cardsInvolved: [sourceCardRef(sourceCard)],
+            context: [...(baseEntry.context ?? []), ...sourceCardContext(sourceCard)],
+          }
+        : baseEntry;
       
       return {
         ...prevState,
@@ -2182,17 +2263,25 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const modifyPlayerBlock = (delta: number) => {
+  const modifyPlayerBlock = (delta: number, sourceCard?: SourceCard) => {
     setGameState((prevState) => {
       if (!prevState) return prevState;
       const beforeBlock = prevState.player.currentBlock ?? 0;
       const newBlock = Math.max(0, beforeBlock + delta);
-      
+
       if (beforeBlock === newBlock) return prevState;
-      
-      const logEntry = delta > 0
+
+      const baseEntry = delta > 0
         ? buildBlockLogEntry('player', delta, beforeBlock, newBlock)
         : buildBlockLostLogEntry('player', Math.abs(delta), beforeBlock, newBlock);
+      const logEntry = sourceCard
+        ? {
+            ...baseEntry,
+            title: `${baseEntry.title} · ${sourceCard.name}`,
+            cardsInvolved: [sourceCardRef(sourceCard)],
+            context: [...(baseEntry.context ?? []), ...sourceCardContext(sourceCard)],
+          }
+        : baseEntry;
       
       return {
         ...prevState,
@@ -2205,15 +2294,23 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const modifyPlayerEnergy = (delta: number) => {
+  const modifyPlayerEnergy = (delta: number, sourceCard?: SourceCard) => {
     setGameState((prevState) => {
       if (!prevState) return prevState;
       const beforeEnergy = prevState.player.currentEnergy ?? 0;
       const newEnergy = Math.max(0, beforeEnergy + delta);
-      
+
       if (beforeEnergy === newEnergy) return prevState;
-      
-      const logEntry = buildEnergyLogEntry(beforeEnergy, newEnergy);
+
+      const baseEntry = buildEnergyLogEntry(beforeEnergy, newEnergy, sourceCard ? { reason: `${sourceCard.name} effect` } : undefined);
+      const logEntry = sourceCard
+        ? {
+            ...baseEntry,
+            title: `${baseEntry.title} · ${sourceCard.name}`,
+            cardsInvolved: [sourceCardRef(sourceCard)],
+            context: [...(baseEntry.context ?? []), ...sourceCardContext(sourceCard)],
+          }
+        : baseEntry;
       
       return {
         ...prevState,
@@ -2311,15 +2408,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         bd.name.trim().toLowerCase() === incomingName.trim().toLowerCase(),
     );
 
-  const addBuffDebuff = (target: 'player' | 'enemy', enemyIndex: number, name: string, type: 'buff' | 'debuff', stacks: number, description?: string) => {
+  const addBuffDebuff = (target: 'player' | 'enemy', enemyIndex: number, name: string, type: 'buff' | 'debuff', stacks: number, description?: string, sourceCard?: SourceCard) => {
     setGameState((prevState) => {
       if (!prevState) return prevState;
       if (target === 'player') {
         const buffsDebuffs = prevState.player.buffsDebuffs ?? [];
         const existingIndex = findBuffDebuffMergeIndex(buffsDebuffs, name, type);
         let nextBuffsDebuffs: typeof buffsDebuffs;
-        let logEntry: ActivityLogEntry;
-        
+        let baseEntry: ActivityLogEntry;
+
         if (existingIndex >= 0) {
           const previousStacks = buffsDebuffs[existingIndex].stacks;
           const mergedStacks = previousStacks + stacks;
@@ -2329,18 +2426,25 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             stacks: mergedStacks,
             description: description ?? nextBuffsDebuffs[existingIndex].description,
           };
-          
-          logEntry = type === 'buff'
+          baseEntry = type === 'buff'
             ? buildBuffLogEntry(name, mergedStacks, 'player', undefined, previousStacks)
             : buildDebuffLogEntry(name, mergedStacks, 'player', undefined, previousStacks);
         } else {
           nextBuffsDebuffs = [...buffsDebuffs, { name, stacks, type, description }];
-          
-          logEntry = type === 'buff'
+          baseEntry = type === 'buff'
             ? buildBuffLogEntry(name, stacks, 'player')
             : buildDebuffLogEntry(name, stacks, 'player');
         }
-        
+
+        const logEntry: ActivityLogEntry = sourceCard
+          ? {
+              ...baseEntry,
+              title: `${baseEntry.title} · ${sourceCard.name}`,
+              cardsInvolved: [sourceCardRef(sourceCard)],
+              context: [...(baseEntry.context ?? []), ...sourceCardContext(sourceCard)],
+            }
+          : baseEntry;
+
         return {
           ...prevState,
           player: { ...prevState.player, buffsDebuffs: nextBuffsDebuffs },
@@ -2532,6 +2636,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     beginTurn,
     endEnemyTurn,
     continueFromTurn,
+    copyTurnStateToSlot,
     resetCurrentTurn,
     isLoading,
     error,
@@ -2550,6 +2655,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     toggleRelic,
     toggleCardSelection,
     playSelectedCards,
+    useSelectedPower,
     moveSelectedCards,
     removeSelectedCards,
     spendEnergyOnSelected,
@@ -2604,7 +2710,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     combatTargetMode, combatTargetEnemyIndices, combatTargetSelf,
     decisionNodes, activeDecisionNodeId, decisionTimelinePositions,
     // Newly-converted useCallbacks (Bucket A — read current state)
-    setCurrentTurn, endPlayerTurn, endEnemyTurn, beginTurn, continueFromTurn,
+    setCurrentTurn, endPlayerTurn, endEnemyTurn, beginTurn, continueFromTurn, copyTurnStateToSlot,
     resetCurrentTurn, playSelectedCards,
     // Existing useCallbacks (already stable refs)
     saveCurrentTurn, syncEnemyIntentsGlobally, resetGameState,

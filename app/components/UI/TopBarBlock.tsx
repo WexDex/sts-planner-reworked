@@ -725,20 +725,25 @@ export default function TopBarBlock() {
                   {showNoPlannerTurn ? (
                     <p className="text-[11px] font-medium text-amber-200/90">{vitalsEmptyCompactLine}</p>
                   ) : (
-                    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[11px] tabular-nums">
-                      <span className="text-rose-200">
-                        HP {playerHp}/{playerMaxHp || "—"}
-                      </span>
-                      <span className="text-slate-600" aria-hidden>
-                        ·
-                      </span>
-                      <span className="text-amber-200">
-                        NRG {currentEnergy}/{energyMax || "—"}
-                      </span>
-                      <span className="text-slate-600" aria-hidden>
-                        ·
-                      </span>
-                      <span className="text-sky-200">Blk {currentBlock}</span>
+                    <div className="flex min-w-0 flex-wrap items-center gap-1 tabular-nums">
+                      <div className={`flex items-center gap-1 rounded-md border px-1.5 py-0.5 ${lowHp ? "border-rose-500/55 bg-rose-950/55" : "border-rose-500/25 bg-rose-950/30"}`}>
+                        <HpIcon className={`h-3 w-3 shrink-0 ${hpEffect.color}`} aria-hidden />
+                        <span className={`text-[11px] font-medium ${lowHp ? "font-bold text-rose-200" : "text-rose-200/90"}`}>
+                          {playerHp}<span className="text-rose-400/55">/{playerMaxHp || "—"}</span>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 rounded-md border border-amber-500/25 bg-amber-950/30 px-1.5 py-0.5">
+                        <EnergyIcon className={`h-3 w-3 shrink-0 ${energyEffect.color}`} aria-hidden />
+                        <span className="text-[11px] font-medium text-amber-200/90">
+                          {currentEnergy}<span className="text-amber-400/55">/{energyMax || "—"}</span>
+                        </span>
+                      </div>
+                      <div className={`flex items-center gap-1 rounded-md border px-1.5 py-0.5 ${currentBlock > 0 ? "border-sky-500/35 bg-sky-950/40" : "border-slate-700/40 bg-slate-900/30"}`}>
+                        <BlockIcon className={`h-3 w-3 shrink-0 ${blockEffect.color}`} aria-hidden />
+                        <span className={`text-[11px] font-medium ${currentBlock > 0 ? "text-sky-200/90" : "text-slate-500"}`}>
+                          {currentBlock}
+                        </span>
+                      </div>
                     </div>
                   )}
                   <div className="flex shrink-0 flex-wrap items-center gap-1.5">
@@ -793,14 +798,25 @@ export default function TopBarBlock() {
                 {!gameState ? "No data loaded" : noPlannerRows ? "No planner rows" : "No row selected"}
               </span>
             ) : (
-              <div className="flex min-w-0 flex-wrap items-center gap-x-2 text-[11px] tabular-nums">
-                <span className={lowHp ? "font-bold text-rose-300" : "text-rose-200"}>
-                  HP {playerHp}/{playerMaxHp || "—"}
-                </span>
-                <span className="text-slate-600" aria-hidden>·</span>
-                <span className="text-amber-200">NRG {currentEnergy}/{energyMax || "—"}</span>
-                <span className="text-slate-600" aria-hidden>·</span>
-                <span className={currentBlock > 0 ? "text-sky-200" : "text-slate-500"}>Blk {currentBlock}</span>
+              <div className="flex min-w-0 flex-wrap items-center gap-1 tabular-nums">
+                <div className={`flex items-center gap-1 rounded-md border px-1.5 py-0.5 ${lowHp ? "border-rose-500/55 bg-rose-950/55" : "border-rose-500/25 bg-rose-950/30"}`}>
+                  <HpIcon className={`h-3 w-3 shrink-0 ${hpEffect.color}`} aria-hidden />
+                  <span className={`text-[11px] font-medium ${lowHp ? "font-bold text-rose-200" : "text-rose-200/90"}`}>
+                    {playerHp}<span className="text-rose-400/55">/{playerMaxHp || "—"}</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 rounded-md border border-amber-500/25 bg-amber-950/30 px-1.5 py-0.5">
+                  <EnergyIcon className={`h-3 w-3 shrink-0 ${energyEffect.color}`} aria-hidden />
+                  <span className="text-[11px] font-medium text-amber-200/90">
+                    {currentEnergy}<span className="text-amber-400/55">/{energyMax || "—"}</span>
+                  </span>
+                </div>
+                <div className={`flex items-center gap-1 rounded-md border px-1.5 py-0.5 ${currentBlock > 0 ? "border-sky-500/35 bg-sky-950/40" : "border-slate-700/40 bg-slate-900/30"}`}>
+                  <BlockIcon className={`h-3 w-3 shrink-0 ${blockEffect.color}`} aria-hidden />
+                  <span className={`text-[11px] font-medium ${currentBlock > 0 ? "text-sky-200/90" : "text-slate-500"}`}>
+                    {currentBlock}
+                  </span>
+                </div>
               </div>
             )}
           </div>

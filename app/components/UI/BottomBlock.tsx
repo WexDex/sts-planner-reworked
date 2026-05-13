@@ -87,6 +87,10 @@ export default function BottomBlock() {
     return getPileCards(pile).length;
   };
 
+  const getSelectedCount = (pile: PileType) => {
+    return getPileCards(pile).filter((c) => (c as any).isSelected).length;
+  };
+
   const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -121,11 +125,11 @@ export default function BottomBlock() {
     <div
       id="sts-deck-zone"
       ref={ref}
-      className="relative scroll-mt-2 border-t border-slate-700/90 bg-slate-900/95 shadow-[0_-12px_40px_rgba(0,0,0,0.45)] backdrop-blur-md max-md:border-t-2 max-md:border-emerald-500/30 max-md:bg-gradient-to-b max-md:from-emerald-950/20 max-md:via-slate-900/95 max-md:to-slate-900/95 max-md:shadow-[0_-8px_32px_rgba(16,185,129,0.08)]"
+      className="relative scroll-mt-2 border-t border-slate-700/90 bg-slate-900/95 shadow-[0_-12px_40px_rgba(0,0,0,0.45)] backdrop-blur-md max-md:border-t-2 max-md:border-emerald-500/30 max-md:bg-linear-to-b max-md:from-emerald-950/20 max-md:via-slate-900/95 max-md:to-slate-900/95 max-md:shadow-[0_-8px_32px_rgba(16,185,129,0.08)]"
     >
       {/* Expandable panel — height animates via grid template rows */}
       <div
-        className={`grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+        className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
           expandedPile ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
         }`}
       >
@@ -222,22 +226,29 @@ export default function BottomBlock() {
         <div className="grid w-full max-md:max-w-full max-md:grid-cols-2 max-md:gap-1.5 md:flex md:w-auto md:flex-wrap md:items-center md:gap-2">
           {PILES.map(({ id, label, Icon, idle, active }) => {
             const isOpen = expandedPile === id;
+            const selCount = getSelectedCount(id);
+            const hasSel = selCount > 0;
             return (
               <button
                 key={id}
                 type="button"
                 onClick={() => toggleExpand(id)}
-                className={`flex min-h-[2.5rem] items-center justify-between gap-1 rounded-xl border px-2 py-1.5 text-left text-xs font-medium transition-all duration-200 max-md:min-w-0 max-md:pr-1.5 md:gap-2 md:px-3 md:py-2 md:text-sm ${
-                  isOpen ? active : idle
-                } `}
+                className={`flex min-h-10 items-center justify-between gap-1 rounded-xl border px-2 py-1.5 text-left text-xs font-medium transition-all duration-200 max-md:min-w-0 max-md:pr-1.5 md:gap-2 md:px-3 md:py-2 md:text-sm ${
+                  isOpen ? active : hasSel ? "border-yellow-400/70 bg-yellow-950/45 text-yellow-100 shadow-[0_0_14px_rgba(234,179,8,0.22)] ring-1 ring-yellow-400/30" : idle
+                }`}
               >
                 <div className="flex min-w-0 items-center gap-1.5 md:gap-2">
                   <Icon className="h-3.5 w-3.5 shrink-0 opacity-90 md:h-4 md:w-4" />
                   <span className="min-w-0 truncate max-md:max-w-[4.2rem] md:whitespace-nowrap">{label}</span>
                 </div>
                 <div className="flex shrink-0 items-center gap-0.5">
+                  {hasSel && (
+                    <span className="rounded-md bg-yellow-400/20 px-1 py-0.5 text-[10px] font-bold tabular-nums text-yellow-300 ring-1 ring-yellow-400/30 md:px-1.5 md:text-xs">
+                      {selCount}✓
+                    </span>
+                  )}
                   <span
-                    className={`min-w-[1.5rem] rounded-md px-1 py-0.5 text-center text-[10px] tabular-nums md:min-w-[1.75rem] md:px-1.5 md:text-xs ${
+                    className={`min-w-6 rounded-md px-1 py-0.5 text-center text-[10px] tabular-nums md:min-w-7 md:px-1.5 md:text-xs ${
                       isOpen ? "bg-black/25" : "bg-black/20"
                     }`}
                   >
@@ -271,7 +282,7 @@ export default function BottomBlock() {
             >
               <ChevronDown className="h-4 w-4" strokeWidth={2} />
             </button>
-            <span className="min-w-[2rem] text-center text-sm font-mono font-bold tabular-nums text-emerald-200">
+            <span className="min-w-8 text-center text-sm font-mono font-bold tabular-nums text-emerald-200">
               {drawAmount}
             </span>
             <input

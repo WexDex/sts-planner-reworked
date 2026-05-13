@@ -1,0 +1,140 @@
+{
+  "Accuracy": [
+    {
+      "label": "Give Accuracy",
+      "actionType": "give_buff",
+      "buffName": "Accuracy",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Establishment": [
+    {
+      "label": "Give Establishment",
+      "actionType": "give_buff",
+      "buffName": "Establishment",
+      "buffType": "buff",
+      "hasInput": false,
+      "defaultValue": 1
+    }
+  ],
+  "Corruption": [
+    {
+      "label": "Give Corruption",
+      "actionType": "give_buff",
+      "buffName": "Corruption",
+      "buffType": "buff",
+      "hasInput": false,
+      "defaultValue": 1
+    }
+  ],
+  "Demon Form": [
+    {
+      "label": "Apply Demon Form",
+      "actionType": "give_buff",
+      "buffName": "Demon Form",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "Feel No Pain": [
+    {
+      "label": "Apply Feel No Pain",
+      "actionType": "give_buff",
+      "buffName": "Feel No Pain",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 3
+    }
+  ],
+  "Inflame": [
+    {
+      "label": "Apply Strength",
+      "actionType": "give_buff",
+      "buffName": "Strength",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "Combust": [
+    {
+      "label": "Apply Combust",
+      "actionType": "give_buff",
+      "buffName": "Combust",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 5
+    }
+  ],
+  "Predator": [
+    {
+      "label": "Draw 2 cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "Blur": [
+    {
+      "label": "Give Blur",
+      "actionType": "give_buff",
+      "buffName": "Blur",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Catalyst": [
+    {
+      "label": "Double Poison",
+      "actionType": "give_debuff",
+      "buffName": "Poison",
+      "buffType": "debuff",
+      "hasInput": true,
+      "defaultValue": 0
+    }
+  ],
+  "Noxious Fumes": [
+    {
+      "label": "Apply Noxious Fumes",
+      "actionType": "give_buff",
+      "buffName": "Noxious Fumes",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "Tools of the Trade": [
+    {
+      "label": "Apply Tools of the Trade",
+      "actionType": "give_buff",
+      "buffName": "Tools of the Trade",
+      "buffType": "buff",
+      "hasInput": false,
+      "defaultValue": 1
+    }
+  ],
+  "Calming": [
+    {
+      "label": "Give Mantra (Calm)",
+      "actionType": "give_buff",
+      "buffName": "Mantra",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "Rushdown": [
+    {
+      "label": "Apply Rushdown",
+      "actionType": "give_buff",
+      "buffName": "Rushdown",
+      "buffType": "buff",
+      "hasInput": false,
+      "defaultValue": 1
+    }
+  ]
+}

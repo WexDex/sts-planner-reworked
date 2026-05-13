@@ -133,6 +133,28 @@ export function buildPhaseBoundaryStartEntry(
   );
 }
 
+/** Card that triggered a quick action — used to enrich log entries with source context. */
+export interface SourceCard {
+  name: string;
+  /** STS character class (ironclad | silent | defect | watcher | colorless). */
+  character?: string;
+  cardType?: string;
+}
+
+export function sourceCardContext(sc: SourceCard): import('@/app/types/gameTypes').ActivityLogContextLine[] {
+  const charLabel = sc.character
+    ? sc.character.charAt(0).toUpperCase() + sc.character.slice(1)
+    : undefined;
+  return [{
+    label: 'Source',
+    value: charLabel ? `${sc.name} (${charLabel}) effect` : `${sc.name} effect`,
+  }];
+}
+
+export function sourceCardRef(sc: SourceCard): import('@/app/types/gameTypes').ActivityLogCardRef {
+  return { name: sc.name, character: sc.character, cardType: sc.cardType };
+}
+
 export interface BuildActionLogExtras {
   context?: ActivityLogContextLine[];
   /** When set, adds a "To" context line (e.g. move destination). */

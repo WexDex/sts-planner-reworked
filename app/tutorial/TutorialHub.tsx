@@ -16,6 +16,7 @@ import {
   Sparkles,
   Swords,
   Wrench,
+  Zap,
 } from "lucide-react";
 import { TutorialPageShell } from "@/app/tutorial/TutorialScrollNav.client";
 import { TUTORIAL_DOC_UPDATE_CLASS } from "@/app/tutorial/docUpdateHighlight";
@@ -62,7 +63,7 @@ export default function TutorialHub() {
 
       <section id="quick-start" className="scroll-mt-28 space-y-4">
         <h2 className="text-base font-bold text-slate-100">Quick start</h2>
-        <div className={TUTORIAL_DOC_UPDATE_CLASS}>
+        <div>
           <ol className="list-decimal space-y-2 ps-5 text-sm leading-relaxed text-slate-300">
           <li>
             Open or create work in the planner: use header{" "}
@@ -121,7 +122,7 @@ export default function TutorialHub() {
           Planner shell map
         </h2>
         <ul className="space-y-3 text-sm leading-relaxed text-slate-300">
-          <li className={`flex gap-3 ${TUTORIAL_DOC_UPDATE_CLASS}`}>
+          <li className="flex gap-3">
             <Activity className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" strokeWidth={2} aria-hidden />
             <span>
               <strong className="text-slate-100">Top chrome</strong> — vitals, legend chips, project name,{" "}
@@ -151,10 +152,16 @@ export default function TutorialHub() {
               <code className="font-mono text-[11px]">sts-deck-zone</code> jumps on mobile shortcuts.
             </span>
           </li>
-          <li className="flex gap-3">
-            <Swords className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" strokeWidth={2} aria-hidden />
+          <li className={`flex gap-3 ${TUTORIAL_DOC_UPDATE_CLASS}`}>
+            <Zap className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" strokeWidth={2} aria-hidden />
             <span>
-              <strong className="text-slate-100">Actions bar</strong> orchestrates playable flow + modal entries.
+              <strong className="text-slate-100">Card Actions rail</strong> — selecting a card swaps the left timeline rail into
+              a vertical actions panel (Play, Quick Actions, Move to, Modify, Cost &amp; type, Manage). Deselecting or moving
+              cards to Hand / Draw / Discard / Exhaust closes it and restores the timeline. See{" "}
+              <Link href="/card-actions-editor" className="font-semibold text-amber-200 underline-offset-2 hover:underline">
+                Quick Actions Editor
+              </Link>{" "}
+              to configure per-card custom actions.
             </span>
           </li>
           <li className="flex gap-3">
@@ -179,7 +186,7 @@ export default function TutorialHub() {
           <Save className="h-4 w-4 text-amber-300" strokeWidth={2} aria-hidden />
           Saves quick reference
         </h2>
-        <div className={`space-y-4 ${TUTORIAL_DOC_UPDATE_CLASS}`}>
+        <div className="space-y-4">
           <div className="flex gap-3 text-sm text-slate-300">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-violet-500/35 bg-violet-950/40 text-violet-200">
             <FolderOpen className="h-5 w-5" strokeWidth={2} aria-hidden />
@@ -246,7 +253,7 @@ export default function TutorialHub() {
           </Link>
           <Link
             href="/tutorial/decision-timeline"
-            className={`rounded-xl border border-cyan-500/35 bg-cyan-950/20 p-4 text-sm shadow-sm transition hover:border-cyan-400/55 hover:bg-cyan-950/35 ${TUTORIAL_DOC_UPDATE_CLASS}`}
+            className="rounded-xl border border-cyan-500/35 bg-cyan-950/20 p-4 text-sm shadow-sm transition hover:border-cyan-400/55 hover:bg-cyan-950/35"
           >
             <span className="block text-[11px] font-bold uppercase tracking-wide text-cyan-300">Timeline</span>
             <span className="mt-1 block font-semibold text-cyan-50">
@@ -287,6 +294,18 @@ export default function TutorialHub() {
               Browse bundled <code className="font-mono text-fuchsia-100/90">app/data/db/STS_CARDS_DB.json</code>; patch records; copy export
             </span>
           </Link>
+          <Link
+            href="/card-actions-editor"
+            className={`rounded-xl border border-amber-500/40 bg-amber-950/20 p-4 text-sm shadow-sm transition hover:border-amber-400/60 hover:bg-amber-950/35 ${TUTORIAL_DOC_UPDATE_CLASS}`}
+          >
+            <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-amber-300">
+              <Zap className="h-3.5 w-3.5" aria-hidden /> Quick Actions Editor
+            </span>
+            <span className="mt-1 block font-semibold text-amber-50">
+              Configure per-card custom actions (buffs, debuffs, HP, energy, draw, pile moves) written to{" "}
+              <code className="font-mono text-amber-100/80">custom_card_actions.json</code>
+            </span>
+          </Link>
         </div>
         <div className="flex flex-wrap gap-2 pt-2 text-xs">
           <Link
@@ -312,6 +331,12 @@ export default function TutorialHub() {
             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 px-3 py-1.5 font-medium text-slate-300 hover:bg-slate-900"
           >
             <FileCode2 className="h-3.5 w-3.5" aria-hidden /> Open Theme wrapper →
+          </Link>
+          <Link
+            href="/card-actions-editor"
+            className={`inline-flex items-center gap-1.5 rounded-lg border border-amber-700/60 px-3 py-1.5 font-medium text-amber-200/95 hover:bg-amber-950/40 ${TUTORIAL_DOC_UPDATE_CLASS}`}
+          >
+            <Zap className="h-3.5 w-3.5" aria-hidden /> Quick Actions Editor →
           </Link>
         </div>
       </section>

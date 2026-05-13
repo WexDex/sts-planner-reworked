@@ -62,6 +62,15 @@ function SheetNoData({ label }: { label: string }) {
 export default function ResponsiveAppShell() {
   const { gameState } = useGameManager();
   const isMdUp = useSyncExternalStore(subscribeMdUp, getMdUpSnapshot, () => false);
+
+  const selectedCount = gameState
+    ? gameState.draw.filter((c) => c.isSelected).length +
+      gameState.discard.filter((c) => c.isSelected).length +
+      gameState.exhaust.filter((c) => c.isSelected).length +
+      gameState.hand.filter((c) => c.isSelected).length +
+      gameState.playedCards.filter((c) => c.isSelected).length
+    : 0;
+  const leftRailShowsActions = isMdUp && selectedCount > 0;
   const [panel, setPanel] = useState<MobilePanel>("none");
   const sheetTitleId = useId();
   const [leftRailCollapsed, setLeftRailCollapsed] = useState(false);
@@ -166,13 +175,14 @@ export default function ResponsiveAppShell() {
         {showLeftRail ? (
           <aside
             className={`${RAIL_L} relative flex shrink-0 flex-col overflow-hidden transition-[width,min-width,max-width] duration-300 ease-in-out motion-reduce:transition-none ${
-              leftRailCollapsed
+              !leftRailShowsActions && leftRailCollapsed
                 ? RAIL_COLLAPSED_W
                 : "w-[min(15rem,34vw)] sm:w-[min(16rem,32vw)] md:w-[min(17rem,30vw)] lg:w-[min(18rem,28vw)] xl:w-[min(19rem,26vw)] 2xl:w-80 2xl:max-w-[20rem]"
             }`}
-            aria-label="Turn timeline"
+            aria-label={leftRailShowsActions ? "Card actions" : "Turn timeline"}
           >
-            {!leftRailCollapsed ? (
+            {/* Collapse button — hidden while showing card actions */}
+            {!leftRailShowsActions && !leftRailCollapsed ? (
               <button
                 type="button"
                 onClick={() => setLeftRailCollapsed(true)}
@@ -185,25 +195,28 @@ export default function ResponsiveAppShell() {
             ) : null}
             <div
               className={`${RAIL_INNER} relative min-h-0 flex-1 overflow-hidden transition-opacity duration-300 ease-in-out motion-reduce:transition-none ${
-                leftRailCollapsed ? "pointer-events-none opacity-0" : "opacity-100"
+                !leftRailShowsActions && leftRailCollapsed ? "pointer-events-none opacity-0" : "opacity-100"
               }`}
             >
-              <TimelineBlock />
+              {leftRailShowsActions ? <ActionsBar /> : <TimelineBlock />}
             </div>
-            <button
-              type="button"
-              onClick={() => setLeftRailCollapsed(false)}
-              title="Expand timeline"
-              aria-label="Expand timeline rail"
-              className={`absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 border-r border-cyan-500/40 bg-linear-to-b from-slate-950 to-slate-900 text-cyan-200 transition-[opacity,background-color] duration-300 ease-in-out motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
-                leftRailCollapsed
-                  ? "pointer-events-auto cursor-e-resize opacity-100 hover:bg-cyan-500/[0.08] active:bg-cyan-500/[0.14]"
-                  : "pointer-events-none opacity-0"
-              }`}
-            >
-              <GitBranch className="h-5 w-5 shrink-0 drop-shadow-sm" strokeWidth={2.25} aria-hidden />
-              <ChevronRight className="h-4 w-4 shrink-0 opacity-85 drop-shadow-sm" strokeWidth={2.5} aria-hidden />
-            </button>
+            {/* Expand overlay — only shown when collapsed in timeline mode */}
+            {!leftRailShowsActions ? (
+              <button
+                type="button"
+                onClick={() => setLeftRailCollapsed(false)}
+                title="Expand timeline"
+                aria-label="Expand timeline rail"
+                className={`absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 border-r border-cyan-500/40 bg-linear-to-b from-slate-950 to-slate-900 text-cyan-200 transition-[opacity,background-color] duration-300 ease-in-out motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
+                  leftRailCollapsed
+                    ? "pointer-events-auto cursor-e-resize opacity-100 hover:bg-cyan-500/[0.08] active:bg-cyan-500/[0.14]"
+                    : "pointer-events-none opacity-0"
+                }`}
+              >
+                <GitBranch className="h-5 w-5 shrink-0 drop-shadow-sm" strokeWidth={2.25} aria-hidden />
+                <ChevronRight className="h-4 w-4 shrink-0 opacity-85 drop-shadow-sm" strokeWidth={2.5} aria-hidden />
+              </button>
+            ) : null}
           </aside>
         ) : null}
 
@@ -222,9 +235,8 @@ export default function ResponsiveAppShell() {
             <MainFieldBlock />
           </div>
 
-          {/* On desktop: ActionsBar + BottomBlock inline. On mobile: they live in sheets. */}
+          {/* On desktop: BottomBlock inline. ActionsBar lives in the left rail. On mobile: they live in sheets. */}
           <div className="hidden md:flex min-h-0 shrink-0 flex-col" data-bottom-deck-skip-outside>
-            <ActionsBar />
             <div className="relative z-30 shrink-0">
               <BottomBlock />
             </div>

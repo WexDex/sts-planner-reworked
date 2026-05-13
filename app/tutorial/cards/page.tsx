@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpen, Code2 } from "lucide-react";
-import { TUTORIAL_DOC_UPDATE_CLASS } from "@/app/tutorial/docUpdateHighlight";
 import { TutorialPageShell } from "@/app/tutorial/TutorialScrollNav.client";
 
 export const metadata: Metadata = {
@@ -50,7 +49,7 @@ export default function TutorialCardsPage() {
           Bundled <code className="rounded bg-slate-950 px-1 font-mono text-[11px]">app/data/db/STS_CARDS_DB.json</code> contains iconCatalog prose,
           rarity, strike/defend remaps, pooled effects — gallery + planner share loaders for parity fixes.
         </p>
-        <div className={`mt-3 space-y-2 ${TUTORIAL_DOC_UPDATE_CLASS}`}>
+        <div className="mt-3 space-y-2">
           <p className="text-sm text-slate-300">
             A <strong className="text-slate-100">project</strong> save includes planner-visible card state from the live shell (picker,
             deck rail) alongside rows; reloading combat JSON alone does not reconstruct that UI layer.
