@@ -64,116 +64,138 @@ type CustomAction = {
 
 type CustomActionsMap = Record<string, CustomAction[]>;
 
-const ACTION_TYPES: { value: ActionType; label: string; description: string; color: string; activeClass: string }[] = [
+const ACTION_TYPES: { value: ActionType; label: string; description: string; color: string; activeClass: string; inactiveClass: string }[] = [
   {
     value: "give_buff", label: "Give Buff", description: "Apply a named buff",
     color: "emerald",
     activeClass: "border-emerald-500/70 bg-emerald-950/60 text-emerald-200 ring-1 ring-emerald-500/30",
+    inactiveClass: "border-emerald-500/40 bg-emerald-900/30 text-emerald-400/80 ring-1 ring-emerald-500/20",
   },
   {
     value: "give_debuff", label: "Give Debuff", description: "Apply a named debuff",
     color: "orange",
     activeClass: "border-orange-500/70 bg-orange-950/60 text-orange-200 ring-1 ring-orange-500/30",
+    inactiveClass: "border-orange-500/40 bg-orange-900/30 text-orange-400/80 ring-1 ring-orange-500/20",
   },
   {
     value: "remove_buff", label: "Remove Buff", description: "Remove buff/debuff",
     color: "rose",
     activeClass: "border-rose-500/70 bg-rose-950/60 text-rose-200 ring-1 ring-rose-500/30",
+    inactiveClass: "border-rose-500/40 bg-rose-900/30 text-rose-400/80 ring-1 ring-rose-500/20",
   },
   {
     value: "modify_hp", label: "Modify HP", description: "Change player HP",
     color: "red",
     activeClass: "border-red-500/70 bg-red-950/60 text-red-200 ring-1 ring-red-500/30",
+    inactiveClass: "border-red-500/40 bg-red-900/30 text-red-400/80 ring-1 ring-red-500/20",
   },
   {
     value: "modify_block", label: "Modify Block", description: "Add/remove block",
     color: "sky",
     activeClass: "border-sky-500/70 bg-sky-950/60 text-sky-200 ring-1 ring-sky-500/30",
+    inactiveClass: "border-sky-500/40 bg-sky-900/30 text-sky-400/80 ring-1 ring-sky-500/20",
   },
   {
     value: "modify_energy", label: "Modify Energy", description: "Add/remove energy",
     color: "amber",
     activeClass: "border-amber-500/70 bg-amber-950/60 text-amber-200 ring-1 ring-amber-500/30",
+    inactiveClass: "border-amber-500/40 bg-amber-900/30 text-amber-400/80 ring-1 ring-amber-500/20",
   },
   {
     value: "draw_cards", label: "Draw Cards", description: "Draw N cards",
     color: "violet",
     activeClass: "border-violet-500/70 bg-violet-950/60 text-violet-200 ring-1 ring-violet-500/30",
+    inactiveClass: "border-violet-500/40 bg-violet-900/30 text-violet-400/80 ring-1 ring-violet-500/20",
   },
   {
     value: "move_to_pile", label: "Move to Pile", description: "Move card to a pile",
     color: "slate",
     activeClass: "border-slate-400/60 bg-slate-700/60 text-slate-200 ring-1 ring-slate-400/25",
+    inactiveClass: "border-slate-400/40 bg-slate-900/30 text-slate-400/80 ring-1 ring-slate-400/20",
   },
   {
     value: "add_card", label: "Add Card", description: "Add a DB card to a pile",
     color: "fuchsia",
     activeClass: "border-fuchsia-500/70 bg-fuchsia-950/60 text-fuchsia-200 ring-1 ring-fuchsia-500/30",
+    inactiveClass: "border-fuchsia-500/40 bg-fuchsia-900/30 text-fuchsia-400/80 ring-1 ring-fuchsia-500/20",
   },
   {
     value: "channel_orb", label: "Channel Orb", description: "Channel orb type N times",
     color: "blue",
     activeClass: "border-blue-500/70 bg-blue-950/60 text-blue-200 ring-1 ring-blue-500/30",
+    inactiveClass: "border-blue-500/40 bg-blue-900/30 text-blue-400/80 ring-1 ring-blue-500/20",
   },
   {
     value: "evoke_orbs", label: "Evoke Orbs", description: "Evoke N orbs",
     color: "cyan",
     activeClass: "border-cyan-500/70 bg-cyan-950/60 text-cyan-200 ring-1 ring-cyan-500/30",
+    inactiveClass: "border-cyan-500/40 bg-cyan-900/30 text-cyan-400/80 ring-1 ring-cyan-500/20",
   },
   {
     value: "set_stance", label: "Set Stance", description: "Change Watcher stance",
     color: "purple",
     activeClass: "border-purple-500/70 bg-purple-950/60 text-purple-200 ring-1 ring-purple-500/30",
+    inactiveClass: "border-purple-500/40 bg-purple-900/30 text-purple-400/80 ring-1 ring-purple-500/20",
   },
   {
     value: "give_enemy_buff", label: "Enemy Buff", description: "Give buff to enemy",
     color: "teal",
     activeClass: "border-teal-500/70 bg-teal-950/60 text-teal-200 ring-1 ring-teal-500/30",
+    inactiveClass: "border-teal-500/40 bg-teal-900/30 text-teal-400/80 ring-1 ring-teal-500/20",
   },
   {
     value: "give_enemy_debuff", label: "Enemy Debuff", description: "Debuff an enemy",
     color: "yellow",
     activeClass: "border-yellow-500/70 bg-yellow-950/60 text-yellow-200 ring-1 ring-yellow-500/30",
+    inactiveClass: "border-yellow-500/40 bg-yellow-900/30 text-yellow-400/80 ring-1 ring-yellow-500/20",
   },
   {
     value: "modify_enemy_hp", label: "Enemy HP", description: "Damage or heal enemy",
     color: "pink",
     activeClass: "border-pink-500/70 bg-pink-950/60 text-pink-200 ring-1 ring-pink-500/30",
+    inactiveClass: "border-pink-500/40 bg-pink-900/30 text-pink-400/80 ring-1 ring-pink-500/20",
   },
   {
     value: "modify_enemy_block", label: "Enemy Block", description: "Add/remove enemy block",
     color: "indigo",
     activeClass: "border-indigo-500/70 bg-indigo-950/60 text-indigo-200 ring-1 ring-indigo-500/30",
+    inactiveClass: "border-indigo-500/40 bg-indigo-900/30 text-indigo-400/80 ring-1 ring-indigo-500/20",
   },
   {
     value: "remove_enemy_buff", label: "Remove Enemy Buff", description: "Remove enemy buff/debuff",
     color: "lime",
     activeClass: "border-lime-500/70 bg-lime-950/60 text-lime-200 ring-1 ring-lime-500/30",
+    inactiveClass: "border-lime-500/40 bg-lime-900/30 text-lime-400/80 ring-1 ring-lime-500/20",
   },
   {
     value: "trigger_orb_passive", label: "Orb Passive", description: "Trigger all orb passives",
     color: "sky",
     activeClass: "border-sky-400/70 bg-sky-950/60 text-sky-200 ring-1 ring-sky-400/30",
+    inactiveClass: "border-sky-400/40 bg-sky-900/30 text-sky-400/80 ring-1 ring-sky-400/20",
   },
   {
     value: "discard_hand", label: "Discard Hand", description: "Discard all cards in hand",
     color: "orange",
     activeClass: "border-orange-400/70 bg-orange-950/60 text-orange-200 ring-1 ring-orange-400/30",
+    inactiveClass: "border-orange-400/40 bg-orange-900/30 text-orange-400/80 ring-1 ring-orange-400/20",
   },
   {
     value: "reshuffle_discard", label: "Reshuffle Discard", description: "Shuffle discard into draw",
     color: "slate",
     activeClass: "border-slate-300/70 bg-slate-700/60 text-slate-100 ring-1 ring-slate-300/30",
+    inactiveClass: "border-slate-300/40 bg-slate-900/30 text-slate-400/80 ring-1 ring-slate-300/20",
   },
   {
     value: "set_orb_slots", label: "Set Orb Slots", description: "Set orb slot count exactly",
     color: "violet",
     activeClass: "border-violet-400/70 bg-violet-950/60 text-violet-200 ring-1 ring-violet-400/30",
+    inactiveClass: "border-violet-400/40 bg-violet-900/30 text-violet-400/80 ring-1 ring-violet-400/20",
   },
   {
     value: "adjust_orb_slots", label: "Adjust Orb Slots", description: "+/− orb slot count",
     color: "violet",
     activeClass: "border-violet-300/60 bg-violet-900/40 text-violet-300 ring-1 ring-violet-300/25",
+    inactiveClass: "border-violet-300/40 bg-violet-900/30 text-violet-400/80 ring-1 ring-violet-300/20",
   },
 ];
 
@@ -409,8 +431,8 @@ function ActionRow({
                 }}
                 className={`flex flex-col gap-0.5 rounded-lg border px-2.5 py-2 text-left transition ${
                   active
-                    ? at.activeClass
-                    : "border-slate-700/50 bg-slate-900/50 text-slate-400 hover:border-slate-600 hover:bg-slate-800/50 hover:text-slate-300"
+                    ? at.activeClass + "border-4 ring-4"
+                    : at.inactiveClass
                 }`}
               >
                 <span className="text-[11px] font-semibold leading-none">{at.label}</span>

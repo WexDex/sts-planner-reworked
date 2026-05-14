@@ -253,6 +253,14 @@
       "actionType": "move_to_pile",
       "pile": "exhaust",
       "hasInput": false
+    },
+    {
+      "label": "Discard Hand",
+      "actionType": "discard_hand",
+      "buffName": "",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 1
     }
   ],
   "Calming": [

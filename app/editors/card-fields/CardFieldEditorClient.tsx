@@ -1257,6 +1257,42 @@ export default function CardFieldEditorClient({
                   </div>
                 )}
 
+                {/* ── JSON ─────────────────────────── */}
+                <div className="border-t border-slate-800/60 pt-4">
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">JSON</span>
+                    <button type="button" onClick={() => card && navigator.clipboard.writeText(JSON.stringify(card, null, 2))} title="Copy JSON"
+                      className="inline-flex h-5 w-5 items-center justify-center rounded border border-slate-700/40 bg-slate-800/30 text-slate-500 transition hover:border-sky-600/50 hover:text-sky-400">
+                      <Copy className="h-3 w-3" strokeWidth={2} />
+                    </button>
+                    <button type="button" onClick={() => {
+                      if (!selectedId) return;
+                      const original = initialBundle[selectedId];
+                      if (original) {
+                        setBundle((prev) => ({ ...prev, [selectedId]: snap(original) }));
+                      }
+                    }} title="Revert card to original"
+                      className="inline-flex h-5 w-5 items-center justify-center rounded border border-slate-700/40 bg-slate-800/30 text-slate-500 transition hover:border-amber-600/50 hover:text-amber-400">
+                      <RotateCcw className="h-3 w-3" strokeWidth={2} />
+                    </button>
+                  </div>
+                  <textarea
+                    value={card ? JSON.stringify(card, null, 2) : ""}
+                    onChange={(e) => {
+                      if (!card || !selectedId) return;
+                      try {
+                        const parsed = JSON.parse(e.target.value);
+                        updateCard(parsed);
+                      } catch (err) {
+                        // Invalid JSON, ignore
+                      }
+                    }}
+                    className="w-full rounded-lg border border-slate-700 bg-slate-900/70 px-2.5 py-1.5 text-[12px] font-mono text-slate-200 outline-none focus:border-cyan-500/50 resize-none"
+                    rows={10}
+                    placeholder="Card JSON..."
+                  />
+                </div>
+
                 <div className="h-10" />
               </div>
             </div>
