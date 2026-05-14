@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import type { EnemyIntentAction, EnemyIntentStatusLocation } from "@/app/types/gameTypes";
-import { ENEMY_INTENT_ACTION_GLYPH } from "@/app/utils/enemyIntentGlyphs";
+import { IntentIconGlyph } from "@/app/components/UI/IntentIconGlyph";
 import { getSingleAttackDamage } from "@/app/utils/enemyIntentActionHelpers";
 import type { EffectType } from "@/app/utils/effectDisplay";
 import { getEffectDisplay } from "@/app/utils/effectDisplay";
@@ -10,9 +10,6 @@ import {
   applyIncomingEnemyAttackDamage,
   type IncomingDamageContext,
 } from "@/app/utils/intentFormat";
-
-const GLYPH = ENEMY_INTENT_ACTION_GLYPH;
-const GLYPH_CLS = "shrink-0 text-[0.8125rem] leading-none select-none";
 
 function statusZoneShort(loc?: EnemyIntentStatusLocation): string {
   const zone = loc ?? "hand";
@@ -79,16 +76,16 @@ export function IntentIncomingChips({
         const chipShell =
           "inline-flex items-center gap-0.5 rounded border border-white/12 bg-black/30 px-1 py-0.5";
 
+        const iconCls = "h-3.5 w-3.5 shrink-0";
+
         switch (action.type) {
           case "attack": {
             const base = getSingleAttackDamage(action);
             const mod = applyIncomingEnemyAttackDamage(base, ctx);
             const dmgMeta = getEffectDisplay("damage");
             chips.push(
-              <span key={`a-${i}`} className={chipShell} title={dmgMeta.fullLabel}>
-                <span className={GLYPH_CLS} aria-hidden>
-                  {GLYPH.attack}
-                </span>
+              <span key={`a-${i}`} className={`${chipShell} text-rose-300/90`} title={dmgMeta.fullLabel}>
+                <IntentIconGlyph type="attack" className={iconCls} strokeWidth={1.75} />
                 <span className="tabular-nums text-[10px] text-slate-100">
                   {mod !== base ? (
                     <>
@@ -108,10 +105,8 @@ export function IntentIncomingChips({
             const showsDetail = per !== action.dmg;
             const dmgMeta = getEffectDisplay("damage");
             chips.push(
-              <span key={`ma-${i}`} className={chipShell} title={dmgMeta.fullLabel}>
-                <span className={GLYPH_CLS} aria-hidden>
-                  {GLYPH.multi_attack}
-                </span>
+              <span key={`ma-${i}`} className={`${chipShell} text-orange-300/90`} title={dmgMeta.fullLabel}>
+                <IntentIconGlyph type="multi_attack" className={iconCls} strokeWidth={1.75} />
                 <span className="tabular-nums text-[10px] text-slate-100">
                   {showsDetail ? (
                     <>
@@ -133,10 +128,8 @@ export function IntentIncomingChips({
           case "block": {
             const bd = getEffectDisplay("block");
             chips.push(
-              <span key={`b-${i}`} className={chipShell} title={bd.fullLabel}>
-                <span className={GLYPH_CLS} aria-hidden>
-                  {GLYPH.block}
-                </span>
+              <span key={`b-${i}`} className={`${chipShell} text-sky-300/90`} title={bd.fullLabel}>
+                <IntentIconGlyph type="block" className={iconCls} strokeWidth={1.75} />
                 <span className="tabular-nums text-[10px] text-slate-100">{action.amount}</span>
               </span>,
             );
@@ -146,10 +139,8 @@ export function IntentIncomingChips({
             const stacks = debuffStacksLabel(action.value);
             const title = action.description ?? debuffTitle(action.effect);
             chips.push(
-              <span key={`db-${i}`} className={chipShell} title={title}>
-                <span className={GLYPH_CLS} aria-hidden>
-                  {GLYPH.debuff}
-                </span>
+              <span key={`db-${i}`} className={`${chipShell} text-violet-300/90`} title={title}>
+                <IntentIconGlyph type="debuff" className={iconCls} strokeWidth={1.75} />
                 <span className="max-w-[9rem] truncate text-[10px] text-slate-200">
                   {action.effect}
                   {stacks}
@@ -161,10 +152,8 @@ export function IntentIncomingChips({
           case "buff": {
             const title = action.description ?? buffTitle(action.effect);
             chips.push(
-              <span key={`bf-${i}`} className={chipShell} title={title}>
-                <span className={GLYPH_CLS} aria-hidden>
-                  {GLYPH.buff}
-                </span>
+              <span key={`bf-${i}`} className={`${chipShell} text-emerald-300/90`} title={title}>
+                <IntentIconGlyph type="buff" className={iconCls} strokeWidth={1.75} />
                 <span className="max-w-[9rem] truncate text-[10px] text-slate-200">
                   {action.effect} {action.value}
                 </span>
@@ -177,10 +166,8 @@ export function IntentIncomingChips({
               ? getEffectDisplay("wound")
               : getEffectDisplay("draw");
             chips.push(
-              <span key={`st-${i}`} className={chipShell} title={action.description ?? woundish.fullLabel}>
-                <span className={GLYPH_CLS} aria-hidden>
-                  {GLYPH.status}
-                </span>
+              <span key={`st-${i}`} className={`${chipShell} text-cyan-300/90`} title={action.description ?? woundish.fullLabel}>
+                <IntentIconGlyph type="status" className={iconCls} strokeWidth={1.75} />
                 <span className="tabular-nums text-[10px] text-slate-200">
                   {action.effect}×{action.value}
                 </span>
@@ -191,10 +178,8 @@ export function IntentIncomingChips({
           }
           case "cowardly": {
             chips.push(
-              <span key={`cw-${i}`} className={chipShell} title={action.description ?? "Escape"}>
-                <span className={GLYPH_CLS} aria-hidden>
-                  {GLYPH.cowardly}
-                </span>
+              <span key={`cw-${i}`} className={`${chipShell} text-amber-300/90`} title={action.description ?? "Escape"}>
+                <IntentIconGlyph type="cowardly" className={iconCls} strokeWidth={1.75} />
                 <span className="text-[10px] text-slate-200">Escape</span>
               </span>,
             );
@@ -202,10 +187,8 @@ export function IntentIncomingChips({
           }
           case "stunned": {
             chips.push(
-              <span key={`stn-${i}`} className={chipShell} title={action.description ?? "Stunned"}>
-                <span className={GLYPH_CLS} aria-hidden>
-                  {GLYPH.stunned}
-                </span>
+              <span key={`stn-${i}`} className={`${chipShell} text-indigo-300/90`} title={action.description ?? "Stunned"}>
+                <IntentIconGlyph type="stunned" className={iconCls} strokeWidth={1.75} />
                 <span className="tabular-nums text-[10px] text-violet-200/90">{action.value}</span>
               </span>,
             );
@@ -213,10 +196,8 @@ export function IntentIncomingChips({
           }
           case "no_action": {
             chips.push(
-              <span key={`na-${i}`} className={chipShell} title={action.description ?? "In combat, no intent this beat"}>
-                <span className={GLYPH_CLS} aria-hidden>
-                  {GLYPH.no_action}
-                </span>
+              <span key={`na-${i}`} className={`${chipShell} text-slate-400/80`} title={action.description ?? "In combat, no intent this beat"}>
+                <IntentIconGlyph type="no_action" className={iconCls} strokeWidth={1.75} />
                 <span className="text-[10px] text-slate-300">No action</span>
               </span>,
             );
@@ -225,9 +206,7 @@ export function IntentIncomingChips({
           default: {
             chips.push(
               <span key={`uk-${i}`} className={chipShell} title="Unknown intent piece">
-                <span className={`${GLYPH_CLS} font-mono text-[10px] text-slate-500`} aria-hidden>
-                  ?
-                </span>
+                <span className="h-3.5 w-3.5 shrink-0 font-mono text-[10px] text-slate-500" aria-hidden>?</span>
                 <span className="font-mono text-[9px] text-slate-500">{JSON.stringify(action)}</span>
               </span>,
             );

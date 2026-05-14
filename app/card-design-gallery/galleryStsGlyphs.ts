@@ -5,6 +5,7 @@ import {
   Bookmark,
   ChevronsUp,
   CircleDot,
+  Cog,
   Coins,
   Copy,
   CreditCard,
@@ -21,6 +22,7 @@ import {
   Plus,
   ScanSearch,
   Shield,
+  ShieldCheck,
   Shuffle,
   Skull,
   Snowflake,
@@ -32,6 +34,7 @@ import {
   TrendingDown,
   TestTube,
   Wand2,
+  Wind,
   Zap,
   Flame,
   Swords,
@@ -1384,6 +1387,63 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
         Icon: f.icon,
         iconClass: f.color,
       });
+    }
+  }
+
+  // Artifact — Cog icon, amber/gold colour, shows stack count
+  const artifactRaw = c.artifact;
+  if (artifactRaw != null) {
+    const an = galleryTierNumber(card, artifactRaw);
+    if (an != null) {
+      push({
+        id: "artifact-n",
+        label: `Artifact ${an}`,
+        clusterClass: "rounded-md border border-yellow-400/35 bg-yellow-950/45 px-1 py-0.5 shadow-sm",
+        segments: [
+          { Icon: Cog, iconClass: "text-yellow-300" },
+          { text: String(an), textClass: "text-yellow-300 font-bold tabular-nums leading-none" },
+        ],
+      });
+    } else {
+      push({ id: "artifact", label: "Artifact", Icon: Cog, iconClass: "text-yellow-300" });
+    }
+  }
+
+  // Buffer — ShieldCheck icon, lime/green colour, shows stack count
+  const bufferRaw = c.buffer;
+  if (bufferRaw != null) {
+    const bn = galleryTierNumber(card, bufferRaw);
+    if (bn != null) {
+      push({
+        id: "buffer-n",
+        label: `Buffer ${bn}`,
+        clusterClass: "rounded-md border border-lime-400/35 bg-lime-950/45 px-1 py-0.5 shadow-sm",
+        segments: [
+          { Icon: ShieldCheck, iconClass: "text-lime-300" },
+          { text: String(bn), textClass: "text-lime-300 font-bold tabular-nums leading-none" },
+        ],
+      });
+    } else {
+      push({ id: "buffer", label: "Buffer", Icon: ShieldCheck, iconClass: "text-lime-300" });
+    }
+  }
+
+  // Mantra — Wind icon, purple colour (Watcher class), shows stack count
+  const mantraRaw = c.mantra;
+  if (mantraRaw != null) {
+    const mn = galleryTierNumber(card, mantraRaw);
+    if (mn != null) {
+      push({
+        id: "mantra-n",
+        label: `Mantra ${mn}`,
+        clusterClass: "rounded-md border border-purple-400/35 bg-purple-950/45 px-1 py-0.5 shadow-sm",
+        segments: [
+          { Icon: Wind, iconClass: "text-purple-300" },
+          { text: String(mn), textClass: "text-purple-300 font-bold tabular-nums leading-none" },
+        ],
+      });
+    } else {
+      push({ id: "mantra", label: "Mantra", Icon: Wind, iconClass: "text-purple-300" });
     }
   }
 

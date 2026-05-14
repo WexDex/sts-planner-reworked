@@ -5,14 +5,18 @@ import Link from "next/link";
 import {
   ArrowLeft,
   Check,
-  Loader2,
+  Download,
   Plus,
   RotateCcw,
-  Save,
+  Search,
   Trash2,
+  X,
   Zap,
 } from "lucide-react";
+import CardPickerModal from "@/app/components/UI/CardPickerModal";
 import stsBundle from "@/app/data/db/STS_CARDS_DB.json";
+import baseActionsData from "@/app/data/custom_card_actions.json";
+import backupActionsData from "@/app/data/custom_card_actions.backup.json";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -24,7 +28,8 @@ type ActionType =
   | "modify_block"
   | "modify_energy"
   | "draw_cards"
-  | "move_to_pile";
+  | "move_to_pile"
+  | "add_card";
 
 type CustomAction = {
   label: string;
@@ -34,6 +39,8 @@ type CustomAction = {
   hasInput?: boolean;
   defaultValue?: number;
   pile?: string;
+  cardNames?: string[];
+  cardCount?: number;
 };
 
 type CustomActionsMap = Record<string, CustomAction[]>;
@@ -79,6 +86,11 @@ const ACTION_TYPES: { value: ActionType; label: string; description: string; col
     color: "slate",
     activeClass: "border-slate-400/60 bg-slate-700/60 text-slate-200 ring-1 ring-slate-400/25",
   },
+  {
+    value: "add_card", label: "Add Card", description: "Add a DB card to a pile",
+    color: "fuchsia",
+    activeClass: "border-fuchsia-500/70 bg-fuchsia-950/60 text-fuchsia-200 ring-1 ring-fuchsia-500/30",
+  },
 ];
 
 const PILE_OPTIONS: { value: string; label: string; activeClass: string }[] = [
@@ -104,6 +116,35 @@ const allCards: { id: string; data: CardData }[] = Object.entries(
   .map(([id, data]) => ({ id, data: data as CardData }))
   .sort((a, b) => a.id.localeCompare(b.id));
 
+type CharFilter = "all" | "ironclad" | "silent" | "defect" | "watcher" | "colorless" | "status" | "curse";
+
+const CHAR_FILTERS: { value: CharFilter; label: string; pill: string; activePill: string; rowBg: string; selectedRowBg: string; charChip: string }[] = [
+  { value: "all",       label: "All",       pill: "border-slate-600/60 text-slate-400 hover:bg-slate-800/50",                       activePill: "border-slate-400/70 bg-slate-700/70 text-slate-100",              rowBg: "",                        selectedRowBg: "bg-slate-800/90 ring-inset ring-1 ring-cyan-500/40",      charChip: "border-slate-700/50 bg-slate-800/50 text-slate-400" },
+  { value: "ironclad",  label: "Ironclad",  pill: "border-rose-900/50 text-rose-400/80 hover:bg-rose-950/30",                       activePill: "border-rose-500/65 bg-rose-950/60 text-rose-200",                 rowBg: "bg-rose-950/10",          selectedRowBg: "bg-rose-950/45 ring-inset ring-1 ring-rose-500/50",       charChip: "border-rose-700/50 bg-rose-950/50 text-rose-300" },
+  { value: "silent",    label: "Silent",    pill: "border-teal-900/50 text-teal-400/80 hover:bg-teal-950/30",                       activePill: "border-teal-500/65 bg-teal-950/60 text-teal-200",                 rowBg: "bg-teal-950/10",          selectedRowBg: "bg-teal-950/45 ring-inset ring-1 ring-teal-500/50",       charChip: "border-teal-700/50 bg-teal-950/50 text-teal-300" },
+  { value: "defect",    label: "Defect",    pill: "border-blue-900/50 text-blue-400/80 hover:bg-blue-950/30",                       activePill: "border-blue-500/65 bg-blue-950/60 text-blue-200",                 rowBg: "bg-blue-950/10",          selectedRowBg: "bg-blue-950/45 ring-inset ring-1 ring-blue-500/50",       charChip: "border-blue-700/50 bg-blue-950/50 text-blue-300" },
+  { value: "watcher",   label: "Watcher",   pill: "border-purple-900/50 text-purple-400/80 hover:bg-purple-950/30",                 activePill: "border-purple-500/65 bg-purple-950/60 text-purple-200",           rowBg: "bg-purple-950/10",        selectedRowBg: "bg-purple-950/45 ring-inset ring-1 ring-purple-500/50",   charChip: "border-purple-700/50 bg-purple-950/50 text-purple-300" },
+  { value: "colorless", label: "Colorless", pill: "border-slate-700/50 text-slate-400/80 hover:bg-slate-800/30",                    activePill: "border-slate-400/65 bg-slate-700/60 text-slate-200",              rowBg: "bg-slate-800/15",         selectedRowBg: "bg-slate-700/60 ring-inset ring-1 ring-slate-400/50",     charChip: "border-slate-600/50 bg-slate-700/50 text-slate-300" },
+  { value: "status",    label: "Status",    pill: "border-amber-900/50 text-amber-400/80 hover:bg-amber-950/30",                    activePill: "border-amber-500/65 bg-amber-950/60 text-amber-200",              rowBg: "bg-amber-950/10",         selectedRowBg: "bg-amber-950/45 ring-inset ring-1 ring-amber-500/50",     charChip: "border-amber-700/50 bg-amber-950/50 text-amber-300" },
+  { value: "curse",     label: "Curses",    pill: "border-indigo-900/50 text-indigo-400/80 hover:bg-indigo-950/30",                 activePill: "border-indigo-500/65 bg-indigo-950/60 text-indigo-200",           rowBg: "bg-indigo-950/10",        selectedRowBg: "bg-indigo-950/45 ring-inset ring-1 ring-indigo-500/50",   charChip: "border-indigo-700/50 bg-indigo-950/50 text-indigo-300" },
+];
+
+function getCharStyle(characters?: string) {
+  return CHAR_FILTERS.find((f) => f.value === characters?.toLowerCase()) ?? CHAR_FILTERS[0];
+}
+
+const ACTION_TYPE_ROW: Record<ActionType, { border: string; bg: string; header: string }> = {
+  give_buff:     { border: "border-emerald-600/65", bg: "bg-emerald-950/45", header: "text-emerald-400" },
+  give_debuff:   { border: "border-orange-600/65",  bg: "bg-orange-950/45",  header: "text-orange-400" },
+  remove_buff:   { border: "border-rose-600/65",    bg: "bg-rose-950/45",    header: "text-rose-400" },
+  modify_hp:     { border: "border-red-600/65",     bg: "bg-red-950/45",     header: "text-red-400" },
+  modify_block:  { border: "border-sky-600/65",     bg: "bg-sky-950/45",     header: "text-sky-400" },
+  modify_energy: { border: "border-amber-600/65",   bg: "bg-amber-950/45",   header: "text-amber-400" },
+  draw_cards:    { border: "border-violet-600/65",  bg: "bg-violet-950/45",  header: "text-violet-400" },
+  move_to_pile:  { border: "border-slate-500/65",   bg: "bg-slate-800/55",   header: "text-slate-300" },
+  add_card:      { border: "border-fuchsia-600/65", bg: "bg-fuchsia-950/45", header: "text-fuchsia-400" },
+};
+
 function typeChipCls(type?: string): string {
   switch (type?.toLowerCase()) {
     case "attack": return "border-rose-500/50 bg-rose-950/50 text-rose-300";
@@ -126,6 +167,13 @@ function blankAction(): CustomAction {
   return { label: "", actionType: "give_buff", buffName: "", buffType: "buff", hasInput: true, defaultValue: 1 };
 }
 
+const PILE_ADD_OPTIONS: { value: string; label: string; activeClass: string }[] = [
+  { value: "hand",    label: "Hand",    activeClass: "border-emerald-500/70 bg-emerald-950/60 text-emerald-200 ring-1 ring-emerald-500/30" },
+  { value: "draw",    label: "Draw",    activeClass: "border-sky-500/70 bg-sky-950/60 text-sky-200 ring-1 ring-sky-500/30" },
+  { value: "discard", label: "Discard", activeClass: "border-rose-500/70 bg-rose-950/60 text-rose-200 ring-1 ring-rose-500/30" },
+  { value: "exhaust", label: "Exhaust", activeClass: "border-amber-500/70 bg-amber-950/60 text-amber-200 ring-1 ring-amber-500/30" },
+];
+
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function ActionRow({
@@ -140,12 +188,14 @@ function ActionRow({
   onDelete: (idx: number) => void;
 }) {
   const set = (patch: Partial<CustomAction>) => onChange(index, { ...action, ...patch });
+  const rowTheme = ACTION_TYPE_ROW[action.actionType];
+  const [showPicker, setShowPicker] = useState(false);
 
   return (
-    <div className="rounded-xl border border-slate-700/70 bg-slate-900/60 p-3 space-y-2.5">
+    <div className={`rounded-xl border p-3 space-y-2.5 ${rowTheme.border} ${rowTheme.bg}`}>
       {/* Row header */}
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        <span className={`text-[10px] font-bold uppercase tracking-wider ${rowTheme.header}`}>
           Action #{index + 1}
         </span>
         <button
@@ -252,8 +302,121 @@ function ActionRow({
         </div>
       )}
 
-      {/* Has input + default value (not for remove_buff or move_to_pile) */}
-      {action.actionType !== "remove_buff" && action.actionType !== "move_to_pile" && (
+      {/* add_card fields */}
+      {action.actionType === "add_card" && (
+        <div className="space-y-2.5">
+          <div>
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                Cards to add
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowPicker(true)}
+                className="inline-flex items-center gap-1 rounded-lg border border-fuchsia-700/50 bg-fuchsia-950/40 px-2.5 py-1 text-[11px] font-semibold text-fuchsia-300 transition hover:bg-fuchsia-900/50"
+              >
+                <Search className="h-3 w-3" strokeWidth={2} />
+                Browse &amp; add
+              </button>
+            </div>
+            {(action.cardNames ?? []).length === 0 ? (
+              <p className="rounded-lg border border-dashed border-slate-700/60 py-3 text-center text-[10px] text-slate-600">
+                No cards selected — click Browse to add
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {(action.cardNames ?? []).map((name, ci) => (
+                  <span
+                    key={`${name}-${ci}`}
+                    className="inline-flex items-center gap-1 rounded-lg border border-fuchsia-700/40 bg-fuchsia-950/35 py-0.5 pl-2 pr-1 text-[11px] font-medium text-fuchsia-200"
+                  >
+                    {name}
+                    <button
+                      type="button"
+                      onClick={() => set({ cardNames: (action.cardNames ?? []).filter((_, i) => i !== ci) })}
+                      className="ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-md text-fuchsia-400 hover:bg-fuchsia-800/50 hover:text-fuchsia-100"
+                    >
+                      <X className="h-2.5 w-2.5" strokeWidth={2.5} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          {showPicker && (
+            <CardPickerModal
+              title="Pick cards to add"
+              multiSelect
+              initialSelected={action.cardNames ?? []}
+              onSelect={(cardIds) => set({ cardNames: [...new Set([...(action.cardNames ?? []), ...cardIds])] })}
+              onClose={() => setShowPicker(false)}
+            />
+          )}
+          <div>
+            <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              Add to pile
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {PILE_ADD_OPTIONS.map((p) => {
+                const active = (action.pile ?? "hand") === p.value;
+                return (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => set({ pile: p.value })}
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
+                      active
+                        ? p.activeClass
+                        : "border-slate-700/50 bg-slate-900/50 text-slate-400 hover:border-slate-600 hover:bg-slate-800/50 hover:text-slate-300"
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              Count
+            </label>
+            <input
+              type="number"
+              min={1}
+              value={action.cardCount ?? 1}
+              onChange={(e) => set({ cardCount: Math.max(1, Number(e.target.value)) })}
+              className="w-32 rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm tabular-nums text-slate-100 outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/30"
+            />
+          </div>
+          {/* Prompt on click toggle */}
+          <div className="flex items-center gap-2.5 pt-1">
+            <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              Prompt on click
+            </label>
+            <button
+              type="button"
+              onClick={() => set({ hasInput: !action.hasInput })}
+              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 transition-colors ${
+                action.hasInput
+                  ? "border-fuchsia-500/60 bg-fuchsia-500/30"
+                  : "border-slate-600 bg-slate-800"
+              }`}
+            >
+              <span
+                className={`inline-block h-3.5 w-3.5 -translate-y-px rounded-full bg-white shadow transition-transform ${
+                  action.hasInput ? "translate-x-3.5" : "translate-x-0"
+                }`}
+              />
+            </button>
+            <span className="text-[10px] text-slate-600">
+              {action.hasInput ? "Lets you edit card & count before adding" : "Uses preset values directly"}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Has input + default value (not for remove_buff, move_to_pile, or add_card) */}
+      {action.actionType !== "remove_buff" && action.actionType !== "move_to_pile" && action.actionType !== "add_card" && (
         <div className="flex items-end gap-3">
           <div className="flex items-center gap-2">
             <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
@@ -292,39 +455,193 @@ function ActionRow({
   );
 }
 
+// ─── Export Modal ─────────────────────────────────────────────────────────────
+
+function ExportModal({
+  data,
+  initialSelected,
+  onExport,
+  onClose,
+}: {
+  data: CustomActionsMap;
+  initialSelected: Set<string>;
+  onExport: (ids: Set<string>) => void;
+  onClose: () => void;
+}) {
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set(initialSelected));
+
+  useEffect(() => {
+    function handler(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  const configuredCards = useMemo(
+    () => Object.keys(data).filter((k) => k !== "__global__" && data[k].length > 0).sort(),
+    [data],
+  );
+
+  const filteredCards = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return q ? configuredCards.filter((id) => id.toLowerCase().includes(q)) : configuredCards;
+  }, [configuredCards, search]);
+
+  function toggle(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-sm"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="flex h-[70vh] w-md max-w-[95vw] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/80">
+        {/* Header */}
+        <div className="flex shrink-0 items-center gap-3 border-b border-slate-800 px-4 py-3">
+          <p className="flex-1 text-sm font-bold text-slate-100">Export cards</p>
+          {selected.size > 0 && (
+            <span className="rounded-md border border-emerald-500/40 bg-emerald-950/50 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+              {selected.size} selected
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-400 hover:text-slate-200"
+          >
+            <X className="h-3.5 w-3.5" strokeWidth={2} />
+          </button>
+        </div>
+        {/* Search */}
+        <div className="shrink-0 border-b border-slate-800 p-3">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Filter configured cards…"
+            className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/30"
+          />
+          <div className="mt-2 flex items-center justify-between">
+            <p className="text-[10px] text-slate-600">
+              {filteredCards.length} card{filteredCards.length !== 1 ? "s" : ""} with custom actions
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setSelected(new Set(filteredCards))}
+                className="text-[10px] font-semibold text-cyan-500 hover:text-cyan-300"
+              >
+                Select all
+              </button>
+              {selected.size > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSelected(new Set())}
+                  className="text-[10px] font-semibold text-slate-500 hover:text-slate-300"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        {/* Card list */}
+        <div className="flex-1 overflow-y-auto [scrollbar-width:thin]">
+          {filteredCards.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <p className="text-sm text-slate-600">No configured cards found.</p>
+            </div>
+          ) : filteredCards.map((id) => {
+            const isChecked = selected.has(id);
+            const actionCount = data[id]?.length ?? 0;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => toggle(id)}
+                className={`flex w-full items-center gap-2.5 border-b border-slate-800/40 px-3 py-2.5 text-left last:border-0 transition ${
+                  isChecked ? "bg-emerald-950/30 ring-inset ring-1 ring-emerald-500/30" : "hover:bg-slate-800/40"
+                }`}
+              >
+                <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition ${
+                  isChecked ? "border-emerald-500/70 bg-emerald-500/30 text-emerald-200" : "border-slate-600 bg-slate-800 text-transparent"
+                }`}>
+                  <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                </span>
+                <span className={`min-w-0 flex-1 truncate text-xs font-semibold ${isChecked ? "text-emerald-100" : "text-slate-100"}`}>
+                  {id}
+                </span>
+                <span className="shrink-0 rounded-md bg-amber-950/70 px-1.5 py-0.5 text-[9px] font-bold text-amber-300">
+                  {actionCount}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        {/* Footer */}
+        <div className="shrink-0 border-t border-slate-800 p-3">
+          <div className="flex items-center gap-3">
+            <p className="flex-1 text-[10px] text-slate-500">
+              {selected.size === 0
+                ? "Select cards to export"
+                : `${selected.size} card${selected.size !== 1 ? "s" : ""} will be exported`}
+            </p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-slate-700"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => { onExport(selected); onClose(); }}
+              disabled={selected.size === 0}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/50 bg-emerald-950/50 px-4 py-2 text-sm font-bold text-emerald-100 transition hover:bg-emerald-900/60 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Download className="h-3.5 w-3.5" strokeWidth={2} />
+              Export {selected.size > 0 ? selected.size : ""}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main editor ─────────────────────────────────────────────────────────────
 
 export default function CardActionsEditorClient() {
-  const [data, setData] = useState<CustomActionsMap>({});
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [data, setData] = useState<CustomActionsMap>(baseActionsData as CustomActionsMap);
   const [saved, setSaved] = useState(false);
-  const [resetting, setResetting] = useState(false);
   const [resetDone, setResetDone] = useState(false);
   const [search, setSearch] = useState("");
+  const [charFilter, setCharFilter] = useState<CharFilter>("all");
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
-
-  function loadFromApi() {
-    fetch("/api/card-actions")
-      .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false); })
-      .catch(() => setLoading(false));
-  }
-
-  useEffect(() => { loadFromApi(); }, []);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return allCards;
-    return allCards.filter(({ id, data }) =>
-      id.toLowerCase().includes(q) ||
-      (data.type ?? "").toLowerCase().includes(q) ||
-      (data.rarity ?? "").toLowerCase().includes(q) ||
-      (data.characters ?? "").toLowerCase().includes(q) ||
-      (data.description ?? "").toLowerCase().includes(q),
-    );
-  }, [search]);
+    return allCards.filter(({ id, data }) => {
+      if (charFilter !== "all" && (data.characters ?? "").toLowerCase() !== charFilter) return false;
+      if (!q) return true;
+      return (
+        id.toLowerCase().includes(q) ||
+        (data.type ?? "").toLowerCase().includes(q) ||
+        (data.rarity ?? "").toLowerCase().includes(q) ||
+        (data.characters ?? "").toLowerCase().includes(q) ||
+        (data.description ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [search, charFilter]);
 
   const currentActions: CustomAction[] = selectedCard ? (data[selectedCard] ?? []) : [];
 
@@ -358,36 +675,39 @@ export default function CardActionsEditorClient() {
     setSearch("");
   }
 
-  async function save() {
-    setSaving(true);
-    try {
-      await fetch("/api/card-actions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data, null, 2),
-      });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    } catch {}
-    setSaving(false);
+  function save() {
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "custom_card_actions.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
   }
 
-  async function resetToOriginal() {
-    if (!confirm("Reset all actions to the original backup? This will discard all your changes.")) return;
-    setResetting(true);
-    try {
-      const res = await fetch("/api/card-actions?reset=true", { method: "POST" });
-      if (res.ok) {
-        setSelectedCard(null);
-        loadFromApi();
-        setResetDone(true);
-        setTimeout(() => setResetDone(false), 2500);
-      }
-    } catch {}
-    setResetting(false);
+  function resetToOriginal() {
+    if (!confirm("Reset to the original? This will reset your editor view AND download custom_card_actions.json so you can replace the file.")) return;
+    const backup = backupActionsData as CustomActionsMap;
+    setData(backup);
+    setSelectedCard(null);
+    setSearch("");
+    // Download the backup as the replacement JSON file
+    const json = JSON.stringify(backup, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "custom_card_actions.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    setResetDone(true);
+    setTimeout(() => setResetDone(false), 2500);
   }
 
-  const configuredCardCount = Object.keys(data).length;
+  const configuredCardCount = Object.keys(data).filter((k) => k !== "__global__").length;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -417,14 +737,19 @@ export default function CardActionsEditorClient() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={resetToOriginal}
-              disabled={resetting}
-              title="Reset all actions to the original backup"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-600/60 bg-slate-800/60 px-3 py-2 text-xs font-semibold text-slate-300 transition hover:border-rose-500/50 hover:bg-rose-950/40 hover:text-rose-200 disabled:opacity-50"
+              onClick={() => setShowExportModal(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-600/60 bg-slate-800/60 px-3 py-2 text-xs font-semibold text-slate-300 transition hover:border-violet-500/50 hover:bg-violet-950/30 hover:text-violet-200"
             >
-              {resetting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2} />
-              ) : resetDone ? (
+              <Download className="h-3.5 w-3.5" strokeWidth={2} />
+              Select to export
+            </button>
+            <button
+              type="button"
+              onClick={resetToOriginal}
+              title="Reset to the original backup (loses unsaved session edits)"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-600/60 bg-slate-800/60 px-3 py-2 text-xs font-semibold text-slate-300 transition hover:border-rose-500/50 hover:bg-rose-950/40 hover:text-rose-200"
+            >
+              {resetDone ? (
                 <Check className="h-3.5 w-3.5 text-emerald-300" strokeWidth={2.5} />
               ) : (
                 <RotateCcw className="h-3.5 w-3.5" strokeWidth={2} />
@@ -434,65 +759,101 @@ export default function CardActionsEditorClient() {
             <button
               type="button"
               onClick={save}
-              disabled={saving}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-500/50 bg-cyan-950/50 px-4 py-2 text-sm font-bold text-cyan-100 transition hover:bg-cyan-900/60 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-500/50 bg-cyan-950/50 px-4 py-2 text-sm font-bold text-cyan-100 transition hover:bg-cyan-900/60"
             >
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
-              ) : saved ? (
+              {saved ? (
                 <Check className="h-4 w-4 text-emerald-300" strokeWidth={2.5} />
               ) : (
-                <Save className="h-4 w-4" strokeWidth={2} />
+                <Download className="h-4 w-4" strokeWidth={2} />
               )}
-              {saved ? "Saved to disk!" : "Save"}
+              {saved ? "Downloaded!" : "Export JSON"}
             </button>
           </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-6">
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-6 w-6 animate-spin text-slate-500" strokeWidth={2} />
-          </div>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-[22rem_1fr]">
+        <div className="grid gap-6 md:grid-cols-[22rem_1fr]">
             {/* Left: card list */}
             <aside className="flex flex-col gap-2">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                All cards — {filtered.length} shown
-              </p>
+              {/* Character filter chips */}
+              <div className="flex flex-wrap gap-1">
+                {CHAR_FILTERS.map((f) => (
+                  <button
+                    key={f.value}
+                    type="button"
+                    onClick={() => setCharFilter(f.value)}
+                    className={`rounded-lg border px-2 py-0.5 text-[10px] font-semibold transition ${
+                      charFilter === f.value ? f.activePill : f.pill
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Filter by name, type, rarity, character…"
+                placeholder="Search name, type, rarity…"
                 className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/30"
               />
+              <p className="text-[10px] font-semibold text-slate-600">
+                {filtered.length} card{filtered.length !== 1 ? "s" : ""} shown
+              </p>
               <div
                 ref={listRef}
                 className="flex-1 overflow-y-auto rounded-xl border border-slate-800 bg-slate-900/50 [scrollbar-width:thin] md:max-h-[calc(100vh-12rem)]"
               >
+                {/* Pinned: Global Actions */}
+                {(() => {
+                  const gid = "__global__";
+                  const isSelected = selectedCard === gid;
+                  const count = data[gid]?.length ?? 0;
+                  return (
+                    <button
+                      key={gid}
+                      type="button"
+                      onClick={() => setSelectedCard(gid)}
+                      className={`flex w-full flex-col gap-1 border-b-2 border-amber-500/30 px-3 py-2.5 text-left transition ${
+                        isSelected
+                          ? "bg-amber-950/40 ring-inset ring-1 ring-amber-500/50"
+                          : "bg-amber-950/10 hover:bg-amber-950/25"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Zap className="h-3 w-3 shrink-0 text-amber-400" strokeWidth={2} />
+                        <span className={`text-xs font-bold ${isSelected ? "text-amber-200" : "text-amber-300/90"}`}>
+                          Global Actions
+                        </span>
+                        {count > 0 && (
+                          <span className="ml-auto shrink-0 rounded-md bg-amber-950/70 px-1.5 py-0.5 text-[9px] font-bold text-amber-300">
+                            {count}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-500">Apply to any selected card</p>
+                    </button>
+                  );
+                })()}
                 {filtered.map(({ id, data: card }) => {
                   const isSelected = selectedCard === id;
                   const hasConfig = Boolean(data[id]?.length);
                   const typeStr = card.type ?? "";
                   const rarityStr = card.rarity ?? "";
-                  const charStr = card.characters ?? "";
+                  const charStyle = getCharStyle(card.characters);
                   return (
                     <button
                       key={id}
                       type="button"
                       onClick={() => setSelectedCard(id)}
-                      className={`flex w-full flex-col gap-1 border-b border-slate-800/50 px-3 py-2.5 text-left last:border-0 transition ${
-                        isSelected
-                          ? "bg-slate-800/90 ring-inset ring-1 ring-cyan-500/40"
-                          : "hover:bg-slate-800/50"
+                      className={`flex w-full flex-col gap-1 border-b border-slate-800/40 px-3 py-2.5 text-left last:border-0 transition ${
+                        isSelected ? charStyle.selectedRowBg : `${charStyle.rowBg} hover:brightness-125`
                       }`}
                     >
                       {/* Name row */}
                       <div className="flex items-center gap-1.5">
-                        <span className={`min-w-0 truncate text-xs font-semibold ${isSelected ? "text-cyan-100" : "text-slate-100"}`}>
+                        <span className={`min-w-0 truncate text-xs font-semibold ${isSelected ? "text-white" : "text-slate-100"}`}>
                           {id}
                         </span>
                         {hasConfig && (
@@ -513,9 +874,9 @@ export default function CardActionsEditorClient() {
                             {rarityStr}
                           </span>
                         )}
-                        {charStr && (
-                          <span className="rounded border border-slate-700/50 bg-slate-800/50 px-1 py-px text-[9px] font-medium capitalize text-slate-400">
-                            {charStr}
+                        {card.characters && (
+                          <span className={`rounded border px-1 py-px text-[9px] font-medium capitalize ${charStyle.charChip}`}>
+                            {card.characters}
                           </span>
                         )}
                       </div>
@@ -544,25 +905,39 @@ export default function CardActionsEditorClient() {
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <h2 className="text-base font-bold text-slate-100">{selectedCard}</h2>
-                        {(() => {
-                          const card = (stsBundle as any).cards?.[selectedCard] as CardData | undefined;
-                          if (!card) return null;
-                          return (
-                            <>
-                              {card.type && <span className={`rounded border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${typeChipCls(card.type)}`}>{card.type}</span>}
-                              {card.rarity && <span className={`rounded border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${rarityChipCls(card.rarity)}`}>{card.rarity}</span>}
-                              {card.characters && <span className="rounded border border-slate-700/50 bg-slate-800/50 px-1.5 py-0.5 text-[9px] font-medium capitalize text-slate-400">{card.characters}</span>}
-                            </>
-                          );
-                        })()}
+                        {selectedCard === "__global__" ? (
+                          <>
+                            <Zap className="h-4 w-4 text-amber-400" strokeWidth={2} />
+                            <h2 className="text-base font-bold text-amber-200">Global Actions</h2>
+                            <span className="rounded border border-amber-500/40 bg-amber-950/40 px-1.5 py-0.5 text-[9px] font-semibold text-amber-300">
+                              All cards
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <h2 className="text-base font-bold text-slate-100">{selectedCard}</h2>
+                            {(() => {
+                              const card = (stsBundle as any).cards?.[selectedCard] as CardData | undefined;
+                              if (!card) return null;
+                              return (
+                                <>
+                                  {card.type && <span className={`rounded border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${typeChipCls(card.type)}`}>{card.type}</span>}
+                                  {card.rarity && <span className={`rounded border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${rarityChipCls(card.rarity)}`}>{card.rarity}</span>}
+                                  {card.characters && <span className="rounded border border-slate-700/50 bg-slate-800/50 px-1.5 py-0.5 text-[9px] font-medium capitalize text-slate-400">{card.characters}</span>}
+                                </>
+                              );
+                            })()}
+                          </>
+                        )}
                       </div>
                       <p className="mt-0.5 text-[11px] text-slate-500">
-                        {currentActions.length} custom action{currentActions.length !== 1 ? "s" : ""}
+                        {selectedCard === "__global__"
+                          ? `${currentActions.length} global action${currentActions.length !== 1 ? "s" : ""} — shown for every selected card`
+                          : `${currentActions.length} custom action${currentActions.length !== 1 ? "s" : ""}`}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      {data[selectedCard] !== undefined && (
+                      {data[selectedCard] !== undefined && selectedCard !== "__global__" && (
                         <button
                           type="button"
                           onClick={deleteCardConfig}
@@ -616,8 +991,29 @@ export default function CardActionsEditorClient() {
               )}
             </div>
           </div>
-        )}
       </main>
+
+      {showExportModal && (
+        <ExportModal
+          data={data}
+          initialSelected={new Set(selectedCard && data[selectedCard] ? [selectedCard] : [])}
+          onExport={(ids) => {
+            const subset: CustomActionsMap = {};
+            for (const id of ids) {
+              if (data[id]) subset[id] = data[id];
+            }
+            const json = JSON.stringify(subset, null, 2);
+            const blob = new Blob([json], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `card_actions_export_${ids.size}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+          onClose={() => setShowExportModal(false)}
+        />
+      )}
     </div>
   );
 }

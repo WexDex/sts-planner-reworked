@@ -7,7 +7,8 @@
       "PowerShell(\\(Get-Item \"e:\\\\Projects\\\\sts-planner-reworked\\\\dist\\\\combatData.json\"\\).Length / 1MB)",
       "PowerShell(\\(Get-Item \"e:\\\\Projects\\\\sts-planner-reworked\\\\app\\\\data\\\\db\\\\STS_CARDS_DB.json\"\\).Length / 1MB)",
       "Bash(xargs grep -l \"import.*\\\\.json\")",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(node -e ' *)"
     ]
   }
 }

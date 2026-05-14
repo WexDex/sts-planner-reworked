@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useGameManager } from "@/app/context/GameContext";
 import QuickActionInputPopup from "@/app/components/UI/QuickActionInputPopup";
+import CardPickerModal from "@/app/components/UI/CardPickerModal";
 
 type ValueNode = number | { base: number; upgraded?: number };
 
@@ -30,12 +31,15 @@ type CustomAction = {
     | "modify_block"
     | "modify_energy"
     | "draw_cards"
-    | "move_to_pile";
+    | "move_to_pile"
+    | "add_card";
   buffName?: string;
   buffType?: "buff" | "debuff";
   hasInput?: boolean;
   defaultValue?: number;
   pile?: string;
+  cardName?: string;
+  cardCount?: number;
 };
 
 type CustomActionsMap = Record<string, CustomAction[]>;
@@ -44,6 +48,12 @@ type PopupState = {
   title: string;
   defaultValue: number;
   onApply: (v: number) => void;
+} | null;
+
+type CardPickerState = {
+  pile: string;
+  defaultCount: number;
+  initialSelected: string[];
 } | null;
 
 function resolveValue(node: ValueNode | undefined, isUpgraded: boolean): number | null {
@@ -79,6 +89,15 @@ function customActionTooltip(ca: CustomAction): string {
       return `Draws cards from the draw pile into hand${ca.hasInput ? " — enter count in the popup" : ` (${ca.defaultValue})`}.`;
     case "move_to_pile":
       return `Moves this card directly to the ${ca.pile ?? "hand"} pile.`;
+    case "add_card": {
+      const names = (ca as any).cardNames as string[] | undefined ?? (ca.cardName ? [ca.cardName] : []);
+      const pile = ca.pile ?? "hand";
+      const count = ca.cardCount ?? 1;
+      if (names.length === 0) return `Opens card picker to add cards to ${pile}.`;
+      const preview = names.slice(0, 4).join(", ") + (names.length > 4 ? ` +${names.length - 4} more` : "");
+      if (!ca.hasInput) return `→ ${pile}: ${preview}${count > 1 ? ` (×${count} each)` : ""}`;
+      return `Opens picker · ${preview} pre-selected → ${pile}`;
+    }
     default:
       return "";
   }
@@ -142,9 +161,11 @@ export default function QuickActionsSection() {
     drawCards,
     addBuffDebuff,
     removeBuffDebuff,
+    addCardFromDB,
   } = useGameManager();
 
   const [popup, setPopup] = useState<PopupState>(null);
+  const [cardPicker, setCardPicker] = useState<CardPickerState>(null);
   const [customActions, setCustomActions] = useState<CustomActionsMap>(customCardActionsData as CustomActionsMap);
 
   useEffect(() => {
@@ -315,7 +336,32 @@ export default function QuickActionsSection() {
 
   const cardCustomActions: CustomAction[] = customActions[card.name] ?? [];
 
-  if (dbActions.length === 0 && cardCustomActions.length === 0) return null;
+  // When the JSON has entries for this card, those are authoritative —
+  // skip the runtime DB-derived actions to avoid showing duplicates.
+  const visibleDbActions = cardCustomActions.length > 0 ? [] : dbActions;
+
+  if (visibleDbActions.length === 0 && cardCustomActions.length === 0) return null;
+
+  function triggerCustomAction(ca: CustomAction) {
+    if (ca.actionType === "add_card") {
+      if (!ca.hasInput) {
+        fireCustomAction(ca);
+        return;
+      }
+      const preSelected = (ca as any).cardNames as string[] | undefined ?? (ca.cardName ? [ca.cardName] : []);
+      setCardPicker({
+        pile: ca.pile ?? "hand",
+        defaultCount: ca.cardCount ?? 1,
+        initialSelected: preSelected,
+      });
+      return;
+    }
+    if (ca.hasInput) {
+      openPopup(ca.label, ca.defaultValue ?? 1, (v) => fireCustomAction(ca, v));
+      return;
+    }
+    fireCustomAction(ca);
+  }
 
   function fireCustomAction(ca: CustomAction, value?: number) {
     const v = value ?? ca.defaultValue ?? 0;
@@ -344,10 +390,21 @@ export default function QuickActionsSection() {
       case "move_to_pile":
         moveSelectedCards(ca.pile ?? "hand");
         break;
+      case "add_card": {
+        const names = (ca as any).cardNames as string[] | undefined ?? (ca.cardName ? [ca.cardName] : []);
+        if (names.length > 0) {
+          addCardFromDB(
+            names.flatMap((id) => Array(Math.max(1, ca.cardCount ?? 1)).fill(id)),
+            ca.pile ?? "hand",
+            false,
+          );
+        }
+        break;
+      }
     }
   }
 
-  const totalCount = dbActions.length + cardCustomActions.length;
+  const totalCount = visibleDbActions.length + cardCustomActions.length;
 
   return (
     <>
@@ -378,9 +435,9 @@ export default function QuickActionsSection() {
           {/* Divider */}
           <div className="mb-3 h-px bg-linear-to-r from-amber-500/30 via-amber-500/10 to-transparent" />
 
-          {/* DB-derived actions */}
+          {/* DB-derived actions (only for cards without JSON config) */}
           <div className="space-y-1.5">
-            {dbActions.map((a) => (
+            {visibleDbActions.map((a) => (
               <QAButton
                 key={a.label}
                 icon={a.icon}
@@ -392,10 +449,10 @@ export default function QuickActionsSection() {
               />
             ))}
 
-            {/* Custom actions */}
+            {/* Card-specific custom actions */}
             {cardCustomActions.length > 0 && (
               <>
-                {dbActions.length > 0 && (
+                {visibleDbActions.length > 0 && (
                   <div className="my-2 flex items-center gap-2">
                     <div className="h-px flex-1 bg-slate-800/60" />
                     <span className="text-[9px] font-bold uppercase tracking-wider text-slate-600">Custom</span>
@@ -408,19 +465,14 @@ export default function QuickActionsSection() {
                     icon={<Sparkles className="h-4 w-4" strokeWidth={2} />}
                     label={ca.label}
                     hint={customActionTooltip(ca)}
-                    badge={ca.hasInput && ca.defaultValue !== undefined ? `${ca.defaultValue}` : undefined}
+                    badge={ca.actionType === "add_card" ? (ca.cardCount ?? 1) > 1 ? `×${ca.cardCount}` : undefined : (ca.hasInput && ca.defaultValue !== undefined ? `${ca.defaultValue}` : undefined)}
                     color="border-teal-500/50 bg-teal-950/40 text-teal-100 hover:bg-teal-900/55 hover:border-teal-400/65"
-                    onClick={() => {
-                      if (ca.hasInput) {
-                        openPopup(ca.label, ca.defaultValue ?? 1, (v) => fireCustomAction(ca, v));
-                      } else {
-                        fireCustomAction(ca);
-                      }
-                    }}
+                    onClick={() => triggerCustomAction(ca)}
                   />
                 ))}
               </>
             )}
+
           </div>
 
         </div>
@@ -432,6 +484,25 @@ export default function QuickActionsSection() {
           defaultValue={popup.defaultValue}
           onApply={popup.onApply}
           onClose={closePopup}
+        />
+      )}
+
+      {cardPicker && (
+        <CardPickerModal
+          title={`Add cards → ${cardPicker.pile}`}
+          multiSelect
+          showCount
+          defaultCount={cardPicker.defaultCount}
+          pile={cardPicker.pile}
+          initialSelected={cardPicker.initialSelected}
+          onSelect={(cardIds, count) => {
+            addCardFromDB(
+              cardIds.flatMap((id) => Array(count).fill(id)),
+              cardPicker.pile,
+              false,
+            );
+          }}
+          onClose={() => setCardPicker(null)}
         />
       )}
     </>

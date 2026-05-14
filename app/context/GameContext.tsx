@@ -554,13 +554,27 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (fromTurnIndex === -1 || toTurnIndex === -1) return;
 
     const fromCurrentPlanner = fromTurnIndex === currentTurnIndex;
-    const sourceState =
+    const rawState =
       fromCurrentPlanner && turnPhase !== 'enemy' && gameState
         ? cloneGameData(gameState)
         : cloneGameData(turns[fromTurnIndex].state);
 
+    // Strip logs from the copied state; replace with a single system marker.
+    const copiedState = {
+      ...rawState,
+      activityLog: [
+        createActivityLogEntry(
+          `Copied from Turn ${fromTurnId}`,
+          undefined,
+          undefined,
+          `State snapshot pasted from Turn ${fromTurnId} (id: ${fromTurnId})`,
+          'system',
+        ),
+      ],
+    };
+
     setTurns(prev =>
-      prev.map((turn, idx) => (idx === toTurnIndex ? { ...turn, state: cloneGameData(sourceState) } : turn)),
+      prev.map((turn, idx) => (idx === toTurnIndex ? { ...turn, state: copiedState } : turn)),
     );
 
     if (activeDecisionNodeId && decisionNodes.length > 0) {
@@ -568,7 +582,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       const targetNodeId = canonicalBySlot.get(toTurnId);
       if (targetNodeId) {
         setDecisionNodes(prev =>
-          prev.map(n => (n.id === targetNodeId ? { ...n, snapshot: cloneGameData(sourceState) } : n)),
+          prev.map(n => (n.id === targetNodeId ? { ...n, snapshot: copiedState } : n)),
         );
       }
     }
@@ -577,12 +591,36 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, [turns, currentTurnIndex, turnPhase, gameState, activeDecisionNodeId, decisionNodes]);
 
   const resetCurrentTurn = useCallback(() => {
-    if (!initialData) return;
-    const resetState = cloneGameData(initialData);
+    if (!initialData) {
+      toast('No initial data to reset to', 'error');
+      return;
+    }
+    const resetState: CombatData = {
+      ...cloneGameData(initialData),
+      activityLog: [
+        createActivityLogEntry(
+          'Turn reset to initial state',
+          undefined, undefined,
+          'All cards, player stats, and enemy stats restored to combat start.',
+          'system',
+        ),
+      ],
+    };
     setGameState(resetState);
     setTurns(prev => prev.map((turn, idx) => idx === currentTurnIndex ? { ...turn, state: resetState } : turn));
     setTurnPhase('start');
-  }, [initialData, currentTurnIndex]);
+    if (activeDecisionNodeId && decisionNodes.length > 0) {
+      const currentTurnId = turns[currentTurnIndex]?.id;
+      if (currentTurnId) {
+        const canonicalBySlot = getActiveLineageCanonicalNodeIdBySlot(decisionNodes, activeDecisionNodeId, turns);
+        const targetNodeId = canonicalBySlot.get(currentTurnId);
+        if (targetNodeId) {
+          setDecisionNodes(prev => prev.map(n => n.id === targetNodeId ? { ...n, snapshot: resetState } : n));
+        }
+      }
+    }
+    toast('Turn reset to initial state', 'success');
+  }, [initialData, currentTurnIndex, activeDecisionNodeId, decisionNodes, turns]);
 
   const updateGameState = (newState: Partial<CombatData>) => {
     setGameState((prevState) => {

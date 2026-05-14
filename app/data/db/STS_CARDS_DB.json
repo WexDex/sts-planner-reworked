@@ -1845,10 +1845,6 @@
       "cost": {
         "base": 3
       },
-      "mantra": {
-        "base": 1,
-        "upgraded": 1
-      },
       "ethereal": {
         "base": true,
         "upgraded": false
@@ -4052,6 +4048,10 @@
       },
       "block": {
         "base": 4
+      },
+      "mantra": {
+        "base": 2,
+        "upgraded": 3
       }
     },
     "Protect": {

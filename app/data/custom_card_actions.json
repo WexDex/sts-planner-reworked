@@ -9,70 +9,194 @@
       "defaultValue": 1
     }
   ],
-  "Establishment": [
+  "Acrobatics": [
     {
-      "label": "Give Establishment",
-      "actionType": "give_buff",
-      "buffName": "Establishment",
-      "buffType": "buff",
-      "hasInput": false,
-      "defaultValue": 1
-    }
-  ],
-  "Corruption": [
-    {
-      "label": "Give Corruption",
-      "actionType": "give_buff",
-      "buffName": "Corruption",
-      "buffType": "buff",
-      "hasInput": false,
-      "defaultValue": 1
-    }
-  ],
-  "Demon Form": [
-    {
-      "label": "Apply Demon Form",
-      "actionType": "give_buff",
-      "buffName": "Demon Form",
-      "buffType": "buff",
-      "hasInput": true,
-      "defaultValue": 2
-    }
-  ],
-  "Feel No Pain": [
-    {
-      "label": "Apply Feel No Pain",
-      "actionType": "give_buff",
-      "buffName": "Feel No Pain",
-      "buffType": "buff",
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
       "hasInput": true,
       "defaultValue": 3
     }
   ],
-  "Inflame": [
+  "Adrenaline": [
     {
-      "label": "Apply Strength",
-      "actionType": "give_buff",
-      "buffName": "Strength",
-      "buffType": "buff",
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
       "hasInput": true,
       "defaultValue": 2
+    },
+    {
+      "label": "Gain Energy",
+      "actionType": "modify_energy",
+      "hasInput": true,
+      "defaultValue": 1
+    },
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
     }
   ],
-  "Combust": [
+  "After Image": [
     {
-      "label": "Apply Combust",
-      "actionType": "give_buff",
-      "buffName": "Combust",
-      "buffType": "buff",
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Alchemize": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Alpha": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Apotheosis": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Apparition": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    },
+    {
+      "label": "Ethereal",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Armaments": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
       "hasInput": true,
       "defaultValue": 5
     }
   ],
-  "Predator": [
+  "Ascender's Bane": [
     {
-      "label": "Draw 2 cards",
+      "label": "Ethereal",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Auto-Shields": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 11
+    }
+  ],
+  "Backflip": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 5
+    },
+    {
+      "label": "Draw Cards",
       "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "Backstab": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Bandage Up": [
+    {
+      "label": "Heal",
+      "actionType": "modify_hp",
+      "hasInput": true,
+      "defaultValue": 4
+    },
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Battle Trance": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 3
+    }
+  ],
+  "Berserk": [
+    {
+      "label": "Gain Energy",
+      "actionType": "modify_energy",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Beta": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Biased Cognition": [
+    {
+      "label": "Gain Focus",
+      "actionType": "give_buff",
+      "buffName": "Focus",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 4
+    }
+  ],
+  "Bite": [
+    {
+      "label": "Heal",
+      "actionType": "modify_hp",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "Blasphemy": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Bloodletting": [
+    {
+      "label": "Gain Energy",
+      "actionType": "modify_energy",
       "hasInput": true,
       "defaultValue": 2
     }
@@ -85,36 +209,50 @@
       "buffType": "buff",
       "hasInput": true,
       "defaultValue": 1
-    }
-  ],
-  "Catalyst": [
+    },
     {
-      "label": "Double Poison",
-      "actionType": "give_debuff",
-      "buffName": "Poison",
-      "buffType": "debuff",
+      "label": "Add Block",
+      "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 0
+      "defaultValue": 5
     }
   ],
-  "Noxious Fumes": [
+  "Boot Sequence": [
     {
-      "label": "Apply Noxious Fumes",
-      "actionType": "give_buff",
-      "buffName": "Noxious Fumes",
-      "buffType": "buff",
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 10
+    },
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Brutality": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Burning Pact": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
       "hasInput": true,
       "defaultValue": 2
     }
   ],
-  "Tools of the Trade": [
+  "Calculated Gamble": [
     {
-      "label": "Apply Tools of the Trade",
-      "actionType": "give_buff",
-      "buffName": "Tools of the Trade",
-      "buffType": "buff",
-      "hasInput": false,
-      "defaultValue": 1
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
     }
   ],
   "Calming": [
@@ -127,6 +265,1058 @@
       "defaultValue": 2
     }
   ],
+  "Carnage": [
+    {
+      "label": "Ethereal",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Catalyst": [
+    {
+      "label": "Double Poison",
+      "actionType": "give_debuff",
+      "buffName": "Poison",
+      "buffType": "debuff",
+      "hasInput": true,
+      "defaultValue": 0
+    },
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Charge Battery": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 7
+    }
+  ],
+  "Chill": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Chrysalis": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Cloak and Dagger": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 6
+    }
+  ],
+  "Clumsy": [
+    {
+      "label": "Ethereal",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Collect": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Combust": [
+    {
+      "label": "Apply Combust",
+      "actionType": "give_buff",
+      "buffName": "Combust",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 5
+    }
+  ],
+  "Compile Driver": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Conjure Blade": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Consume": [
+    {
+      "label": "Gain Focus",
+      "actionType": "give_buff",
+      "buffName": "Focus",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "Coolheaded": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Core Surge": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Corruption": [
+    {
+      "label": "Give Corruption",
+      "actionType": "give_buff",
+      "buffName": "Corruption",
+      "buffType": "buff",
+      "hasInput": false,
+      "defaultValue": 1
+    }
+  ],
+  "Crescendo": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Crippling Cloud": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Cut Through Fate": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Dagger Throw": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Dark Embrace": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Dark Shackles": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Dash": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 10
+    }
+  ],
+  "Dazed": [
+    {
+      "label": "Ethereal",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Deceive Reality": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 4
+    }
+  ],
+  "Deep Breath": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Defend_B": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 5
+    }
+  ],
+  "Defend_G": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 5
+    }
+  ],
+  "Defend_P": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 5
+    }
+  ],
+  "Defend_R": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 5
+    }
+  ],
+  "Deflect": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 4
+    }
+  ],
+  "Demon Form": [
+    {
+      "label": "Apply Demon Form",
+      "actionType": "give_buff",
+      "buffName": "Demon Form",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "Deus Ex Machina": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Deva Form": [
+    {
+      "label": "Gain Mantra",
+      "actionType": "give_buff",
+      "buffName": "Mantra",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 1
+    },
+    {
+      "label": "Ethereal",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Die Die Die": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Disarm": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Discovery": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Distraction": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Dodge and Roll": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 4
+    }
+  ],
+  "Doppelganger": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Double Energy": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Dramatic Entrance": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Dropkick": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Echo Form": [
+    {
+      "label": "Ethereal",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Empty Body": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 7
+    }
+  ],
+  "Empty Mind": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "Endless Agony": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Equilibrium": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 13
+    }
+  ],
+  "Escape Plan": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 3
+    },
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Establishment": [
+    {
+      "label": "Give Establishment",
+      "actionType": "give_buff",
+      "buffName": "Establishment",
+      "buffType": "buff",
+      "hasInput": false,
+      "defaultValue": 1
+    }
+  ],
+  "Evaluate": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 6
+    }
+  ],
+  "Evolve": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Exhume": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "FTL": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Feed": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Feel No Pain": [
+    {
+      "label": "Apply Feel No Pain",
+      "actionType": "give_buff",
+      "buffName": "Feel No Pain",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 3
+    },
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 3
+    }
+  ],
+  "Fiend Fire": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Finesse": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 2
+    },
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Fission": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    },
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Flame Barrier": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 12
+    }
+  ],
+  "Flash of Steel": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Force Field": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 12
+    }
+  ],
+  "Foreign Influence": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Genetic Algorithm": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 1
+    },
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Ghostly Armor": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 10
+    },
+    {
+      "label": "Ethereal",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Glacier": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 7
+    }
+  ],
+  "Good Instincts": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 6
+    }
+  ],
+  "Halt": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 3
+    }
+  ],
+  "Heatsinks": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Heel Hook": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Hologram": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 3
+    },
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Impatience": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "Impervious": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 30
+    },
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Infernal Blade": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Inflame": [
+    {
+      "label": "Apply Strength",
+      "actionType": "give_buff",
+      "buffName": "Strength",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "Inner Peace": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 3
+    }
+  ],
+  "Insight": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 2
+    },
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Intimidate": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Iron Wave": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 5
+    }
+  ],
+  "Jack of All Trades": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Just Lucky": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "Leap": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 9
+    }
+  ],
+  "Leg Sweep": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 11
+    }
+  ],
+  "Lesson Learned": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Like Water": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 5
+    }
+  ],
+  "Limit Break": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Madness": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Malaise": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Master of Strategy": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 3
+    },
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Mental Fortress": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 4
+    }
+  ],
+  "Metallicize": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 3
+    }
+  ],
+  "Metamorphosis": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Miracle": [
+    {
+      "label": "Gain Energy",
+      "actionType": "modify_energy",
+      "hasInput": true,
+      "defaultValue": 1
+    },
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Nightmare": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Nirvana": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 3
+    }
+  ],
+  "Noxious Fumes": [
+    {
+      "label": "Apply Noxious Fumes",
+      "actionType": "give_buff",
+      "buffName": "Noxious Fumes",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "Offering": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 3
+    },
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Overclock": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "Panacea": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Panic Button": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 30
+    },
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Perseverance": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 5
+    }
+  ],
+  "Piercing Wail": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Pommel Strike": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Power Through": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 15
+    }
+  ],
+  "Predator": [
+    {
+      "label": "Draw 2 cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "Prepared": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Pride": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Prostrate": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 4
+    }
+  ],
+  "Protect": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 12
+    }
+  ],
+  "Pummel": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Quick Slash": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Rage": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 3
+    }
+  ],
+  "Rainbow": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Reaper": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Reboot": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 4
+    },
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Reflex": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "Reinforced Body": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 7
+    }
+  ],
+  "Ritual Dagger": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
   "Rushdown": [
     {
       "label": "Apply Rushdown",
@@ -135,6 +1325,400 @@
       "buffType": "buff",
       "hasInput": false,
       "defaultValue": 1
+    },
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "Safety": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 12
+    },
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Sanctity": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 6
+    },
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "Scrape": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 4
+    }
+  ],
+  "Scrawl": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Second Wind": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 5
+    }
+  ],
+  "Secret Technique": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Secret Weapon": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Seeing Red": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Seek": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Sentinel": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 5
+    }
+  ],
+  "Shiv": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Shockwave": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Shrug It Off": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 8
+    },
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Simmering Fury": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "Skim": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 3
+    }
+  ],
+  "Slimed": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Smite": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Spirit Shield": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 3
+    }
+  ],
+  "Steam Barrier": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 6
+    }
+  ],
+  "Survivor": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 8
+    }
+  ],
+  "Sweeping Beam": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Swivel": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 8
+    }
+  ],
+  "Tactician": [
+    {
+      "label": "Gain Energy",
+      "actionType": "modify_energy",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Talk to the Hand": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 2
+    },
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Tempest": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Terror": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Thinking Ahead": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 2
+    },
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Third Eye": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 7
+    }
+  ],
+  "Through Violence": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Tools of the Trade": [
+    {
+      "label": "Apply Tools of the Trade",
+      "actionType": "give_buff",
+      "buffName": "Tools of the Trade",
+      "buffType": "buff",
+      "hasInput": false,
+      "defaultValue": 1
+    },
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
+  "Tranquility": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Transmutation": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "True Grit": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 7
+    }
+  ],
+  "Vault": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Vigilance": [
+    {
+      "label": "Add Block",
+      "actionType": "modify_block",
+      "hasInput": true,
+      "defaultValue": 8
+    }
+  ],
+  "Violence": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Void": [
+    {
+      "label": "Ethereal",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Warcry": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 1
+    },
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    }
+  ],
+  "Wheel Kick": [
+    {
+      "label": "Draw Cards",
+      "actionType": "draw_cards",
+      "hasInput": true,
+      "defaultValue": 2
+    }
+  ],
+  "White Noise": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
+    },
+    {
+      "label": "azdazdazdazdazdazdazdazdaz",
+      "actionType": "add_card",
+      "buffName": "",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 1,
+      "pile": "hand",
+      "cardNames": [
+        "A Thousand Cuts",
+        "Accuracy",
+        "Adrenaline",
+        "Acrobatics",
+        "After Image"
+      ]
+    }
+  ],
+  "Wish": [
+    {
+      "label": "Self Exhaust",
+      "actionType": "move_to_pile",
+      "pile": "exhaust",
+      "hasInput": false
     }
   ]
 }

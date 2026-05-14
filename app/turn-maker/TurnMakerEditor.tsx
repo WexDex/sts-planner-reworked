@@ -29,7 +29,7 @@ import {
   hslHueToAccentHex,
   resolvedDecisionTimelineAccentHex,
 } from "@/app/utils/decisionTimelineAccent";
-import { ENEMY_INTENT_ACTION_GLYPH } from "@/app/utils/enemyIntentGlyphs";
+import { IntentIconGlyph } from "@/app/components/UI/IntentIconGlyph";
 
 const ACTION_LABEL: Record<EnemyIntentAction["type"], string> = {
   attack: "Attack",
@@ -46,61 +46,61 @@ const ACTION_LABEL: Record<EnemyIntentAction["type"], string> = {
 /** Inactive chip + ring when selected (radio-card look). */
 const ACTION_TYPE_THEME: Record<
   EnemyIntentAction["type"],
-  { ring: string; soft: string; label: string; glyph: string }
+  { ring: string; soft: string; label: string; iconCls: string }
 > = {
   attack: {
     ring: "ring-rose-400/55 border-rose-400/65 bg-rose-950/55 text-rose-50",
     soft: "border-rose-500/25 bg-rose-950/25 text-rose-100/85 hover:bg-rose-950/45",
     label: "text-rose-200/95",
-    glyph: ENEMY_INTENT_ACTION_GLYPH.attack,
+    iconCls: "text-rose-300",
   },
   multi_attack: {
     ring: "ring-orange-400/55 border-orange-400/65 bg-orange-950/55 text-orange-50",
     soft: "border-orange-500/25 bg-orange-950/25 text-orange-100/85 hover:bg-orange-950/45",
     label: "text-orange-200/95",
-    glyph: ENEMY_INTENT_ACTION_GLYPH.multi_attack,
+    iconCls: "text-orange-300",
   },
   block: {
     ring: "ring-sky-400/55 border-sky-400/65 bg-sky-950/55 text-sky-50",
     soft: "border-sky-500/25 bg-sky-950/25 text-sky-100/85 hover:bg-sky-950/45",
     label: "text-sky-200/95",
-    glyph: ENEMY_INTENT_ACTION_GLYPH.block,
+    iconCls: "text-sky-300",
   },
   debuff: {
     ring: "ring-violet-400/55 border-violet-400/65 bg-violet-950/55 text-violet-50",
     soft: "border-violet-500/25 bg-violet-950/25 text-violet-100/85 hover:bg-violet-950/45",
     label: "text-violet-200/95",
-    glyph: ENEMY_INTENT_ACTION_GLYPH.debuff,
+    iconCls: "text-violet-300",
   },
   buff: {
     ring: "ring-emerald-400/55 border-emerald-400/65 bg-emerald-950/55 text-emerald-50",
     soft: "border-emerald-500/25 bg-emerald-950/25 text-emerald-100/85 hover:bg-emerald-950/45",
     label: "text-emerald-200/95",
-    glyph: ENEMY_INTENT_ACTION_GLYPH.buff,
+    iconCls: "text-emerald-300",
   },
   status: {
     ring: "ring-cyan-400/55 border-cyan-400/65 bg-cyan-950/55 text-cyan-50",
     soft: "border-cyan-500/25 bg-cyan-950/25 text-cyan-100/85 hover:bg-cyan-950/45",
     label: "text-cyan-200/95",
-    glyph: ENEMY_INTENT_ACTION_GLYPH.status,
+    iconCls: "text-cyan-300",
   },
   cowardly: {
     ring: "ring-amber-400/55 border-amber-400/65 bg-amber-950/55 text-amber-50",
     soft: "border-amber-500/25 bg-amber-950/25 text-amber-100/85 hover:bg-amber-950/45",
     label: "text-amber-200/95",
-    glyph: ENEMY_INTENT_ACTION_GLYPH.cowardly,
+    iconCls: "text-amber-300",
   },
   stunned: {
     ring: "ring-indigo-400/55 border-indigo-400/65 bg-indigo-950/55 text-indigo-50",
     soft: "border-indigo-500/25 bg-indigo-950/25 text-indigo-100/85 hover:bg-indigo-950/45",
     label: "text-indigo-200/95",
-    glyph: ENEMY_INTENT_ACTION_GLYPH.stunned,
+    iconCls: "text-indigo-300",
   },
   no_action: {
     ring: "ring-slate-400/55 border-slate-400/65 bg-slate-900/95 text-slate-50",
     soft: "border-slate-500/25 bg-slate-950/40 text-slate-200/85 hover:bg-slate-900/65",
     label: "text-slate-200/95",
-    glyph: ENEMY_INTENT_ACTION_GLYPH.no_action,
+    iconCls: "text-slate-400",
   },
 };
 
@@ -425,13 +425,15 @@ function ActionTypePickerGrid({
             aria-checked={active}
             onClick={() => onChange(t)}
             title={ACTION_LABEL[t]}
-            className={`flex min-h-[4.5rem] flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2.5 text-center shadow-sm transition-all active:scale-[0.98] ${
+            className={`flex min-h-[4.5rem] flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-2.5 text-center shadow-sm transition-all active:scale-[0.98] ${
               active ? `${th.ring} ring-2 shadow-md shadow-black/30` : `${th.soft}`
             }`}
           >
-            <span className="text-[1.65rem] leading-none drop-shadow-sm [filter:none] select-none" aria-hidden>
-              {th.glyph}
-            </span>
+            <IntentIconGlyph
+              type={t}
+              className={`h-6 w-6 shrink-0 drop-shadow-sm ${th.iconCls}`}
+              strokeWidth={1.75}
+            />
             <span className={`line-clamp-2 text-[11px] font-semibold leading-tight ${th.label}`}>
               {ACTION_LABEL[t]}
             </span>
@@ -1009,7 +1011,7 @@ export default function TurnMakerEditor() {
                   : line;
               const ac = plannerSlotAccentById.get(it.turn) ?? "#64748b";
               const nActs = it.actions.length;
-              const typeStrip = it.actions.slice(0, 5).map((a) => ACTION_TYPE_THEME[a.type].glyph);
+              const typeStrip = it.actions.slice(0, 5);
               const stepLabel = `${idx + 1} / ${intentsSorted.length}`;
               return (
                 <button
@@ -1069,9 +1071,19 @@ export default function TurnMakerEditor() {
                         )}
                       </div>
                       {typeStrip.length > 0 ? (
-                        <p className="mt-1.5 text-[11px] leading-none tracking-wide text-slate-400">
-                          {typeStrip.join("\u00A0\u00B7\u00A0")}
-                        </p>
+                        <div className="mt-1.5 flex items-center gap-1">
+                          {typeStrip.map((a, ai) => (
+                            <IntentIconGlyph
+                              key={ai}
+                              type={a.type}
+                              className={`h-3.5 w-3.5 shrink-0 ${ACTION_TYPE_THEME[a.type].iconCls}`}
+                              strokeWidth={1.75}
+                            />
+                          ))}
+                          {it.actions.length > 5 && (
+                            <span className="text-[9px] font-bold text-slate-500">+{it.actions.length - 5}</span>
+                          )}
+                        </div>
                       ) : null}
                       <p
                         className={`mt-2 line-clamp-2 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed ${
