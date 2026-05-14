@@ -4,6 +4,7 @@ import {
   BookOpen,
   CalendarClock,
   FileCode2,
+  FlaskConical,
   FolderOpen,
   GitBranch,
   Hand,
@@ -20,14 +21,17 @@ import {
 } from "lucide-react";
 import { TutorialPageShell } from "@/app/tutorial/TutorialScrollNav.client";
 import { TUTORIAL_DOC_UPDATE_CLASS } from "@/app/tutorial/docUpdateHighlight";
+import OrbEditor from "@/app/tutorial/OrbEditor.client";
 
 const HUB_TOC = [
+  { id: "whats-new", label: "What's new" },
   { id: "overview", label: "Overview" },
   { id: "quick-start", label: "Quick start" },
   { id: "phases", label: "Turn phases" },
   { id: "ui-map", label: "Planner UI map" },
   { id: "saves", label: "Saves quick ref" },
   { id: "topic-guides", label: "In-depth guides" },
+  { id: "orb-editor", label: "Orb defaults" },
   { id: "disclaimer", label: "Disclaimer" },
 ] as const;
 
@@ -44,6 +48,96 @@ export default function TutorialHub() {
           timeline persistence, cards, and theme exports. Search indexes every glossary cell site-wide.
         </p>
       </div>
+
+      <section id="whats-new" className={`scroll-mt-28 space-y-4 rounded-2xl border border-indigo-500/35 bg-indigo-950/20 p-5 sm:p-6 ${TUTORIAL_DOC_UPDATE_CLASS}`}>
+        <h2 className="flex items-center gap-2 text-base font-bold text-indigo-100">
+          <Sparkles className="h-4 w-4 text-indigo-400" strokeWidth={2} aria-hidden />
+          What&apos;s new — 2026.05.14
+        </h2>
+        <p className="text-sm text-slate-400">
+          Feature expansion shipped in this pass. All items below are live from the main planner shell.
+        </p>
+
+        {/* ── Latest drop ── */}
+        <div className="rounded-xl border border-indigo-400/40 bg-indigo-950/30 p-4">
+          <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-indigo-300">
+            <Sparkles className="h-3 w-3 shrink-0" strokeWidth={2.5} aria-hidden />
+            Latest additions
+          </p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border border-indigo-500/25 bg-slate-900/60 p-3 text-xs">
+              <p className="mb-1 flex items-center gap-1 font-bold text-indigo-200">
+                <Zap className="h-3 w-3 shrink-0" strokeWidth={2.5} aria-hidden />
+                Quick Actions panel
+              </p>
+              <p className="leading-relaxed text-slate-400">
+                Collapsible panel in the topbar (indigo button). Houses orb channel, stance toggle, hand discard tools,
+                scry, and shuffle discard → draw — all logged. Click the button to expand; click again to dismiss.
+              </p>
+            </div>
+            <div className="rounded-lg border border-sky-500/25 bg-slate-900/60 p-3 text-xs">
+              <p className="mb-1 flex items-center gap-1 font-bold text-sky-200">
+                <Layers className="h-3 w-3 shrink-0" strokeWidth={2.5} aria-hidden />
+                Pile Order Modal
+              </p>
+              <p className="leading-relaxed text-slate-400">
+                Shared drag-sort dialog used by Scry, Shuffle discard → draw, and the auto-reshuffle on deck exhaustion.
+                Drag rows to set the final sequence before confirming.
+              </p>
+            </div>
+            <div className="rounded-lg border border-emerald-500/25 bg-slate-900/60 p-3 text-xs">
+              <p className="mb-1 flex items-center gap-1 font-bold text-emerald-200">
+                <FlaskConical className="h-3 w-3 shrink-0" strokeWidth={2.5} aria-hidden />
+                Potion belt
+              </p>
+              <p className="leading-relaxed text-slate-400">
+                Belt strip in the bottom pile bar — 1–5 slots (default 2, +/− to resize). Add potions via the card
+                DB picker. Tap a filled slot to <strong className="text-slate-300">Use</strong> or{" "}
+                <strong className="text-slate-300">Discard</strong>; both log the action.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Full feature grid ── */}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border border-indigo-500/30 bg-slate-900/50 p-4 text-sm">
+            <p className="mb-1 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-indigo-300">
+              <Zap className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
+              Quick Actions — detail
+            </p>
+            <ul className="space-y-1 text-slate-400 text-xs leading-relaxed">
+              <li><strong className="text-slate-200">Orb channel</strong> — channel Lightning ⚡, Dark 🌑, Frost 🔵, or Plasma orbs. Evoke N (configurable); Trigger All Passives. Channel size displayed as filled/total.</li>
+              <li><strong className="text-slate-200">Stance toggle</strong> — 4-button row: Neutral / Wrath / Calm / Divinity. Active stance highlighted; switches logged.</li>
+              <li><strong className="text-slate-200">Discard whole hand</strong> — dumps all cards to discard in one click.</li>
+              <li><strong className="text-slate-200">Discard with exceptions</strong> — chip-picker lets you keep specific cards; rest go to discard.</li>
+              <li><strong className="text-slate-200">Scry N</strong> — peek and reorder the top N cards of your draw pile via the order modal.</li>
+              <li><strong className="text-slate-200">Shuffle discard → draw</strong> — opens the order modal to set the resulting draw sequence.</li>
+            </ul>
+          </div>
+          <div className="rounded-xl border border-amber-500/30 bg-slate-900/50 p-4 text-sm">
+            <p className="mb-1 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-amber-300">
+              <Hand className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
+              Deck &amp; draw improvements
+            </p>
+            <ul className="space-y-1 text-slate-400 text-xs leading-relaxed">
+              <li><strong className="text-slate-200">Smart draw</strong> — detects deck exhaustion mid-draw, logs both phases, opens the order modal to set reshuffle sequence before drawing the remainder.</li>
+              <li><strong className="text-slate-200">Card play order</strong> — multi-selected cards show numbered indigo badges (1, 2, 3…). Deselecting renumbers. Play resolves in badge order.</li>
+            </ul>
+          </div>
+          <div className="rounded-xl border border-teal-500/30 bg-slate-900/50 p-4 text-sm">
+            <p className="mb-1 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-teal-300">
+              <CalendarClock className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
+              Turn maker upgrades
+            </p>
+            <ul className="space-y-1 text-slate-400 text-xs leading-relaxed">
+              <li><strong className="text-slate-200">Drag-reorder</strong> — drag intent rows in the sidebar to rearrange sequence; turn numbers renumber automatically.</li>
+              <li><strong className="text-slate-200">Duplicate turn</strong> — one-click clone of the selected turn appended at the next slot.</li>
+              <li><strong className="text-slate-200">HP overrides</strong> — collapsible section per enemy: define <em>If HP ≤ X% → use Turn N</em> conditional rules. Affected turns show a ⚠ badge.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
 
       <section id="overview" className="scroll-mt-28 space-y-3">
         <h2 className="flex items-center gap-2 text-base font-bold text-slate-100">
@@ -158,8 +252,8 @@ export default function TutorialHub() {
               <strong className="text-slate-100">Card Actions rail</strong> — selecting a card swaps the left timeline rail into
               a vertical actions panel (Play, Quick Actions, Move to, Modify, Cost &amp; type, Manage). Deselecting or moving
               cards to Hand / Draw / Discard / Exhaust closes it and restores the timeline. See{" "}
-              <Link href="/card-actions-editor" className="font-semibold text-amber-200 underline-offset-2 hover:underline">
-                Quick Actions Editor
+              <Link href="/editors" className="font-semibold text-amber-200 underline-offset-2 hover:underline">
+                Editors
               </Link>{" "}
               to configure per-card custom actions.
             </span>
@@ -295,15 +389,14 @@ export default function TutorialHub() {
             </span>
           </Link>
           <Link
-            href="/card-actions-editor"
+            href="/editors"
             className={`rounded-xl border border-amber-500/40 bg-amber-950/20 p-4 text-sm shadow-sm transition hover:border-amber-400/60 hover:bg-amber-950/35 ${TUTORIAL_DOC_UPDATE_CLASS}`}
           >
             <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-amber-300">
-              <Zap className="h-3.5 w-3.5" aria-hidden /> Quick Actions Editor
+              <Zap className="h-3.5 w-3.5" aria-hidden /> Editors
             </span>
             <span className="mt-1 block font-semibold text-amber-50">
-              Configure per-card custom actions (buffs, debuffs, HP, energy, draw, pile moves) written to{" "}
-              <code className="font-mono text-amber-100/80">custom_card_actions.json</code>
+              Card Actions editor (per-card quick actions → <code className="font-mono text-amber-100/80">custom_card_actions.json</code>) and Card Field editor (browse &amp; patch all 370 card records in <code className="font-mono text-amber-100/80">STS_CARDS_DB.json</code>)
             </span>
           </Link>
         </div>
@@ -333,12 +426,25 @@ export default function TutorialHub() {
             <FileCode2 className="h-3.5 w-3.5" aria-hidden /> Open Theme wrapper →
           </Link>
           <Link
-            href="/card-actions-editor"
+            href="/editors"
             className={`inline-flex items-center gap-1.5 rounded-lg border border-amber-700/60 px-3 py-1.5 font-medium text-amber-200/95 hover:bg-amber-950/40 ${TUTORIAL_DOC_UPDATE_CLASS}`}
           >
-            <Zap className="h-3.5 w-3.5" aria-hidden /> Quick Actions Editor →
+            <Zap className="h-3.5 w-3.5" aria-hidden /> Editors →
           </Link>
         </div>
+      </section>
+
+      <section id="orb-editor" className="scroll-mt-28 space-y-4">
+        <h2 className="flex items-center gap-2 text-base font-bold text-slate-100">
+          <span className="text-lg" aria-hidden>⚡</span>
+          Orb default values
+        </h2>
+        <p className="text-sm text-slate-400 leading-relaxed">
+          Configure the starting passive and evoke tracker values for each orb type. These are the numbers
+          that pre-fill the orb slot trackers in the topbar whenever you channel that orb — useful if
+          your character&apos;s Focus or relics modify the base amounts.
+        </p>
+        <OrbEditor />
       </section>
 
       <section id="disclaimer" className="scroll-mt-28 border-t border-slate-800 pt-10 text-xs leading-relaxed text-slate-500">

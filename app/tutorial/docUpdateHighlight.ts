@@ -18,7 +18,7 @@ export const TUTORIAL_DOC_UPDATE_CLASS = "tutorial-doc-update" as const;
 export const TUTORIAL_DOC_UPDATE_NOTICE_CLASS = "tutorial-doc-update-notice" as const;
 
 /** Bump when you complete a doc pass (shown in chrome + per-page status strip). */
-export const TUTORIAL_DOC_PASS_VERSION = "2026.05.13";
+export const TUTORIAL_DOC_PASS_VERSION = "2026.05.14";
 
 /**
  * Tutorial routes that currently include ≥1 `.tutorial-doc-update` region — drives amber badges on header nav links.
@@ -26,6 +26,7 @@ export const TUTORIAL_DOC_PASS_VERSION = "2026.05.13";
  */
 export const TUTORIAL_ROUTES_WITH_DOC_UPDATES = [
   "/tutorial",
+  "/tutorial/turn-maker",
 ] as const;
 
 /** Whether the fixed tutorial nav entry should show the doc-pass stripe (linked page has striped regions). */

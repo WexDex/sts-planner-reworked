@@ -32,7 +32,20 @@ type CustomAction = {
     | "modify_energy"
     | "draw_cards"
     | "move_to_pile"
-    | "add_card";
+    | "add_card"
+    | "channel_orb"
+    | "evoke_orbs"
+    | "set_stance"
+    | "give_enemy_buff"
+    | "give_enemy_debuff"
+    | "modify_enemy_hp"
+    | "modify_enemy_block"
+    | "remove_enemy_buff"
+    | "trigger_orb_passive"
+    | "discard_hand"
+    | "reshuffle_discard"
+    | "set_orb_slots"
+    | "adjust_orb_slots";
   buffName?: string;
   buffType?: "buff" | "debuff";
   hasInput?: boolean;
@@ -40,6 +53,11 @@ type CustomAction = {
   pile?: string;
   cardName?: string;
   cardCount?: number;
+  orbType?: "lightning" | "dark" | "frost" | "plasma";
+  orbCount?: number;
+  stance?: "neutral" | "wrath" | "calm" | "divinity";
+  enemyIndex?: number;
+  allEnemies?: boolean;
 };
 
 type CustomActionsMap = Record<string, CustomAction[]>;
@@ -98,6 +116,32 @@ function customActionTooltip(ca: CustomAction): string {
       if (!ca.hasInput) return `→ ${pile}: ${preview}${count > 1 ? ` (×${count} each)` : ""}`;
       return `Opens picker · ${preview} pre-selected → ${pile}`;
     }
+    case "channel_orb":
+      return `Channels ${ca.orbCount ?? 1}× ${ca.orbType ?? "lightning"} orb${(ca.orbCount ?? 1) > 1 ? "s" : ""} into the orb slots.`;
+    case "evoke_orbs":
+      return `Evokes ${ca.hasInput ? "N" : ca.defaultValue ?? 1} orb${ca.hasInput || (ca.defaultValue ?? 1) > 1 ? "s" : ""} from the leftmost slot.`;
+    case "set_stance":
+      return `Changes Watcher stance to ${ca.stance ?? "neutral"}.`;
+    case "give_enemy_buff":
+      return `Gives "${ca.buffName}" buff to ${ca.allEnemies ? "all enemies" : `enemy #${ca.enemyIndex ?? 0}`}${ca.hasInput ? " — enter stacks" : ""}.`;
+    case "give_enemy_debuff":
+      return `Applies "${ca.buffName}" debuff to ${ca.allEnemies ? "all enemies" : `enemy #${ca.enemyIndex ?? 0}`}${ca.hasInput ? " — enter stacks" : ""}.`;
+    case "modify_enemy_hp":
+      return `Changes HP of ${ca.allEnemies ? "all enemies" : `enemy #${ca.enemyIndex ?? 0}`}${ca.hasInput ? " — enter value" : ` by ${ca.defaultValue}`}.`;
+    case "modify_enemy_block":
+      return `Modifies block of ${ca.allEnemies ? "all enemies" : `enemy #${ca.enemyIndex ?? 0}`}${ca.hasInput ? " — enter value" : ` by ${ca.defaultValue}`}.`;
+    case "remove_enemy_buff":
+      return `Removes "${ca.buffName}" from ${ca.allEnemies ? "all enemies" : `enemy #${ca.enemyIndex ?? 0}`}.`;
+    case "trigger_orb_passive":
+      return "Triggers the passive effect of all channeled orbs.";
+    case "discard_hand":
+      return "Discards all cards currently in hand.";
+    case "reshuffle_discard":
+      return "Shuffles the discard pile back into the draw pile.";
+    case "set_orb_slots":
+      return `Sets orb slot count to ${ca.hasInput ? "N" : ca.defaultValue ?? 3} (max 10).`;
+    case "adjust_orb_slots":
+      return `Adjusts orb slot count by ${ca.hasInput ? "N" : (ca.defaultValue ?? 1) >= 0 ? `+${ca.defaultValue ?? 1}` : ca.defaultValue ?? 1}.`;
     default:
       return "";
   }
@@ -162,6 +206,15 @@ export default function QuickActionsSection() {
     addBuffDebuff,
     removeBuffDebuff,
     addCardFromDB,
+    channelOrb,
+    evokeOrb,
+    setStance,
+    modifyEnemyHp,
+    modifyEnemyBlock,
+    triggerOrbPassive,
+    discardWholeHand,
+    shuffleDiscardIntoDraw,
+    setOrbChannelSize,
   } = useGameManager();
 
   const [popup, setPopup] = useState<PopupState>(null);
@@ -342,20 +395,18 @@ export default function QuickActionsSection() {
 
   if (visibleDbActions.length === 0 && cardCustomActions.length === 0) return null;
 
+  const NO_INPUT_TYPES = new Set<CustomAction["actionType"]>([
+    "channel_orb", "set_stance", "trigger_orb_passive", "discard_hand", "reshuffle_discard", "remove_buff", "remove_enemy_buff",
+  ]);
+
   function triggerCustomAction(ca: CustomAction) {
     if (ca.actionType === "add_card") {
-      if (!ca.hasInput) {
-        fireCustomAction(ca);
-        return;
-      }
+      if (!ca.hasInput) { fireCustomAction(ca); return; }
       const preSelected = (ca as any).cardNames as string[] | undefined ?? (ca.cardName ? [ca.cardName] : []);
-      setCardPicker({
-        pile: ca.pile ?? "hand",
-        defaultCount: ca.cardCount ?? 1,
-        initialSelected: preSelected,
-      });
+      setCardPicker({ pile: ca.pile ?? "hand", defaultCount: ca.cardCount ?? 1, initialSelected: preSelected });
       return;
     }
+    if (NO_INPUT_TYPES.has(ca.actionType)) { fireCustomAction(ca); return; }
     if (ca.hasInput) {
       openPopup(ca.label, ca.defaultValue ?? 1, (v) => fireCustomAction(ca, v));
       return;
@@ -401,6 +452,50 @@ export default function QuickActionsSection() {
         }
         break;
       }
+      case "channel_orb":
+        for (let i = 0; i < (ca.orbCount ?? 1); i++) channelOrb(ca.orbType ?? "lightning");
+        break;
+      case "evoke_orbs":
+        evokeOrb(Math.max(1, Math.round(v)));
+        break;
+      case "set_stance":
+        setStance(ca.stance ?? "neutral");
+        break;
+      case "give_enemy_buff":
+        if (ca.allEnemies) (gameState?.enemies ?? []).forEach((_, i) => addBuffDebuff("enemy", i, ca.buffName ?? "", "buff", v, undefined, sourceCard));
+        else addBuffDebuff("enemy", ca.enemyIndex ?? 0, ca.buffName ?? "", "buff", v, undefined, sourceCard);
+        break;
+      case "give_enemy_debuff":
+        if (ca.allEnemies) (gameState?.enemies ?? []).forEach((_, i) => addBuffDebuff("enemy", i, ca.buffName ?? "", "debuff", v, undefined, sourceCard));
+        else addBuffDebuff("enemy", ca.enemyIndex ?? 0, ca.buffName ?? "", "debuff", v, undefined, sourceCard);
+        break;
+      case "modify_enemy_hp":
+        if (ca.allEnemies) (gameState?.enemies ?? []).forEach((_, i) => modifyEnemyHp(i, v));
+        else modifyEnemyHp(ca.enemyIndex ?? 0, v);
+        break;
+      case "modify_enemy_block":
+        if (ca.allEnemies) (gameState?.enemies ?? []).forEach((_, i) => modifyEnemyBlock(i, v));
+        else modifyEnemyBlock(ca.enemyIndex ?? 0, v);
+        break;
+      case "remove_enemy_buff":
+        if (ca.allEnemies) (gameState?.enemies ?? []).forEach((_, i) => removeBuffDebuff("enemy", i, ca.buffName ?? ""));
+        else removeBuffDebuff("enemy", ca.enemyIndex ?? 0, ca.buffName ?? "");
+        break;
+      case "trigger_orb_passive":
+        triggerOrbPassive();
+        break;
+      case "discard_hand":
+        discardWholeHand();
+        break;
+      case "reshuffle_discard":
+        shuffleDiscardIntoDraw(gameState?.discard ?? []);
+        break;
+      case "set_orb_slots":
+        setOrbChannelSize(Math.max(1, Math.min(10, Math.round(v))));
+        break;
+      case "adjust_orb_slots":
+        setOrbChannelSize(Math.max(1, Math.min(10, (gameState?.orbSlots?.length ?? 3) + Math.round(v))));
+        break;
     }
   }
 

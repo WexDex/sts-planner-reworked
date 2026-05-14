@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useGameManager } from "@/app/context/GameContext";
 import STSCard from "./Card";
+import PotionBelt from "@/app/components/UI/PotionBelt";
 import { LOCATION } from "@/app/types/types";
 import {
   ChevronDown,
@@ -264,6 +265,8 @@ export default function BottomBlock() {
             );
           })}
         </div>
+
+        <PotionBelt />
 
         <div className="flex w-full min-w-0 max-md:max-w-full max-md:flex-nowrap max-md:items-center max-md:justify-between max-md:gap-1.5 max-md:overflow-x-auto max-md:pb-0.5 md:w-auto md:flex-wrap md:items-center md:gap-2 md:overflow-visible">
           <span className="hidden text-[10px] font-medium uppercase tracking-wide text-slate-500 sm:mr-0.5 md:inline">Draw</span>

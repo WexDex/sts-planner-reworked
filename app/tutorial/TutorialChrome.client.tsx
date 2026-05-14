@@ -200,7 +200,7 @@ export default function TutorialChrome({
           <strong className="font-semibold text-amber-100">Docs highlight (v{TUTORIAL_DOC_PASS_VERSION}):</strong> Panels with the
           amber left stripe are new or revised in this pass — Card Actions rail (left-rail swap, persistent selection), Quick
           Actions per card (block, draw, energy, heal, focus, mantra, exhaust, Power apply/remove), and the new{" "}
-          <code className="font-mono text-[10px] text-amber-200/90">/card-actions-editor</code> route for configuring custom
+          <code className="font-mono text-[10px] text-amber-200/90">/editors/card-actions</code> route for configuring custom
           per-card actions. Next doc update: remove old stripes, bump version, sync route list in{" "}
           <code className="font-mono text-[10px] text-amber-200/90">docUpdateHighlight.ts</code>, then restripe only what changed.
         </div>

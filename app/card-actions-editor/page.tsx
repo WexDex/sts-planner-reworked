@@ -1,5 +1,5 @@
-import CardActionsEditorClient from "@/app/card-actions-editor/CardActionsEditorClient";
+import { redirect } from "next/navigation";
 
-export default function CardActionsEditorPage() {
-  return <CardActionsEditorClient />;
+export default function CardActionsEditorRedirect() {
+  redirect("/editors/card-actions");
 }

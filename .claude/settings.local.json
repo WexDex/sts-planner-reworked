@@ -8,7 +8,11 @@
       "PowerShell(\\(Get-Item \"e:\\\\Projects\\\\sts-planner-reworked\\\\app\\\\data\\\\db\\\\STS_CARDS_DB.json\"\\).Length / 1MB)",
       "Bash(xargs grep -l \"import.*\\\\.json\")",
       "Bash(npx tsc *)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(Get-ChildItem -Path \"d:\\\\new Projects\\\\NextJS\\\\sts-planner-reworked\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Get-Content \"d:\\\\new Projects\\\\NextJS\\\\sts-planner-reworked\\\\app\\\\data\\\\db\\\\STS_CARDS_DB.json\" -TotalCount 50)",
+      "Bash(xargs grep -l \"token.*resolve\\\\|placeholder.*rule\")"
     ]
   }
 }

@@ -219,6 +219,31 @@ interface GameContextType {
   unlinkDecisionTimelineBranch: (nodeId: string) => void;
   /** Set planner phase marker on a turn checkpoint; writes a row to that node's snapshot log (and live log if active). */
   updateDecisionNodeTurnPhase: (nodeId: string, phase: CombatTurnPhase) => void;
+
+  // --- Orb channel (Defect) ---
+  channelOrb: (type: import('@/app/types/gameTypes').OrbType, droppedDmg?: number) => void;
+  evokeOrb: (count?: number, times?: number, passiveVal?: number, evokeVal?: number) => void;
+  triggerOrbPassive: () => void;
+  triggerSingleOrbPassive: (index: number, trackedDmg?: number) => void;
+  setOrbChannelSize: (size: number) => void;
+
+  // --- Stance (Watcher) ---
+  setStance: (stance: import('@/app/types/gameTypes').StanceType) => void;
+
+  // --- Potion belt ---
+  addPotionToBelt: (card: import('@/app/types/gameTypes').Card, slotIndex?: number) => void;
+  usePotionFromBelt: (slotIndex: number) => void;
+  discardPotionFromBelt: (slotIndex: number) => void;
+  setPotionBeltSize: (size: number) => void;
+
+  // --- Hand quick actions ---
+  discardWholeHand: () => void;
+  discardHandWithExceptions: (keepCardUids: string[]) => void;
+  shuffleDiscardIntoDraw: (orderedCards: import('@/app/types/gameTypes').Card[]) => void;
+
+  // --- Smart draw reshuffle ---
+  /** Complete a pending deck-exhaustion reshuffle; called by UI after PileOrderModal confirms. */
+  confirmReshuffle: (orderedDiscard: import('@/app/types/gameTypes').Card[]) => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -2047,36 +2072,416 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const ensureUid = (card: import('@/app/types/gameTypes').Card): import('@/app/types/gameTypes').Card =>
+    card._uid ? card : { ...card, _uid: crypto.randomUUID().slice(0, 8) };
+
+  const orbEmoji: Record<import('@/app/types/gameTypes').OrbType, string> = {
+    lightning: '⚡', dark: '🌑', frost: '🔵', plasma: '⬜',
+  };
+
   const drawCards = (amount: number, sourceCard?: SourceCard) => {
     setGameState((prevState) => {
       if (!prevState) return prevState;
-      const cardsToDraw = prevState.draw.slice(0, amount);
-      const remainingDraw = prevState.draw.slice(amount);
-      const newHand = [...prevState.hand, ...cardsToDraw];
+      const phase1Cards = prevState.draw.slice(0, Math.min(amount, prevState.draw.length)).map(ensureUid);
+      const remainingNeeded = amount - phase1Cards.length;
+      const remainingDraw = prevState.draw.slice(phase1Cards.length);
+      const newHand = [...prevState.hand, ...phase1Cards];
       const titleSuffix = sourceCard ? ` · ${sourceCard.name}` : '';
+
+      if (remainingNeeded <= 0 || prevState.discard.length === 0) {
+        // Normal draw — no exhaustion or nothing to reshuffle
+        return {
+          ...prevState,
+          draw: remainingDraw,
+          hand: newHand,
+          pendingReshuffle: null,
+          activityLog: [
+            ...prevState.activityLog,
+            createActivityLogEntry(
+              `Drew ${phase1Cards.length} card${phase1Cards.length === 1 ? '' : 's'}${titleSuffix}`,
+              `Draw pile: ${prevState.draw.length} cards`,
+              `Draw pile: ${remainingDraw.length} cards`,
+              `Drawn: ${formatCardNames(phase1Cards)}`,
+              'state-change',
+              {
+                cardsInvolved: [
+                  ...phase1Cards.map((c) => ({ name: c.name, cardType: c.type })),
+                  ...(sourceCard ? [sourceCardRef(sourceCard)] : []),
+                ],
+                context: [
+                  { label: 'Draw pile', value: `${prevState.draw.length} → ${remainingDraw.length}` },
+                  { label: 'Hand size', value: `${prevState.hand.length} → ${newHand.length}` },
+                  ...(sourceCard ? sourceCardContext(sourceCard) : []),
+                ],
+              },
+            ),
+          ],
+        };
+      }
+
+      // Deck exhaustion mid-draw — set pendingReshuffle so UI can open PileOrderModal
       return {
         ...prevState,
-        draw: remainingDraw,
+        draw: [],
         hand: newHand,
+        pendingReshuffle: { remaining: remainingNeeded, phase1Cards },
         activityLog: [
           ...prevState.activityLog,
           createActivityLogEntry(
-            `Drew ${cardsToDraw.length} card${cardsToDraw.length === 1 ? '' : 's'}${titleSuffix}`,
+            `Drew ${phase1Cards.length} card${phase1Cards.length === 1 ? '' : 's'} — draw pile exhausted, need ${remainingNeeded} more${titleSuffix}`,
             `Draw pile: ${prevState.draw.length} cards`,
-            `Draw pile: ${remainingDraw.length} cards`,
-            `Drawn: ${formatCardNames(cardsToDraw)}`,
+            'Draw pile: 0 cards (exhausted)',
+            `Phase 1 drawn: ${formatCardNames(phase1Cards)}. Waiting for discard reshuffle (${prevState.discard.length} cards).`,
             'state-change',
             {
-              cardsInvolved: [
-                ...cardsToDraw.map((c) => ({ name: c.name, cardType: c.type })),
-                ...(sourceCard ? [sourceCardRef(sourceCard)] : []),
-              ],
+              cardsInvolved: phase1Cards.map((c) => ({ name: c.name, cardType: c.type })),
               context: [
-                { label: 'Draw pile', value: `${prevState.draw.length} → ${remainingDraw.length}` },
-                { label: 'Hand size', value: `${prevState.hand.length} → ${newHand.length}` },
+                { label: 'Phase 1 drawn', value: `${phase1Cards.length} card${phase1Cards.length === 1 ? '' : 's'}` },
+                { label: 'Still needed', value: `${remainingNeeded}` },
+                { label: 'Discard to reshuffle', value: `${prevState.discard.length} cards` },
                 ...(sourceCard ? sourceCardContext(sourceCard) : []),
               ],
             },
+          ),
+        ],
+      };
+    });
+  };
+
+  const confirmReshuffle = (orderedDiscard: import('@/app/types/gameTypes').Card[]) => {
+    setGameState((prevState) => {
+      if (!prevState?.pendingReshuffle) return prevState;
+      const { remaining, phase1Cards } = prevState.pendingReshuffle;
+      const withUids = orderedDiscard.map(ensureUid);
+      const phase2Cards = withUids.slice(0, remaining);
+      const newDraw = withUids.slice(remaining);
+      const newHand = [...prevState.hand, ...phase2Cards];
+      return {
+        ...prevState,
+        draw: newDraw,
+        hand: newHand,
+        discard: [],
+        pendingReshuffle: null,
+        activityLog: [
+          ...prevState.activityLog,
+          createActivityLogEntry(
+            `Reshuffled discard → drew ${phase2Cards.length} more (${phase1Cards.length + phase2Cards.length} total)`,
+            `Discard: ${orderedDiscard.length} cards`,
+            `Discard: 0 · Draw: ${newDraw.length} cards`,
+            `Phase 1: ${formatCardNames(phase1Cards)}. Reshuffled ${orderedDiscard.length} cards. Phase 2: ${formatCardNames(phase2Cards)}.`,
+            'state-change',
+            {
+              cardsInvolved: [
+                ...phase1Cards.map((c) => ({ name: c.name, cardType: c.type })),
+                ...phase2Cards.map((c) => ({ name: c.name, cardType: c.type })),
+              ],
+              context: [
+                { label: 'Reshuffled', value: `${orderedDiscard.length} cards from discard` },
+                { label: 'Phase 2 drawn', value: formatCardNames(phase2Cards) },
+                { label: 'New draw pile', value: `${newDraw.length} cards` },
+              ],
+            },
+          ),
+        ],
+      };
+    });
+  };
+
+  // --- Orb channel ---
+  const channelOrb = (type: import('@/app/types/gameTypes').OrbType, droppedDmg?: number) => {
+    setGameState((prevState) => {
+      if (!prevState) return prevState;
+      const size = prevState.orbChannelSize ?? 3;
+      const current = prevState.orbs ?? [];
+      const next = [type, ...current].slice(0, size);
+      const dropped = current.length >= size ? current[current.length - 1] : null;
+      const newEntries = [
+        createActivityLogEntry(
+          `Channeled ${orbEmoji[type]} ${type.charAt(0).toUpperCase() + type.slice(1)} Orb`,
+          current.map(o => orbEmoji[o]).join(' ') || '(empty)',
+          next.map(o => orbEmoji[o]).join(' '),
+          undefined,
+          'state-change',
+        ),
+      ];
+      if (dropped) {
+        newEntries.push(createActivityLogEntry(
+          `Auto-evoked ${orbEmoji[dropped]} ${dropped.charAt(0).toUpperCase() + dropped.slice(1)} (channel full)`,
+          undefined,
+          undefined,
+          droppedDmg !== undefined ? `Tracked value at evoke: ${droppedDmg}` : undefined,
+          'state-change',
+        ));
+      }
+      return {
+        ...prevState,
+        orbs: next,
+        activityLog: [...prevState.activityLog, ...newEntries],
+      };
+    });
+  };
+
+  const evokeOrb = (count: number = 1, times?: number, passiveVal?: number, evokeVal?: number) => {
+    setGameState((prevState) => {
+      if (!prevState) return prevState;
+      const current = prevState.orbs ?? [];
+      const n = Math.min(count, current.length);
+      const evoked = current.slice(current.length - n);
+      const remaining = current.slice(0, current.length - n);
+      if (evoked.length === 0) return prevState;
+      // change color of text depending on orb
+      const type = orbEmoji[evoked[0]] + evoked[0].charAt(0).toUpperCase() + evoked[0].slice(1);
+
+      const timesLabel = times !== undefined ? `Evoked orb ${type} x${times} times` : `Evoked ${evoked.map(o => `${orbEmoji[o]} ${o}`).join(', ')}`;
+      const valNote = (passiveVal !== undefined && evokeVal !== undefined)
+        ? `values (${passiveVal}, ${evokeVal})`
+        : undefined;
+      return {
+        ...prevState,
+        orbs: remaining,
+        activityLog: [
+          ...prevState.activityLog,
+          createActivityLogEntry(
+            timesLabel,
+            current.map(o => orbEmoji[o]).join(' '),
+            remaining.map(o => orbEmoji[o]).join(' ') || '(empty)',
+            valNote,
+            'state-change',
+          ),
+        ],
+      };
+    });
+  };
+
+  const triggerOrbPassive = () => {
+    setGameState((prevState) => {
+      if (!prevState) return prevState;
+      const orbs = prevState.orbs ?? [];
+      if (orbs.length === 0) return prevState;
+      const passiveDesc: Record<import('@/app/types/gameTypes').OrbType, string> = {
+        lightning: 'deal 3 damage to random enemy',
+        dark: 'accumulate damage',
+        frost: 'gain 2 block',
+        plasma: 'gain 2 energy',
+      };
+      return {
+        ...prevState,
+        activityLog: [
+          ...prevState.activityLog,
+          createActivityLogEntry(
+            `Triggered passive for ${orbs.length} orb${orbs.length === 1 ? '' : 's'}`,
+            undefined,
+            undefined,
+            orbs.map(o => `${orbEmoji[o]} ${o.charAt(0).toUpperCase() + o.slice(1)}: ${passiveDesc[o]}`).join(' · '),
+            'state-change',
+          ),
+        ],
+      };
+    });
+  };
+
+  const triggerSingleOrbPassive = (index: number, trackedDmg?: number) => {
+    setGameState((prevState) => {
+      if (!prevState) return prevState;
+      const orbs = prevState.orbs ?? [];
+      const orb = orbs[index];
+      if (!orb) return prevState;
+      const passiveLabel: Record<import('@/app/types/gameTypes').OrbType, string> = {
+        lightning: 'damage to random enemy',
+        dark: 'accumulated',
+        frost: 'block',
+        plasma: 'energy',
+      };
+      const label = passiveLabel[orb];
+      return {
+        ...prevState,
+        activityLog: [
+          ...prevState.activityLog,
+          createActivityLogEntry(
+            `${orbEmoji[orb]} ${orb.charAt(0).toUpperCase() + orb.slice(1)} passive (slot ${index + 1})`,
+            undefined,
+            undefined,
+            trackedDmg !== undefined ? `${label}: ${trackedDmg}` : label,
+            'state-change',
+          ),
+        ],
+      };
+    });
+  };
+
+  const setOrbChannelSize = (size: number) => {
+    setGameState((prevState) => {
+      if (!prevState) return prevState;
+      const clamped = Math.max(1, Math.min(10, size));
+      const current = prevState.orbs ?? [];
+      // When reducing, drop from the left (newest orbs first)
+      const trimmed = current.length > clamped ? current.slice(current.length - clamped) : current;
+      return {
+        ...prevState,
+        orbChannelSize: clamped,
+        orbs: trimmed,
+      };
+    });
+  };
+
+  // --- Stance ---
+  const setStance = (stance: import('@/app/types/gameTypes').StanceType) => {
+    setGameState((prevState) => {
+      if (!prevState) return prevState;
+      const prev = prevState.stance ?? 'neutral';
+      if (prev === stance) return prevState;
+      return {
+        ...prevState,
+        stance,
+        activityLog: [
+          ...prevState.activityLog,
+          createActivityLogEntry(
+            `Entered ${stance.charAt(0).toUpperCase() + stance.slice(1)} Stance`,
+            `Stance: ${prev}`,
+            `Stance: ${stance}`,
+            undefined,
+            'state-change',
+          ),
+        ],
+      };
+    });
+  };
+
+  // --- Potion belt ---
+  const addPotionToBelt = (card: import('@/app/types/gameTypes').Card, slotIndex?: number) => {
+    setGameState((prevState) => {
+      if (!prevState) return prevState;
+      const size = prevState.potionBeltSize ?? 2;
+      const belt = prevState.potionBelt ?? Array(size).fill(null);
+      const idx = slotIndex !== undefined ? slotIndex : belt.findIndex(s => s === null);
+      if (idx < 0 || idx >= belt.length) return prevState;
+      const next = [...belt];
+      next[idx] = ensureUid(card);
+      return {
+        ...prevState,
+        potionBelt: next,
+        activityLog: [
+          ...prevState.activityLog,
+          createActivityLogEntry(`Added ${card.name} to potion belt (slot ${idx + 1})`, undefined, undefined, undefined, 'state-change'),
+        ],
+      };
+    });
+  };
+
+  const usePotionFromBelt = (slotIndex: number) => {
+    setGameState((prevState) => {
+      if (!prevState) return prevState;
+      const belt = prevState.potionBelt ?? [];
+      const potion = belt[slotIndex];
+      if (!potion) return prevState;
+      const next = [...belt];
+      next[slotIndex] = null;
+      return {
+        ...prevState,
+        potionBelt: next,
+        activityLog: [
+          ...prevState.activityLog,
+          createActivityLogEntry(`Used ${potion.name}`, `Slot ${slotIndex + 1}: ${potion.name}`, `Slot ${slotIndex + 1}: empty`, undefined, 'card-action', { cardsInvolved: [{ name: potion.name, cardType: 'Potion' }] }),
+        ],
+      };
+    });
+  };
+
+  const discardPotionFromBelt = (slotIndex: number) => {
+    setGameState((prevState) => {
+      if (!prevState) return prevState;
+      const belt = prevState.potionBelt ?? [];
+      const potion = belt[slotIndex];
+      if (!potion) return prevState;
+      const next = [...belt];
+      next[slotIndex] = null;
+      return {
+        ...prevState,
+        potionBelt: next,
+        activityLog: [
+          ...prevState.activityLog,
+          createActivityLogEntry(`Discarded ${potion.name} from potion belt`, undefined, undefined, undefined, 'state-change'),
+        ],
+      };
+    });
+  };
+
+  const setPotionBeltSize = (size: number) => {
+    setGameState((prevState) => {
+      if (!prevState) return prevState;
+      const clamped = Math.max(1, Math.min(5, size));
+      const current = prevState.potionBelt ?? [];
+      const next = Array(clamped).fill(null).map((_, i) => current[i] ?? null);
+      return { ...prevState, potionBeltSize: clamped, potionBelt: next };
+    });
+  };
+
+  // --- Hand quick actions ---
+  const discardWholeHand = () => {
+    setGameState((prevState) => {
+      if (!prevState || prevState.hand.length === 0) return prevState;
+      const discarded = prevState.hand;
+      return {
+        ...prevState,
+        hand: [],
+        discard: [...prevState.discard, ...discarded],
+        activityLog: [
+          ...prevState.activityLog,
+          createActivityLogEntry(
+            `Discarded full hand (${discarded.length} card${discarded.length === 1 ? '' : 's'})`,
+            `Hand: ${discarded.length}`,
+            'Hand: 0',
+            `Discarded: ${formatCardNames(discarded)}`,
+            'state-change',
+            { cardsInvolved: discarded.map(c => ({ name: c.name, cardType: c.type })) },
+          ),
+        ],
+      };
+    });
+  };
+
+  const discardHandWithExceptions = (keepCardUids: string[]) => {
+    setGameState((prevState) => {
+      if (!prevState) return prevState;
+      const kept = prevState.hand.filter(c => c._uid && keepCardUids.includes(c._uid));
+      const discarded = prevState.hand.filter(c => !c._uid || !keepCardUids.includes(c._uid));
+      if (discarded.length === 0) return prevState;
+      return {
+        ...prevState,
+        hand: kept,
+        discard: [...prevState.discard, ...discarded],
+        activityLog: [
+          ...prevState.activityLog,
+          createActivityLogEntry(
+            `Discarded ${discarded.length} card${discarded.length === 1 ? '' : 's'}, kept ${kept.length}`,
+            `Hand: ${prevState.hand.length}`,
+            `Hand: ${kept.length}`,
+            `Discarded: ${formatCardNames(discarded)}${kept.length ? ` · Kept: ${formatCardNames(kept)}` : ''}`,
+            'state-change',
+            { cardsInvolved: discarded.map(c => ({ name: c.name, cardType: c.type })) },
+          ),
+        ],
+      };
+    });
+  };
+
+  const shuffleDiscardIntoDraw = (orderedCards: import('@/app/types/gameTypes').Card[]) => {
+    setGameState((prevState) => {
+      if (!prevState) return prevState;
+      const withUids = orderedCards.map(ensureUid);
+      const top5 = withUids.slice(0, 5).map(c => c.name).join(', ');
+      return {
+        ...prevState,
+        draw: [...withUids, ...prevState.draw],
+        discard: [],
+        activityLog: [
+          ...prevState.activityLog,
+          createActivityLogEntry(
+            `Shuffled discard into draw pile (${withUids.length} cards)`,
+            `Discard: ${prevState.discard.length} · Draw: ${prevState.draw.length}`,
+            `Discard: 0 · Draw: ${withUids.length + prevState.draw.length}`,
+            `Top of draw: ${top5}${withUids.length > 5 ? ', …' : ''}`,
+            'state-change',
           ),
         ],
       };
@@ -2742,6 +3147,20 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     linkDecisionTimelineParent,
     unlinkDecisionTimelineBranch,
     updateDecisionNodeTurnPhase,
+    channelOrb,
+    evokeOrb,
+    triggerOrbPassive,
+    triggerSingleOrbPassive,
+    setOrbChannelSize,
+    setStance,
+    addPotionToBelt,
+    usePotionFromBelt,
+    discardPotionFromBelt,
+    setPotionBeltSize,
+    discardWholeHand,
+    discardHandWithExceptions,
+    shuffleDiscardIntoDraw,
+    confirmReshuffle,
   }), [
     // State
     gameState, turns, currentTurnIndex, turnPhase, isLoading, error, activeProject,

@@ -982,11 +982,17 @@ export default function CardActionsEditorClient() {
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Link
-              href="/"
+              href="/editors"
               className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:bg-slate-700"
             >
               <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2} />
-              Back to planner
+              Editors
+            </Link>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700/50 bg-slate-800/40 px-3 py-1.5 text-xs font-semibold text-slate-500 transition hover:bg-slate-700/60 hover:text-slate-300"
+            >
+              Planner
             </Link>
             <div className="flex items-center gap-2">
               <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-amber-500/35 bg-amber-950/40 text-amber-300">

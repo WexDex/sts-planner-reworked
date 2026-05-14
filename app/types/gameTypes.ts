@@ -24,8 +24,13 @@ export type DamageValueField =
       [key: string]: unknown;
     };
 
+export type OrbType = 'lightning' | 'dark' | 'frost' | 'plasma';
+export type StanceType = 'neutral' | 'wrath' | 'calm' | 'divinity';
+
 export interface Card {
   name: string;
+  /** Stable per-instance identity for drag-reorder and play-order tracking. */
+  _uid?: string;
   /** When `type` is `Potion`, category tags from `POTION_CATEGORIES` / `POTIONS_DB.json`. */
   potionTags?: string[];
   type?: string;
@@ -207,6 +212,14 @@ export interface EnemyIntent {
   actions: EnemyIntentAction[];
 }
 
+/** HP-threshold conditional override for enemy intent sequences. */
+export interface EnemyIntentOverride {
+  /** Trigger when enemy HP% ≤ this value (0–100). */
+  hpThresholdPercent: number;
+  /** Switch to this intent turn number when triggered. */
+  intentTurnNumber: number;
+}
+
 export interface Enemy {
   name: string;
   hp: number;
@@ -214,6 +227,8 @@ export interface Enemy {
   currentBlock?: number;
   buffsDebuffs?: BuffDebuff[];
   intents: EnemyIntent[];
+  /** Optional HP-threshold overrides for scripted puzzle sequences. */
+  intentOverrides?: EnemyIntentOverride[];
 }
 
 /** Turn flow: start-of-turn hooks (relics, draw, ST) → play cards → enemy resolves. */
@@ -303,6 +318,14 @@ export interface DecisionTreeState {
   activeNodeId: string | null;
 }
 
+/** Pending deck-exhaustion reshuffle triggered mid-draw; resolved by UI showing PileOrderModal. */
+export interface PendingReshuffle {
+  /** How many more cards still needed after the draw pile was exhausted. */
+  remaining: number;
+  /** Cards already drawn in phase 1 (before exhaustion). */
+  phase1Cards: Card[];
+}
+
 export interface CombatData {
   player: PlayerData;
   deck: DeckEntry[];
@@ -313,5 +336,17 @@ export interface CombatData {
   playedCards: Card[];
   activityLog: ActivityLogEntry[];
   enemies?: Enemy[];
+  /** Defect orb channel, left = evoke position. */
+  orbs?: OrbType[];
+  /** Max orb channel slots (default 3). */
+  orbChannelSize?: number;
+  /** Watcher combat stance. */
+  stance?: StanceType;
+  /** Potion belt slots; null = empty. */
+  potionBelt?: (Card | null)[];
+  /** Max potion belt slots (default 2). */
+  potionBeltSize?: number;
+  /** Set when drawCards() exhausts the draw pile mid-draw; UI opens PileOrderModal to reshuffle. */
+  pendingReshuffle?: PendingReshuffle | null;
   [key: string]: any;
 }

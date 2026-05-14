@@ -5574,9 +5574,6 @@
       "description": "Unplayable. Ethereal. Whenever this card is drawn, lose 1 Energy.",
       "characters": "status",
       "unplayable": true,
-      "gainEnergy": {
-        "base": -1
-      },
       "ethereal": {
         "base": true,
         "upgraded": true

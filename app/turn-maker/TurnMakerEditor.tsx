@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import type {
   Enemy,
   EnemyIntent,
@@ -767,6 +767,8 @@ export default function TurnMakerEditor() {
   const [importDraft, setImportDraft] = useState("");
   /** Mobile: collapsible sections could use this later; keep expand for JSON */
   const [jsonOpen, setJsonOpen] = useState(true);
+  const [overridesOpen, setOverridesOpen] = useState(false);
+  const dragFromIdx = useRef<number | null>(null);
 
   const intentsSorted = useMemo(() => {
     const list = enemies[enemyIdx]?.intents ?? [];
@@ -896,12 +898,67 @@ export default function TurnMakerEditor() {
     setIntentIdx(sorted.findIndex((x) => x.turn === t));
   };
 
+  const duplicateIntent = () => {
+    const e = enemies[enemyIdx];
+    if (!e) return;
+    const src = intentsSorted[intentIdxResolved];
+    if (!src) return;
+    const t = nextTurnNumber(e.intents);
+    const clone: EnemyIntent = { turn: t, actions: JSON.parse(JSON.stringify(src.actions)) };
+    patchEnemy(enemyIdx, { intents: [...e.intents, clone] });
+    const sorted = [...e.intents, clone].sort((a, b) => a.turn - b.turn);
+    setIntentIdx(sorted.findIndex((x) => x.turn === t));
+  };
+
   const removeIntent = (turnKey: number) => {
     const e = enemies[enemyIdx];
     if (!e || e.intents.length <= 1) return;
     patchEnemy(enemyIdx, { intents: e.intents.filter((x) => x.turn !== turnKey) });
     setIntentIdx(0);
   };
+
+  /** Reorder intents after drag: renumber turns 1..N to match new visual order. */
+  const reorderIntents = useCallback((fromIdx: number, toIdx: number) => {
+    if (fromIdx === toIdx) return;
+    setEnemies((prev) => {
+      const next = cloneEnemies(prev);
+      const sorted = [...next[enemyIdx].intents].sort((a, b) => a.turn - b.turn);
+      const [moved] = sorted.splice(fromIdx, 1);
+      sorted.splice(toIdx, 0, moved);
+      next[enemyIdx].intents = sorted.map((it, i) => ({ ...it, turn: i + 1 }));
+      return next;
+    });
+    setIntentIdx(toIdx);
+  }, [enemyIdx]);
+
+  // HP override management
+  const addOverride = useCallback(() => {
+    setEnemies((prev) => {
+      const next = cloneEnemies(prev);
+      const overrides = next[enemyIdx].intentOverrides ?? [];
+      next[enemyIdx].intentOverrides = [...overrides, { hpThresholdPercent: 50, intentTurnNumber: 1 }];
+      return next;
+    });
+  }, [enemyIdx]);
+
+  const patchOverride = useCallback((overrideIdx: number, patch: Partial<import('@/app/types/gameTypes').EnemyIntentOverride>) => {
+    setEnemies((prev) => {
+      const next = cloneEnemies(prev);
+      const overrides = next[enemyIdx].intentOverrides ?? [];
+      overrides[overrideIdx] = { ...overrides[overrideIdx], ...patch };
+      next[enemyIdx].intentOverrides = overrides;
+      return next;
+    });
+  }, [enemyIdx]);
+
+  const removeOverride = useCallback((overrideIdx: number) => {
+    setEnemies((prev) => {
+      const next = cloneEnemies(prev);
+      const overrides = next[enemyIdx].intentOverrides ?? [];
+      next[enemyIdx].intentOverrides = overrides.filter((_, i) => i !== overrideIdx);
+      return next;
+    });
+  }, [enemyIdx]);
 
   const previewLine = formatIntentActionsLine(currentIntent.actions);
 
@@ -1013,15 +1070,28 @@ export default function TurnMakerEditor() {
               const nActs = it.actions.length;
               const typeStrip = it.actions.slice(0, 5);
               const stepLabel = `${idx + 1} / ${intentsSorted.length}`;
+              const hasOverride = (enemies[enemyIdx]?.intentOverrides ?? []).some(
+                (ov) => ov.intentTurnNumber === it.turn,
+              );
               return (
                 <button
                   key={it.turn}
                   type="button"
                   role="radio"
                   aria-checked={sel}
+                  draggable
+                  onDragStart={() => { dragFromIdx.current = idx; }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    if (dragFromIdx.current !== null && dragFromIdx.current !== idx) {
+                      reorderIntents(dragFromIdx.current, idx);
+                      dragFromIdx.current = idx;
+                    }
+                  }}
+                  onDragEnd={() => { dragFromIdx.current = null; }}
                   onClick={() => setIntentIdx(idx)}
                   title={line || "No intent line yet"}
-                  className={`group relative w-full overflow-hidden rounded-2xl border text-left transition-all duration-200 active:scale-[0.992] ${
+                  className={`group relative w-full overflow-hidden rounded-2xl border text-left transition-all duration-200 active:scale-[0.992] cursor-grab active:cursor-grabbing ${
                     sel ? "shadow-lg shadow-black/45" : "hover:brightness-[1.03]"
                   }`}
                   style={{
@@ -1060,6 +1130,11 @@ export default function TurnMakerEditor() {
                         <span className="rounded-md border border-white/10 bg-black/28 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-teal-200/90">
                           {stepLabel}
                         </span>
+                        {hasOverride && (
+                          <span className="rounded-md border border-amber-500/50 bg-amber-950/50 px-1.5 py-px text-[9px] font-bold text-amber-200" title="HP threshold override points to this turn">
+                            ⚠ HP override
+                          </span>
+                        )}
                         {nActs > 0 ? (
                           <span className="ml-auto rounded-full border border-slate-600/50 bg-slate-950/40 px-2 py-px text-[9px] font-bold tabular-nums text-slate-400 group-hover:border-slate-500 group-hover:text-slate-300 sm:ml-0">
                             {nActs}&nbsp;action{nActs === 1 ? "" : "s"}
@@ -1100,16 +1175,23 @@ export default function TurnMakerEditor() {
             })}
           </div>
           <div className="mt-auto flex flex-col gap-2 border-t border-teal-500/20 pt-2">
-            <button
-              type="button"
-              onClick={addIntent}
-              className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-teal-400/50 bg-teal-950/35 py-2.5 text-[11px] font-bold text-teal-200 transition hover:bg-teal-950/55 hover:text-teal-50"
-            >
-              <span className="text-sm leading-none select-none" aria-hidden>
-                ➕
-              </span>
-              Add planner turn
-            </button>
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                type="button"
+                onClick={addIntent}
+                className="flex items-center justify-center gap-1 rounded-xl border border-dashed border-teal-400/50 bg-teal-950/35 py-2 text-[10px] font-bold text-teal-200 transition hover:bg-teal-950/55 hover:text-teal-50"
+              >
+                ➕ Add turn
+              </button>
+              <button
+                type="button"
+                onClick={duplicateIntent}
+                className="flex items-center justify-center gap-1 rounded-xl border border-dashed border-sky-400/40 bg-sky-950/30 py-2 text-[10px] font-bold text-sky-200 transition hover:bg-sky-950/50 hover:text-sky-50"
+                title="Duplicate current turn at next slot"
+              >
+                ⧉ Duplicate
+              </button>
+            </div>
             <button
               type="button"
               onClick={() => removeIntent(currentIntent.turn)}
@@ -1117,11 +1199,58 @@ export default function TurnMakerEditor() {
               className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-rose-500/40 bg-rose-950/30 py-2 text-[11px] font-semibold text-rose-100/95 transition hover:bg-rose-950/50 disabled:opacity-40"
               title="Remove this planner turn"
             >
-              <span className="text-sm leading-none select-none" aria-hidden>
-                🗑️
-              </span>
+              <span className="text-sm leading-none select-none" aria-hidden>🗑️</span>
               Remove turn
             </button>
+
+            {/* HP Conditional Overrides */}
+            <div className="border-t border-teal-500/15 pt-2">
+              <button
+                type="button"
+                onClick={() => setOverridesOpen(v => !v)}
+                className="flex w-full items-center justify-between gap-1.5 rounded-lg px-1 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-300/80 hover:text-amber-200 transition-colors"
+              >
+                <span>⚠ HP Overrides ({(enemies[enemyIdx]?.intentOverrides ?? []).length})</span>
+                <span>{overridesOpen ? "▲" : "▼"}</span>
+              </button>
+              {overridesOpen && (
+                <div className="mt-1.5 flex flex-col gap-1.5">
+                  {(enemies[enemyIdx]?.intentOverrides ?? []).map((ov, oi) => (
+                    <div key={oi} className="flex items-center gap-1 rounded-lg border border-amber-500/30 bg-amber-950/25 px-2 py-1.5">
+                      <span className="text-[9px] text-amber-400/70 shrink-0">HP ≤</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={ov.hpThresholdPercent}
+                        onChange={e => patchOverride(oi, { hpThresholdPercent: Number(e.target.value) })}
+                        className="w-10 rounded border border-amber-700/50 bg-slate-900 px-1 py-0.5 text-center text-[10px] text-amber-100"
+                      />
+                      <span className="text-[9px] text-amber-400/70 shrink-0">% → T</span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={ov.intentTurnNumber}
+                        onChange={e => patchOverride(oi, { intentTurnNumber: Number(e.target.value) })}
+                        className="w-10 rounded border border-amber-700/50 bg-slate-900 px-1 py-0.5 text-center text-[10px] text-amber-100"
+                      />
+                      <button
+                        onClick={() => removeOverride(oi)}
+                        className="ml-auto text-rose-400 hover:text-rose-200 text-xs"
+                        aria-label="Remove override"
+                      >✕</button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addOverride}
+                    className="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-amber-500/35 bg-amber-950/20 py-1.5 text-[10px] font-bold text-amber-300 hover:bg-amber-950/40 transition-colors"
+                  >
+                    + Add override
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </aside>
 

@@ -1,4 +1,13 @@
-import type { Card, ValueNode } from "@/app/types/gameTypes";
+import type { Card } from "@/app/types/gameTypes";
+import rulesData from "@/app/data/description_placeholder_rules.json";
+
+export type PlaceholderRuleConfig = {
+  token: string;
+  label: string;
+  resolverType: "field" | "debuff" | "custom";
+  fieldKey: string;
+  customId?: string;
+};
 
 /**
  * Numeric tier from a plain number or `{ base, upgraded? }`, honoring {@link Card.isUpgraded}.
@@ -15,14 +24,6 @@ export function tieredNumeric(card: Card, node: unknown): number {
   return 0;
 }
 
-function tieredField(card: Card, field?: ValueNode | null): number {
-  return tieredNumeric(card, field);
-}
-
-function energyGainSource(card: Card): unknown {
-  const c = card as Record<string, unknown>;
-  return c.energyGain ?? c.gainEnergy;
-}
 
 function debuffStacks(card: Card, kind: string): number {
   const c = card as Record<string, unknown>;
@@ -30,13 +31,6 @@ function debuffStacks(card: Card, kind: string): number {
   const nested = debuffs?.[kind];
   if (nested !== undefined) return tieredNumeric(card, nested);
   return tieredNumeric(card, c[kind]);
-}
-
-/** `[W]` in STS: Mantra when `mantra` is present, otherwise Weak stacks. */
-function weakOrMantraW(card: Card): number {
-  const c = card as Record<string, unknown>;
-  if (c.mantra !== undefined && c.mantra !== null) return tieredNumeric(card, c.mantra);
-  return debuffStacks(card, "weak");
 }
 
 function discardDisplayCount(card: Card): number {
@@ -55,47 +49,30 @@ function multiHitCount(card: Card): number {
   return tieredNumeric(card, mhRaw);
 }
 
+export function buildResolver(cfg: PlaceholderRuleConfig): (card: Card) => number {
+  if (cfg.resolverType === "field")
+    return (c) => tieredNumeric(c, (c as Record<string, unknown>)[cfg.fieldKey]);
+  if (cfg.resolverType === "debuff")
+    return (c) => debuffStacks(c, cfg.fieldKey);
+  if (cfg.customId === "discard") return discardDisplayCount;
+  if (cfg.customId === "hits") return multiHitCount;
+  return () => 0;
+}
+
 type PlaceholderRule = {
   token: string;
-  /** Short note for docs / debugging */
   label: string;
   resolve: (card: Card) => number;
 };
 
-const PLACEHOLDER_RULES_UNSORTED: PlaceholderRule[] = [
-  { token: "[DMG]", label: "Damage", resolve: (c) => tieredField(c, c.damage) },
-  { token: "[BLOCK]", label: "Block", resolve: (c) => tieredField(c, c.block) },
-  { token: "[B]", label: "Block (short)", resolve: (c) => tieredField(c, c.block) },
-  { token: "[DRAW]", label: "Draw", resolve: (c) => tieredField(c, c.draw) },
-  { token: "[COST]", label: "Cost", resolve: (c) => tieredField(c, c.cost) },
-  { token: "[TAKEDMG]", label: "Lose HP / self-hit", resolve: (c) => tieredField(c, c.takeDamage) },
-  { token: "[GAINE]", label: "Gain energy (explicit)", resolve: (c) => tieredNumeric(c, energyGainSource(c)) },
-  { token: "[G]", label: "Gain energy (Ui shorthand)", resolve: (c) => tieredNumeric(c, energyGainSource(c)) },
-  { token: "[R]", label: "Energy (STS red pip text)", resolve: (c) => tieredNumeric(c, energyGainSource(c)) },
-  { token: "[VULN]", label: "Vulnerable stacks", resolve: (c) => debuffStacks(c, "vulnerable") },
-  { token: "[WEAK]", label: "Weak stacks", resolve: (c) => debuffStacks(c, "weak") },
-  { token: "[W]", label: "Mantra or Weak (see card.mantra)", resolve: weakOrMantraW },
-  { token: "[MANTRA]", label: "Mantra stacks", resolve: (c) => tieredNumeric(c, (c as Record<string, unknown>).mantra) },
-  { token: "[PSN]", label: "Poison stacks", resolve: (c) => debuffStacks(c, "poison") },
-  { token: "[POISON]", label: "Poison stacks (long)", resolve: (c) => debuffStacks(c, "poison") },
-  { token: "[WOUND]", label: "Wound stacks", resolve: (c) => debuffStacks(c, "wound") },
-  { token: "[FRAIL]", label: "Frail stacks", resolve: (c) => debuffStacks(c, "frail") },
-  { token: "[DISCARD]", label: "Discard count (discardEffect)", resolve: discardDisplayCount },
-  { token: "[HITS]", label: "Multi-hit count", resolve: multiHitCount },
-  { token: "[HEAL]", label: "Heal (optional card.heal)", resolve: (c) => tieredNumeric(c, (c as Record<string, unknown>).heal) },
-  { token: "[STR]", label: "Strength (optional card.strength)", resolve: (c) => tieredNumeric(c, (c as Record<string, unknown>).strength) },
-  { token: "[DEX]", label: "Dexterity (optional card.dexterity)", resolve: (c) => tieredNumeric(c, (c as Record<string, unknown>).dexterity) },
-  { token: "[FOCUS]", label: "Focus (card.focus)", resolve: (c) => tieredNumeric(c, (c as Record<string, unknown>).focus) },
-  { token: "[LOCK]", label: "Lock-On (optional appliesDebuffs.lockOn)", resolve: (c) => debuffStacks(c, "lockOn") },
-  { token: "[ART]", label: "Artifact (optional card.artifact)", resolve: (c) => tieredNumeric(c, (c as Record<string, unknown>).artifact) },
-];
+/** Longer tokens first so e.g. `[POISON]` is matched before `[PSN]`. */
+export const DESCRIPTION_PLACEHOLDER_RULES: PlaceholderRule[] =
+  [...(rulesData as PlaceholderRuleConfig[])]
+    .sort((a, b) => b.token.length - a.token.length)
+    .map((cfg) => ({ token: cfg.token, label: cfg.label, resolve: buildResolver(cfg) }));
 
-/** Longer tokens first so e.g. `[WEAK]` is not broken by a hypothetical shorter prefix. */
-export const DESCRIPTION_PLACEHOLDER_RULES: PlaceholderRule[] = [...PLACEHOLDER_RULES_UNSORTED].sort(
-  (a, b) => b.token.length - a.token.length,
-);
-
-export const DESCRIPTION_PLACEHOLDER_TOKENS: readonly string[] = DESCRIPTION_PLACEHOLDER_RULES.map((r) => r.token);
+export const DESCRIPTION_PLACEHOLDER_TOKENS: readonly string[] =
+  DESCRIPTION_PLACEHOLDER_RULES.map((r) => r.token);
 
 /** Map token → substituted string for the given card. */
 export function getDescriptionPlaceholderMap(card: Card): Map<string, string> {
@@ -115,8 +92,7 @@ export function applyDescriptionPlaceholders(description: string, card: Card): s
 }
 
 /**
- * Fills bracket tokens in a card description (e.g. `[DMG]`, `[BLOCK]`, STS `[G]` / `[R]` / `[B]` / `[W]`).
- * Does not alter `X` cost wording; `[X]` is not a defined token.
+ * Fills bracket tokens in a card description (e.g. `[DMG]`, `[BLOCK]`).
  */
 export function getFormattedDescription(description: string | undefined, card: Card): string {
   if (!description) return "";

@@ -87,14 +87,26 @@ function CardSizeCycleButton({
   );
 }
 
+function PlayOrderBadge({ order }: { order: number }) {
+  return (
+    <span className="pointer-events-none absolute right-1 top-1 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white shadow-md ring-1 ring-white/20">
+      {order}
+    </span>
+  );
+}
+
 function HandFan({
   hand,
   size,
   onToggleSelect,
+  playOrder,
+  getCardKey,
 }: {
   hand: import("@/app/types/gameTypes").Card[];
   size: CardPileViewSize;
   onToggleSelect: (location: string, index: number) => void;
+  playOrder: Record<string, number>;
+  getCardKey: (card: import("@/app/types/gameTypes").Card, index: number) => string;
 }) {
   const n = hand.length;
   const totalSpread = Math.min(60, n * 8);
@@ -106,13 +118,14 @@ function HandFan({
         const rotDeg = n > 1 ? totalSpread * (index - (n - 1) / 2) / (n - 1) : 0;
         const yOffset = Math.abs(rotDeg) * 1.2;
         const offsetX = (index - (n - 1) / 2) * cardStep;
+        const order = playOrder[getCardKey(card, index)];
         return (
           <div
             key={`fan-${index}-${card.name}`}
             className="absolute bottom-0 transition-[transform,z-index] duration-200 hover:z-50"
             style={{
               transform: `translateX(${offsetX}px) rotate(${rotDeg}deg) translateY(${yOffset}px)`,
-              zIndex: index + 1,
+              zIndex: card.isSelected ? 50 + index : index + 1,
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLDivElement).style.transform = `translateX(${offsetX}px) rotate(${rotDeg}deg) translateY(-2rem)`;
@@ -121,13 +134,16 @@ function HandFan({
               (e.currentTarget as HTMLDivElement).style.transform = `translateX(${offsetX}px) rotate(${rotDeg}deg) translateY(${yOffset}px)`;
             }}
           >
-            <STSCard
-              size={size}
-              card={card}
-              index={index}
-              location={LOCATION.HAND}
-              onToggleSelect={onToggleSelect}
-            />
+            <div className="relative">
+              {order != null && <PlayOrderBadge order={order} />}
+              <STSCard
+                size={size}
+                card={card}
+                index={index}
+                location={LOCATION.HAND}
+                onToggleSelect={onToggleSelect}
+              />
+            </div>
           </div>
         );
       })}
@@ -186,6 +202,60 @@ export default function MainFieldBlock() {
   const [handCardSize, setHandCardSize] = useState<CardPileViewSize>("medium");
   const [handLayout, setHandLayout] = useState<HandLayout>("legacy");
   const [enemyTargetLayout, setEnemyTargetLayout] = useState<TargetEnemyLayout>("tiles");
+
+  // Play order: keyed by card._uid or fallback "hand-{index}", value = 1-based play position
+  const [playOrder, setPlayOrder] = useState<Record<string, number>>({});
+
+  const getHandCardKey = useCallback((card: import("@/app/types/gameTypes").Card, index: number) =>
+    card._uid ?? `hand-${index}`, []);
+
+  // Keep playOrder in sync with actual hand selection.
+  // Any external action (playSelectedCards, moveSelectedCards, deselectAllCards, etc.)
+  // clears isSelected in gameState but never touches the local playOrder — this effect
+  // removes stale keys and renumbers so badges never linger on deselected/played cards.
+  useEffect(() => {
+    const hand = gameState?.hand;
+    if (!hand || hand.length === 0) {
+      setPlayOrder({});
+      return;
+    }
+    const selectedKeys = new Set<string>();
+    hand.forEach((card, i) => {
+      if (card.isSelected) selectedKeys.add(getHandCardKey(card, i));
+    });
+    setPlayOrder(prev => {
+      const hasStale = Object.keys(prev).some(k => !selectedKeys.has(k));
+      if (!hasStale) return prev;
+      const kept = Object.entries(prev)
+        .filter(([k]) => selectedKeys.has(k))
+        .sort((a, b) => a[1] - b[1]);
+      const renumbered: Record<string, number> = {};
+      kept.forEach(([k], i) => { renumbered[k] = i + 1; });
+      return renumbered;
+    });
+  }, [gameState?.hand, getHandCardKey]);
+
+  const handleToggleHandSelect = useCallback((location: string, index: number) => {
+    if (location === LOCATION.HAND) {
+      const card = gameState?.hand[index];
+      const key = getHandCardKey(card!, index);
+      const wasSelected = card?.isSelected;
+      setPlayOrder(prev => {
+        if (wasSelected) {
+          const next = { ...prev };
+          delete next[key];
+          const sorted = Object.entries(next).sort((a, b) => a[1] - b[1]);
+          const renumbered: Record<string, number> = {};
+          sorted.forEach(([k], i) => { renumbered[k] = i + 1; });
+          return renumbered;
+        } else {
+          const maxOrder = Object.values(prev).length > 0 ? Math.max(...Object.values(prev)) : 0;
+          return { ...prev, [key]: maxOrder + 1 };
+        }
+      });
+    }
+    toggleCardSelection(location, index);
+  }, [gameState?.hand, getHandCardKey, toggleCardSelection]);
 
   const enemies = useMemo(() => gameState?.enemies ?? [], [gameState?.enemies]);
 
@@ -786,32 +856,41 @@ export default function MainFieldBlock() {
 
         {handLayout === "legacy" && (
           <div className="flex flex-wrap gap-4">
-            {(gameState?.hand ?? []).map((card, index) => (
-              <STSCard
-                key={`hand-${index}-${card.name}`}
-                size={handCardSize}
-                card={card}
-                index={index}
-                location={LOCATION.HAND}
-                onToggleSelect={toggleCardSelection}
-              />
-            ))}
+            {(gameState?.hand ?? []).map((card, index) => {
+              const order = playOrder[getHandCardKey(card, index)];
+              return (
+                <div key={`hand-${index}-${card.name}`} className="relative">
+                  {order != null && <PlayOrderBadge order={order} />}
+                  <STSCard
+                    size={handCardSize}
+                    card={card}
+                    index={index}
+                    location={LOCATION.HAND}
+                    onToggleSelect={handleToggleHandSelect}
+                  />
+                </div>
+              );
+            })}
           </div>
         )}
 
         {handLayout === "scroll" && (
           <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [scrollbar-width:thin]">
-            {(gameState?.hand ?? []).map((card, index) => (
-              <div key={`hand-${index}-${card.name}`} className="shrink-0 snap-start">
-                <STSCard
-                  size={handCardSize}
-                  card={card}
-                  index={index}
-                  location={LOCATION.HAND}
-                  onToggleSelect={toggleCardSelection}
-                />
-              </div>
-            ))}
+            {(gameState?.hand ?? []).map((card, index) => {
+              const order = playOrder[getHandCardKey(card, index)];
+              return (
+                <div key={`hand-${index}-${card.name}`} className="relative shrink-0 snap-start">
+                  {order != null && <PlayOrderBadge order={order} />}
+                  <STSCard
+                    size={handCardSize}
+                    card={card}
+                    index={index}
+                    location={LOCATION.HAND}
+                    onToggleSelect={handleToggleHandSelect}
+                  />
+                </div>
+              );
+            })}
           </div>
         )}
 
@@ -819,7 +898,9 @@ export default function MainFieldBlock() {
           <HandFan
             hand={gameState?.hand ?? []}
             size={handCardSize}
-            onToggleSelect={toggleCardSelection}
+            onToggleSelect={handleToggleHandSelect}
+            playOrder={playOrder}
+            getCardKey={getHandCardKey}
           />
         )}
       </section>

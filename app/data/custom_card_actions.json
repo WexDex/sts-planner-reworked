@@ -1555,6 +1555,16 @@
       "actionType": "move_to_pile",
       "pile": "exhaust",
       "hasInput": false
+    },
+    {
+      "label": "",
+      "actionType": "channel_orb",
+      "buffName": "",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 1,
+      "orbType": "lightning",
+      "orbCount": 10
     }
   ],
   "Terror": [
@@ -1695,22 +1705,6 @@
       "actionType": "move_to_pile",
       "pile": "exhaust",
       "hasInput": false
-    },
-    {
-      "label": "azdazdazdazdazdazdazdazdaz",
-      "actionType": "add_card",
-      "buffName": "",
-      "buffType": "buff",
-      "hasInput": true,
-      "defaultValue": 1,
-      "pile": "hand",
-      "cardNames": [
-        "A Thousand Cuts",
-        "Accuracy",
-        "Adrenaline",
-        "Acrobatics",
-        "After Image"
-      ]
     }
   ],
   "Wish": [
