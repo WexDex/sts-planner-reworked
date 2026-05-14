@@ -49,20 +49,52 @@ function multiHitCount(card: Card): number {
   return tieredNumeric(card, mhRaw);
 }
 
-export function buildResolver(cfg: PlaceholderRuleConfig): (card: Card) => number {
+function resolveFieldPath(card: Card, fieldKey: string): unknown {
+  const segments = fieldKey.split(".");
+  let current: unknown = card as Record<string, unknown>;
+
+  for (const segment of segments) {
+    if (typeof current !== "object" || current === null || Array.isArray(current)) {
+      return undefined;
+    }
+    current = (current as Record<string, unknown>)[segment];
+  }
+
+  return current;
+}
+
+function resolvePlaceholderValue(card: Card, fieldKey: string): string {
+  const value = resolveFieldPath(card, fieldKey);
+  if (value === undefined || value === null) return "";
+
+  if (typeof value === "object") {
+    if (!Array.isArray(value) && ("base" in (value as Record<string, unknown>) || "upgraded" in (value as Record<string, unknown>))) {
+      return String(tieredNumeric(card, value));
+    }
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+
+  return String(value);
+}
+
+export function buildResolver(cfg: PlaceholderRuleConfig): (card: Card) => string {
   if (cfg.resolverType === "field")
-    return (c) => tieredNumeric(c, (c as Record<string, unknown>)[cfg.fieldKey]);
+    return (c) => resolvePlaceholderValue(c, cfg.fieldKey);
   if (cfg.resolverType === "debuff")
-    return (c) => debuffStacks(c, cfg.fieldKey);
-  if (cfg.customId === "discard") return discardDisplayCount;
-  if (cfg.customId === "hits") return multiHitCount;
-  return () => 0;
+    return (c) => String(debuffStacks(c, cfg.fieldKey));
+  if (cfg.customId === "discard") return (c) => String(discardDisplayCount(c));
+  if (cfg.customId === "hits") return (c) => String(multiHitCount(c));
+  return () => "0";
 }
 
 type PlaceholderRule = {
   token: string;
   label: string;
-  resolve: (card: Card) => number;
+  resolve: (card: Card) => string;
 };
 
 /** Longer tokens first so e.g. `[POISON]` is matched before `[PSN]`. */

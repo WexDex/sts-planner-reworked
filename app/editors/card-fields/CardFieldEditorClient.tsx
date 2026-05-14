@@ -7,6 +7,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Copy,
   Download,
   Link2,
   Pencil,
@@ -24,7 +25,7 @@ import rulesData from "@/app/data/description_placeholder_rules.json";
 import rulesBackup from "@/app/data/description_placeholder_rules.backup.json";
 import type { Card } from "@/app/types/gameTypes";
 
-type BuiltRule = { token: string; label: string; resolve: (card: Card) => number };
+type BuiltRule = { token: string; label: string; resolve: (card: Card) => string };
 
 function renderColored(description: string, card: Card, rules: BuiltRule[]): React.ReactNode {
   const segments: React.ReactNode[] = [];
@@ -469,6 +470,7 @@ function ValueNodeRow({
   error,
   onChangeRaw,
   onRef,
+  onRemove,
 }: {
   label: string;
   fieldKey?: string;
@@ -476,6 +478,7 @@ function ValueNodeRow({
   error?: string;
   onChangeRaw: (obj: Record<string, unknown> | undefined) => void;
   onRef?: () => void;
+  onRemove?: () => void;
 }) {
   const b = getBase(value);
   const u = getUpgraded(value);
@@ -520,6 +523,12 @@ function ValueNodeRow({
           <button type="button" onClick={onRef} title="Show/add token"
             className="ml-auto inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border border-slate-700/40 bg-slate-800/30 text-slate-500 transition hover:border-sky-600/50 hover:text-sky-400">
             <Link2 className="h-3 w-3" strokeWidth={2} />
+          </button>
+        )}
+        {onRemove && (
+          <button type="button" onClick={onRemove} title="Remove field"
+            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border border-rose-700/40 bg-rose-950/30 text-rose-400 transition hover:bg-rose-900/50">
+            <X className="h-3 w-3" strokeWidth={2.5} />
           </button>
         )}
       </div>
@@ -607,15 +616,19 @@ function BoolCard({
 
 function RecursiveField({
   label,
+  fieldPath,
   value,
   onChange,
   onRef,
+  onRemove,
   absent,
 }: {
   label: string;
+  fieldPath: string;
   value: unknown;
   onChange: (v: unknown) => void;
-  onRef?: () => void;
+  onRef?: (fieldPath: string) => void;
+  onRemove?: () => void;
   absent?: boolean;
 }) {
   const [adding, setAdding] = useState(false);
@@ -645,9 +658,15 @@ function RecursiveField({
           <span className={`font-mono text-[11px] font-semibold ${absent ? "text-slate-600" : "text-slate-300"}`}>{label}</span>
           <span className="text-[9px] text-slate-600">[{entries.length}]</span>
           {onRef && (
-            <button type="button" onClick={onRef} title="Show/add token"
+            <button type="button" onClick={() => onRef(fieldPath)} title="Show/add token"
               className="ml-auto inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border border-slate-700/40 bg-slate-800/30 text-slate-500 transition hover:border-sky-600/50 hover:text-sky-400">
               <Link2 className="h-3 w-3" strokeWidth={2} />
+            </button>
+          )}
+          {onRemove && (
+            <button type="button" onClick={onRemove} title="Remove field"
+              className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border border-rose-700/40 bg-rose-950/30 text-rose-400 transition hover:bg-rose-900/50">
+              <X className="h-3 w-3" strokeWidth={2.5} />
             </button>
           )}
         </div>
@@ -656,8 +675,10 @@ function RecursiveField({
             <RecursiveField
               key={k}
               label={`${label}.${k}`}
+              fieldPath={`${fieldPath}.${k}`}
               value={v}
               onChange={(nv) => onChange({ ...obj, [k]: nv })}
+              onRef={onRef}
             />
           ))}
           {adding ? (
@@ -691,7 +712,7 @@ function RecursiveField({
       <span className={`w-40 shrink-0 truncate font-mono text-[10px] ${absent ? "text-slate-600" : "text-slate-400"}`}>{label}</span>
       <PropValueInput type={t} value={displayValue} onChange={onChange} />
       {onRef && (
-        <button type="button" onClick={onRef} title="Show/add token"
+        <button type="button" onClick={() => onRef(fieldPath)} title="Show/add token"
           className="ml-auto inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border border-slate-700/40 bg-slate-800/30 text-slate-500 transition hover:border-sky-600/50 hover:text-sky-400">
           <Link2 className="h-3 w-3" strokeWidth={2} />
         </button>
@@ -945,6 +966,16 @@ export default function CardFieldEditorClient({
   const canUndo = histEntry ? histEntry.idx > 0 : false;
   const canRedo = histEntry ? histEntry.idx < histEntry.stack.length - 1 : false;
 
+  const allFieldKeys = useMemo(() => {
+    const keys = new Set(masterFields);
+    if (card) {
+      for (const k of Object.keys(card)) {
+        if (!COMBAT_EXCLUDED.has(k)) keys.add(k);
+      }
+    }
+    return [...keys].sort();
+  }, [masterFields, card]);
+
 
   function toggleSection(key: string) {
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -1161,17 +1192,18 @@ export default function CardFieldEditorClient({
                 )}
 
                 {/* Fields */}
-                <SectionHeader label={`Fields (${masterFields.length})`} open={openSections.fields} onToggle={() => toggleSection("fields")} />
+                <SectionHeader label={`Fields (${allFieldKeys.length})`} open={openSections.fields} onToggle={() => toggleSection("fields")} />
                 {openSections.fields && (
                   <div className="rounded-xl border border-slate-800/60 bg-slate-900/30 p-4">
                     <div className="space-y-1">
-                      {masterFields.map((key) => {
+                      {allFieldKeys.map((key) => {
                         const vnf = VALUE_NODE_FIELDS.find((f) => f.key === key);
                         if (vnf) return (
                           <div key={key} className="border-b border-slate-800/40 pb-2 last:border-0 last:pb-0">
                             <ValueNodeRow label={vnf.label} fieldKey={key} value={card[key]} error={errors[key]}
                               onChangeRaw={(obj) => updateCard({ [key]: obj })}
-                              onRef={() => handleRef(key)} />
+                              onRef={() => handleRef(key)}
+                              onRemove={key in card ? () => updateCard({ [key]: undefined }) : undefined} />
                           </div>
                         );
                         const bf = BONUS_FIELDS.find((f) => f.key === key);
@@ -1179,7 +1211,8 @@ export default function CardFieldEditorClient({
                           <div key={key} className="border-b border-slate-800/40 pb-2 last:border-0 last:pb-0">
                             <ValueNodeRow label={bf.label} fieldKey={key} value={card[key]}
                               onChangeRaw={(obj) => updateCard({ [key]: obj })}
-                              onRef={() => handleRef(key)} />
+                              onRef={() => handleRef(key)}
+                              onRemove={key in card ? () => updateCard({ [key]: undefined }) : undefined} />
                           </div>
                         );
                         const exists = key in card;
@@ -1188,9 +1221,11 @@ export default function CardFieldEditorClient({
                           <div key={key} className="border-b border-slate-800/40 pb-1 last:border-0 last:pb-0">
                             <RecursiveField
                               label={key}
+                              fieldPath={key}
                               value={effectiveValue}
                               onChange={(v) => updateCard({ [key]: v })}
-                              onRef={() => handleRef(key)}
+                              onRef={(fieldPath) => handleRef(fieldPath)}
+                              onRemove={exists ? () => updateCard({ [key]: undefined }) : undefined}
                               absent={!exists}
                             />
                           </div>
@@ -1227,8 +1262,8 @@ export default function CardFieldEditorClient({
             </div>
 
             {/* Right col: descriptions */}
-            <div className="w-72 shrink-0 overflow-y-auto border-l border-slate-800/80 [scrollbar-width:thin]">
-              <div className="space-y-4 px-4 py-5">
+            <div className="w-80 shrink-0 overflow-y-auto border-l border-slate-800/80 [scrollbar-width:thin]">
+              <div className="space-y-2 px-4 py-3">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">Description</p>
 
                 {/* Live preview */}
@@ -1262,7 +1297,7 @@ export default function CardFieldEditorClient({
                 {/* Upgraded description */}
                 <div>
                   <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                    Upgraded <span className="normal-case text-slate-600">— blank = same</span>
+                    Upgraded
                   </label>
                   <textarea rows={4} value={(card.descriptionUpgraded as string) ?? ""}
                     onChange={(e) => updateCard({ descriptionUpgraded: e.target.value || undefined })}
@@ -1311,22 +1346,28 @@ export default function CardFieldEditorClient({
                       return (
                         <div key={r.token}
                           ref={(el) => { ruleItemRefs.current[r.token] = el; }}
-                          className={`flex items-center gap-1.5 rounded-lg border px-2 py-1.5 transition-all duration-300 ${
+                          className={`flex flex-wrap items-center gap-1.5 rounded-lg border px-2 py-1.5 transition-all duration-300 ${
                             isHighlighted
                               ? "border-amber-400/50 bg-amber-950/30 ring-1 ring-amber-400/40"
                               : isCustom
                               ? "border-slate-800/40 bg-slate-900/20 opacity-60"
                               : "border-slate-800/50 bg-slate-900/30"
                           }`}>
-                          <span className="w-20 shrink-0 font-mono text-[10px] font-bold text-slate-300">{r.token}</span>
-                          <span className="min-w-0 flex-1 truncate text-[10px] text-slate-500">{r.label}</span>
-                          <span className={`shrink-0 rounded border px-1 py-px text-[8px] font-bold font-mono ${
-                            r.resolverType === "debuff" ? "border-rose-700/50 text-rose-400" :
-                            r.resolverType === "custom" ? "border-slate-600/40 text-slate-600" :
-                            "border-sky-700/50 text-sky-400"
-                          }`}>
-                            {r.resolverType === "custom" ? "custom" : r.fieldKey}
-                          </span>
+                          <span className="min-w-0 max-w-full break-all font-mono text-[10px] font-bold text-slate-300">{r.token}</span>
+                          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                            <button type="button" onClick={() => void navigator.clipboard.writeText(r.token)} title="Copy token"
+                              className="inline-flex h-5 w-5 items-center justify-center rounded border border-slate-700/40 bg-slate-800/30 text-slate-500 transition hover:border-sky-600/50 hover:text-sky-400">
+                              <Copy className="h-3 w-3" strokeWidth={2} />
+                            </button>
+                            <span className="min-w-0 flex-1 truncate text-[10px] text-slate-500">{r.label}</span>
+                            <span className={`shrink-0 rounded border px-1 py-px text-[8px] font-bold font-mono ${
+                              r.resolverType === "debuff" ? "border-rose-700/50 text-rose-400" :
+                              r.resolverType === "custom" ? "border-slate-600/40 text-slate-600" :
+                              "border-sky-700/50 text-sky-400"
+                            }`}>
+                              {r.resolverType === "custom" ? "custom" : r.fieldKey}
+                            </span>
+                          </div>
                           {!isCustom && (
                             <button type="button" onClick={() => deleteRule(r.token)}
                               className="shrink-0 inline-flex h-4 w-4 items-center justify-center rounded border border-rose-700/40 bg-rose-950/30 text-rose-400 hover:bg-rose-900/50">
