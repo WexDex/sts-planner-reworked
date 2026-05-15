@@ -12,7 +12,9 @@
       "Bash(Get-ChildItem -Path \"d:\\\\new Projects\\\\NextJS\\\\sts-planner-reworked\" -Recurse -Directory)",
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(Get-Content \"d:\\\\new Projects\\\\NextJS\\\\sts-planner-reworked\\\\app\\\\data\\\\db\\\\STS_CARDS_DB.json\" -TotalCount 50)",
-      "Bash(xargs grep -l \"token.*resolve\\\\|placeholder.*rule\")"
+      "Bash(xargs grep -l \"token.*resolve\\\\|placeholder.*rule\")",
+      "Bash(powershell -Command \"Get-Content 'app\\\\decision-timeline\\\\dtl-branch-combat-panel.tsx' | Select-Object -Index 490 | Format-Hex\")",
+      "Bash(python -c ' *)"
     ]
   }
 }

@@ -5,7 +5,7 @@ import { getNewLogEntriesForDecisionNode } from '@/app/utils/decisionNodePlays';
 import { collectEnemyIntentLinesForPlannerSlot } from '@/app/utils/decisionTimelineIntentSummaries';
 
 /** Horizontal footprint for timeline **branch / turn** cards — keep in sync with `DecisionTimelineFlow` card chrome. */
-export const DECISION_TIMELINE_BRANCH_CARD_W = 400;
+export const DECISION_TIMELINE_BRANCH_CARD_W = 640;
 
 /**
  * Minimum branch-card height for RF + layout when estimation returns less (fallback).
@@ -34,72 +34,21 @@ function maxBranchFootprintHeight(nodes: DecisionNode[], turns: Turn[]): number 
 }
 
 /**
- * RF / pack spacing footprint for a timeline card — branch height scales with snapshot (intents, logs, nickname).
- * Update slice constants when `DecisionBranchCard` / `DtlBranchCombatIntel` chrome changes.
+ * RF / pack spacing footprint for a timeline card.
+ * Branch cards default to collapsed (~56px bar), so layout packs them tightly on load.
+ * React Flow DOM-measures the actual height when a card is expanded.
  */
 export function estimateDecisionTimelineBranchFootprint(
   nodes: DecisionNode[],
   n: DecisionNode,
   turns: Turn[],
 ): { w: number; h: number } {
+  void nodes; void turns;
   if (n.timelineRole === 'timeline_start') {
     return { w: DECISION_TIMELINE_START_CARD_W, h: DECISION_TIMELINE_START_CARD_H };
   }
-
-  const w = DECISION_TIMELINE_BRANCH_CARD_W;
-  const slotId = effectivePlannerTurnSlotId(nodes, n, turns);
-  const parent = n.parentId ? nodes.find((x) => x.id === n.parentId) ?? null : null;
-  const peersSame = decisionNodesPeersSameTurnDepth(nodes, n.id);
-  const branchOrdinal = Math.max(1, peersSame.findIndex((x) => x.id === n.id) + 1);
-  const autoSlug = formatDecisionBreadcrumbSegment(slotId, branchOrdinal);
-  const customLabelRaw = n.label.trim();
-  const showNickname = customLabelRaw.length > 0 && customLabelRaw !== autoSlug;
-
-  const intentLines = collectEnemyIntentLinesForPlannerSlot(n.snapshot, slotId);
-  const parentSlotId = parent ? effectivePlannerTurnSlotId(nodes, parent, turns) : slotId;
-  const logEntries = getNewLogEntriesForDecisionNode(n, parent, {
-    childSlot: slotId,
-    parentSlot: parentSlotId,
-  });
-
-  /** Floating icon toolbar sits above the card; reserve space so packed layouts don’t vertically collide. */
-  const FLOAT_TOOLBAR_CLEARANCE = 56;
-  let h = FLOAT_TOOLBAR_CLEARANCE;
-
-  h += 22; // outer vertical padding (aligned with card pt/pb)
-  h += 34; // top MOVE grab rail on branch checkpoint cards
-  h += 34; // bottom MOVE grab rail
-  h += 42; // phase strip + slug / uid row
-  if (showNickname) h += 52;
-  h += 36; // `TurnPhaseTripleStrip`
-
-  // `DtlBranchCombatIntel`: stats grid, buff/enemy panels (enemy list max-h-40), collapsed hand/played rows, piles row
-  h += 400;
-
-  const intentHeader = 68;
-  if (intentLines.length === 0) {
-    h += intentHeader + 28;
-  } else if (intentLines.length <= TIMELINE_INTENT_PREVIEW_MAX) {
-    h += intentHeader + intentLines.length * 54 + 10;
-  } else {
-    h += intentHeader + 176 + 32; // max-h ~11rem scroll + expand control
-  }
-
-  const logHeader = 56;
-  if (logEntries.length === 0) {
-    h += logHeader + 36;
-  } else {
-    const rowApprox = 22;
-    h += logHeader + Math.min(176, Math.max(52, logEntries.length * rowApprox));
-  }
-
-  h += 48; // “Set Active” + breathing room
-
-  if (isDecisionTimelineOrphan(nodes, n)) h += 26;
-
-  h += 28; // slack for borders, line wraps, and RF rounding
-
-  return { w, h: Math.max(DECISION_TIMELINE_BRANCH_CARD_H, Math.ceil(h)) };
+  // 56px floating toolbar clearance + 52px collapsed bar = 108 → round to 110
+  return { w: DECISION_TIMELINE_BRANCH_CARD_W, h: 110 };
 }
 
 /** All node ids in the subtree rooted at `rootId` (including `rootId`). */
@@ -304,6 +253,64 @@ export function formatDecisionBreadcrumbSegment(plannerTurnSlotId: number, sibli
   return `T${plannerTurnSlotId}.${ord}`;
 }
 
+// ─── Path statistics ───────────────────────────────────────────────────────────
+
+export interface PathStats {
+  /** Total damage dealt to enemies from root → node. */
+  dealt: number;
+  /** Total damage taken by the player from root → node. */
+  taken: number;
+  /** Total block generated from root → node. */
+  blocked: number;
+  /** Total HP healed from root → node. */
+  healed: number;
+  /** Total card-action log entries from root → node. */
+  cardsPlayed: number;
+  /** Total energy spent from root → node (sum of before−after deltas). */
+  energyUsed: number;
+  /** Damage dealt per enemy name from root → node. */
+  perEnemyDealt: Record<string, number>;
+}
+
+export function computePathStats(nodes: DecisionNode[], nodeId: string): PathStats {
+  const path = getDecisionPathFromRoot(nodes, nodeId);
+  const s: PathStats = { dealt: 0, taken: 0, blocked: 0, healed: 0, cardsPlayed: 0, energyUsed: 0, perEnemyDealt: {} };
+  for (const node of path) {
+    for (const e of node.snapshot.activityLog ?? []) {
+      if (e.type === 'damage') {
+        const n = parseInt(e.context?.find((c) => c.label === 'Damage')?.value ?? '0') || 0;
+        if (e.target === 'enemy') {
+          s.dealt += n;
+          const m = e.title.match(/^(.+?) took \d+/);
+          const name = m?.[1] ?? 'Enemy';
+          s.perEnemyDealt[name] = (s.perEnemyDealt[name] ?? 0) + n;
+        }
+        if (e.target === 'player') s.taken += n;
+      } else if (e.type === 'block') {
+        s.blocked += parseInt(e.context?.find((c) => c.label === 'Block gained')?.value ?? '0') || 0;
+      } else if (e.type === 'heal') {
+        const raw = e.context?.find((c) => c.label === 'Healing')?.value ?? '0';
+        s.healed += parseInt(raw.replace(/^\+/, '')) || 0;
+      } else if (e.type === 'card-action') {
+        s.cardsPlayed++;
+      } else if (e.type === 'energy') {
+        const raw = e.context?.find((c) => c.label === 'Energy')?.value ?? '';
+        const m = raw.match(/(\d+)\s*→\s*(\d+)/);
+        if (m) { const delta = parseInt(m[1]) - parseInt(m[2]); if (delta > 0) s.energyUsed += delta; }
+      }
+    }
+  }
+  return s;
+}
+
+/** HP difference between this node and its direct parent snapshot. Negative = took damage. */
+export function computeHpDeltaFromParent(nodes: DecisionNode[], node: DecisionNode): number {
+  if (!node.parentId) return 0;
+  const parent = nodes.find((n) => n.id === node.parentId);
+  if (!parent) return 0;
+  return node.snapshot.player.hp - parent.snapshot.player.hp;
+}
+
 /** Ordered path from root to `nodeId` (inclusive). Empty if unknown. */
 export function getDecisionPathFromRoot(nodes: DecisionNode[], nodeId: string): DecisionNode[] {
   const byId = new Map(nodes.map((n) => [n.id, n] as const));
@@ -444,7 +451,7 @@ export function getActiveLineageBranchIds(nodes: DecisionNode[], pinnedNodeId: s
  *
  * Returns `null` when there is no pin, the pin is unknown, START has no child checkpoint, the pin is not
  * anchored under START (e.g. orphan), or lineage resolves to zero planner slots.
- * Callers with a Decision Timeline should treat `null` as “no visible lineage rows” (not “fall back to all turns”).
+ * Callers with a Decision Timeline should treat `null` as "no visible lineage rows" (not "fall back to all turns").
  */
 export function turnsVisibleForActiveDecisionLineage(
   nodes: DecisionNode[],
@@ -519,7 +526,7 @@ export function getActiveLineageCanonicalNodeIdBySlot(
 /**
  * Walk from the tree root (START): follow the only child while unique; at a fork, prefer
  * {@link DecisionNode.timelineRole} `turn_checkpoint` then earliest {@link DecisionNode.createdAt}.
- * Repeat until a leaf — typical imported spine + deterministic “main chain”.
+ * Repeat until a leaf — typical imported spine + deterministic "main chain".
  *
  * Used to pin the active decision node id so {@link getActiveLineageBranchIds} still spans planner rows
  * on load (ancestors ∪ unique-child ladder below that leaf).
@@ -813,7 +820,7 @@ export function activeDecisionCheckpointSnapshotFromPlanner(
 }
 
 /**
- * Merge each planner slot’s state along `root … target` — deepest node per depth-derived slot wins.
+ * Merge each planner slot's state along `root … target` — deepest node per depth-derived slot wins.
  * Returns cloned turn rows for `setTurns`.
  */
 export function buildTurnStatesFromBranchPath(nodes: DecisionNode[], targetNodeId: string, turns: Turn[]): Turn[] {

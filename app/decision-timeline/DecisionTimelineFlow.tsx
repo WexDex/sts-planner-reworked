@@ -24,6 +24,8 @@ import {
   useEdgesState,
   useReactFlow,
   useViewport,
+  useUpdateNodeInternals,
+  useNodeId,
   Panel,
   Handle,
   Position,
@@ -79,6 +81,9 @@ import {
   decisionTimelineStartHasConnectedCheckpoint,
   pinnedDecisionLineageAnchoredAtStart,
   formatDecisionBreadcrumbSegment,
+  computePathStats,
+  computeHpDeltaFromParent,
+  type PathStats,
 } from '@/app/utils/decisionTreeHelpers';
 import { getNewLogEntriesForDecisionNode } from '@/app/utils/decisionNodePlays';
 import {
@@ -480,7 +485,7 @@ function groupChildrenByParentId(
   return byParent;
 }
 
-/** Slightly different Bézier tension per sibling so shared parent→child bundles don’t sit on one path. */
+/** Slightly different Bézier tension per sibling so shared parent→child bundles don't sit on one path. */
 function bezierCurvatureForFan(
   siblingIdsLeftToRight: string[],
   edgeChildId: string,
@@ -622,7 +627,7 @@ const DecisionSlotCluster = memo(function DecisionSlotCluster({ data }: { id: st
   );
 });
 
-/** Prevent wheel from reaching React Flow’s pane (zoom) when scrolling nested log lists. */
+/** Prevent wheel from reaching React Flow's pane (zoom) when scrolling nested log lists. */
 function stopWheelZoomOnPane(e: React.WheelEvent) {
   e.stopPropagation();
 }
@@ -665,7 +670,7 @@ function TurnPhaseTripleStrip({
       className="nodrag nopan mb-2 flex overflow-hidden rounded-lg border border-slate-600/55 shadow-inner shadow-black/30"
       title={
         editable
-          ? 'Planner phase is advanced with “End of start / main / enemy” in the main bar (writes Start/End lines in the activity log). Tap a cell to emphasize it in this strip only.'
+          ? 'Planner phase is advanced with "End of start / main / enemy" in the main bar (writes Start/End lines in the activity log). Tap a cell to emphasize it in this strip only.'
           : 'Draw → Main → Enemy for this planner turn'
       }
       role={editable ? 'group' : undefined}
@@ -967,6 +972,10 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
       interact.reparentHoverParentId === decisionNode.id &&
       eligibleRelinkPanelParents?.has(decisionNode.id));
 
+  const [cardExpanded, setCardExpanded] = useState(false);
+  const nodeId = useNodeId();
+  const updateNodeInternals = useUpdateNodeInternals();
+
   const [inlineLogDensity, setInlineLogDensity] = useState<ActivityLogInlineDensity>('minimal');
   const [logModalOpen, setLogModalOpen] = useState(false);
   const [logsSectionExpanded, setLogsSectionExpanded] = useState(true);
@@ -1035,6 +1044,10 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
   }, []);
 
   useEffect(() => {
+    if (nodeId) updateNodeInternals(nodeId);
+  }, [cardExpanded, nodeId, updateNodeInternals]);
+
+  useEffect(() => {
     if (!logModalOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setLogModalOpen(false);
@@ -1042,6 +1055,19 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [logModalOpen]);
+
+  const collapsedHp = decisionNode.snapshot.player.hp;
+  const collapsedMaxHp = decisionNode.snapshot.player.maxHp;
+  const collapsedBlock = decisionNode.snapshot.player.currentBlock ?? 0;
+
+  const pathStats = useMemo<PathStats>(
+    () => computePathStats(decisionNodes, decisionNode.id),
+    [decisionNodes, decisionNode.id],
+  );
+  const hpDelta = useMemo(
+    () => computeHpDeltaFromParent(decisionNodes, decisionNode),
+    [decisionNodes, decisionNode],
+  );
 
   const parentNode = data.parent;
   const childNodes = useMemo(
@@ -1213,7 +1239,7 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
   return (
     <>
     <div
-      className="relative max-w-[358px] min-w-[273px] shrink-0"
+      className="relative w-[640px] shrink-0"
       onPointerEnter={() => setChromeHovered(true)}
       onPointerLeave={() => setChromeHovered(false)}
     >
@@ -1311,7 +1337,7 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
       {data.relinkPanelRole === 'child' ? <RelinkMoveBranchAboveCard /> : null}
       <div
       style={data.isOrphan ? undefined : branchCardAccentChromeStyle}
-      className={`relative max-w-[358px] min-w-[273px] overflow-hidden rounded-xl border-2 shadow-lg transition-[transform,box-shadow,ring,filter] duration-150 ${clusterSnapLocked ? 'px-2.5 pb-2.5 pt-3' : 'p-0'} ${accentShell} ${timelineBranchOffPathClass(isPinned)} ${timelineBranchOnPathClass(isPinned)}${parentPickHoverRingClass(Boolean(hoverPick || data.isForkParentHoverHighlight))}${relinkPanelVisualClass(data.relinkPanelRole)} ${orphanShell}${data.isGraphSelected ? ' ring-2 ring-violet-400/85 ring-offset-2 ring-offset-slate-950 z-[5]' : ''}`}
+      className={`relative w-[640px] overflow-hidden rounded-xl border-2 shadow-lg transition-[transform,box-shadow,ring,filter] duration-150 ${clusterSnapLocked ? 'px-2.5 pb-2.5 pt-3' : 'p-0'} ${accentShell} ${timelineBranchOffPathClass(isPinned)} ${timelineBranchOnPathClass(isPinned)}${parentPickHoverRingClass(Boolean(hoverPick || data.isForkParentHoverHighlight))}${relinkPanelVisualClass(data.relinkPanelRole)} ${orphanShell}${data.isGraphSelected ? ' ring-2 ring-violet-400/85 ring-offset-2 ring-offset-slate-950 z-[5]' : ''}`}
     >
       <DtlCardPortHandles />
       <RelinkRoleBadge role={data.relinkPanelRole} placement="branch" />
@@ -1323,9 +1349,13 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
           Orphan Node
         </span>
       ) : null}
-      <div className={`pointer-events-none absolute left-0 right-0 top-0 z-[2] h-[5px] ${plannerPhaseStripClass(decisionNode.turnPhase)}`} aria-hidden />
+      {/* Phase top strip — only when expanded */}
+      {cardExpanded && (
+        <div className={`pointer-events-none absolute left-0 right-0 top-0 z-[2] h-[5px] ${plannerPhaseStripClass(decisionNode.turnPhase)}`} aria-hidden />
+      )}
 
-      {!clusterSnapLocked ? (
+      {/* Move rails — only when expanded */}
+      {cardExpanded && !clusterSnapLocked ? (
         <>
           <div
             className={`${DTL_BRANCH_MOVE_EDGE_ROW} absolute left-0 right-0 top-[5px] z-[24] rounded-t-xl border-b border-slate-700/40 transition-[box-shadow,background-color,color] duration-150 ${moveRailsLit ? 'text-slate-100' : 'text-slate-500'}`}
@@ -1360,7 +1390,7 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
             Move
           </div>
           <div
-            className={`dtl-branch-move-rail absolute bottom-8 left-0 top-[calc(5px+2rem)] z-[24] flex w-5 cursor-grab flex-col items-center justify-center border-slate-700/30 bg-slate-900/78 transition-[box-shadow,background-color] duration-150 hover:bg-slate-900/92 active:cursor-grabbing`}
+            className="dtl-branch-move-rail absolute bottom-8 left-0 top-[calc(5px+2rem)] z-[24] flex w-5 cursor-grab flex-col items-center justify-center border-slate-700/30 bg-slate-900/78 transition-[box-shadow,background-color] duration-150 hover:bg-slate-900/92 active:cursor-grabbing"
             style={branchMoveRailAccentStyle.sideLeft}
             title="Drag to move this checkpoint"
             onPointerEnter={onMoveRailPointerEnter}
@@ -1375,7 +1405,7 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
             />
           </div>
           <div
-            className={`dtl-branch-move-rail absolute bottom-8 right-0 top-[calc(5px+2rem)] z-[24] flex w-5 cursor-grab flex-col items-center justify-center border-slate-700/30 bg-slate-900/78 transition-[box-shadow,background-color] duration-150 hover:bg-slate-900/92 active:cursor-grabbing`}
+            className="dtl-branch-move-rail absolute bottom-8 right-0 top-[calc(5px+2rem)] z-[24] flex w-5 cursor-grab flex-col items-center justify-center border-slate-700/30 bg-slate-900/78 transition-[box-shadow,background-color] duration-150 hover:bg-slate-900/92 active:cursor-grabbing"
             style={branchMoveRailAccentStyle.sideRight}
             title="Drag to move this checkpoint"
             onPointerEnter={onMoveRailPointerEnter}
@@ -1392,268 +1422,364 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
         </>
       ) : null}
 
-      <div className={`relative z-[2] ${!clusterSnapLocked ? 'px-6 pb-[calc(2rem+0.5rem)] pt-[calc(5px+2rem+0.5rem)]' : ''}`}>
-        <div className="mb-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <TurnSlugTypography
-            slug={autoTurnSlug}
-            size="lg"
-            title={breadcrumbDisplay}
-            accentHex={branchAccentHex}
-          />
-          {plannerTurnUid ? (
-            <span className="font-mono text-[8px] font-medium tabular-nums text-slate-600" title={plannerTurnUid}>
-              {formatTurnUidShort(plannerTurnUid)}
+      {/* ── COLLAPSED BAR ──────────────────────────────────────────── */}
+      {!cardExpanded ? (
+        <div className="nodrag nopan flex min-h-[52px] items-center gap-2 px-4 py-2" onPointerDown={(e) => e.stopPropagation()}>
+          <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: branchAccentHex }} aria-hidden />
+          <TurnSlugTypography slug={autoTurnSlug} size="md" title={breadcrumbDisplay} accentHex={branchAccentHex} />
+          {showRenamedTitle && (
+            <span className="max-w-[110px] truncate text-[10px] font-semibold text-violet-200">{customLabelRaw}</span>
+          )}
+          <span className="text-[10px] text-slate-600" aria-hidden>·</span>
+          <span className="font-mono text-[10px] tabular-nums text-slate-300">
+            HP <span className="text-emerald-300">{collapsedHp}</span><span className="text-slate-600">/</span>{collapsedMaxHp}
+          </span>
+          {collapsedBlock > 0 && (
+            <span className="font-mono text-[10px] tabular-nums text-sky-300">Blk {collapsedBlock}</span>
+          )}
+          {pathStats.dealt > 0 && (
+            <span className="font-mono text-[10px] font-bold text-emerald-400">⚔ {pathStats.dealt}</span>
+          )}
+          {pathStats.taken > 0 && (
+            <span className="font-mono text-[10px] font-bold text-rose-400">💔 {pathStats.taken}</span>
+          )}
+          {hpDelta !== 0 && (
+            <span className={`font-mono text-[10px] font-bold ${hpDelta > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {hpDelta > 0 ? '+' : ''}{hpDelta} HP
             </span>
-          ) : null}
-        </div>
-
-        {showRenamedTitle ? (
-          <div className="mb-1 rounded-md border border-violet-500/25 bg-violet-950/20 px-2 py-1">
-            <p className="text-[8px] font-bold uppercase tracking-wide text-violet-400/90">Nickname</p>
-            <p className="line-clamp-2 text-[11px] font-semibold leading-tight text-violet-100">{customLabelRaw}</p>
-          </div>
-        ) : null}
-
-        <TurnPhaseTripleStrip
-          key={`${decisionNode.id}-phase-strip`}
-          hintPhase={decisionNode.turnPhase}
-          mode="dtl-highlight"
-        />
-
-        <DtlBranchCombatIntel
-          key={decisionNode.id}
-          snapshot={decisionNode.snapshot}
-          turnPhase={decisionNode.turnPhase}
-        />
-
-        <div
-          className="nodrag nopan mb-1.5 border-t border-slate-700/35 pt-2"
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <div className="mb-1 flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="flex flex-wrap items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-rose-200/95">
-                <Skull className="h-3 w-3 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
-                <span>Enemy intents</span>
-              </p>
-              <p className="mt-0.5 text-[9px] text-slate-600">
-                {intentLines.length === 0
-                  ? 'No intents on snapshot for this turn slot.'
-                  : `${intentLines.length} intent line${intentLines.length === 1 ? '' : 's'}`}
-              </p>
-            </div>
-            {incomingIntentDamageTotal > 0 ? (
-              <div
-                className="shrink-0 rounded-full border border-rose-500/35 bg-rose-950/40 px-2 py-px text-[10px] font-semibold tabular-nums text-rose-200"
-                title="Sum of incoming attack damage from intents (after Weak / Vulnerable / Intangible)"
-              >
-                {incomingIntentDamageTotal} dmg
-              </div>
-            ) : null}
-          </div>
-
-          {intentLines.length > 0 ? (
-            <>
-              <div
-                className="max-h-[11rem] space-y-1 overflow-y-auto overscroll-contain pr-0.5 [scrollbar-width:thin]"
-                onWheelCapture={stopWheelZoomOnPane}
-              >
-                {visibleIntentLines.map((row, ei) => {
-                  const tone = enemyIntentSlotTone(row.name);
-                  const titleParts = [
-                    `${row.name}: ${row.line || 'No intent'}`,
-                    row.modifierHint ? `${row.modifierHint}. (n) = base attack.` : '',
-                  ].filter(Boolean);
-                  return (
-                    <div
-                      key={`${decisionNode.id}-intent-${ei}-${row.name}`}
-                      className={`space-y-0.5 rounded-md border px-2 py-1.5 ${tone.card}`}
-                    >
-                      <div
-                        className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-2"
-                        title={titleParts.join(' ')}
-                      >
-                        <span className={`shrink-0 text-[10px] font-semibold tracking-tight ${tone.name}`}>
-                          {row.name}
-                        </span>
-                        <div className="min-w-0 flex-1 text-[10px] leading-snug text-slate-300">
-                          <IntentIncomingChips actions={row.actions} ctx={row.incomingCtx} />
-                        </div>
-                      </div>
-                      {row.modifierHint ? (
-                        <p className="text-[9px] leading-tight text-amber-200/85">{row.modifierHint}</p>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-              {hiddenIntentCount > 0 ? (
-                <button
-                  type="button"
-                  className="nodrag nopan mt-1 flex w-full items-center justify-center gap-1 rounded-lg border border-slate-700/80 bg-slate-900/50 py-1 text-[10px] font-medium text-cyan-300/90 transition hover:bg-slate-800/80"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIntentsExpanded((v) => !v);
-                  }}
-                >
-                  {intentsExpanded ? (
-                    <>
-                      <ChevronDown className="h-3 w-3 shrink-0" strokeWidth={2} aria-hidden />
-                      Show less
-                    </>
-                  ) : (
-                    <>
-                      <ChevronRight className="h-3 w-3 shrink-0" strokeWidth={2} aria-hidden />
-                      +{hiddenIntentCount} more
-                    </>
-                  )}
-                </button>
-              ) : intentLines.length > BRANCH_INTENT_PREVIEW_MAX ? (
-                <button
-                  type="button"
-                  className="nodrag nopan mt-1 flex w-full items-center justify-center gap-1 text-[10px] font-medium text-slate-500 hover:text-slate-400"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIntentsExpanded(false);
-                  }}
-                >
-                  <ChevronDown className="h-3 w-3 shrink-0" strokeWidth={2} aria-hidden />
-                  Collapse
-                </button>
-              ) : null}
-            </>
-          ) : null}
-        </div>
-
-        <div
-          className="nodrag nopan border-t border-slate-700/40 pt-2"
-          onPointerDown={(e) => e.stopPropagation()}
-          onWheelCapture={stopWheelZoomOnPane}
-        >
-          <div className="mb-1 flex flex-wrap items-start gap-x-2 gap-y-2">
+          )}
+          <div className="ml-auto flex shrink-0 items-center gap-1.5">
             <button
               type="button"
-              className={`nodrag nopan flex min-h-8 min-w-0 flex-1 shrink items-center gap-1 rounded-lg border px-2 py-1 text-left transition-colors ${
-                logsSectionExpanded
-                  ? 'border-slate-600/70 bg-slate-900/35 text-slate-200 hover:bg-slate-800/50'
-                  : 'border-slate-700/50 bg-slate-950/50 text-slate-400 hover:bg-slate-900/65'
-              }`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setLogsSectionExpanded((v) => !v);
-              }}
-              aria-expanded={logsSectionExpanded}
+              disabled={isPinned}
+              title={isPinned ? 'Active on current path' : 'Set as active checkpoint'}
+              className={`nodrag nopan rounded-lg border px-2 py-1 text-[10px] font-semibold transition-colors ${
+                isPinned
+                  ? 'cursor-default border-slate-600/55 bg-slate-900/50 text-slate-500'
+                  : setActiveSuggested
+                    ? 'border-sky-400/65 bg-sky-950/45 text-sky-50 hover:bg-sky-900/55'
+                    : 'border-cyan-500/45 bg-cyan-950/50 text-cyan-100 hover:bg-cyan-900/55'
+              } disabled:pointer-events-none`}
+              onClick={(e) => { e.stopPropagation(); jumpToDecisionNode(decisionNode.id); }}
             >
-              {logsSectionExpanded ? (
-                <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-500" aria-hidden strokeWidth={2} />
-              ) : (
-                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-500" aria-hidden strokeWidth={2} />
-              )}
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">
-                Log <span className="tabular-nums text-slate-500">({logEntries.length})</span>
-              </span>
-              {!logsSectionExpanded ? (
-                <span className="ml-auto text-[9px] font-normal text-slate-600">Collapsed</span>
-              ) : null}
+              {isPinned ? 'Active' : 'Set Active'}
             </button>
-            <div className="flex flex-wrap gap-1 sm:justify-end">
+            <button
+              type="button"
+              title="Expand card"
+              className="nodrag nopan flex h-7 w-7 items-center justify-center rounded-lg border border-slate-600/70 bg-slate-900/60 text-slate-400 transition-colors hover:bg-slate-800/80 hover:text-slate-200"
+              onClick={(e) => { e.stopPropagation(); setCardExpanded(true); }}
+            >
+              <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* ── EXPANDED 3-COL LAYOUT ───────────────────────────────── */
+        <div className={`relative z-[2] ${!clusterSnapLocked ? 'px-6 pb-[calc(2rem+0.5rem)] pt-[calc(5px+2rem+0.5rem)]' : 'p-3'}`}>
+          <div className="grid grid-cols-3 gap-3">
+
+            {/* ── Col 1: Player ───────────────────────────────────── */}
+            <div className="min-w-0 space-y-2">
+              <div className="flex items-baseline gap-x-2 gap-y-0.5 flex-wrap pr-8">
+                <TurnSlugTypography slug={autoTurnSlug} size="lg" title={breadcrumbDisplay} accentHex={branchAccentHex} />
+                {plannerTurnUid ? (
+                  <span className="font-mono text-[8px] font-medium tabular-nums text-slate-600" title={plannerTurnUid}>
+                    {formatTurnUidShort(plannerTurnUid)}
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  title="Collapse card"
+                  className="nodrag nopan ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded border border-slate-600/70 bg-slate-900/60 text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
+                  onClick={(e) => { e.stopPropagation(); setCardExpanded(false); }}
+                >
+                  <ChevronUp className="h-3 w-3" strokeWidth={2} aria-hidden />
+                </button>
+              </div>
+
+              {showRenamedTitle ? (
+                <div className="rounded-md border border-violet-500/25 bg-violet-950/20 px-2 py-1">
+                  <p className="text-[8px] font-bold uppercase tracking-wide text-violet-400/90">Nickname</p>
+                  <p className="line-clamp-2 text-[11px] font-semibold leading-tight text-violet-100">{customLabelRaw}</p>
+                </div>
+              ) : null}
+
+              <TurnPhaseTripleStrip
+                key={`${decisionNode.id}-phase-strip`}
+                hintPhase={decisionNode.turnPhase}
+                mode="dtl-highlight"
+              />
+
+              <DtlBranchCombatIntel
+                key={`${decisionNode.id}-player`}
+                snapshot={decisionNode.snapshot}
+                turnPhase={decisionNode.turnPhase}
+                section="player"
+              />
+
               <button
                 type="button"
-                className={`nodrag nopan min-h-8 rounded-md border px-2 py-1 text-[9px] font-semibold transition-colors sm:px-2.5 ${
-                  inlineLogDensity === 'minimal'
-                    ? 'border-violet-500/50 bg-violet-950/55 text-violet-100'
-                    : 'border-slate-600 bg-slate-900 text-slate-400 hover:bg-slate-800'
-                }`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setInlineLogDensityPersisted('minimal');
-                }}
+                disabled={isPinned}
+                title={
+                  isPinned
+                    ? 'On the loaded timeline path for this turn row (alternate branches use Set Active).'
+                    : setActiveSuggested
+                      ? 'Only continuation below your active pin — click Set Active to extend the loaded path.'
+                      : isSlotActive
+                        ? 'Load this alternate for planner turn row ' + effectivePlannerSlotId
+                        : 'Load checkpoint for planner turn row ' + effectivePlannerSlotId + ' (timeline row differs from planner selection)'
+                }
+                className={`nodrag nopan mt-1 w-full min-h-10 cursor-pointer touch-manipulation rounded-xl border px-3 py-2.5 text-xs font-semibold ${
+                  isPinned
+                    ? 'cursor-default border-slate-600/55 bg-slate-900/50 text-slate-500 opacity-95'
+                    : setActiveSuggested
+                      ? 'border-sky-400/65 bg-sky-950/45 text-sky-50 shadow-[0_0_22px_-6px_rgba(56,189,248,0.48)] ring-1 ring-sky-400/45 hover:bg-sky-900/55 hover:ring-sky-300/55'
+                      : 'border-cyan-500/45 bg-cyan-950/50 text-cyan-100 hover:bg-cyan-900/55'
+                } disabled:pointer-events-none`}
+                onClick={(e) => { e.stopPropagation(); jumpToDecisionNode(decisionNode.id); }}
               >
-                Compact
-              </button>
-              <button
-                type="button"
-                className={`nodrag nopan min-h-8 rounded-md border px-2 py-1 text-[9px] font-semibold transition-colors sm:px-2.5 ${
-                  inlineLogDensity === 'detailed'
-                    ? 'border-violet-500/50 bg-violet-950/55 text-violet-100'
-                    : 'border-slate-600 bg-slate-900 text-slate-400 hover:bg-slate-800'
-                }`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setInlineLogDensityPersisted('detailed');
-                }}
-              >
-                Detailed
-              </button>
-              <button
-                type="button"
-                disabled={logEntries.length === 0}
-                className={`nodrag nopan min-h-8 rounded-md border px-2 py-1 text-[9px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 sm:px-2.5 ${
-                  logModalOpen
-                    ? 'border-amber-500/50 bg-amber-950/45 text-amber-100'
-                    : 'border-slate-600 bg-slate-900 text-slate-400 hover:bg-slate-800'
-                }`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setLogModalOpen(true);
-                }}
-                aria-haspopup="dialog"
-                aria-expanded={logModalOpen}
-              >
-                Full
+                {isPinned ? 'Active' : 'Set Active'}
               </button>
             </div>
-          </div>
 
-          {logsSectionExpanded ? (
-            logEntries.length === 0 ? (
-              <p className="py-2 text-center text-[10px] text-slate-600">No new log entries for this step.</p>
-            ) : (
-              <div
-                className="relative max-h-44 overflow-y-auto overscroll-contain py-1 pr-0.5 [scrollbar-width:thin]"
-                onWheelCapture={stopWheelZoomOnPane}
-              >
-                {renderDtlActivityLogBody(logEntries, inlineLogDensity, 'inline')}
+            {/* ── Col 2: Enemies + Path Stats ─────────────────────── */}
+            <div className="min-w-0 space-y-2 border-l border-slate-700/40 pl-3">
+              <DtlBranchCombatIntel
+                key={`${decisionNode.id}-enemies`}
+                snapshot={decisionNode.snapshot}
+                turnPhase={decisionNode.turnPhase}
+                section="enemies"
+              />
+
+              {/* Path Stats band */}
+              {(() => {
+                const allZero = pathStats.dealt === 0 && pathStats.taken === 0 && pathStats.blocked === 0 &&
+                  pathStats.healed === 0 && pathStats.cardsPlayed === 0 && pathStats.energyUsed === 0;
+                const hpDeltaSign = hpDelta > 0 ? '+' : '';
+                const hpDeltaColor = hpDelta > 0 ? 'text-emerald-400' : hpDelta < 0 ? 'text-rose-400' : 'text-slate-500';
+                const cells: { label: string; value: string | number; color: string }[] = [
+                  { label: 'Dealt',   value: pathStats.dealt,       color: 'text-emerald-400' },
+                  { label: 'Taken',   value: pathStats.taken,       color: 'text-rose-400' },
+                  { label: 'Δ HP',    value: `${hpDeltaSign}${hpDelta}`, color: hpDeltaColor },
+                  { label: 'Blocked', value: pathStats.blocked,     color: 'text-sky-400' },
+                  { label: 'Cards',   value: pathStats.cardsPlayed, color: 'text-violet-400' },
+                  { label: 'Energy',  value: pathStats.energyUsed,  color: 'text-amber-400' },
+                ];
+                return (
+                  <div className={`rounded-lg border border-slate-700/40 bg-slate-800/50 px-3 py-2 ${allZero ? 'opacity-40' : ''}`}>
+                    <p className="mb-1.5 text-[8px] font-bold uppercase tracking-widest text-slate-600">Path totals</p>
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-1.5">
+                      {cells.map(({ label, value, color }) => (
+                        <div key={label} className="flex items-baseline gap-1">
+                          <span className="w-9 shrink-0 text-[8px] font-semibold uppercase tracking-wide text-slate-600">{label}</span>
+                          <span className={`font-mono text-[11px] font-bold tabular-nums ${color}`}>
+                            {allZero ? '—' : value}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    {Object.keys(pathStats.perEnemyDealt).length > 0 && (
+                      <div className="mt-2 space-y-1 border-t border-slate-700/40 pt-2">
+                        <p className="mb-1 text-[8px] font-bold uppercase tracking-widest text-slate-600">Per enemy</p>
+                        {Object.entries(pathStats.perEnemyDealt).map(([name, dmg]) => {
+                          const enemy = decisionNode.snapshot.enemies?.find((e) => e.name === name);
+                          const hpPct = enemy ? Math.round((enemy.hp / enemy.maxHp) * 100) : null;
+                          const hpColor = hpPct == null ? '' : hpPct > 50 ? 'text-emerald-400' : hpPct > 25 ? 'text-amber-400' : 'text-rose-400';
+                          return (
+                            <div key={name} className="flex items-center gap-1.5">
+                              <span className="min-w-0 flex-1 truncate text-[9px] font-medium text-slate-300">{name}</span>
+                              <span className="shrink-0 font-mono text-[9px] font-bold text-emerald-400">⚔ {dmg}</span>
+                              {enemy != null && (
+                                <span className={`shrink-0 font-mono text-[9px] font-bold tabular-nums ${hpColor}`}>
+                                  {enemy.hp}/{enemy.maxHp}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* ── Col 3: Intents + Log ────────────────────────────── */}
+            <div
+              className="nodrag nopan min-w-0 space-y-2 border-l border-slate-700/40 pl-3"
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              {/* Enemy intents */}
+              <div>
+                <div className="mb-1 flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="flex flex-wrap items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-rose-200/95">
+                      <Skull className="h-3 w-3 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
+                      <span>Intents</span>
+                    </p>
+                    <p className="mt-0.5 text-[9px] text-slate-600">
+                      {intentLines.length === 0
+                        ? 'None in snapshot.'
+                        : `${intentLines.length} line${intentLines.length === 1 ? '' : 's'}`}
+                    </p>
+                  </div>
+                  {incomingIntentDamageTotal > 0 ? (
+                    <div
+                      className="shrink-0 rounded-full border border-rose-500/35 bg-rose-950/40 px-2 py-px text-[10px] font-semibold tabular-nums text-rose-200"
+                      title="Sum of incoming attack damage from intents"
+                    >
+                      {incomingIntentDamageTotal} dmg
+                    </div>
+                  ) : null}
+                </div>
+
+                {intentLines.length > 0 ? (
+                  <>
+                    <div
+                      className="max-h-[11rem] space-y-1 overflow-y-auto overscroll-contain pr-0.5 [scrollbar-width:thin]"
+                      onWheelCapture={stopWheelZoomOnPane}
+                    >
+                      {visibleIntentLines.map((row, ei) => {
+                        const tone = enemyIntentSlotTone(row.name);
+                        const titleParts = [
+                          `${row.name}: ${row.line || 'No intent'}`,
+                          row.modifierHint ? `${row.modifierHint}. (n) = base attack.` : '',
+                        ].filter(Boolean);
+                        return (
+                          <div
+                            key={`${decisionNode.id}-intent-${ei}-${row.name}`}
+                            className={`space-y-0.5 rounded-md border px-2 py-1.5 ${tone.card}`}
+                          >
+                            <div
+                              className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-2"
+                              title={titleParts.join(' ')}
+                            >
+                              <span className={`shrink-0 text-[10px] font-semibold tracking-tight ${tone.name}`}>
+                                {row.name}
+                              </span>
+                              <div className="min-w-0 flex-1 text-[10px] leading-snug text-slate-300">
+                                <IntentIncomingChips actions={row.actions} ctx={row.incomingCtx} />
+                              </div>
+                            </div>
+                            {row.modifierHint ? (
+                              <p className="text-[9px] leading-tight text-amber-200/85">{row.modifierHint}</p>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {hiddenIntentCount > 0 ? (
+                      <button
+                        type="button"
+                        className="nodrag nopan mt-1 flex w-full items-center justify-center gap-1 rounded-lg border border-slate-700/80 bg-slate-900/50 py-1 text-[10px] font-medium text-cyan-300/90 transition hover:bg-slate-800/80"
+                        onClick={(e) => { e.stopPropagation(); setIntentsExpanded((v) => !v); }}
+                      >
+                        {intentsExpanded ? (
+                          <><ChevronDown className="h-3 w-3 shrink-0" strokeWidth={2} aria-hidden />Show less</>
+                        ) : (
+                          <><ChevronRight className="h-3 w-3 shrink-0" strokeWidth={2} aria-hidden />+{hiddenIntentCount} more</>
+                        )}
+                      </button>
+                    ) : intentLines.length > BRANCH_INTENT_PREVIEW_MAX ? (
+                      <button
+                        type="button"
+                        className="nodrag nopan mt-1 flex w-full items-center justify-center gap-1 text-[10px] font-medium text-slate-500 hover:text-slate-400"
+                        onClick={(e) => { e.stopPropagation(); setIntentsExpanded(false); }}
+                      >
+                        <ChevronDown className="h-3 w-3 shrink-0" strokeWidth={2} aria-hidden />
+                        Collapse
+                      </button>
+                    ) : null}
+                  </>
+                ) : null}
               </div>
-            )
-          ) : (
-            logEntries.length > 0 ? (
-              <p className="py-1.5 text-center text-[9px] text-slate-600">
-                Expand to preview inline logs, or tap <span className="font-semibold text-slate-400">Full</span>.
-              </p>
-            ) : null
-          )}
-        </div>
 
-        <button
-          type="button"
-          disabled={isPinned}
-          title={
-            isPinned
-              ? 'On the loaded timeline path for this turn row (alternate branches use Set Active).'
-              : setActiveSuggested
-                ? 'Only continuation below your active pin — click Set Active to extend the loaded path.'
-                : isSlotActive
-                  ? 'Load this alternate for planner turn row ' + effectivePlannerSlotId
-                  : 'Load checkpoint for planner turn row ' +
-                    effectivePlannerSlotId +
-                    ' (timeline row differs from planner selection)'
-          }
-          className={`nodrag nopan mt-2 w-full min-h-10 cursor-pointer touch-manipulation rounded-xl border px-3 py-2.5 text-xs font-semibold sm:min-h-11 sm:py-3 ${
-            isPinned
-              ? 'cursor-default border-slate-600/55 bg-slate-900/50 text-slate-500 opacity-95'
-              : setActiveSuggested
-                ? 'border-sky-400/65 bg-sky-950/45 text-sky-50 shadow-[0_0_22px_-6px_rgba(56,189,248,0.48)] ring-1 ring-sky-400/45 hover:bg-sky-900/55 hover:ring-sky-300/55'
-                : 'border-cyan-500/45 bg-cyan-950/50 text-cyan-100 hover:bg-cyan-900/55'
-          } disabled:pointer-events-none`}
-          onClick={(e) => {
-            e.stopPropagation();
-            jumpToDecisionNode(decisionNode.id);
-          }}
-        >
-          {isPinned ? 'Active' : 'Set Active'}
-        </button>
-      </div>
+              {/* Activity log */}
+              <div className="border-t border-slate-700/40 pt-2" onWheelCapture={stopWheelZoomOnPane}>
+                <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <button
+                    type="button"
+                    className={`nodrag nopan flex min-h-7 flex-1 items-center gap-1 rounded-lg border px-2 py-1 text-left transition-colors ${
+                      logsSectionExpanded
+                        ? 'border-slate-600/70 bg-slate-900/35 text-slate-200 hover:bg-slate-800/50'
+                        : 'border-slate-700/50 bg-slate-950/50 text-slate-400 hover:bg-slate-900/65'
+                    }`}
+                    onClick={(e) => { e.stopPropagation(); setLogsSectionExpanded((v) => !v); }}
+                    aria-expanded={logsSectionExpanded}
+                  >
+                    {logsSectionExpanded ? (
+                      <ChevronDown className="h-3 w-3 shrink-0 text-slate-500" aria-hidden strokeWidth={2} />
+                    ) : (
+                      <ChevronRight className="h-3 w-3 shrink-0 text-slate-500" aria-hidden strokeWidth={2} />
+                    )}
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">
+                      Log <span className="tabular-nums text-slate-500">({logEntries.length})</span>
+                    </span>
+                  </button>
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      className={`nodrag nopan min-h-7 rounded-md border px-2 py-0.5 text-[9px] font-semibold transition-colors ${
+                        inlineLogDensity === 'minimal'
+                          ? 'border-violet-500/50 bg-violet-950/55 text-violet-100'
+                          : 'border-slate-600 bg-slate-900 text-slate-400 hover:bg-slate-800'
+                      }`}
+                      onClick={(e) => { e.stopPropagation(); setInlineLogDensityPersisted('minimal'); }}
+                    >
+                      Compact
+                    </button>
+                    <button
+                      type="button"
+                      className={`nodrag nopan min-h-7 rounded-md border px-2 py-0.5 text-[9px] font-semibold transition-colors ${
+                        inlineLogDensity === 'detailed'
+                          ? 'border-violet-500/50 bg-violet-950/55 text-violet-100'
+                          : 'border-slate-600 bg-slate-900 text-slate-400 hover:bg-slate-800'
+                      }`}
+                      onClick={(e) => { e.stopPropagation(); setInlineLogDensityPersisted('detailed'); }}
+                    >
+                      Detailed
+                    </button>
+                    <button
+                      type="button"
+                      disabled={logEntries.length === 0}
+                      className={`nodrag nopan min-h-7 rounded-md border px-2 py-0.5 text-[9px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                        logModalOpen
+                          ? 'border-amber-500/50 bg-amber-950/45 text-amber-100'
+                          : 'border-slate-600 bg-slate-900 text-slate-400 hover:bg-slate-800'
+                      }`}
+                      onClick={(e) => { e.stopPropagation(); setLogModalOpen(true); }}
+                      aria-haspopup="dialog"
+                      aria-expanded={logModalOpen}
+                    >
+                      Full
+                    </button>
+                  </div>
+                </div>
+
+                {logsSectionExpanded ? (
+                  logEntries.length === 0 ? (
+                    <p className="py-2 text-center text-[10px] text-slate-600">No new log entries for this step.</p>
+                  ) : (
+                    <div
+                      className="relative max-h-44 overflow-y-auto overscroll-contain py-1 pr-0.5 [scrollbar-width:thin]"
+                      onWheelCapture={stopWheelZoomOnPane}
+                    >
+                      {renderDtlActivityLogBody(logEntries, inlineLogDensity, 'inline')}
+                    </div>
+                  )
+                ) : (
+                  logEntries.length > 0 ? (
+                    <p className="py-1.5 text-center text-[9px] text-slate-600">
+                      Expand to preview, or tap <span className="font-semibold text-slate-400">Full</span>.
+                    </p>
+                  ) : null
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </div>
 

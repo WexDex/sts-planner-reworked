@@ -10,6 +10,8 @@ import {
   effectivePlannerTurnSlotId,
   getDecisionPathFromRoot,
   pinnedDecisionLineageAnchoredAtStart,
+  computePathStats,
+  computeHpDeltaFromParent,
 } from '@/app/utils/decisionTreeHelpers';
 import type { DecisionNode, Turn } from '@/app/types/gameTypes';
 import { resolvedDecisionTimelineAccentHex } from '@/app/utils/decisionTimelineAccent';
@@ -120,6 +122,27 @@ export default function DecisionTimelineSummary() {
                         Active pin
                       </span>
                     ) : null}
+                    {n.timelineRole !== 'timeline_start' && (() => {
+                      const s = computePathStats(decisionNodes, n.id);
+                      const delta = computeHpDeltaFromParent(decisionNodes, n);
+                      const allZero = s.dealt === 0 && s.taken === 0 && delta === 0;
+                      if (allZero) return null;
+                      return (
+                        <div className="mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5">
+                          {s.dealt > 0 && (
+                            <span className="font-mono text-[8px] font-bold text-emerald-400">⚔ {s.dealt}</span>
+                          )}
+                          {s.taken > 0 && (
+                            <span className="font-mono text-[8px] font-bold text-rose-400">💔 {s.taken}</span>
+                          )}
+                          {delta !== 0 && (
+                            <span className={`font-mono text-[8px] font-bold ${delta > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              {delta > 0 ? '+' : ''}{delta} HP
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               );

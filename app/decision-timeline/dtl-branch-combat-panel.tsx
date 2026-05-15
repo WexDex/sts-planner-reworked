@@ -30,7 +30,7 @@ import {
   Zap,
 } from 'lucide-react';
 
-/** Prevent wheel from reaching React Flow’s pane when scrolling nested lists. */
+/** Prevent wheel from reaching React Flow's pane when scrolling nested lists. */
 function stopWheelZoomOnPane(e: React.WheelEvent) {
   e.stopPropagation();
 }
@@ -440,9 +440,12 @@ function MiniEnemyRow({ enemy, index }: { enemy: Enemy; index: number }) {
 export function DtlBranchCombatIntel({
   snapshot,
   turnPhase,
+  section = 'all',
 }: {
   snapshot: CombatData;
   turnPhase: CombatTurnPhase;
+  /** Which portion of the combat intel to render. Default 'all' = original full layout. */
+  section?: 'all' | 'player' | 'enemies';
 }) {
   const [handOpen, setHandOpen] = useState(false);
   const [playedOpen, setPlayedOpen] = useState(false);
@@ -451,7 +454,7 @@ export function DtlBranchCombatIntel({
   const player = snapshot.player;
   const energyMax = getPlayerMaxEnergy(player);
   const currentEnergy = player.currentEnergy ?? 0;
-  /** Max-3 proportional orbs; above that use “N × orb” so the cell stays readable. */
+  /** Max-3 proportional orbs; above that use "N × orb" so the cell stays readable. */
   const useEnergyCountFormat = energyMax > 3 || currentEnergy > 3;
   const energyOrbFilled =
     energyMax > 0 && !useEnergyCountFormat
@@ -480,168 +483,196 @@ export function DtlBranchCombatIntel({
 
   const totalPileCards = drawPile.length + discardPile.length + exhaustPile.length;
 
-  return (
-    <div
-      className="nodrag nopan mb-2 space-y-2 border-t border-slate-700/40 pt-2"
-      onPointerDown={(e) => e.stopPropagation()}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-1">
-        <p className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">
-          <Swords className="h-3 w-3" strokeWidth={2} aria-hidden />
-          Combat snapshot
-        </p>
-        <span
-          className="rounded border border-slate-600/70 bg-slate-900/80 px-1.5 py-px text-[8px] font-semibold text-slate-400"
-          title="Each checkpoint stores one combat state. The phase strip tags which moment this bookmark refers to (all values below are from that snapshot)."
-        >
-          Bookmark: {PHASE_BOOKMARK_LABEL[turnPhase]}
+  const showHeader = section === 'all';
+  const showStats = section !== 'enemies';
+  const showHandPiles = section !== 'enemies';
+
+  const statsGrid = (
+    <div className="grid grid-cols-3 gap-1.5">
+      <div
+        className="flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-950/20 px-1.5 py-1"
+        title="HP / max HP"
+      >
+        <Heart className="h-3 w-3 shrink-0 text-emerald-400/90" strokeWidth={2} aria-hidden />
+        <span className="font-mono text-[10px] font-semibold tabular-nums text-emerald-100">
+          {hp}<span className="text-slate-600">/</span>{maxHp}
         </span>
       </div>
-
-      <div className="grid grid-cols-3 gap-1.5">
-        <div
-          className="flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-950/20 px-1.5 py-1"
-          title="HP / max HP"
-        >
-          <Heart className="h-3 w-3 shrink-0 text-emerald-400/90" strokeWidth={2} aria-hidden />
-          <span className="font-mono text-[10px] font-semibold tabular-nums text-emerald-100">
-            {hp}<span className="text-slate-600">/</span>{maxHp}
-          </span>
-        </div>
-        <div
-          className="flex items-center gap-1 rounded-md border border-sky-500/30 bg-sky-950/20 px-1.5 py-1"
-          title="Block"
-        >
-          <Shield className="h-3 w-3 shrink-0 text-sky-300/90" strokeWidth={2} aria-hidden />
-          <span className="font-mono text-[10px] font-semibold tabular-nums text-sky-100">{block}</span>
-        </div>
-        <div
-          className="flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-950/20 px-1.5 py-1"
-          title={energyMax > 0 ? `Energy ${currentEnergy} / ${energyMax}` : 'Energy'}
-        >
-          <Zap className="h-3 w-3 shrink-0 text-amber-300/90" strokeWidth={2} aria-hidden />
-          <div className="flex min-w-0 flex-1 items-center justify-center gap-0.5">
-            {energyMax > 0 ? (
-              useEnergyCountFormat ? (
-                <div
-                  className="flex items-center justify-center gap-0.5"
-                  role="img"
-                  aria-label={`Energy ${currentEnergy} of ${energyMax}`}
-                >
-                  <span className="font-mono text-[10px] font-semibold tabular-nums text-amber-100">
-                    {currentEnergy}
-                  </span>
-                  <span className="text-[9px] font-semibold text-amber-200/55" aria-hidden>
-                    ×
-                  </span>
-                  <span
-                    className="h-3 w-3 shrink-0 rounded-full border-2 border-amber-300/90 bg-amber-500 shadow-[0_0_6px_rgba(251,191,36,0.4)]"
-                    title={`${currentEnergy} energy`}
-                    aria-hidden
-                  />
-                </div>
-              ) : (
-                <div
-                  className="flex items-center justify-center gap-0.5"
-                  role="img"
-                  aria-label={`Energy ${currentEnergy} of ${energyMax}, ${energyOrbFilled} of 3 orbs lit`}
-                >
-                  {Array.from({ length: 3 }, (_, i) => {
-                    const filled = i < energyOrbFilled;
-                    return (
-                      <span
-                        key={i}
-                        className={`h-3 w-3 shrink-0 rounded-full border-2 ${
-                          filled
-                            ? 'border-amber-300/90 bg-amber-500 shadow-[0_0_6px_rgba(251,191,36,0.4)]'
-                            : 'border-amber-800/55 bg-amber-950/80'
-                        }`}
-                      />
-                    );
-                  })}
-                </div>
-              )
-            ) : (
-              <span className="text-[10px] font-semibold text-amber-200/40">—</span>
-            )}
-          </div>
-        </div>
+      <div
+        className="flex items-center gap-1 rounded-md border border-sky-500/30 bg-sky-950/20 px-1.5 py-1"
+        title="Block"
+      >
+        <Shield className="h-3 w-3 shrink-0 text-sky-300/90" strokeWidth={2} aria-hidden />
+        <span className="font-mono text-[10px] font-semibold tabular-nums text-sky-100">{block}</span>
       </div>
-
-      <div className="grid gap-2 sm:grid-cols-2">
-        <div className="rounded-md border border-blue-500/20 bg-blue-950/10 px-2 py-1.5">
-          <p className="mb-1 flex items-center gap-1 text-[8px] font-bold uppercase tracking-wide text-blue-300/90">
-            <Sparkles className="h-3 w-3" strokeWidth={2} aria-hidden />
-            Player
-          </p>
-          <ReadonlyBuffGrid items={pBuffs} title="Buffs" />
-          <div className="mt-1.5">
-            <ReadonlyBuffGrid items={pDebuffs} title="Debuffs" />
-          </div>
-        </div>
-        <div className="rounded-md border border-rose-500/20 bg-rose-950/10 px-2 py-1.5">
-          <p className="mb-1 flex items-center gap-1 text-[8px] font-bold uppercase tracking-wide text-rose-300/90">
-            <Skull className="h-3 w-3" strokeWidth={2} aria-hidden />
-            Enemies ({enemies.length})
-          </p>
-          {enemies.length === 0 ? (
-            <p className="text-[9px] text-slate-600">No enemies in snapshot</p>
+      <div
+        className="flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-950/20 px-1.5 py-1"
+        title={energyMax > 0 ? `Energy ${currentEnergy} / ${energyMax}` : 'Energy'}
+      >
+        <Zap className="h-3 w-3 shrink-0 text-amber-300/90" strokeWidth={2} aria-hidden />
+        <div className="flex min-w-0 flex-1 items-center justify-center gap-0.5">
+          {energyMax > 0 ? (
+            useEnergyCountFormat ? (
+              <div
+                className="flex items-center justify-center gap-0.5"
+                role="img"
+                aria-label={`Energy ${currentEnergy} of ${energyMax}`}
+              >
+                <span className="font-mono text-[10px] font-semibold tabular-nums text-amber-100">
+                  {currentEnergy}
+                </span>
+                <span className="text-[9px] font-semibold text-amber-200/55" aria-hidden>
+                  ×
+                </span>
+                <span
+                  className="h-3 w-3 shrink-0 rounded-full border-2 border-amber-300/90 bg-amber-500 shadow-[0_0_6px_rgba(251,191,36,0.4)]"
+                  title={`${currentEnergy} energy`}
+                  aria-hidden
+                />
+              </div>
+            ) : (
+              <div
+                className="flex items-center justify-center gap-0.5"
+                role="img"
+                aria-label={`Energy ${currentEnergy} of ${energyMax}, ${energyOrbFilled} of 3 orbs lit`}
+              >
+                {Array.from({ length: 3 }, (_, i) => {
+                  const filled = i < energyOrbFilled;
+                  return (
+                    <span
+                      key={i}
+                      className={`h-3 w-3 shrink-0 rounded-full border-2 ${
+                        filled
+                          ? 'border-amber-300/90 bg-amber-500 shadow-[0_0_6px_rgba(251,191,36,0.4)]'
+                          : 'border-amber-800/55 bg-amber-950/80'
+                      }`}
+                    />
+                  );
+                })}
+              </div>
+            )
           ) : (
-            <div className="max-h-40 space-y-1 overflow-y-auto [scrollbar-width:thin]" onWheelCapture={stopWheelZoomOnPane}>
-              {enemies.map((enemy, i) => (
-                <MiniEnemyRow key={`${enemy.name}-${i}`} enemy={enemy} index={i} />
-              ))}
-            </div>
+            <span className="text-[10px] font-semibold text-amber-200/40">—</span>
           )}
         </div>
       </div>
+    </div>
+  );
 
-      <div className="space-y-1.5">
-        <CollapsibleCardList
-          title="Hand"
-          count={hand.length}
-          Icon={Hand}
-          cards={hand}
-          expanded={handOpen}
-          onToggle={() => setHandOpen((v) => !v)}
-          emptyHint="No cards in hand"
-        />
-        <CollapsibleCardList
-          title="Played this turn"
-          count={played.length}
-          Icon={Play}
-          cards={played}
-          expanded={playedOpen}
-          onToggle={() => setPlayedOpen((v) => !v)}
-          emptyHint="No cards in played zone"
-        />
+  const playerPanel = (
+    <div className="rounded-md border border-blue-500/20 bg-blue-950/10 px-2 py-1.5">
+      <p className="mb-1 flex items-center gap-1 text-[8px] font-bold uppercase tracking-wide text-blue-300/90">
+        <Sparkles className="h-3 w-3" strokeWidth={2} aria-hidden />
+        Player
+      </p>
+      <ReadonlyBuffGrid items={pBuffs} title="Buffs" />
+      <div className="mt-1.5">
+        <ReadonlyBuffGrid items={pDebuffs} title="Debuffs" />
       </div>
+    </div>
+  );
 
-      <div>
-        <p className="mb-1 flex items-center gap-1 text-[8px] font-bold uppercase tracking-wide text-slate-500">
-          <Layers className="h-3 w-3" strokeWidth={2} aria-hidden />
-          Piles
-        </p>
-        <button
-          type="button"
-          className="flex w-full flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-600/70 bg-slate-900/70 px-2.5 py-1.5 text-left transition hover:bg-slate-800/90"
-          title="Draw, discard, and exhaust piles — choose a tab inside"
-          onClick={(e) => {
-            e.stopPropagation();
-            setPilesModalOpen(true);
-          }}
-        >
-          <span className="text-[10px] font-semibold text-slate-200">View piles</span>
-          <span className="font-mono text-[9px] tabular-nums text-slate-400">
-            <span className="text-cyan-200/90">{drawPile.length}</span>
-            <span className="mx-1 text-slate-600">/</span>
-            <span className="text-sky-200/90">{discardPile.length}</span>
-            <span className="mx-1 text-slate-600">/</span>
-            <span className="text-amber-200/90">{exhaustPile.length}</span>
-            <span className="ml-1.5 text-slate-600">({totalPileCards})</span>
+  const enemiesPanel = (
+    <div className="rounded-md border border-rose-500/20 bg-rose-950/10 px-2 py-1.5">
+      <p className="mb-1 flex items-center gap-1 text-[8px] font-bold uppercase tracking-wide text-rose-300/90">
+        <Skull className="h-3 w-3" strokeWidth={2} aria-hidden />
+        Enemies ({enemies.length})
+      </p>
+      {enemies.length === 0 ? (
+        <p className="text-[9px] text-slate-600">No enemies in snapshot</p>
+      ) : (
+        <div className="max-h-40 space-y-1 overflow-y-auto [scrollbar-width:thin]" onWheelCapture={stopWheelZoomOnPane}>
+          {enemies.map((enemy, i) => (
+            <MiniEnemyRow key={`${enemy.name}-${i}`} enemy={enemy} index={i} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div
+      className={`nodrag nopan space-y-2 ${section === 'all' ? 'mb-2 border-t border-slate-700/40 pt-2' : ''}`}
+      onPointerDown={(e) => e.stopPropagation()}
+    >
+      {showHeader && (
+        <div className="flex flex-wrap items-center justify-between gap-1">
+          <p className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">
+            <Swords className="h-3 w-3" strokeWidth={2} aria-hidden />
+            Combat snapshot
+          </p>
+          <span
+            className="rounded border border-slate-600/70 bg-slate-900/80 px-1.5 py-px text-[8px] font-semibold text-slate-400"
+            title="Each checkpoint stores one combat state. The phase strip tags which moment this bookmark refers to (all values below are from that snapshot)."
+          >
+            Bookmark: {PHASE_BOOKMARK_LABEL[turnPhase]}
           </span>
-        </button>
-      </div>
+        </div>
+      )}
+
+      {showStats && statsGrid}
+
+      {section === 'all' ? (
+        <div className="grid gap-2 sm:grid-cols-2">
+          {playerPanel}
+          {enemiesPanel}
+        </div>
+      ) : section === 'player' ? (
+        playerPanel
+      ) : (
+        enemiesPanel
+      )}
+
+      {showHandPiles && (
+        <div className="space-y-1.5">
+          <CollapsibleCardList
+            title="Hand"
+            count={hand.length}
+            Icon={Hand}
+            cards={hand}
+            expanded={handOpen}
+            onToggle={() => setHandOpen((v) => !v)}
+            emptyHint="No cards in hand"
+          />
+          <CollapsibleCardList
+            title="Played this turn"
+            count={played.length}
+            Icon={Play}
+            cards={played}
+            expanded={playedOpen}
+            onToggle={() => setPlayedOpen((v) => !v)}
+            emptyHint="No cards in played zone"
+          />
+        </div>
+      )}
+
+      {showHandPiles && (
+        <div>
+          <p className="mb-1 flex items-center gap-1 text-[8px] font-bold uppercase tracking-wide text-slate-500">
+            <Layers className="h-3 w-3" strokeWidth={2} aria-hidden />
+            Piles
+          </p>
+          <button
+            type="button"
+            className="flex w-full flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-600/70 bg-slate-900/70 px-2.5 py-1.5 text-left transition hover:bg-slate-800/90"
+            title="Draw, discard, and exhaust piles — choose a tab inside"
+            onClick={(e) => {
+              e.stopPropagation();
+              setPilesModalOpen(true);
+            }}
+          >
+            <span className="text-[10px] font-semibold text-slate-200">View piles</span>
+            <span className="font-mono text-[9px] tabular-nums text-slate-400">
+              <span className="text-cyan-200/90">{drawPile.length}</span>
+              <span className="mx-1 text-slate-600">/</span>
+              <span className="text-sky-200/90">{discardPile.length}</span>
+              <span className="mx-1 text-slate-600">/</span>
+              <span className="text-amber-200/90">{exhaustPile.length}</span>
+              <span className="ml-1.5 text-slate-600">({totalPileCards})</span>
+            </span>
+          </button>
+        </div>
+      )}
 
       <PilesModal
         open={pilesModalOpen}

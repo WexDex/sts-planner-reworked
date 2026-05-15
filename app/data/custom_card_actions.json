@@ -1,4 +1,16 @@
 {
+  "A Thousand Cuts": [
+    {
+      "label": "XDDDD",
+      "actionType": "give_enemy_debuff",
+      "buffName": "Strength",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 1,
+      "allEnemies": false,
+      "enemyIndex": 2
+    }
+  ],
   "Accuracy": [
     {
       "label": "Give Accuracy",
