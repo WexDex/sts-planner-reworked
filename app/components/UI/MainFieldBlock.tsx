@@ -25,6 +25,8 @@ import { isEnemyTargetableInPlannerTurn } from "@/app/utils/enemyPlannerTurn";
 import { enemyIntentSlotTone } from "@/app/utils/enemyIntentSlotTone";
 import { formatTurnUidShort, hasValidPlannerTurnSelection } from "@/app/utils/gameHelpers";
 import {
+  ArrowUpDown,
+  CheckSquare,
   ChevronLeft,
   ChevronRight,
   Columns2,
@@ -43,6 +45,8 @@ import {
   User,
   X,
 } from "lucide-react";
+import PileOrderModal from "@/app/components/UI/PileOrderModal";
+import GlobalQuickActions from "@/app/components/UI/GlobalQuickActions";
 
 import { toast } from "@/app/utils/toast";
 
@@ -186,6 +190,8 @@ export default function MainFieldBlock() {
     currentTurnIndex,
     saveCurrentTurn,
     toggleCardSelection,
+    selectAllInPile,
+    reorderPile,
     combatTargetMode: targetMode,
     setCombatTargetMode,
     combatTargetEnemyIndices: selectedEnemyIndices,
@@ -205,6 +211,7 @@ export default function MainFieldBlock() {
 
   // Play order: keyed by card._uid or fallback "hand-{index}", value = 1-based play position
   const [playOrder, setPlayOrder] = useState<Record<string, number>>({});
+  const [handReorderOpen, setHandReorderOpen] = useState(false);
 
   const getHandCardKey = useCallback((card: import("@/app/types/gameTypes").Card, index: number) =>
     card._uid ?? `hand-${index}`, []);
@@ -225,12 +232,21 @@ export default function MainFieldBlock() {
     });
     setPlayOrder(prev => {
       const hasStale = Object.keys(prev).some(k => !selectedKeys.has(k));
-      if (!hasStale) return prev;
+      const hasMissing = [...selectedKeys].some(k => !(k in prev));
+      if (!hasStale && !hasMissing) return prev;
       const kept = Object.entries(prev)
         .filter(([k]) => selectedKeys.has(k))
         .sort((a, b) => a[1] - b[1]);
       const renumbered: Record<string, number> = {};
       kept.forEach(([k], i) => { renumbered[k] = i + 1; });
+      // assign order to newly selected keys not already in prev
+      let maxOrder = kept.length;
+      hand.forEach((card, i) => {
+        const key = getHandCardKey(card, i);
+        if (card.isSelected && !(key in renumbered)) {
+          renumbered[key] = ++maxOrder;
+        }
+      });
       return renumbered;
     });
   }, [gameState?.hand, getHandCardKey]);
@@ -595,6 +611,9 @@ export default function MainFieldBlock() {
                 const hpPct = enemy.maxHp > 0 ? Math.max(0, Math.min(100, (enemy.hp / enemy.maxHp) * 100)) : 0;
                 const block = enemy.currentBlock ?? 0;
                 const buffs = enemy.buffsDebuffs ?? [];
+                const ePoison = buffs.find(b => b.name === "Poison")?.stacks ?? 0;
+                const ePoisonOvertakes = ePoison > 0 && ePoison >= enemy.hp && enemy.hp > 0;
+                const ePoisonBarPct = enemy.maxHp > 0 ? Math.min(100, (ePoison / enemy.maxHp) * 100) : 0;
                 const incoming = plannerTurnIntentIncoming(enemy, currentTurnId, gameState?.player);
                 const tooltipLine = incoming
                   ? incoming.modifierHint
@@ -641,16 +660,23 @@ export default function MainFieldBlock() {
                       <div className="mb-3 grid grid-cols-2 gap-2 rounded-xl border border-white/8 bg-black/22 p-2 shadow-inner shadow-black/30">
                         <div>
                           <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-500">HP</p>
-                          <p className="font-mono text-sm font-semibold tabular-nums text-rose-200">
-                            {enemy.hp}
-                            <span className="font-normal text-slate-600"> / </span>
-                            {enemy.maxHp}
-                          </p>
-                          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-900/90">
+                          {enemy.hp <= 0 ? (
+                            <p className="font-mono text-sm font-bold text-red-400">DEAD</p>
+                          ) : (
+                            <p className="font-mono text-sm font-semibold tabular-nums text-rose-200">
+                              {enemy.hp}
+                              <span className="font-normal text-slate-600"> / </span>
+                              {enemy.maxHp}
+                            </p>
+                          )}
+                          <div className="relative mt-1 h-1.5 overflow-hidden rounded-full bg-slate-900/90">
                             <div
-                              className="h-full rounded-full bg-linear-to-r from-rose-800 to-rose-400 transition-[width]"
+                              className={`h-full rounded-full transition-[width,background-color] ${ePoisonOvertakes ? "bg-emerald-500" : "bg-linear-to-r from-rose-800 to-rose-400"}`}
                               style={{ width: `${hpPct}%` }}
                             />
+                            {!ePoisonOvertakes && ePoison > 0 && (
+                              <div className="absolute inset-y-0 left-0 rounded-full bg-emerald-500/70 transition-[width]" style={{ width: `${ePoisonBarPct}%` }} />
+                            )}
                           </div>
                         </div>
                         <div>
@@ -720,6 +746,9 @@ export default function MainFieldBlock() {
                 const hpPct = enemy.maxHp > 0 ? Math.max(0, Math.min(100, (enemy.hp / enemy.maxHp) * 100)) : 0;
                 const block = enemy.currentBlock ?? 0;
                 const buffCount = enemy.buffsDebuffs?.length ?? 0;
+                const hudPoison = enemy.buffsDebuffs?.find(b => b.name === "Poison")?.stacks ?? 0;
+                const hudPoisonOvertakes = hudPoison > 0 && hudPoison >= enemy.hp && enemy.hp > 0;
+                const hudPoisonBarPct = enemy.maxHp > 0 ? Math.min(100, (hudPoison / enemy.maxHp) * 100) : 0;
                 const incoming = plannerTurnIntentIncoming(enemy, currentTurnId, gameState?.player);
                 const titleIntent = incoming
                   ? incoming.modifierHint
@@ -765,18 +794,29 @@ export default function MainFieldBlock() {
 
                     <div className="relative h-[3px] w-full overflow-hidden rounded-full bg-black/65">
                       <div
-                        className={`absolute inset-y-0 left-0 rounded-full transition-[width] ${
-                          selected
-                            ? "bg-linear-to-r from-rose-500 to-orange-400"
-                            : "bg-linear-to-r from-rose-600/90 to-rose-400/85"
+                        className={`absolute inset-y-0 left-0 rounded-full transition-[width,background-color] ${
+                          hudPoisonOvertakes
+                            ? "bg-emerald-500"
+                            : selected
+                              ? "bg-linear-to-r from-rose-500 to-orange-400"
+                              : "bg-linear-to-r from-rose-600/90 to-rose-400/85"
                         }`}
                         style={{ width: `${hpPct}%` }}
                       />
+                      {!hudPoisonOvertakes && hudPoison > 0 && (
+                        <div className="absolute inset-y-0 left-0 rounded-full bg-emerald-500/70 transition-[width]" style={{ width: `${hudPoisonBarPct}%` }} />
+                      )}
                     </div>
                     <div className="flex items-center justify-between gap-1 font-mono text-[10px] tabular-nums text-slate-400">
-                      <span className="truncate text-rose-200/90">{enemy.hp}</span>
-                      <span className="shrink-0 text-slate-600">/</span>
-                      <span className="truncate text-right text-slate-500">{enemy.maxHp}</span>
+                      {enemy.hp <= 0 ? (
+                        <span className="font-bold text-red-400">DEAD</span>
+                      ) : (
+                        <>
+                          <span className="truncate text-rose-200/90">{enemy.hp}</span>
+                          <span className="shrink-0 text-slate-600">/</span>
+                          <span className="truncate text-right text-slate-500">{enemy.maxHp}</span>
+                        </>
+                      )}
                     </div>
                     <div className="flex items-center justify-between gap-1 border-t border-white/10 pt-1.5 text-[10px]">
                       <span className="text-slate-500">Blk</span>
@@ -806,6 +846,11 @@ export default function MainFieldBlock() {
             </div>
           </div>
         )}
+      </section>
+
+      {/* Quick Actions */}
+      <section className="rounded-xl border border-slate-700/60 bg-slate-900/50 px-3 py-2 flex items-center gap-2">
+        <GlobalQuickActions compact />
       </section>
 
       {/* Hand */}
@@ -851,6 +896,31 @@ export default function MainFieldBlock() {
               </button>
             </div>
             <CardSizeCycleButton size={handCardSize} onChange={setHandCardSize} />
+            {(gameState?.hand ?? []).length > 0 && (() => {
+              const hand = gameState?.hand ?? [];
+              const allSelected = hand.length > 0 && hand.every(c => c.isSelected);
+              return (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => selectAllInPile(LOCATION.HAND)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-600/70 bg-slate-800/80 px-2.5 py-1.5 text-[11px] font-medium text-slate-300 transition hover:border-slate-500 hover:bg-slate-800"
+                  >
+                    <CheckSquare className="h-3.5 w-3.5" />
+                    {allSelected ? "Desel. All" : "Sel. All"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHandReorderOpen(true)}
+                    title="Manually reorder hand"
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-600/70 bg-slate-800/80 px-2.5 py-1.5 text-[11px] font-medium text-slate-300 transition hover:border-slate-500 hover:bg-slate-800"
+                  >
+                    <ArrowUpDown className="h-3.5 w-3.5" />
+                    Reorder
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         </div>
 
@@ -1134,6 +1204,15 @@ export default function MainFieldBlock() {
           </div>,
           document.body
         )}
+      {handReorderOpen && mounted && createPortal(
+        <PileOrderModal
+          title="Reorder Hand"
+          cards={gameState?.hand ?? []}
+          onConfirm={(ordered) => { reorderPile(LOCATION.HAND, ordered); setHandReorderOpen(false); }}
+          onClose={() => setHandReorderOpen(false)}
+        />,
+        document.body
+      )}
     </div>
   );
 }

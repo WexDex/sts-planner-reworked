@@ -21,7 +21,7 @@ const ORB_CFG: { type: OrbType; label: string; emoji: string; bg: string; border
   { type: "frost",     label: "Frost",     emoji: "🔵", bg: "bg-sky-950/60",    border: "border-sky-500/50"    },
   { type: "plasma",    label: "Plasma",    emoji: "⬜", bg: "bg-slate-800/60",  border: "border-slate-500/50"  },
 ];
-import GlobalQuickActions from "@/app/components/UI/GlobalQuickActions";
+import DeckPreviewModal from "@/app/components/UI/DeckPreviewModal";
 
 const CARD_EFFECT_LEGEND = getCardEffectLegendItems();
 
@@ -163,6 +163,7 @@ export default function TopBarBlock() {
   }, [hoveredCard, highlightIds]);
   const [legendShowAllLabels, setLegendShowAllLabels] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deckPreviewOpen, setDeckPreviewOpen] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
   const [topBarMinimized, setTopBarMinimized] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -213,6 +214,9 @@ export default function TopBarBlock() {
 
   const hpPct = playerMaxHp > 0 ? clampPct((playerHp / playerMaxHp) * 100) : 0;
   const lowHp = playerMaxHp > 0 && (playerHp === 0 || (playerHp > 0 && hpPct < 30));
+  const playerPoison = gameState?.player?.buffsDebuffs?.find(b => b.name === "Poison")?.stacks ?? 0;
+  const playerPoisonOvertakes = playerPoison > 0 && playerPoison >= playerHp && playerHp > 0;
+  const playerPoisonBarPct = playerMaxHp > 0 ? Math.min(100, (playerPoison / playerMaxHp) * 100) : 0;
   const energyPct = energyMax > 0 ? clampPct((currentEnergy / energyMax) * 100) : 0;
   /** Block bar uses max HP as scale; fill caps at 100% when block ≥ max HP. */
   const blockVsMaxHpPct = playerMaxHp > 0 ? clampPct((currentBlock / playerMaxHp) * 100) : 0;
@@ -230,6 +234,26 @@ export default function TopBarBlock() {
   const BlockIcon = blockEffect.icon;
 
   const loadError = fileError ?? error;
+
+  // Combat identity info
+  const CHAR_LABEL: Record<string, { label: string; color: string }> = {
+    ironclad: { label: "Ironclad", color: "border-red-500/60 bg-red-950/35 text-red-200" },
+    silent:   { label: "Silent",   color: "border-emerald-500/60 bg-emerald-950/35 text-emerald-200" },
+    defect:   { label: "Defect",   color: "border-sky-500/60 bg-sky-950/35 text-sky-200" },
+    watcher:  { label: "Watcher",  color: "border-violet-500/60 bg-violet-950/35 text-violet-200" },
+  };
+  const COMBAT_TYPE_COLOR: Record<string, string> = {
+    Elite:  "border-orange-500/60 bg-orange-950/35 text-orange-200",
+    Boss:   "border-red-500/60 bg-red-950/35 text-red-200",
+    Normal: "border-slate-600/60 bg-slate-800/50 text-slate-400",
+  };
+  const charKey = gameState?.player?.characters?.toLowerCase();
+  const charInfo = charKey ? (CHAR_LABEL[charKey] ?? null) : null;
+  const combatType = gameState?.player?.combatType ?? null;
+  const combatName = gameState?.player?.combatName ?? null;
+  const combatFloor = gameState?.player?.floor ?? null;
+  const currentSlot = turns[currentTurnIndex]?.id ?? 1;
+  const currentRelicEffects = (gameState?.player?.relicEffects ?? []).filter((e) => e.turn === currentSlot);
 
   const handleJsonFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -422,7 +446,18 @@ export default function TopBarBlock() {
                   })}
                 </span>
               )}
-              <GlobalQuickActions />
+              <button
+                type="button"
+                onClick={() => setDeckPreviewOpen(true)}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-600/70 bg-slate-800/80 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-slate-500 hover:bg-slate-800"
+                title="Preview starting deck"
+              >
+                <BookOpen className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                Deck
+                <span className="rounded-md bg-slate-700/80 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-300">
+                  {gameState?.deck?.length ?? 0}
+                </span>
+              </button>
               <PlannerPhaseActionsBar variant="inline" />
               <button
                 type="button"
@@ -482,6 +517,35 @@ export default function TopBarBlock() {
               </p>
             </div>
           ) : (
+          <>
+          {/* Combat identity + relic trigger row */}
+          {(charInfo || combatType || combatName || combatFloor != null) && (
+            <div className="mb-3 flex flex-wrap items-center gap-1.5">
+              {charInfo && (
+                <span className={`rounded-lg border px-2 py-0.5 text-[11px] font-semibold ${charInfo.color}`}>
+                  {charInfo.label}
+                </span>
+              )}
+              {combatType && (
+                <span className={`rounded-lg border px-2 py-0.5 text-[11px] font-semibold ${COMBAT_TYPE_COLOR[combatType] ?? "border-slate-600/60 bg-slate-800/50 text-slate-400"}`}>
+                  {combatType}
+                </span>
+              )}
+              {combatName && (
+                <span className="text-sm font-semibold text-slate-100">{combatName}</span>
+              )}
+              {combatFloor != null && (
+                <span className="text-[11px] tabular-nums text-slate-500">
+                  Floor <span className="font-bold text-slate-300">{combatFloor}</span>
+                </span>
+              )}
+              {currentRelicEffects.map((eff, i) => (
+                <span key={i} className="rounded-md border border-amber-500/50 bg-amber-950/30 px-2 py-0.5 text-[10px] font-medium text-amber-200">
+                  ⚡ T{eff.turn}: {eff.effect}
+                </span>
+              ))}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-2 sm:gap-2.5 lg:grid-cols-4">
             {/* HP */}
             <div
@@ -512,7 +576,7 @@ export default function TopBarBlock() {
                 </p>
               </div>
               <div
-                className="h-2.5 w-full overflow-hidden rounded-full border border-rose-900/50 bg-rose-950/80"
+                className="relative h-2.5 w-full overflow-hidden rounded-full border border-rose-900/50 bg-rose-950/80"
                 role="progressbar"
                 aria-valuenow={Math.round(hpPct)}
                 aria-valuemin={0}
@@ -520,11 +584,19 @@ export default function TopBarBlock() {
                 aria-label={`Health ${Math.round(hpPct)} percent`}
               >
                 <div
-                  className={`h-full rounded-full bg-gradient-to-r from-rose-800 to-rose-500 transition-[width] duration-500 ${
-                    lowHp ? "shadow-[0_0_12px_rgba(244,63,94,0.45)]" : ""
+                  className={`h-full rounded-full transition-[width,background-color] duration-500 ${
+                    playerPoisonOvertakes
+                      ? "bg-emerald-500"
+                      : `bg-gradient-to-r from-rose-800 to-rose-500 ${lowHp ? "shadow-[0_0_12px_rgba(244,63,94,0.45)]" : ""}`
                   }`}
                   style={{ width: `${hpPct}%` }}
                 />
+                {!playerPoisonOvertakes && playerPoison > 0 && (
+                  <div
+                    className="absolute inset-y-0 left-0 rounded-full bg-emerald-500/70 transition-[width]"
+                    style={{ width: `${playerPoisonBarPct}%` }}
+                  />
+                )}
               </div>
             </div>
 
@@ -693,6 +765,7 @@ export default function TopBarBlock() {
 
             {/* Orb channel moved to BottomBlock alongside the potion belt */}
           </div>
+          </>
           )}
         </div>
 
@@ -1005,6 +1078,7 @@ export default function TopBarBlock() {
       </div>
 
       <CardDBModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAddCard={addCardFromDB} />
+      <DeckPreviewModal isOpen={deckPreviewOpen} onClose={() => setDeckPreviewOpen(false)} deck={gameState?.deck ?? []} />
 
     </div>
   );

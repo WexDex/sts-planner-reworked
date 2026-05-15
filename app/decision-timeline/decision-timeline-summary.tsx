@@ -11,7 +11,7 @@ import {
   getDecisionPathFromRoot,
   pinnedDecisionLineageAnchoredAtStart,
   computePathStats,
-  computeHpDeltaFromParent,
+  getStartSnapshotForNode,
 } from '@/app/utils/decisionTreeHelpers';
 import type { DecisionNode, Turn } from '@/app/types/gameTypes';
 import { resolvedDecisionTimelineAccentHex } from '@/app/utils/decisionTimelineAccent';
@@ -124,21 +124,43 @@ export default function DecisionTimelineSummary() {
                     ) : null}
                     {n.timelineRole !== 'timeline_start' && (() => {
                       const s = computePathStats(decisionNodes, n.id);
-                      const delta = computeHpDeltaFromParent(decisionNodes, n);
-                      const allZero = s.dealt === 0 && s.taken === 0 && delta === 0;
-                      if (allZero) return null;
+                      const startSnap = getStartSnapshotForNode(decisionNodes, n);
+                      const endSnap = n.snapshot;
+                      const startHp = startSnap?.player?.hp ?? endSnap.player.hp;
+                      const endHp = endSnap.player.hp;
+                      const startBlock = startSnap?.player?.currentBlock ?? 0;
+                      const endBlock = endSnap.player.currentBlock ?? 0;
+                      const hpChanged = startHp !== endHp;
+                      const blockChanged = startBlock !== endBlock;
+                      const hasCombatStats = s.dealt > 0 || s.taken > 0;
+                      if (!hpChanged && !blockChanged && !hasCombatStats) return null;
                       return (
-                        <div className="mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5">
-                          {s.dealt > 0 && (
-                            <span className="font-mono text-[8px] font-bold text-emerald-400">⚔ {s.dealt}</span>
-                          )}
-                          {s.taken > 0 && (
-                            <span className="font-mono text-[8px] font-bold text-rose-400">💔 {s.taken}</span>
-                          )}
-                          {delta !== 0 && (
-                            <span className={`font-mono text-[8px] font-bold ${delta > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                              {delta > 0 ? '+' : ''}{delta} HP
+                        <div className="mt-0.5 flex flex-col gap-y-0.5">
+                          {hpChanged && (
+                            <span className="font-mono text-[8px] font-bold text-slate-300">
+                              HP{' '}
+                              <span className="text-rose-300">{startHp}</span>
+                              <span className="text-slate-500"> → </span>
+                              <span className={endHp < startHp ? 'text-rose-400' : 'text-emerald-400'}>{endHp}</span>
                             </span>
+                          )}
+                          {blockChanged && (
+                            <span className="font-mono text-[8px] font-bold text-slate-300">
+                              Block{' '}
+                              <span className="text-sky-300">{startBlock}</span>
+                              <span className="text-slate-500"> → </span>
+                              <span className={endBlock < startBlock ? 'text-slate-400' : 'text-sky-400'}>{endBlock}</span>
+                            </span>
+                          )}
+                          {hasCombatStats && (
+                            <div className="flex flex-wrap gap-x-2">
+                              {s.dealt > 0 && (
+                                <span className="font-mono text-[8px] font-bold text-emerald-400">⚔ {s.dealt}</span>
+                              )}
+                              {s.taken > 0 && (
+                                <span className="font-mono text-[8px] font-bold text-rose-400">💔 {s.taken}</span>
+                              )}
+                            </div>
                           )}
                         </div>
                       );

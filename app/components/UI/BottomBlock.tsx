@@ -5,8 +5,12 @@ import { useGameManager } from "@/app/context/GameContext";
 import STSCard from "./Card";
 import PotionBelt from "@/app/components/UI/PotionBelt";
 import OrbChannelPanel, { ORB_CFG } from "@/app/components/UI/OrbChannelPanel";
+import { getOrbDefaults } from "@/app/utils/orbDefaults";
 import { LOCATION } from "@/app/types/types";
+import PileOrderModal from "@/app/components/UI/PileOrderModal";
 import {
+  ArrowUpDown,
+  CheckSquare,
   ChevronDown,
   ChevronUp,
   Columns2,
@@ -14,6 +18,7 @@ import {
   Layers,
   LayoutGrid,
   Library,
+  Shuffle,
   SquareStack,
   Trash2,
   TableProperties,
@@ -59,8 +64,9 @@ const PILES: {
 ];
 
 export default function BottomBlock() {
-  const { gameState, drawCards, toggleCardSelection } = useGameManager();
+  const { gameState, drawCards, toggleCardSelection, selectAllInPile, shufflePile, reorderPile } = useGameManager();
   const [expandedPile, setExpandedPile] = useState<PileType | null>(null);
+  const [reorderingPile, setReorderingPile] = useState<PileType | null>(null);
   const [drawAmount, setDrawAmount] = useState(5);
   const [show_size, setShowSize] = useState<"small" | "medium" | "large">("small");
   const [expandLayout, setExpandLayout] = useState<"wrap" | "grid">("wrap");
@@ -70,9 +76,11 @@ export default function BottomBlock() {
   useEffect(() => {
     if (!orbPotionOpen) return;
     const handler = (e: MouseEvent) => {
-      if (orbPotionRef.current && !orbPotionRef.current.contains(e.target as Node)) {
-        setOrbPotionOpen(false);
-      }
+      const t = e.target as Node | null;
+      if (!t) return;
+      if (orbPotionRef.current?.contains(t)) return;
+      if (t instanceof Element && t.closest?.('[role="dialog"]')) return;
+      setOrbPotionOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -137,6 +145,7 @@ export default function BottomBlock() {
   const expandedLabel = PILES.find((p) => p.id === expandedPile)?.label ?? "Pile";
 
   return (
+    <>
     <div
       id="sts-deck-zone"
       ref={ref}
@@ -157,7 +166,39 @@ export default function BottomBlock() {
                   ({expandedPile ? getPileCount(expandedPile) : 0})
                 </span>
               </h3>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Pile actions */}
+                {expandedPile && getPileCount(expandedPile) > 0 && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => selectAllInPile(expandedPile)}
+                      title={getPileCards(expandedPile).every(c => (c as any).isSelected) ? "Deselect all" : "Select all"}
+                      className="flex items-center gap-1 rounded-lg border border-slate-600/70 bg-slate-800/80 px-2 py-1.5 text-[11px] font-medium text-slate-300 transition hover:border-slate-500 hover:bg-slate-800"
+                    >
+                      <CheckSquare className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                      {getPileCards(expandedPile).every(c => (c as any).isSelected) ? "Desel. All" : "Sel. All"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => shufflePile(expandedPile)}
+                      title="Shuffle pile randomly"
+                      className="flex items-center gap-1 rounded-lg border border-slate-600/70 bg-slate-800/80 px-2 py-1.5 text-[11px] font-medium text-slate-300 transition hover:border-slate-500 hover:bg-slate-800"
+                    >
+                      <Shuffle className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                      Shuffle
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setReorderingPile(expandedPile)}
+                      title="Manually reorder cards"
+                      className="flex items-center gap-1 rounded-lg border border-slate-600/70 bg-slate-800/80 px-2 py-1.5 text-[11px] font-medium text-slate-300 transition hover:border-slate-500 hover:bg-slate-800"
+                    >
+                      <ArrowUpDown className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                      Reorder
+                    </button>
+                  </div>
+                )}
                 <div className="inline-flex rounded-lg border border-slate-700 bg-slate-900/80 p-0.5">
                   <button
                     type="button"
@@ -293,30 +334,41 @@ export default function BottomBlock() {
               {(gameState?.potionBelt ?? []).filter(Boolean).length}/{gameState?.potionBeltSize ?? 2}
             </span>
             {(gameState?.orbs ?? []).length > 0 && (
-                <span className="flex gap-0.5">
-                  {(gameState?.orbs ?? []).map((orb, i) => {
-                    const cfg = ORB_CFG.find(o => o.type === orb);
-                    return <span className="border border-slate-100/20" key={i} aria-hidden>
-                      {cfg?.emoji ?? "?"} <br /> 12,22</span>;
-                  })}
-                </span>
+              <span className="flex gap-0.5">
+                {(gameState?.orbs ?? []).map((orb, i) => {
+                  const cfg = ORB_CFG.find(o => o.type === orb);
+                  const focus = (() => { try { return parseInt(localStorage.getItem("sts-orb-focus") ?? "0", 10) || 0; } catch { return 0; } })();
+                  const d = getOrbDefaults()[orb];
+                  const passive = d ? d.passiveDmg + (d.passiveFocus ? focus : 0) : "?";
+                  const evoke = d ? d.evokeDmg + (d.evokeFocus ? focus : 0) : "?";
+                  return (
+                    <span key={i} aria-hidden className="flex flex-col items-center rounded border border-slate-100/20 px-0.5 leading-none">
+                      <span>{cfg?.emoji ?? "?"}</span>
+                      <span className="tabular-nums text-[8px] text-slate-300">{passive}</span>
+                      <span className="tabular-nums text-[8px] text-slate-500">{evoke}</span>
+                    </span>
+                  );
+                })}
+              </span>
             )}
             <ChevronUp className={`h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform duration-150 ${orbPotionOpen ? "" : "rotate-180"}`} strokeWidth={2} />
           </button>
 
-          {orbPotionOpen && (
-            <div className="absolute bottom-full left-0 z-50 mb-2 flex gap-3 rounded-2xl border border-slate-700 bg-slate-900 p-3 shadow-2xl">
-              <div className="flex flex-col gap-1">
-                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-1">Potions</p>
-                <PotionBelt />
-              </div>
-              <div className="w-px bg-slate-700/60 self-stretch" />
-              <div className="flex flex-col gap-1">
-                <p className="text-[9px] font-bold uppercase tracking-widest text-purple-400/70 mb-1">Orb Channel</p>
-                <OrbChannelPanel />
-              </div>
+          {/* Keep always mounted so OrbChannelPanel local state (passive/evoke values) isn't lost on close */}
+          <div
+            className="absolute bottom-full left-0 z-50 mb-2 flex gap-3 rounded-2xl border border-slate-700 bg-slate-900 p-3 shadow-2xl"
+            style={{ display: orbPotionOpen ? undefined : "none" }}
+          >
+            <div className="flex flex-col gap-1">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-1">Potions</p>
+              <PotionBelt />
             </div>
-          )}
+            <div className="w-px bg-slate-700/60 self-stretch" />
+            <div className="flex flex-col gap-1">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-purple-400/70 mb-1">Orb Channel</p>
+              <OrbChannelPanel />
+            </div>
+          </div>
         </div>
 
         <div className="flex w-full min-w-0 max-md:max-w-full max-md:flex-nowrap max-md:items-center max-md:justify-between max-md:gap-1.5 max-md:overflow-x-auto max-md:pb-0.5 md:w-auto md:flex-wrap md:items-center md:gap-2 md:overflow-visible">
@@ -382,5 +434,17 @@ export default function BottomBlock() {
         </div>
       </div>
     </div>
+    {reorderingPile && (
+      <PileOrderModal
+        title={`Reorder ${reorderingPile}`}
+        cards={getPileCards(reorderingPile)}
+        onConfirm={(ordered) => {
+          reorderPile(reorderingPile!, ordered);
+          setReorderingPile(null);
+        }}
+        onClose={() => setReorderingPile(null)}
+      />
+    )}
+    </>
   );
 }

@@ -3,19 +3,19 @@
 import React, { useState } from "react";
 import { useGameManager } from "@/app/context/GameContext";
 import { Card } from "@/app/types/gameTypes";
-import CardDBModal from "@/app/components/CardDBModal";
+import PotionPickerModal from "@/app/components/PotionPickerModal";
 import { FlaskConical, Minus, Plus, X } from "lucide-react";
 
 const POTION_TYPE_COLOR: Record<string, string> = {
-  offensive: "border-red-500/60 bg-red-950/50 text-red-100",
-  defensive: "border-sky-500/60 bg-sky-950/50 text-sky-100",
-  utility:   "border-violet-500/60 bg-violet-950/50 text-violet-100",
-  power:     "border-amber-500/60 bg-amber-950/50 text-amber-100",
+  offensive: "border-red-400/80 bg-red-900/70 text-red-50",
+  defensive: "border-sky-400/80 bg-sky-900/70 text-sky-50",
+  utility:   "border-violet-400/80 bg-violet-900/70 text-violet-50",
+  power:     "border-orange-400/80 bg-orange-900/70 text-orange-50",
 };
 
 function potionSlotStyle(card: Card): string {
   const tag = card.potionTags?.[0];
-  return POTION_TYPE_COLOR[tag ?? ""] ?? "border-emerald-500/60 bg-emerald-950/50 text-emerald-100";
+  return POTION_TYPE_COLOR[tag ?? ""] ?? "border-emerald-400/80 bg-emerald-900/70 text-emerald-50";
 }
 
 interface SlotMenuProps {
@@ -62,11 +62,8 @@ export default function PotionBelt() {
   const belt = gameState?.potionBelt ?? [];
   const size = gameState?.potionBeltSize ?? 2;
 
-  const handleAddPickerSelect = (cardIds: string[], _location: string) => {
-    if (!cardIds[0]) return;
-    // Build a minimal Card from the db id — the modal calls addCardFromDB internally,
-    // but here we intercept to addPotionToBelt instead. We construct a stub with the name.
-    const card: Card = { name: cardIds[0], type: "Potion" };
+  const handlePickerSelect = (name: string) => {
+    const card: Card = { name, type: "Potion" };
     addPotionToBelt(card, targetSlot ?? undefined);
     setPickerOpen(false);
     setTargetSlot(null);
@@ -121,14 +118,14 @@ export default function PotionBelt() {
                   }
                 }}
                 title={card ? `${card.name} — click to use or discard` : "Empty slot — click to add potion"}
-                className={`relative flex min-h-10 min-w-18 items-center justify-center gap-1.5 rounded-xl border px-2 py-1.5 text-xs font-medium transition-all duration-200 ${
+                className={`relative flex min-h-10 items-center justify-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs font-medium transition-all duration-200 ${
                   card
                     ? potionSlotStyle(card)
-                    : "border-slate-600/60 bg-slate-800/40 text-slate-500 hover:border-emerald-500/40 hover:bg-emerald-950/25 hover:text-emerald-300"
+                    : "border-slate-500/60 bg-slate-800/50 text-slate-500 hover:border-emerald-500/50 hover:bg-emerald-950/30 hover:text-emerald-300"
                 }`}
               >
                 <FlaskConical className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
-                <span className="max-w-16 truncate leading-tight">
+                <span className="whitespace-nowrap leading-tight">
                   {card ? card.name : <span className="text-[10px]">+ Potion</span>}
                 </span>
               </button>
@@ -150,10 +147,10 @@ export default function PotionBelt() {
 
       {/* Potion picker modal */}
       {pickerOpen && (
-        <CardDBModal
+        <PotionPickerModal
           isOpen={pickerOpen}
           onClose={() => { setPickerOpen(false); setTargetSlot(null); }}
-          onAddCard={handleAddPickerSelect}
+          onSelect={handlePickerSelect}
         />
       )}
     </div>

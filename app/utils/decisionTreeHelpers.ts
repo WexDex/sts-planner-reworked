@@ -970,3 +970,20 @@ export function isValidDecisionReparent(
   const sub = collectSubtreeIds(nodes, nodeId);
   return !sub.has(newParentId);
 }
+
+/**
+ * Returns the snapshot that represents the START of the turn containing `node`.
+ * Looks for the `turnPhase === 'start'` node with the same `plannerTurnSlotId`.
+ * Falls back to the parent node's snapshot, then null.
+ */
+export function getStartSnapshotForNode(
+  nodes: DecisionNode[],
+  node: DecisionNode,
+): import('@/app/types/gameTypes').CombatData | null {
+  const startNode = nodes.find(
+    n => n.plannerTurnSlotId === node.plannerTurnSlotId && n.turnPhase === 'start',
+  );
+  if (startNode) return startNode.snapshot;
+  const parent = nodes.find(n => n.id === node.parentId);
+  return parent?.snapshot ?? null;
+}

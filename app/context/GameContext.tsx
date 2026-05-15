@@ -145,6 +145,9 @@ interface GameContextType {
   closeProject: () => void;
   toggleRelic: (relicName: string) => void;
   toggleCardSelection: (location: string, index: number) => void;
+  selectAllInPile: (location: string) => void;
+  shufflePile: (location: string) => void;
+  reorderPile: (location: string, newOrder: Card[]) => void;
   playSelectedCards: () => void;
   useSelectedPower: () => void;
   moveSelectedCards: (toLocation: string) => void;
@@ -2591,6 +2594,69 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const selectAllInPile = (location: string) => {
+    setGameState((prevState) => {
+      if (!prevState) return prevState;
+      const pile = prevState[location as keyof CombatData] as Card[];
+      if (!Array.isArray(pile) || pile.length === 0) return prevState;
+      const allSelected = pile.every(c => c.isSelected);
+      const newPile = pile.map(c => ({ ...c, isSelected: !allSelected }));
+      const label = formatPileLabel(location);
+      const logEntry = createActivityLogEntry(
+        allSelected ? `Deselected all in ${label}` : `Selected all in ${label}`,
+        undefined,
+        `${pile.length} card${pile.length !== 1 ? 's' : ''}`,
+        undefined,
+        'card-action',
+      );
+      return { ...prevState, [location]: newPile, activityLog: [...prevState.activityLog, logEntry] };
+    });
+  };
+
+  const shufflePile = (location: string) => {
+    setGameState((prevState) => {
+      if (!prevState) return prevState;
+      const pile = prevState[location as keyof CombatData] as Card[];
+      if (!Array.isArray(pile) || pile.length < 2) return prevState;
+      const before = pile.slice(0, 5).map(c => c.name).join(', ') + (pile.length > 5 ? ', …' : '');
+      const shuffled = [...pile];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      const after = shuffled.slice(0, 5).map(c => c.name).join(', ') + (shuffled.length > 5 ? ', …' : '');
+      const label = formatPileLabel(location);
+      const logEntry = createActivityLogEntry(
+        `Shuffled ${label}`,
+        before,
+        after,
+        undefined,
+        'card-action',
+      );
+      return { ...prevState, [location]: shuffled, activityLog: [...prevState.activityLog, logEntry] };
+    });
+  };
+
+  const reorderPile = (location: string, newOrder: Card[]) => {
+    setGameState((prevState) => {
+      if (!prevState) return prevState;
+      const pile = prevState[location as keyof CombatData] as Card[];
+      if (!Array.isArray(pile)) return prevState;
+      const before = pile.map(c => c.name).join(', ');
+      const after = newOrder.map(c => c.name).join(', ');
+      const label = formatPileLabel(location);
+      const logEntry = createActivityLogEntry(
+        `Reordered ${label}`,
+        before,
+        after,
+        undefined,
+        'card-action',
+        { context: [{ label: 'Cards', value: `${newOrder.length}` }] },
+      );
+      return { ...prevState, [location]: newOrder, activityLog: [...prevState.activityLog, logEntry] };
+    });
+  };
+
   const buildCardFromDatabase = (cardId: string, isUpgraded: boolean): Card | null => {
     const fromSts = gameCardFromDatabaseId(cardId, { isUpgraded });
     if (fromSts) {
@@ -3097,6 +3163,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     closeProject,
     toggleRelic,
     toggleCardSelection,
+    selectAllInPile,
+    shufflePile,
+    reorderPile,
     playSelectedCards,
     useSelectedPower,
     moveSelectedCards,

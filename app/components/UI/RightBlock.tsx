@@ -228,6 +228,9 @@ export default function RightBlock() {
 
   const player = gameState.player;
   const hpPct = player.maxHp > 0 ? Math.min(100, Math.max(0, (player.hp / player.maxHp) * 100)) : 0;
+  const playerPoison = player.buffsDebuffs?.find(b => b.name === "Poison")?.stacks ?? 0;
+  const playerPoisonOvertakes = playerPoison > 0 && playerPoison >= player.hp && player.hp > 0;
+  const playerPoisonBarPct = player.maxHp > 0 ? Math.min(100, (playerPoison / player.maxHp) * 100) : 0;
   const energyCap = getPlayerMaxEnergy(player);
 
   const parseUnsigned = (s: string) => Math.max(0, parseInt(s, 10) || 0);
@@ -316,12 +319,22 @@ export default function RightBlock() {
               <span className="flex items-center gap-1">
                 <Heart className="h-3 w-3 text-rose-400/90" /> HP
               </span>
-              <span className="font-mono tabular-nums text-rose-200">
-                {player.hp} / {player.maxHp}
-              </span>
+              {player.hp <= 0 ? (
+                <span className="font-mono font-bold text-red-400">DEAD</span>
+              ) : (
+                <span className="font-mono tabular-nums text-rose-200">
+                  {player.hp} / {player.maxHp}
+                </span>
+              )}
             </div>
-            <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-slate-800">
-              <div className="h-full rounded-full bg-gradient-to-r from-rose-700 to-rose-500" style={{ width: `${hpPct}%` }} />
+            <div className="relative mb-2 h-1.5 overflow-hidden rounded-full bg-slate-800">
+              <div
+                className={`h-full rounded-full transition-[width,background-color] ${playerPoisonOvertakes ? "bg-emerald-500" : "bg-linear-to-r from-rose-700 to-rose-500"}`}
+                style={{ width: `${hpPct}%` }}
+              />
+              {!playerPoisonOvertakes && playerPoison > 0 && (
+                <div className="absolute inset-y-0 left-0 rounded-full bg-emerald-500/70 transition-[width]" style={{ width: `${playerPoisonBarPct}%` }} />
+              )}
             </div>
             <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">Quick</p>
             <div className="mb-2 flex flex-wrap gap-1">
@@ -539,6 +552,9 @@ export default function RightBlock() {
             <div className="flex flex-col gap-3">
               {enemies.map((enemy: Enemy, idx: number) => {
                 const eHpPct = enemy.maxHp > 0 ? Math.min(100, Math.max(0, (enemy.hp / enemy.maxHp) * 100)) : 0;
+                const ePoison = enemy.buffsDebuffs?.find(b => b.name === "Poison")?.stacks ?? 0;
+                const ePoisonOvertakes = ePoison > 0 && ePoison >= enemy.hp && enemy.hp > 0;
+                const ePoisonBarPct = enemy.maxHp > 0 ? Math.min(100, (ePoison / enemy.maxHp) * 100) : 0;
                 const isBuffFocus = buffTarget === 'enemy' && selectedEnemyIdx === idx;
                 return (
                   <div
@@ -561,12 +577,22 @@ export default function RightBlock() {
                     </div>
                     <div className="mb-1 flex justify-between text-[10px] text-slate-500">
                       <span>HP</span>
-                      <span className="font-mono tabular-nums text-rose-200">
-                        {enemy.hp} / {enemy.maxHp}
-                      </span>
+                      {enemy.hp <= 0 ? (
+                        <span className="font-mono font-bold text-red-400">DEAD</span>
+                      ) : (
+                        <span className="font-mono tabular-nums text-rose-200">
+                          {enemy.hp} / {enemy.maxHp}
+                        </span>
+                      )}
                     </div>
-                    <div className="mb-2 h-1 overflow-hidden rounded-full bg-slate-800">
-                      <div className="h-full bg-rose-600" style={{ width: `${eHpPct}%` }} />
+                    <div className="relative mb-2 h-1 overflow-hidden rounded-full bg-slate-800">
+                      <div
+                        className={`h-full transition-[width,background-color] ${ePoisonOvertakes ? "bg-emerald-500" : "bg-rose-600"}`}
+                        style={{ width: `${eHpPct}%` }}
+                      />
+                      {!ePoisonOvertakes && ePoison > 0 && (
+                        <div className="absolute inset-y-0 left-0 bg-emerald-500/70 transition-[width]" style={{ width: `${ePoisonBarPct}%` }} />
+                      )}
                     </div>
                     <div className="mb-2 flex flex-wrap gap-1">
                       <StepBtn tone="rose" onClick={() => modifyEnemyHp(idx, -10)}>-10</StepBtn>
