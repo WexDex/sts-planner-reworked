@@ -1,4 +1,14 @@
 {
+  "__global__": [
+    {
+      "label": "",
+      "actionType": "give_debuff",
+      "buffName": "",
+      "buffType": "debuff",
+      "hasInput": true,
+      "defaultValue": 1
+    }
+  ],
   "A Thousand Cuts": [
     {
       "label": "XDDDD",
@@ -8,7 +18,34 @@
       "hasInput": true,
       "defaultValue": 1,
       "allEnemies": false,
-      "enemyIndex": 2
+      "enemyIndex": 2,
+      "filter": {
+        "type": "group",
+        "id": "392hldri44x",
+        "conjunction": "AND",
+        "children": [
+          {
+            "type": "leaf",
+            "id": "dndnov2pg4",
+            "field": "type",
+            "operator": "eq",
+            "value": {
+              "kind": "literal",
+              "value": "Power"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "label": "azdazda",
+      "actionType": "modify_enemy_hp",
+      "buffName": "",
+      "buffType": "buff",
+      "hasInput": true,
+      "defaultValue": 1,
+      "allEnemies": false,
+      "enemyIndex": 0
     }
   ],
   "Accuracy": [
@@ -29,6 +66,35 @@
       "defaultValue": 3
     }
   ],
+  "Grand Finale": [
+  {
+    "label": "FINALE",
+    "actionType": "modify_enemy_hp",
+    "buffName": "",
+    "buffType": "buff",
+    "hasInput": true,
+    "defaultValue": 50,
+    "filter": {
+      "type": "group",
+      "id": "0v8gaxbqwa2",
+      "conjunction": "AND",
+      "children": [
+        {
+          "type": "leaf",
+          "id": "zwoyedj7hcj",
+          "field": "draw.length",
+          "operator": "eq",
+          "value": {
+            "kind": "literal",
+            "value": "0"
+          }
+        }
+      ]
+    },
+    "allEnemies": true,
+    "enemyIndex": 0
+  }
+],
   "Adrenaline": [
     {
       "label": "Draw Cards",

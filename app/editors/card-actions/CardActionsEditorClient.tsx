@@ -15,6 +15,8 @@ import {
   Zap,
 } from "lucide-react";
 import CardPickerModal from "@/app/components/UI/CardPickerModal";
+import QuickActionsModal from "@/app/components/UI/QuickActionsModal";
+import type { QAMAction } from "@/app/components/UI/QuickActionsModal";
 import stsBundle from "@/app/data/db/STS_CARDS_DB.json";
 import baseActionsData from "@/app/data/custom_card_actions.json";
 import backupActionsData from "@/app/data/custom_card_actions.backup.json";
@@ -45,6 +47,592 @@ type ActionType =
   | "set_orb_slots"
   | "adjust_orb_slots";
 
+// ─── Filter types ────────────────────────────────────────────────────────────
+
+type FilterOperator =
+  | "eq" | "neq"
+  | "contains" | "notContains"
+  | "gt" | "lt" | "gte" | "lte"
+  | "isTrue" | "isFalse";
+
+type FilterValue =
+  | { kind: "literal"; value: string }
+  | { kind: "field"; field: string };
+
+type FilterLeaf = {
+  type: "leaf";
+  id: string;
+  field: string;
+  operator: FilterOperator;
+  value: FilterValue;
+};
+
+type FilterGroup = {
+  type: "group";
+  id: string;
+  conjunction: "AND" | "OR";
+  children: FilterNode[];
+};
+
+type FilterNode = FilterLeaf | FilterGroup;
+type ActionFilter = FilterGroup;
+
+// ─── Card field descriptors ──────────────────────────────────────────────────
+
+type FieldDef = {
+  field: string;
+  label: string;
+  description: string;
+  operators: FilterOperator[];
+  runtime?: boolean;
+  enumValues?: string[];
+};
+
+const CARD_FILTER_FIELDS: FieldDef[] = [
+  { field: "type",              label: "Card Type",        description: "Attack, Skill, Power, Status, or Curse",                  operators: ["eq","neq"],                        enumValues: ["Attack","Skill","Power","Curse","Status"] },
+  { field: "rarity",            label: "Rarity",           description: "Basic, Common, Uncommon, Rare, Special, or Curse",        operators: ["eq","neq"],                        enumValues: ["Basic","Common","Uncommon","Rare","Special","Curse"] },
+  { field: "characters",        label: "Character",        description: "Which character class the card belongs to",               operators: ["eq","neq"],                        enumValues: ["Ironclad","Silent","Defect","Watcher","Colorless","Curse"] },
+  { field: "name",              label: "Card Name",        description: "Exact or partial match on the card's name string",        operators: ["eq","neq","contains","notContains"] },
+  { field: "damage.base",       label: "Base Damage",      description: "Damage value in the card definition (pre-upgrade)",       operators: ["eq","neq","gt","lt","gte","lte"] },
+  { field: "block.base",        label: "Base Block",       description: "Block value in the card definition (pre-upgrade)",        operators: ["eq","neq","gt","lt","gte","lte"] },
+  { field: "draw",              label: "Draw Count",       description: "Cards drawn when this card is played",                    operators: ["eq","gt","lt","gte","lte"] },
+  { field: "cost.base",         label: "Energy Cost",      description: "Energy required to play the card (base cost)",            operators: ["eq","gt","lt","gte","lte"] },
+  { field: "selfExhaustOnPlay", label: "Exhausts on Play", description: "Card moves to the Exhaust pile after being played",       operators: ["isTrue","isFalse"] },
+  { field: "ethereal",          label: "Ethereal",         description: "Card is exhausted at end of turn if still in hand",       operators: ["isTrue","isFalse"] },
+  { field: "innate",            label: "Innate",           description: "Card starts in your opening hand at combat start",        operators: ["isTrue","isFalse"] },
+  { field: "retain",            label: "Retain",           description: "Card is not discarded at end of turn",                    operators: ["isTrue","isFalse"] },
+];
+
+const RUNTIME_FILTER_FIELDS: FieldDef[] = [
+  { field: "player.hp",         label: "Player HP",        description: "Player's current hit points",                            operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "player.maxHp",      label: "Player Max HP",    description: "Player's maximum hit point cap",                         operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "player.block",      label: "Player Block",     description: "Block the player has this turn (absorbs damage)",        operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "player.energy",     label: "Current Energy",   description: "Energy remaining for the player this turn",              operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "hand.length",       label: "Hand Size",        description: "Number of cards currently in the player's hand",         operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "draw.length",       label: "Draw Pile Size",   description: "Cards remaining in the draw pile",                       operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "discard.length",    label: "Discard Size",     description: "Cards currently in the discard pile",                    operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "exhaust.length",    label: "Exhaust Size",     description: "Cards that have been exhausted this combat",             operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "enemies.length",    label: "Enemy Count",      description: "Number of enemies still alive in the encounter",         operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "enemies[0].hp",     label: "Enemy 0 HP",       description: "Current HP of the first enemy (index 0)",               operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "stance",            label: "Stance",           description: "Watcher's current combat stance",                        operators: ["eq","neq"],                        runtime: true, enumValues: ["neutral","wrath","calm","divinity"] },
+  { field: "orbs.length",       label: "Orb Count",        description: "Number of orbs currently channeled (Defect)",            operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+];
+
+const ALL_FILTER_FIELDS = [...CARD_FILTER_FIELDS, ...RUNTIME_FILTER_FIELDS];
+
+const ACTION_VALUE_FIELDS: { field: string; label: string }[] = [
+  { field: "player.hp",       label: "Player HP" },
+  { field: "player.maxHp",    label: "Player Max HP" },
+  { field: "player.block",    label: "Player Block" },
+  { field: "player.energy",   label: "Current Energy" },
+  { field: "hand.length",     label: "Hand Size" },
+  { field: "draw.length",     label: "Draw Pile Size" },
+  { field: "discard.length",  label: "Discard Size" },
+  { field: "exhaust.length",  label: "Exhaust Size" },
+  { field: "enemies.length",  label: "Enemy Count" },
+  { field: "enemies[0].hp",   label: "Enemy 0 HP" },
+  { field: "orbs.length",     label: "Orb Count" },
+  { field: "damage.base",     label: "Card Base Damage" },
+  { field: "block.base",      label: "Card Base Block" },
+  { field: "cost.base",       label: "Card Energy Cost" },
+  { field: "draw",            label: "Card Draw Count" },
+];
+
+const OP_LABELS: Record<FilterOperator, string> = {
+  eq: "=", neq: "≠", contains: "contains", notContains: "not contains",
+  gt: ">", lt: "<", gte: "≥", lte: "≤", isTrue: "is true", isFalse: "is false",
+};
+
+function isRuntimeField(field: string): boolean {
+  return field.startsWith("player.") || field.startsWith("enemies") ||
+    field.startsWith("hand.") || field.startsWith("draw.") ||
+    field.startsWith("discard.") || field.startsWith("exhaust.") ||
+    field.startsWith("stance") || field.startsWith("orbs") ||
+    field.startsWith("playerBuff:") || field.startsWith("playerDebuff:");
+}
+
+function getNestedField(obj: Record<string, unknown>, path: string): unknown {
+  const parts = path.replace(/\[(\d+)\]/g, ".$1").split(".");
+  let cur: unknown = obj;
+  for (const p of parts) {
+    if (cur == null || typeof cur !== "object") return undefined;
+    cur = (cur as Record<string, unknown>)[p];
+  }
+  return cur;
+}
+
+function isTruthy(v: unknown): boolean {
+  if (!v) return false;
+  if (typeof v === "boolean") return v;
+  if (typeof v === "object" && v !== null) {
+    const o = v as Record<string, unknown>;
+    return Boolean(o.base ?? o.upgraded);
+  }
+  return Boolean(v);
+}
+
+function resolveFilterValue(fv: FilterValue, cardData: Record<string, unknown>): string | number {
+  if (fv.kind === "literal") return fv.value;
+  if (isRuntimeField(fv.field)) return "";
+  return String(getNestedField(cardData, fv.field) ?? "");
+}
+
+function evaluateFilterLeaf(leaf: FilterLeaf, cardData: Record<string, unknown>): boolean {
+  if (isRuntimeField(leaf.field)) return true;
+  const raw = getNestedField(cardData, leaf.field);
+  const rhs = resolveFilterValue(leaf.value, cardData);
+  const lhs = String(raw ?? "").toLowerCase();
+  const rhsStr = String(rhs).toLowerCase();
+  switch (leaf.operator) {
+    case "eq": return lhs === rhsStr;
+    case "neq": return lhs !== rhsStr;
+    case "contains": return lhs.includes(rhsStr);
+    case "notContains": return !lhs.includes(rhsStr);
+    case "gt": return Number(raw) > Number(rhs);
+    case "lt": return Number(raw) < Number(rhs);
+    case "gte": return Number(raw) >= Number(rhs);
+    case "lte": return Number(raw) <= Number(rhs);
+    case "isTrue": return isTruthy(raw);
+    case "isFalse": return !isTruthy(raw);
+    default: return true;
+  }
+}
+
+function evaluateFilterNode(node: FilterNode, cardData: Record<string, unknown>): boolean {
+  if (node.type === "leaf") return evaluateFilterLeaf(node, cardData);
+  const results = node.children.map(c => evaluateFilterNode(c, cardData));
+  return node.conjunction === "AND" ? results.every(Boolean) : results.some(Boolean);
+}
+
+function newLeaf(): FilterLeaf {
+  return { type: "leaf", id: Math.random().toString(36).slice(2), field: "type", operator: "eq", value: { kind: "literal", value: "Attack" } };
+}
+
+function newGroup(conjunction: "AND" | "OR" = "AND"): FilterGroup {
+  return { type: "group", id: Math.random().toString(36).slice(2), conjunction, children: [newLeaf()] };
+}
+
+function filterNodeToExpr(node: FilterNode): string {
+  if (node.type === "leaf") {
+    const fDef = ALL_FILTER_FIELDS.find(f => f.field === node.field);
+    const lhs = fDef?.label ?? node.field;
+    const op = OP_LABELS[node.operator] ?? node.operator;
+    const rhs = node.value.kind === "literal" ? node.value.value : `[${node.value.field}]`;
+    return `${lhs} ${op} ${rhs}`;
+  }
+  if (node.children.length === 0) return "(empty)";
+  const parts = node.children.map(c => filterNodeToExpr(c));
+  const joined = parts.join(` ${node.conjunction} `);
+  return node.children.length > 1 ? `( ${joined} )` : joined;
+}
+
+function filterMatchCount(filter: ActionFilter, allCards: Record<string, unknown>[]): number {
+  return allCards.filter(c => evaluateFilterNode(filter, c)).length;
+}
+
+// ─── FilterNodeEditor ─────────────────────────────────────────────────────────
+
+function FilterLeafEditor({
+  leaf,
+  onChange,
+  onDelete,
+  onWrap,
+}: {
+  leaf: FilterLeaf;
+  onChange: (updated: FilterLeaf) => void;
+  onDelete: () => void;
+  onWrap: () => void;
+}) {
+  const fDef = ALL_FILTER_FIELDS.find(f => f.field === leaf.field);
+  const runtime = fDef?.runtime ?? isRuntimeField(leaf.field);
+  const hasEnum = (fDef?.enumValues ?? []).length > 0;
+  const isBool = leaf.operator === "isTrue" || leaf.operator === "isFalse";
+
+  return (
+    <div className={`rounded-lg border px-2 py-1.5 ${runtime ? "border-amber-600/30 bg-amber-950/15" : "border-sky-600/30 bg-sky-950/15"}`}>
+      {fDef?.description && (
+        <p className="mb-1 text-[9px] italic text-slate-500">{fDef.description}</p>
+      )}
+      <div className="flex flex-wrap items-center gap-1.5">
+      {/* Field select */}
+      <select
+        value={leaf.field}
+        onChange={e => {
+          const newField = e.target.value;
+          const newDef = ALL_FILTER_FIELDS.find(f => f.field === newField);
+          const op = newDef?.operators[0] ?? "eq";
+          onChange({ ...leaf, field: newField, operator: op, value: { kind: "literal", value: "" } });
+        }}
+        className="rounded border border-slate-600/50 bg-slate-800/80 px-1.5 py-0.5 text-[10px] text-slate-200 outline-none"
+      >
+        <optgroup label="Card Stats">
+          {CARD_FILTER_FIELDS.map(f => <option key={f.field} value={f.field}>{f.label}</option>)}
+        </optgroup>
+        <optgroup label="Runtime ⚡">
+          {RUNTIME_FILTER_FIELDS.map(f => <option key={f.field} value={f.field}>{f.label}</option>)}
+        </optgroup>
+      </select>
+
+      {/* Operator select */}
+      <select
+        value={leaf.operator}
+        onChange={e => onChange({ ...leaf, operator: e.target.value as FilterOperator })}
+        className="rounded border border-slate-600/50 bg-slate-800/80 px-1.5 py-0.5 text-[10px] text-slate-200 outline-none"
+      >
+        {(fDef?.operators ?? (["eq","neq"] as FilterOperator[])).map(op => (
+          <option key={op} value={op}>{OP_LABELS[op]}</option>
+        ))}
+      </select>
+
+      {/* Value — literal or field-ref */}
+      {!isBool && (() => {
+        const isFieldRef = leaf.value.kind === "field";
+        return (
+          <div className="flex items-center gap-1">
+            {isFieldRef ? (
+              <span className="flex items-center gap-1 rounded border border-purple-500/40 bg-purple-950/50 px-1.5 py-0.5 font-mono text-[9px] text-purple-200">
+                [{ALL_FILTER_FIELDS.find(f => f.field === (leaf.value as { kind: "field"; field: string }).field)?.label ?? (leaf.value as { kind: "field"; field: string }).field}]
+                <button onClick={() => onChange({ ...leaf, value: { kind: "literal", value: "" } })} className="text-purple-400 hover:text-purple-100">×</button>
+              </span>
+            ) : (
+              hasEnum ? (
+                <select
+                  value={(leaf.value as { kind: "literal"; value: string }).value}
+                  onChange={e => onChange({ ...leaf, value: { kind: "literal", value: e.target.value } })}
+                  className="rounded border border-slate-600/50 bg-slate-800/80 px-1.5 py-0.5 text-[10px] text-amber-200 outline-none"
+                >
+                  {(fDef?.enumValues ?? []).map(v => <option key={v} value={v}>{v}</option>)}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={(leaf.value as { kind: "literal"; value: string }).value}
+                  onChange={e => onChange({ ...leaf, value: { kind: "literal", value: e.target.value } })}
+                  placeholder="value"
+                  className="w-24 rounded border border-slate-600/50 bg-slate-800/80 px-1.5 py-0.5 text-[10px] text-amber-200 outline-none"
+                />
+              )
+            )}
+            {/* Toggle to field-ref */}
+            {!isFieldRef && (
+              <select
+                value=""
+                onChange={e => {
+                  if (e.target.value) onChange({ ...leaf, value: { kind: "field", field: e.target.value } });
+                }}
+                className="rounded border border-purple-700/40 bg-purple-950/40 px-1 py-0.5 text-[9px] text-purple-300 outline-none"
+                title="Set value to a field reference"
+              >
+                <option value="">[$]</option>
+                {ALL_FILTER_FIELDS.map(f => <option key={f.field} value={f.field}>{f.label}{f.runtime ? " ⚡" : ""}</option>)}
+              </select>
+            )}
+          </div>
+        );
+      })()}
+
+      {runtime && <span className="text-[8px] font-bold text-amber-400 opacity-80">⚡</span>}
+      <button onClick={onWrap} title="Wrap in group" className="text-[9px] text-slate-500 hover:text-slate-200 border border-slate-700/50 rounded px-1 py-0.5">Wrap</button>
+      <button onClick={onDelete} title="Remove condition" className="text-rose-500 hover:text-rose-300">
+        <X className="h-3 w-3" strokeWidth={2.5} />
+      </button>
+      </div>
+    </div>
+  );
+}
+
+function FilterGroupEditor({
+  group,
+  onChange,
+  onDelete,
+  isRoot,
+}: {
+  group: FilterGroup;
+  onChange: (updated: FilterGroup) => void;
+  onDelete?: () => void;
+  isRoot?: boolean;
+}) {
+  const groupColor = group.conjunction === "AND"
+    ? "border-rose-500/40 bg-rose-950/15"
+    : "border-sky-500/40 bg-sky-950/15";
+  const accentColor = group.conjunction === "AND" ? "bg-rose-500" : "bg-sky-500";
+
+  function updateChild(idx: number, updated: FilterNode) {
+    const children = [...group.children];
+    children[idx] = updated;
+    onChange({ ...group, children });
+  }
+
+  function deleteChild(idx: number) {
+    const children = group.children.filter((_, i) => i !== idx);
+    onChange({ ...group, children });
+  }
+
+  function wrapLeaf(idx: number) {
+    const child = group.children[idx];
+    const newGrp: FilterGroup = { type: "group", id: Math.random().toString(36).slice(2), conjunction: "AND", children: [child] };
+    const children = [...group.children];
+    children[idx] = newGrp;
+    onChange({ ...group, children });
+  }
+
+  return (
+    <div className={`relative rounded-xl border ${groupColor} pl-3 pr-2 py-2`}>
+      <div className={`absolute left-0 top-2 bottom-2 w-1 rounded-full ${accentColor}`} />
+      {/* Header */}
+      <div className="mb-2 flex items-center gap-1.5 flex-wrap">
+        <button
+          type="button"
+          onClick={() => onChange({ ...group, conjunction: group.conjunction === "AND" ? "OR" : "AND" })}
+          className={`rounded-full border px-2 py-0.5 text-[10px] font-bold transition ${
+            group.conjunction === "AND"
+              ? "border-rose-500/50 bg-rose-950/50 text-rose-200 hover:bg-rose-900/60"
+              : "border-sky-500/50 bg-sky-950/50 text-sky-200 hover:bg-sky-900/60"
+          }`}
+        >
+          {group.conjunction} ▾
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange({ ...group, children: [...group.children, newLeaf()] })}
+          className="rounded border border-slate-600/50 bg-slate-800/50 px-1.5 py-0.5 text-[9px] text-slate-300 hover:bg-slate-700/60"
+        >
+          + Condition
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange({ ...group, children: [...group.children, newGroup("AND")] })}
+          className="rounded border border-slate-600/50 bg-slate-800/50 px-1.5 py-0.5 text-[9px] text-slate-300 hover:bg-slate-700/60"
+        >
+          + Group
+        </button>
+        {!isRoot && onDelete && (
+          <button type="button" onClick={onDelete} className="ml-auto text-rose-500 hover:text-rose-300">
+            <X className="h-3 w-3" strokeWidth={2.5} />
+          </button>
+        )}
+      </div>
+      {/* Children */}
+      <div className="space-y-1.5">
+        {group.children.map((child, i) => (
+          <div key={child.id}>
+            {i > 0 && (
+              <p className={`my-1 text-[9px] font-bold ${group.conjunction === "AND" ? "text-rose-400" : "text-sky-400"}`}>
+                {group.conjunction}
+              </p>
+            )}
+            {child.type === "leaf" ? (
+              <FilterLeafEditor
+                leaf={child}
+                onChange={updated => updateChild(i, updated)}
+                onDelete={() => deleteChild(i)}
+                onWrap={() => wrapLeaf(i)}
+              />
+            ) : (
+              <FilterGroupEditor
+                group={child}
+                onChange={updated => updateChild(i, updated)}
+                onDelete={() => deleteChild(i)}
+              />
+            )}
+          </div>
+        ))}
+        {group.children.length === 0 && (
+          <p className="text-[9px] italic text-slate-600">No conditions — add one above.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── ActionFilter section ────────────────────────────────────────────────────
+
+function FilterChipRow({ filter }: { filter: ActionFilter }) {
+  const expr = filterNodeToExpr(filter);
+  return (
+    <span className="text-[9px] text-slate-400 italic truncate max-w-[320px]" title={expr}>{expr}</span>
+  );
+}
+
+function ActionFilterSection({
+  filter,
+  onChange,
+  allCards,
+}: {
+  filter?: ActionFilter;
+  onChange: (f: ActionFilter | undefined) => void;
+  allCards: Record<string, unknown>[];
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const active = filter ?? null;
+  const matchCount = active ? filterMatchCount(active, allCards) : allCards.length;
+
+  return (
+    <div className="rounded-lg border border-slate-700/50 bg-slate-900/40 px-2.5 py-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        <button
+          type="button"
+          onClick={() => {
+            if (!active) onChange(newGroup("AND"));
+            setExpanded(v => !v);
+          }}
+          className="text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-200"
+        >
+          Action Filter {expanded ? "▲" : "▶"}
+        </button>
+        {active ? (
+          <>
+            {!expanded && <FilterChipRow filter={active} />}
+            <button
+              type="button"
+              onClick={() => setPreviewOpen(true)}
+              className="ml-auto shrink-0 rounded border border-sky-600/40 bg-sky-950/50 px-1.5 py-0.5 text-[9px] font-semibold text-sky-200 hover:bg-sky-900/60"
+            >
+              Preview ({matchCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => { onChange(undefined); setExpanded(false); }}
+              className="text-[9px] text-rose-500 hover:text-rose-300"
+              title="Remove filter"
+            >
+              <X className="h-3 w-3" strokeWidth={2.5} />
+            </button>
+          </>
+        ) : (
+          <span className="text-[9px] text-slate-600 italic">No filter — matches all cards</span>
+        )}
+      </div>
+
+      {expanded && active && (
+        <div className="mt-2">
+          <FilterGroupEditor
+            group={active}
+            onChange={onChange}
+            isRoot
+          />
+          <div className="mt-2 rounded-lg border border-slate-700/40 bg-slate-950/40 px-2 py-1.5">
+            <p className="text-[9px] text-slate-500 font-mono leading-relaxed">
+              <span className="text-slate-400">{filterNodeToExpr(active)}</span>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {previewOpen && active && (
+        <div
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => setPreviewOpen(false)}
+        >
+          <div
+            className="flex max-h-[70dvh] w-[480px] flex-col rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-700/60 px-4 py-3">
+              <div>
+                <p className="text-sm font-bold text-slate-100">Matching cards ({matchCount})</p>
+                <p className="mt-0.5 text-[9px] text-amber-400/80">⚡ Runtime conditions skipped in preview</p>
+              </div>
+              <button onClick={() => setPreviewOpen(false)} className="text-slate-500 hover:text-slate-200">
+                <X className="h-4 w-4" strokeWidth={2} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-2">
+              {allCards.filter(c => evaluateFilterNode(active, c)).slice(0, 200).map((card, i) => {
+                const name = String((card as Record<string, unknown>).name ?? "");
+                const type = String((card as Record<string, unknown>).type ?? "");
+                const rarity = String((card as Record<string, unknown>).rarity ?? "");
+                return (
+                  <div key={i} className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-slate-800/50">
+                    <span className="flex-1 text-[11px] text-slate-200">{name}</span>
+                    <span className="rounded bg-slate-700/60 px-1 py-0.5 text-[8px] text-slate-400">{type}</span>
+                    <span className="rounded bg-slate-700/60 px-1 py-0.5 text-[8px] text-slate-400">{rarity}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── ValueRefInput ────────────────────────────────────────────────────────────
+
+function ValueRefInput({
+  value,
+  valueRef,
+  onChange,
+  onChangeRef,
+  placeholder,
+  min,
+}: {
+  value: number | undefined;
+  valueRef: string | undefined;
+  onChange: (v: number) => void;
+  onChangeRef: (ref: string | undefined) => void;
+  placeholder?: string;
+  min?: number;
+}) {
+  const [refPickerOpen, setRefPickerOpen] = useState(false);
+
+  if (valueRef) {
+    const label = ACTION_VALUE_FIELDS.find(f => f.field === valueRef)?.label ?? valueRef;
+    return (
+      <span className="flex items-center gap-1 rounded-lg border border-violet-500/40 bg-violet-950/50 px-2 py-1 font-mono text-[10px] text-violet-200">
+        ${label}
+        <button
+          type="button"
+          onClick={() => onChangeRef(undefined)}
+          className="text-violet-400 hover:text-violet-100"
+          title="Clear variable reference"
+        >
+          ×
+        </button>
+      </span>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1">
+      <input
+        type="number"
+        min={min}
+        value={value ?? 0}
+        onChange={e => onChange(Number(e.target.value))}
+        placeholder={placeholder}
+        className="w-20 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-slate-100 outline-none focus:border-cyan-500/60 [appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
+      />
+      <div className="relative">
+        <button
+          type="button"
+          title="Set to a game-state variable"
+          onClick={() => setRefPickerOpen(v => !v)}
+          className="rounded border border-violet-700/40 bg-violet-950/40 px-1.5 py-1.5 text-[10px] text-violet-300 hover:border-violet-500/60 hover:bg-violet-900/50"
+        >
+          $
+        </button>
+        {refPickerOpen && (
+          <div className="absolute bottom-full left-0 z-50 mb-1 w-44 rounded-xl border border-slate-700 bg-slate-900 p-1 shadow-xl">
+            {ACTION_VALUE_FIELDS.map(f => (
+              <button
+                key={f.field}
+                type="button"
+                onClick={() => { onChangeRef(f.field); setRefPickerOpen(false); }}
+                className="flex w-full items-center rounded-lg px-2 py-1 text-[10px] text-slate-300 hover:bg-slate-800"
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 type CustomAction = {
   label: string;
   actionType: ActionType;
@@ -52,6 +640,7 @@ type CustomAction = {
   buffType?: "buff" | "debuff";
   hasInput?: boolean;
   defaultValue?: number;
+  valueRef?: string;
   pile?: string;
   cardNames?: string[];
   cardCount?: number;
@@ -60,6 +649,7 @@ type CustomAction = {
   stance?: "neutral" | "wrath" | "calm" | "divinity";
   enemyIndex?: number;
   allEnemies?: boolean;
+  filter?: ActionFilter;
 };
 
 type CustomActionsMap = Record<string, CustomAction[]>;
@@ -222,6 +812,8 @@ const allCards: { id: string; data: CardData }[] = Object.entries(
   .map(([id, data]) => ({ id, data: data as CardData }))
   .sort((a, b) => a.id.localeCompare(b.id));
 
+const allCardsFlat: Record<string, unknown>[] = allCards.map(c => c.data as Record<string, unknown>);
+
 type CharFilter = "all" | "ironclad" | "silent" | "defect" | "watcher" | "colorless" | "status" | "curse";
 
 const CHAR_FILTERS: { value: CharFilter; label: string; pill: string; activePill: string; rowBg: string; selectedRowBg: string; charChip: string }[] = [
@@ -337,6 +929,7 @@ function ActionRow({
   const rowTheme = ACTION_TYPE_ROW[action.actionType];
   const [showPicker, setShowPicker] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [typeModalOpen, setTypeModalOpen] = useState(false);
 
   return (
     <div className={`rounded-xl border ${rowTheme.border} ${rowTheme.bg}`}>
@@ -390,58 +983,102 @@ function ActionRow({
         />
       </div>
 
+      {/* Action Filter */}
+      <ActionFilterSection
+        filter={action.filter}
+        onChange={f => set({ filter: f })}
+        allCards={allCardsFlat}
+      />
+
       {/* Action type */}
       <div>
         <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
           Action type
         </label>
-        <div className="grid grid-cols-2 gap-1.5">
-          {ACTION_TYPES.map((at) => {
-            const active = action.actionType === at.value;
-            return (
-              <button
-                key={at.value}
-                type="button"
-                onClick={() => {
-                  const t = at.value;
-                  const patch: Partial<CustomAction> = { actionType: t };
-                  if (t === "move_to_pile") patch.pile = action.pile ?? "hand";
-                  if (t === "give_buff" || t === "give_debuff" || t === "remove_buff") {
-                    patch.buffName = action.buffName ?? "";
-                    patch.buffType = t === "give_debuff" ? "debuff" : "buff";
-                  }
-                  if (t === "channel_orb") { patch.orbType = action.orbType ?? "lightning"; patch.orbCount = action.orbCount ?? 1; }
-                  if (t === "set_stance") patch.stance = action.stance ?? "neutral";
-                  if (t === "evoke_orbs" || t === "set_orb_slots" || t === "adjust_orb_slots") {
-                    patch.hasInput = action.hasInput ?? true;
-                    patch.defaultValue = action.defaultValue ?? (t === "set_orb_slots" ? 3 : 1);
-                  }
-                  if (t === "give_enemy_buff" || t === "give_enemy_debuff") {
-                    patch.buffName = action.buffName ?? ""; patch.allEnemies = action.allEnemies ?? false;
-                    patch.enemyIndex = action.enemyIndex ?? 0; patch.hasInput = action.hasInput ?? true; patch.defaultValue = action.defaultValue ?? 1;
-                  }
-                  if (t === "modify_enemy_hp" || t === "modify_enemy_block") {
-                    patch.allEnemies = action.allEnemies ?? false; patch.enemyIndex = action.enemyIndex ?? 0;
-                    patch.hasInput = action.hasInput ?? true; patch.defaultValue = action.defaultValue ?? 5;
-                  }
-                  if (t === "remove_enemy_buff") {
-                    patch.buffName = action.buffName ?? ""; patch.allEnemies = action.allEnemies ?? false; patch.enemyIndex = action.enemyIndex ?? 0;
-                  }
-                  set(patch);
-                }}
-                className={`flex flex-col gap-0.5 rounded-lg border px-2.5 py-2 text-left transition ${
-                  active
-                    ? at.activeClass + "border-4 ring-4"
-                    : at.inactiveClass
-                }`}
-              >
-                <span className="text-[11px] font-semibold leading-none">{at.label}</span>
-                <span className="text-[9px] leading-snug opacity-70">{at.description}</span>
-              </button>
-            );
-          })}
-        </div>
+        {(() => {
+          const activeType = ACTION_TYPES.find(t => t.value === action.actionType) ?? ACTION_TYPES[0];
+          return (
+            <button
+              type="button"
+              onClick={() => setTypeModalOpen(true)}
+              className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition ${activeType.activeClass}`}
+            >
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-current opacity-80" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[12px] font-bold leading-none">{activeType.label}</p>
+                <p className="mt-0.5 text-[10px] opacity-60 leading-snug">{activeType.description}</p>
+              </div>
+              <span className="shrink-0 text-[10px] text-slate-400">Change ›</span>
+            </button>
+          );
+        })()}
       </div>
+
+      {typeModalOpen && (
+        <div
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => setTypeModalOpen(false)}
+        >
+          <div
+            className="flex max-h-[80dvh] w-[520px] flex-col rounded-2xl border border-slate-700/80 bg-slate-900 shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-700/60 px-4 py-3">
+              <p className="text-sm font-bold text-slate-100">Choose Action Type</p>
+              <button onClick={() => setTypeModalOpen(false)} className="text-slate-500 hover:text-slate-200">
+                <X className="h-4 w-4" strokeWidth={2} />
+              </button>
+            </div>
+            <div className="flex-1 space-y-1.5 overflow-y-auto p-3">
+              {ACTION_TYPES.map(at => {
+                const active = action.actionType === at.value;
+                return (
+                  <button
+                    key={at.value}
+                    type="button"
+                    onClick={() => {
+                      const t = at.value;
+                      const patch: Partial<CustomAction> = { actionType: t };
+                      if (t === "move_to_pile") patch.pile = action.pile ?? "hand";
+                      if (t === "give_buff" || t === "give_debuff" || t === "remove_buff") {
+                        patch.buffName = action.buffName ?? "";
+                        patch.buffType = t === "give_debuff" ? "debuff" : "buff";
+                      }
+                      if (t === "channel_orb") { patch.orbType = action.orbType ?? "lightning"; patch.orbCount = action.orbCount ?? 1; }
+                      if (t === "set_stance") patch.stance = action.stance ?? "neutral";
+                      if (t === "evoke_orbs" || t === "set_orb_slots" || t === "adjust_orb_slots") {
+                        patch.hasInput = action.hasInput ?? true;
+                        patch.defaultValue = action.defaultValue ?? (t === "set_orb_slots" ? 3 : 1);
+                      }
+                      if (t === "give_enemy_buff" || t === "give_enemy_debuff") {
+                        patch.buffName = action.buffName ?? ""; patch.allEnemies = action.allEnemies ?? false;
+                        patch.enemyIndex = action.enemyIndex ?? 0; patch.hasInput = action.hasInput ?? true; patch.defaultValue = action.defaultValue ?? 1;
+                      }
+                      if (t === "modify_enemy_hp" || t === "modify_enemy_block") {
+                        patch.allEnemies = action.allEnemies ?? false; patch.enemyIndex = action.enemyIndex ?? 0;
+                        patch.hasInput = action.hasInput ?? true; patch.defaultValue = action.defaultValue ?? 5;
+                      }
+                      if (t === "remove_enemy_buff") {
+                        patch.buffName = action.buffName ?? ""; patch.allEnemies = action.allEnemies ?? false; patch.enemyIndex = action.enemyIndex ?? 0;
+                      }
+                      set(patch);
+                      setTypeModalOpen(false);
+                    }}
+                    className={`flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${active ? at.activeClass + " ring-2" : at.inactiveClass}`}
+                  >
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-current opacity-80" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[12px] font-bold">{at.label}</p>
+                      <p className="mt-0.5 text-[10px] opacity-70">{at.description}</p>
+                    </div>
+                    {active && <Check className="h-4 w-4 shrink-0 text-current" strokeWidth={2.5} />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Buff/debuff name */}
       {(action.actionType === "give_buff" || action.actionType === "give_debuff" || action.actionType === "remove_buff") && (
@@ -685,8 +1322,12 @@ function ActionRow({
               </div>
               <div className="min-w-0 flex-1">
                 <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">Default value</label>
-                <input type="number" value={action.defaultValue ?? 1} onChange={(e) => set({ defaultValue: Number(e.target.value) })}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm tabular-nums text-slate-100 outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/30" />
+                <ValueRefInput
+                  value={action.defaultValue ?? 1}
+                  valueRef={action.valueRef}
+                  onChange={v => set({ defaultValue: v })}
+                  onChangeRef={ref => set({ valueRef: ref })}
+                />
               </div>
             </div>
           )}
@@ -729,11 +1370,11 @@ function ActionRow({
             <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
               Default value
             </label>
-            <input
-              type="number"
+            <ValueRefInput
               value={action.defaultValue ?? 1}
-              onChange={(e) => set({ defaultValue: Number(e.target.value) })}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm tabular-nums text-slate-100 outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/30"
+              valueRef={action.valueRef}
+              onChange={v => set({ defaultValue: v })}
+              onChangeRef={ref => set({ valueRef: ref })}
             />
           </div>
         </div>
@@ -932,6 +1573,10 @@ export default function CardActionsEditorClient() {
   }, [search, charFilter]);
 
   const currentActions: CustomAction[] = selectedCard ? (data[selectedCard] ?? []) : [];
+  const mergedActions: QAMAction[] = [
+    ...(selectedCard ? (data[selectedCard] ?? []) : []),
+    ...(data["__global__"] ?? []),
+  ] as QAMAction[];
 
   function setCardActions(actions: CustomAction[]) {
     if (!selectedCard) return;
@@ -1029,6 +1674,13 @@ export default function CardActionsEditorClient() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {selectedCard && currentActions.length > 0 && (
+              <QuickActionsModal
+                cardId={selectedCard}
+                actions={mergedActions}
+                triggerLabel="Test Actions"
+              />
+            )}
             <button
               type="button"
               onClick={() => setShowExportModal(true)}

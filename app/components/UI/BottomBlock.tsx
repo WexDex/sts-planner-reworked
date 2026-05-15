@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useGameManager } from "@/app/context/GameContext";
 import STSCard from "./Card";
 import PotionBelt from "@/app/components/UI/PotionBelt";
+import OrbChannelPanel, { ORB_CFG } from "@/app/components/UI/OrbChannelPanel";
 import { LOCATION } from "@/app/types/types";
 import {
   ChevronDown,
@@ -63,6 +64,19 @@ export default function BottomBlock() {
   const [drawAmount, setDrawAmount] = useState(5);
   const [show_size, setShowSize] = useState<"small" | "medium" | "large">("small");
   const [expandLayout, setExpandLayout] = useState<"wrap" | "grid">("wrap");
+  const [orbPotionOpen, setOrbPotionOpen] = useState(false);
+  const orbPotionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!orbPotionOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (orbPotionRef.current && !orbPotionRef.current.contains(e.target as Node)) {
+        setOrbPotionOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [orbPotionOpen]);
 
   const toggleExpand = (pile: PileType) => {
     setExpandedPile((prev) => (prev === pile ? null : pile));
@@ -266,7 +280,44 @@ export default function BottomBlock() {
           })}
         </div>
 
-        <PotionBelt />
+        {/* Combined orbs + potions dropdown-up */}
+        <div ref={orbPotionRef} className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setOrbPotionOpen(v => !v)}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700/60 bg-slate-800/70 px-3 py-2 text-xs font-semibold text-slate-200 shadow-sm transition hover:border-slate-600 hover:bg-slate-700/70"
+            title="Potions & Orbs"
+          >
+            <span>🧪</span>
+            <span className="tabular-nums text-slate-300">
+              {(gameState?.potionBelt ?? []).filter(Boolean).length}/{gameState?.potionBeltSize ?? 2}
+            </span>
+            {(gameState?.orbs ?? []).length > 0 && (
+                <span className="flex gap-0.5">
+                  {(gameState?.orbs ?? []).map((orb, i) => {
+                    const cfg = ORB_CFG.find(o => o.type === orb);
+                    return <span className="border border-slate-100/20" key={i} aria-hidden>
+                      {cfg?.emoji ?? "?"} <br /> 12,22</span>;
+                  })}
+                </span>
+            )}
+            <ChevronUp className={`h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform duration-150 ${orbPotionOpen ? "" : "rotate-180"}`} strokeWidth={2} />
+          </button>
+
+          {orbPotionOpen && (
+            <div className="absolute bottom-full left-0 z-50 mb-2 flex gap-3 rounded-2xl border border-slate-700 bg-slate-900 p-3 shadow-2xl">
+              <div className="flex flex-col gap-1">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-1">Potions</p>
+                <PotionBelt />
+              </div>
+              <div className="w-px bg-slate-700/60 self-stretch" />
+              <div className="flex flex-col gap-1">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-purple-400/70 mb-1">Orb Channel</p>
+                <OrbChannelPanel />
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="flex w-full min-w-0 max-md:max-w-full max-md:flex-nowrap max-md:items-center max-md:justify-between max-md:gap-1.5 max-md:overflow-x-auto max-md:pb-0.5 md:w-auto md:flex-wrap md:items-center md:gap-2 md:overflow-visible">
           <span className="hidden text-[10px] font-medium uppercase tracking-wide text-slate-500 sm:mr-0.5 md:inline">Draw</span>

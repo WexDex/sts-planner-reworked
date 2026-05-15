@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import customCardActionsData from "@/app/data/custom_card_actions.json";
+import stsBundle from "@/app/data/db/STS_CARDS_DB.json";
 import {
   Activity,
   Battery,
@@ -18,6 +19,212 @@ import {
 import { useGameManager } from "@/app/context/GameContext";
 import QuickActionInputPopup from "@/app/components/UI/QuickActionInputPopup";
 import CardPickerModal from "@/app/components/UI/CardPickerModal";
+
+// ─── Filter types (mirrored from CardActionsEditorClient) ────────────────────
+
+type FilterOperator = "eq" | "neq" | "contains" | "notContains" | "gt" | "lt" | "gte" | "lte" | "isTrue" | "isFalse";
+type FilterValue = { kind: "literal"; value: string } | { kind: "field"; field: string };
+type FilterLeaf = { type: "leaf"; id: string; field: string; operator: FilterOperator; value: FilterValue };
+type FilterGroup = { type: "group"; id: string; conjunction: "AND" | "OR"; children: FilterNode[] };
+type FilterNode = FilterLeaf | FilterGroup;
+type ActionFilter = FilterGroup;
+
+function getNestedField(obj: unknown, path: string): unknown {
+  return path.split(".").reduce<unknown>((acc, k) => {
+    if (acc === null || acc === undefined) return undefined;
+    const match = k.match(/^(\w+)\[(\d+)\]$/);
+    if (match) return (acc as Record<string, unknown[]>)[match[1]]?.[Number(match[2])];
+    return (acc as Record<string, unknown>)[k];
+  }, obj);
+}
+
+// Evaluate a filter against a full context object (card data merged with live game state).
+// No runtime auto-pass — every field resolves from ctx.
+function evaluateFilterLeaf(leaf: FilterLeaf, ctx: Record<string, unknown>): boolean {
+  const lhsRaw = getNestedField(ctx, leaf.field);
+  const rhs = leaf.value.kind === "literal"
+    ? leaf.value.value
+    : String(getNestedField(ctx, leaf.value.field) ?? "");
+  const lhs = String(lhsRaw ?? "").toLowerCase();
+  const rhsLow = rhs.toLowerCase();
+  switch (leaf.operator) {
+    case "eq": return lhs === rhsLow;
+    case "neq": return lhs !== rhsLow;
+    case "contains": return lhs.includes(rhsLow);
+    case "notContains": return !lhs.includes(rhsLow);
+    case "gt": return Number(lhsRaw) > Number(rhs);
+    case "lt": return Number(lhsRaw) < Number(rhs);
+    case "gte": return Number(lhsRaw) >= Number(rhs);
+    case "lte": return Number(lhsRaw) <= Number(rhs);
+    case "isTrue": return Boolean(lhsRaw);
+    case "isFalse": return !Boolean(lhsRaw);
+    default: return true;
+  }
+}
+
+function evaluateFilterNode(node: FilterNode, ctx: Record<string, unknown>): boolean {
+  if (node.type === "leaf") return evaluateFilterLeaf(node, ctx);
+  const results = node.children.map(c => evaluateFilterNode(c, ctx));
+  return node.conjunction === "AND" ? results.every(Boolean) : results.some(Boolean);
+}
+
+// Build a merged evaluation context: card DB data + live game state fields.
+// Filter paths like draw.length, player.hp, stance, etc. resolve to real values.
+function buildEvalContext(cardData: Record<string, unknown>, gs: Record<string, unknown>): Record<string, unknown> {
+  const player = (gs.player ?? {}) as Record<string, unknown>;
+  const energy = (player.energy ?? {}) as Record<string, unknown>;
+  return {
+    ...cardData,
+    player: {
+      hp:     player.hp     ?? 0,
+      maxHp:  player.maxHp  ?? 0,
+      block:  player.currentBlock ?? 0,
+      energy: player.currentEnergy ?? energy.base ?? 0,
+    },
+    hand:    { length: ((gs.hand    as unknown[]) ?? []).length },
+    draw:    { length: ((gs.draw    as unknown[]) ?? []).length },
+    discard: { length: ((gs.discard as unknown[]) ?? []).length },
+    exhaust: { length: ((gs.exhaust as unknown[]) ?? []).length },
+    enemies: Object.assign(
+      ((gs.enemies as Record<string, unknown>[]) ?? []).map(e => ({ hp: e.hp, maxHp: e.maxHp })),
+      { length: ((gs.enemies as unknown[]) ?? []).length },
+    ),
+    stance: gs.stance ?? "neutral",
+    orbs:   { length: ((gs.orbs as unknown[]) ?? []).length },
+  };
+}
+
+// ─── Filter expression renderer ──────────────────────────────────────────────
+
+const OP_LABELS: Record<string, string> = {
+  eq: "=", neq: "≠", contains: "∋", notContains: "∌",
+  gt: ">", lt: "<", gte: "≥", lte: "≤", isTrue: "is true", isFalse: "is false",
+};
+
+const FIELD_LABELS: Record<string, string> = {
+  "type": "Type", "rarity": "Rarity", "characters": "Character", "name": "Name",
+  "damage.base": "Damage", "block.base": "Block", "draw": "Draw",
+  "cost.base": "Energy", "selfExhaustOnPlay": "Exhausts", "ethereal": "Ethereal",
+  "innate": "Innate", "retain": "Retain",
+};
+
+function filterExpr(node: FilterNode): string {
+  if (node.type === "leaf") {
+    const lhs = FIELD_LABELS[node.field] ?? node.field;
+    const op = OP_LABELS[node.operator] ?? node.operator;
+    const rhs = node.value.kind === "literal" ? node.value.value : `[${node.value.field}]`;
+    return `${lhs} ${op} ${rhs}`;
+  }
+  if (node.children.length === 0) return "(empty)";
+  const parts = node.children.map(c => filterExpr(c));
+  const joined = parts.join(` ${node.conjunction} `);
+  return node.children.length > 1 ? `( ${joined} )` : joined;
+}
+
+function FilterExprColored({ node, cardData }: { node: FilterNode; cardData: Record<string, unknown> }): React.ReactElement {
+  if (node.type === "leaf") {
+    const fLabel = FIELD_LABELS[node.field] ?? node.field;
+    const op = OP_LABELS[node.operator] ?? node.operator;
+    const expectedVal = node.value.kind === "literal" ? node.value.value : `[${node.value.field}]`;
+    const actualRaw = getNestedField(cardData, node.field);
+    const matches = evaluateFilterLeaf(node, cardData);
+    const actualStr = actualRaw === undefined || actualRaw === null ? "—" : String(actualRaw);
+    return (
+      <span className="inline-flex flex-wrap items-baseline gap-x-0.5">
+        <span className="text-sky-300">{fLabel}</span>
+        {!matches && <span className="text-rose-400 text-[8px] font-mono">[{actualStr}]</span>}
+        <span className="text-slate-500 px-0.5">{op}</span>
+        <span className={matches ? "text-amber-300" : "text-amber-500/70"}>{expectedVal}</span>
+      </span>
+    );
+  }
+  if (node.children.length === 0) return <span className="text-slate-600 text-[9px]">(empty)</span>;
+  const conjCls = node.conjunction === "AND" ? "text-rose-400 font-bold" : "text-sky-400 font-bold";
+  return (
+    <span className="inline-flex flex-wrap items-baseline gap-x-0.5">
+      {node.children.length > 1 && <span className="text-slate-600">(</span>}
+      {node.children.map((child, i) => (
+        <span key={i} className="inline-flex items-baseline gap-x-0.5">
+          {i > 0 && <span className={conjCls}>{node.conjunction}</span>}
+          <FilterExprColored node={child} cardData={cardData} />
+        </span>
+      ))}
+      {node.children.length > 1 && <span className="text-slate-600">)</span>}
+    </span>
+  );
+}
+
+// ─── STS DB card lookup ───────────────────────────────────────────────────────
+
+const STS_CARDS = (stsBundle as unknown as { cards: Record<string, Record<string, unknown>> }).cards ?? {};
+
+function getCardData(name: string): Record<string, unknown> {
+  return STS_CARDS[name] ?? {};
+}
+
+// ─── Enemy action types ───────────────────────────────────────────────────────
+
+const ENEMY_ACTION_TYPES = new Set([
+  "give_enemy_buff",
+  "give_enemy_debuff",
+  "modify_enemy_hp",
+  "modify_enemy_block",
+  "remove_enemy_buff",
+]);
+
+// ─── Enemy picker popup ───────────────────────────────────────────────────────
+
+function EnemyPickerPopup({ title, enemies, onApply, onCancel }: {
+  title: string;
+  enemies: Array<{ name: string; hp: number; maxHp: number }>;
+  onApply: (indices: number[]) => void;
+  onCancel: () => void;
+}) {
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [allSelected, setAllSelected] = useState(false);
+
+  const canApply = allSelected || selected.size > 0;
+
+  return (
+    <div className="fixed inset-0 z-99999 flex items-center justify-center bg-black/70" onClick={onCancel}>
+      <div className="w-95 rounded-2xl border border-slate-700/80 bg-slate-900 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="border-b border-slate-700/60 px-4 py-3">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-slate-300">{title}</p>
+          <p className="text-[10px] text-slate-500">Select target enemies</p>
+        </div>
+        <div className="max-h-72 space-y-1.5 overflow-y-auto p-3">
+          <button type="button" onClick={() => { setAllSelected(v => !v); setSelected(new Set()); }}
+            className={`flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-[11px] transition ${allSelected ? "border-rose-500/60 bg-rose-950/40 text-rose-100" : "border-slate-600/50 bg-slate-800/60 text-slate-300 hover:border-slate-500/60"}`}
+          >
+            <span className={`h-3.5 w-3.5 shrink-0 rounded border-2 ${allSelected ? "border-rose-400 bg-rose-400" : "border-slate-500"}`} aria-hidden />
+            <span className="font-semibold">All enemies</span>
+          </button>
+          {enemies.map((e, i) => {
+            const isSel = selected.has(i) || allSelected;
+            return (
+              <button key={i} type="button" onClick={() => {
+                setSelected(prev => { const n = new Set(prev); n.has(i) ? n.delete(i) : n.add(i); return n; });
+                setAllSelected(false);
+              }}
+                className={`flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-[11px] transition ${isSel ? "border-rose-500/60 bg-rose-950/40 text-rose-100" : "border-slate-600/50 bg-slate-800/60 text-slate-300 hover:border-slate-500/60"}`}
+              >
+                <span className={`h-3.5 w-3.5 shrink-0 rounded border-2 ${isSel ? "border-rose-400 bg-rose-400" : "border-slate-500"}`} aria-hidden />
+                <span className="flex-1 font-medium">{e.name || `Enemy ${i + 1}`}</span>
+                <span className="tabular-nums text-slate-400"><span className="text-emerald-300">{e.hp}</span><span className="text-slate-600">/</span>{e.maxHp} HP</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex items-center justify-end gap-2 border-t border-slate-700/60 px-4 py-3">
+          <button type="button" onClick={onCancel} className="rounded-lg border border-slate-600/50 bg-slate-800/60 px-3 py-1.5 text-[11px] font-semibold text-slate-300 hover:bg-slate-700/60">Cancel</button>
+          <button type="button" disabled={!canApply} onClick={() => onApply(allSelected ? enemies.map((_, i) => i) : Array.from(selected))}
+            className="rounded-lg border border-rose-500/50 bg-rose-950/50 px-3 py-1.5 text-[11px] font-bold text-rose-100 hover:bg-rose-900/60 disabled:cursor-not-allowed disabled:opacity-40"
+          >Apply</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 type ValueNode = number | { base: number; upgraded?: number };
 
@@ -58,6 +265,7 @@ type CustomAction = {
   stance?: "neutral" | "wrath" | "calm" | "divinity";
   enemyIndex?: number;
   allEnemies?: boolean;
+  filter?: ActionFilter;
 };
 
 type CustomActionsMap = Record<string, CustomAction[]>;
@@ -123,15 +331,15 @@ function customActionTooltip(ca: CustomAction): string {
     case "set_stance":
       return `Changes Watcher stance to ${ca.stance ?? "neutral"}.`;
     case "give_enemy_buff":
-      return `Gives "${ca.buffName}" buff to ${ca.allEnemies ? "all enemies" : `enemy #${ca.enemyIndex ?? 0}`}${ca.hasInput ? " — enter stacks" : ""}.`;
+      return `Gives "${ca.buffName}" buff to selected enemies${ca.hasInput ? " — enter stacks" : ""}.`;
     case "give_enemy_debuff":
-      return `Applies "${ca.buffName}" debuff to ${ca.allEnemies ? "all enemies" : `enemy #${ca.enemyIndex ?? 0}`}${ca.hasInput ? " — enter stacks" : ""}.`;
+      return `Applies "${ca.buffName}" debuff to selected enemies${ca.hasInput ? " — enter stacks" : ""}.`;
     case "modify_enemy_hp":
-      return `Changes HP of ${ca.allEnemies ? "all enemies" : `enemy #${ca.enemyIndex ?? 0}`}${ca.hasInput ? " — enter value" : ` by ${ca.defaultValue}`}.`;
+      return `Changes HP of selected enemies${ca.hasInput ? " — enter value" : ` by ${ca.defaultValue}`}.`;
     case "modify_enemy_block":
-      return `Modifies block of ${ca.allEnemies ? "all enemies" : `enemy #${ca.enemyIndex ?? 0}`}${ca.hasInput ? " — enter value" : ` by ${ca.defaultValue}`}.`;
+      return `Modifies block of selected enemies${ca.hasInput ? " — enter value" : ` by ${ca.defaultValue}`}.`;
     case "remove_enemy_buff":
-      return `Removes "${ca.buffName}" from ${ca.allEnemies ? "all enemies" : `enemy #${ca.enemyIndex ?? 0}`}.`;
+      return `Removes "${ca.buffName}" from selected enemies.`;
     case "trigger_orb_passive":
       return "Triggers the passive effect of all channeled orbs.";
     case "discard_hand":
@@ -155,6 +363,7 @@ function QAButton({
   hint,
   color,
   badge,
+  filter,
   onClick,
 }: {
   icon: React.ReactNode;
@@ -162,8 +371,10 @@ function QAButton({
   hint: string;
   color: string;
   badge?: string;
+  filter?: ActionFilter;
   onClick: () => void;
 }) {
+  const expr = filter ? filterExpr(filter) : null;
   return (
     <button
       type="button"
@@ -182,6 +393,11 @@ function QAButton({
           )}
         </span>
         <span className="mt-0.5 block text-[10px] leading-snug opacity-60">{hint}</span>
+        {expr && (
+          <span className="mt-1 block truncate font-mono text-[9px] text-sky-400/70" title={expr}>
+            if {expr}
+          </span>
+        )}
       </span>
       <Info
         className="mt-0.5 h-3 w-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-40"
@@ -189,6 +405,29 @@ function QAButton({
         aria-hidden
       />
     </button>
+  );
+}
+
+// ─── Grayed-out action (filter doesn't match current card) ───────────────────
+
+function GrayedQAButton({ label, filter, cardData }: {
+  label: string;
+  filter?: ActionFilter;
+  cardData: Record<string, unknown>;
+}) {
+  return (
+    <div className="group relative flex w-full flex-col rounded-lg border border-slate-700/30 bg-slate-900/20 px-3 py-1.5 opacity-50 transition-colors hover:border-slate-600/50 hover:bg-slate-800/40 hover:opacity-100">
+      <div className="flex items-center gap-2">
+        <span className="h-3 w-3 shrink-0 rounded-full border border-slate-600/50 bg-slate-800" />
+        <span className="text-[10px] font-semibold text-slate-500 line-through">{label}</span>
+        <span className="ml-auto shrink-0 text-[9px] text-slate-600">filter</span>
+      </div>
+      {filter && (
+        <div className="mt-1.5 hidden flex-wrap gap-x-1 gap-y-0.5 font-mono text-[9px] leading-relaxed group-hover:flex">
+          <FilterExprColored node={filter} cardData={cardData} />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -220,6 +459,7 @@ export default function QuickActionsSection() {
   const [popup, setPopup] = useState<PopupState>(null);
   const [cardPicker, setCardPicker] = useState<CardPickerState>(null);
   const [customActions, setCustomActions] = useState<CustomActionsMap>(customCardActionsData as CustomActionsMap);
+  const [enemyPickerPending, setEnemyPickerPending] = useState<{ action: CustomAction; preValue?: number } | null>(null);
 
   useEffect(() => {
     fetch("/api/card-actions")
@@ -243,6 +483,7 @@ export default function QuickActionsSection() {
   const card = selected[0];
   const upg = card.isUpgraded ?? false;
   const sourceCard = { name: card.name, character: card.characters as string | undefined, cardType: card.type as string | undefined };
+  const evalCtx = buildEvalContext(getCardData(card.name), gameState as unknown as Record<string, unknown>);
 
   function openPopup(title: string, defaultValue: number, onApply: (v: number) => void) {
     setPopup({ title, defaultValue, onApply });
@@ -387,9 +628,11 @@ export default function QuickActionsSection() {
     });
   }
 
-  const cardCustomActions: CustomAction[] = customActions[card.name] ?? [];
+  const cardSpecificActions: CustomAction[] = customActions[card.name] ?? [];
+  const globalActions: CustomAction[] = (customActions as Record<string, CustomAction[]>)["__global__"] ?? [];
+  const cardCustomActions: CustomAction[] = [...cardSpecificActions, ...globalActions];
 
-  // When the JSON has entries for this card, those are authoritative —
+  // When the JSON has entries for this card (card-specific or global), those are authoritative —
   // skip the runtime DB-derived actions to avoid showing duplicates.
   const visibleDbActions = cardCustomActions.length > 0 ? [] : dbActions;
 
@@ -406,6 +649,16 @@ export default function QuickActionsSection() {
       setCardPicker({ pile: ca.pile ?? "hand", defaultCount: ca.cardCount ?? 1, initialSelected: preSelected });
       return;
     }
+    if (ENEMY_ACTION_TYPES.has(ca.actionType)) {
+      const enemies = gameState?.enemies ?? [];
+      if (enemies.length === 0) { fireCustomAction(ca); return; }
+      if (ca.hasInput) {
+        openPopup(ca.label, ca.defaultValue ?? 1, (v) => setEnemyPickerPending({ action: ca, preValue: v }));
+      } else {
+        setEnemyPickerPending({ action: ca });
+      }
+      return;
+    }
     if (NO_INPUT_TYPES.has(ca.actionType)) { fireCustomAction(ca); return; }
     if (ca.hasInput) {
       openPopup(ca.label, ca.defaultValue ?? 1, (v) => fireCustomAction(ca, v));
@@ -414,8 +667,9 @@ export default function QuickActionsSection() {
     fireCustomAction(ca);
   }
 
-  function fireCustomAction(ca: CustomAction, value?: number) {
+  function fireCustomAction(ca: CustomAction, value?: number, targetIndices?: number[]) {
     const v = value ?? ca.defaultValue ?? 0;
+    const targets = targetIndices ?? (ca.allEnemies ? (gameState?.enemies ?? []).map((_, i) => i) : [ca.enemyIndex ?? 0]);
     switch (ca.actionType) {
       case "give_buff":
         addBuffDebuff("player", -1, ca.buffName ?? "", "buff", v, undefined, sourceCard);
@@ -462,24 +716,19 @@ export default function QuickActionsSection() {
         setStance(ca.stance ?? "neutral");
         break;
       case "give_enemy_buff":
-        if (ca.allEnemies) (gameState?.enemies ?? []).forEach((_, i) => addBuffDebuff("enemy", i, ca.buffName ?? "", "buff", v, undefined, sourceCard));
-        else addBuffDebuff("enemy", ca.enemyIndex ?? 0, ca.buffName ?? "", "buff", v, undefined, sourceCard);
+        targets.forEach(i => addBuffDebuff("enemy", i, ca.buffName ?? "", "buff", v, undefined, sourceCard));
         break;
       case "give_enemy_debuff":
-        if (ca.allEnemies) (gameState?.enemies ?? []).forEach((_, i) => addBuffDebuff("enemy", i, ca.buffName ?? "", "debuff", v, undefined, sourceCard));
-        else addBuffDebuff("enemy", ca.enemyIndex ?? 0, ca.buffName ?? "", "debuff", v, undefined, sourceCard);
+        targets.forEach(i => addBuffDebuff("enemy", i, ca.buffName ?? "", "debuff", v, undefined, sourceCard));
         break;
       case "modify_enemy_hp":
-        if (ca.allEnemies) (gameState?.enemies ?? []).forEach((_, i) => modifyEnemyHp(i, v));
-        else modifyEnemyHp(ca.enemyIndex ?? 0, v);
+        targets.forEach(i => modifyEnemyHp(i, v));
         break;
       case "modify_enemy_block":
-        if (ca.allEnemies) (gameState?.enemies ?? []).forEach((_, i) => modifyEnemyBlock(i, v));
-        else modifyEnemyBlock(ca.enemyIndex ?? 0, v);
+        targets.forEach(i => modifyEnemyBlock(i, v));
         break;
       case "remove_enemy_buff":
-        if (ca.allEnemies) (gameState?.enemies ?? []).forEach((_, i) => removeBuffDebuff("enemy", i, ca.buffName ?? ""));
-        else removeBuffDebuff("enemy", ca.enemyIndex ?? 0, ca.buffName ?? "");
+        targets.forEach(i => removeBuffDebuff("enemy", i, ca.buffName ?? ""));
         break;
       case "trigger_orb_passive":
         triggerOrbPassive();
@@ -545,7 +794,7 @@ export default function QuickActionsSection() {
             ))}
 
             {/* Card-specific custom actions */}
-            {cardCustomActions.length > 0 && (
+            {cardSpecificActions.length > 0 && (
               <>
                 {visibleDbActions.length > 0 && (
                   <div className="my-2 flex items-center gap-2">
@@ -554,17 +803,49 @@ export default function QuickActionsSection() {
                     <div className="h-px flex-1 bg-slate-800/60" />
                   </div>
                 )}
-                {cardCustomActions.map((ca, i) => (
-                  <QAButton
-                    key={`${ca.label}-${i}`}
-                    icon={<Sparkles className="h-4 w-4" strokeWidth={2} />}
-                    label={ca.label}
-                    hint={customActionTooltip(ca)}
-                    badge={ca.actionType === "add_card" ? (ca.cardCount ?? 1) > 1 ? `×${ca.cardCount}` : undefined : (ca.hasInput && ca.defaultValue !== undefined ? `${ca.defaultValue}` : undefined)}
-                    color="border-teal-500/50 bg-teal-950/40 text-teal-100 hover:bg-teal-900/55 hover:border-teal-400/65"
-                    onClick={() => triggerCustomAction(ca)}
-                  />
-                ))}
+                {cardSpecificActions.map((ca, i) => {
+                  const filterPass = !ca.filter || evaluateFilterNode(ca.filter, evalCtx);
+                  if (!filterPass) return <GrayedQAButton key={`${ca.label}-${i}`} label={ca.label} filter={ca.filter} cardData={evalCtx} />;
+                  return (
+                    <QAButton
+                      key={`${ca.label}-${i}`}
+                      icon={<Sparkles className="h-4 w-4" strokeWidth={2} />}
+                      label={ca.label}
+                      hint={customActionTooltip(ca)}
+                      badge={ca.actionType === "add_card" ? (ca.cardCount ?? 1) > 1 ? `×${ca.cardCount}` : undefined : (ca.hasInput && ca.defaultValue !== undefined ? `${ca.defaultValue}` : undefined)}
+                      filter={ca.filter}
+                      color="border-teal-500/50 bg-teal-950/40 text-teal-100 hover:bg-teal-900/55 hover:border-teal-400/65"
+                      onClick={() => triggerCustomAction(ca)}
+                    />
+                  );
+                })}
+              </>
+            )}
+
+            {/* Global actions (from __global__ key — apply to every card) */}
+            {globalActions.length > 0 && (
+              <>
+                <div className="my-2 flex items-center gap-2">
+                  <div className="h-px flex-1 bg-slate-800/60" />
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600/80">Global</span>
+                  <div className="h-px flex-1 bg-slate-800/60" />
+                </div>
+                {globalActions.map((ca, i) => {
+                  const filterPass = !ca.filter || evaluateFilterNode(ca.filter, evalCtx);
+                  if (!filterPass) return <GrayedQAButton key={`global-${ca.label}-${i}`} label={ca.label} filter={ca.filter} cardData={evalCtx} />;
+                  return (
+                    <QAButton
+                      key={`global-${ca.label}-${i}`}
+                      icon={<Sparkles className="h-4 w-4" strokeWidth={2} />}
+                      label={ca.label}
+                      hint={customActionTooltip(ca)}
+                      badge={ca.actionType === "add_card" ? (ca.cardCount ?? 1) > 1 ? `×${ca.cardCount}` : undefined : (ca.hasInput && ca.defaultValue !== undefined ? `${ca.defaultValue}` : undefined)}
+                      filter={ca.filter}
+                      color="border-amber-500/50 bg-amber-950/40 text-amber-100 hover:bg-amber-900/55 hover:border-amber-400/65"
+                      onClick={() => triggerCustomAction(ca)}
+                    />
+                  );
+                })}
               </>
             )}
 
@@ -598,6 +879,15 @@ export default function QuickActionsSection() {
             );
           }}
           onClose={() => setCardPicker(null)}
+        />
+      )}
+
+      {enemyPickerPending && (
+        <EnemyPickerPopup
+          title={enemyPickerPending.action.label}
+          enemies={(gameState?.enemies ?? []).map(e => ({ name: (e as any).name ?? "", hp: (e as any).hp ?? 0, maxHp: (e as any).maxHp ?? 0 }))}
+          onApply={indices => { fireCustomAction(enemyPickerPending.action, enemyPickerPending.preValue, indices); setEnemyPickerPending(null); }}
+          onCancel={() => setEnemyPickerPending(null)}
         />
       )}
     </>

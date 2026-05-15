@@ -1,6 +1,8 @@
 export interface OrbTypeDefaults {
   passiveDmg: number;
   evokeDmg: number;
+  passiveFocus?: boolean;
+  evokeFocus?: boolean;
 }
 
 export const BUILTIN_ORBS: { type: string; label: string; emoji: string }[] = [
@@ -11,10 +13,10 @@ export const BUILTIN_ORBS: { type: string; label: string; emoji: string }[] = [
 ];
 
 export const DEFAULT_ORB_VALUES: Record<string, OrbTypeDefaults> = {
-  lightning: { passiveDmg: 3,  evokeDmg: 8  },
-  dark:      { passiveDmg: 6,  evokeDmg: 0  },
-  frost:     { passiveDmg: 2,  evokeDmg: 11 },
-  plasma:    { passiveDmg: 1,  evokeDmg: 2  },
+  lightning: { passiveDmg: 3,  evokeDmg: 8,  passiveFocus: true,  evokeFocus: true  },
+  dark:      { passiveDmg: 6,  evokeDmg: 0,  passiveFocus: false, evokeFocus: false },
+  frost:     { passiveDmg: 2,  evokeDmg: 11, passiveFocus: true,  evokeFocus: false },
+  plasma:    { passiveDmg: 1,  evokeDmg: 2,  passiveFocus: false, evokeFocus: false },
 };
 
 const STORAGE_KEY = "sts-orb-defaults";
