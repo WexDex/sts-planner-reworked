@@ -17,7 +17,8 @@
       "Bash(python -c ' *)",
       "Bash(git checkout *)",
       "Bash(node -e \"const db=require\\('./app/data/db/STS_CARDS_DB.json'\\); const keys=Object.keys\\(db.cards||db\\).slice\\(0,5\\); console.log\\(JSON.stringify\\(keys\\)\\); const first=Object.values\\(db.cards||db\\)[0]; console.log\\(JSON.stringify\\(Object.keys\\(first\\)\\)\\)\")",
-      "Bash(node -e \"const db = require\\('./app/data/db/STS_CARDS_DB.json'\\); const cards = db.cards ?? db; const blockCard = Object.entries\\(cards\\).find\\(\\([,v]\\) => v.block\\); const energyCard = Object.entries\\(cards\\).find\\(\\([,v]\\) => v.cost || v.energyCost\\); console.log\\('block card:', JSON.stringify\\(blockCard?.[1], null, 2\\).substring\\(0, 300\\)\\); console.log\\('energy card:', JSON.stringify\\(energyCard?.[1], null, 2\\).substring\\(0, 200\\)\\);\")"
+      "Bash(node -e \"const db = require\\('./app/data/db/STS_CARDS_DB.json'\\); const cards = db.cards ?? db; const blockCard = Object.entries\\(cards\\).find\\(\\([,v]\\) => v.block\\); const energyCard = Object.entries\\(cards\\).find\\(\\([,v]\\) => v.cost || v.energyCost\\); console.log\\('block card:', JSON.stringify\\(blockCard?.[1], null, 2\\).substring\\(0, 300\\)\\); console.log\\('energy card:', JSON.stringify\\(energyCard?.[1], null, 2\\).substring\\(0, 200\\)\\);\")",
+      "Bash(powershell -Command ' *)"
     ]
   }
 }

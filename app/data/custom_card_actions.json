@@ -7,6 +7,32 @@
       "buffType": "debuff",
       "hasInput": true,
       "defaultValue": 1
+    },
+    {
+      "label": "USE POWER",
+      "actionType": "move_to_pile",
+      "buffName": "",
+      "buffType": "debuff",
+      "hasInput": true,
+      "defaultValue": 1,
+      "filter": {
+        "type": "group",
+        "id": "yodibwvavn9",
+        "conjunction": "AND",
+        "children": [
+          {
+            "type": "leaf",
+            "id": "r2a4u7r4ics",
+            "field": "type",
+            "operator": "eq",
+            "value": {
+              "kind": "literal",
+              "value": "Power"
+            }
+          }
+        ]
+      },
+      "pile": "exhaust"
     }
   ],
   "A Thousand Cuts": [
@@ -67,34 +93,39 @@
     }
   ],
   "Grand Finale": [
-  {
-    "label": "FINALE",
-    "actionType": "modify_enemy_hp",
-    "buffName": "",
-    "buffType": "buff",
-    "hasInput": true,
-    "defaultValue": 50,
+      {
+    "label": "",
+    "actionType": "move_to_pile",
     "filter": {
       "type": "group",
-      "id": "0v8gaxbqwa2",
+      "id": "fsa3apm7y6e",
       "conjunction": "AND",
       "children": [
         {
           "type": "leaf",
-          "id": "zwoyedj7hcj",
-          "field": "draw.length",
+          "id": "34gh1fvcbpj",
+          "field": "isUpgraded",
+          "operator": "isTrue",
+          "value": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "type": "leaf",
+          "id": "bul821xworg",
+          "field": "rarity",
           "operator": "eq",
           "value": {
             "kind": "literal",
-            "value": "0"
+            "value": "Rare"
           }
         }
       ]
     },
-    "allEnemies": true,
-    "enemyIndex": 0
+    "pile": "exhaust"
   }
-],
+  ],
   "Adrenaline": [
     {
       "label": "Draw Cards",

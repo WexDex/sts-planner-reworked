@@ -57,7 +57,8 @@ type FilterOperator =
 
 type FilterValue =
   | { kind: "literal"; value: string }
-  | { kind: "field"; field: string };
+  | { kind: "field"; field: string }
+  | { kind: "cardFilter"; filter: FilterGroup };
 
 type FilterLeaf = {
   type: "leaf";
@@ -86,21 +87,36 @@ type FieldDef = {
   operators: FilterOperator[];
   runtime?: boolean;
   enumValues?: string[];
+  isPile?: boolean;
 };
 
 const CARD_FILTER_FIELDS: FieldDef[] = [
-  { field: "type",              label: "Card Type",        description: "Attack, Skill, Power, Status, or Curse",                  operators: ["eq","neq"],                        enumValues: ["Attack","Skill","Power","Curse","Status"] },
-  { field: "rarity",            label: "Rarity",           description: "Basic, Common, Uncommon, Rare, Special, or Curse",        operators: ["eq","neq"],                        enumValues: ["Basic","Common","Uncommon","Rare","Special","Curse"] },
-  { field: "characters",        label: "Character",        description: "Which character class the card belongs to",               operators: ["eq","neq"],                        enumValues: ["Ironclad","Silent","Defect","Watcher","Colorless","Curse"] },
-  { field: "name",              label: "Card Name",        description: "Exact or partial match on the card's name string",        operators: ["eq","neq","contains","notContains"] },
-  { field: "damage.base",       label: "Base Damage",      description: "Damage value in the card definition (pre-upgrade)",       operators: ["eq","neq","gt","lt","gte","lte"] },
-  { field: "block.base",        label: "Base Block",       description: "Block value in the card definition (pre-upgrade)",        operators: ["eq","neq","gt","lt","gte","lte"] },
-  { field: "draw",              label: "Draw Count",       description: "Cards drawn when this card is played",                    operators: ["eq","gt","lt","gte","lte"] },
-  { field: "cost.base",         label: "Energy Cost",      description: "Energy required to play the card (base cost)",            operators: ["eq","gt","lt","gte","lte"] },
-  { field: "selfExhaustOnPlay", label: "Exhausts on Play", description: "Card moves to the Exhaust pile after being played",       operators: ["isTrue","isFalse"] },
-  { field: "ethereal",          label: "Ethereal",         description: "Card is exhausted at end of turn if still in hand",       operators: ["isTrue","isFalse"] },
-  { field: "innate",            label: "Innate",           description: "Card starts in your opening hand at combat start",        operators: ["isTrue","isFalse"] },
-  { field: "retain",            label: "Retain",           description: "Card is not discarded at end of turn",                    operators: ["isTrue","isFalse"] },
+  { field: "type",                  label: "Card Type",          description: "Attack, Skill, Power, Status, or Curse",                        operators: ["eq","neq"],                        enumValues: ["Attack","Skill","Power","Curse","Status"] },
+  { field: "rarity",                label: "Rarity",             description: "Basic, Common, Uncommon, Rare, Special, or Curse",              operators: ["eq","neq"],                        enumValues: ["Basic","Common","Uncommon","Rare","Special","Curse"] },
+  { field: "characters",            label: "Character",          description: "Which character class the card belongs to",                     operators: ["eq","neq"],                        enumValues: ["Ironclad","Silent","Defect","Watcher","Colorless","Curse"] },
+  { field: "name",                  label: "Card Name",          description: "Exact or partial match on the card's name string",              operators: ["eq","neq","contains","notContains"] },
+  { field: "damage.base",           label: "Base Damage",        description: "Damage value in the card definition (pre-upgrade)",             operators: ["eq","neq","gt","lt","gte","lte"] },
+  { field: "block.base",            label: "Base Block",         description: "Block value in the card definition (pre-upgrade)",              operators: ["eq","neq","gt","lt","gte","lte"] },
+  { field: "draw.base",             label: "Draw Count",         description: "Cards drawn when this card is played",                          operators: ["eq","gt","lt","gte","lte"] },
+  { field: "cost.base",             label: "Energy Cost",        description: "Energy required to play the card (base cost)",                  operators: ["eq","gt","lt","gte","lte"] },
+  { field: "selfExhaustOnPlay.base",label: "Exhausts on Play",   description: "Card moves to the Exhaust pile after being played",             operators: ["isTrue","isFalse"] },
+  { field: "ethereal.base",         label: "Ethereal",           description: "Card is exhausted at end of turn if still in hand",             operators: ["isTrue","isFalse"] },
+  { field: "innate.base",           label: "Innate",             description: "Card starts in your opening hand at combat start",              operators: ["isTrue","isFalse"] },
+  { field: "retain.base",           label: "Retain",             description: "Card is not discarded at end of turn",                          operators: ["isTrue","isFalse"] },
+  { field: "isUpgraded",            label: "Is Upgraded",        description: "True for the upgraded version of a card (preview only)",        operators: ["isTrue","isFalse"] },
+  { field: "gainEnergy.base",       label: "Energy Gain",        description: "Energy added to the player's pool when played",                 operators: ["eq","gt","lt","gte","lte"] },
+  { field: "heal.base",             label: "Heal Amount",        description: "HP restored when played",                                       operators: ["eq","gt","lt","gte","lte"] },
+  { field: "focus.base",            label: "Focus Gain",         description: "Defect Focus stacks granted when played",                       operators: ["eq","gt","lt","gte","lte"] },
+  { field: "scry.base",             label: "Scry Count",         description: "Cards scryed when played (Watcher)",                            operators: ["eq","gt","lt","gte","lte"] },
+  { field: "canAddCards",           label: "Adds Cards",         description: "Adds or shuffles cards into hand/piles when played",            operators: ["isTrue","isFalse"] },
+  { field: "xCost",                 label: "X-Cost",             description: "Effect scales with energy spent (costs X energy)",              operators: ["isTrue","isFalse"] },
+  { field: "unplayable",            label: "Unplayable",         description: "Cannot be played from hand (curses/statuses)",                  operators: ["isTrue","isFalse"] },
+  { field: "costManipulation",      label: "Manipulates Costs",  description: "Changes the play cost of other cards in hand or deck",          operators: ["isTrue","isFalse"] },
+  { field: "canUpgradeCards",       label: "Upgrades Cards",     description: "Upgrades other cards in hand or deck when played",              operators: ["isTrue","isFalse"] },
+  { field: "appliesDebuffs",        label: "Applies Debuffs",    description: "Inflicts at least one debuff on an enemy when played",          operators: ["isTrue","isFalse"] },
+  { field: "multiHit",              label: "Multi-Hit",          description: "Hits or repeats its effect multiple times",                     operators: ["isTrue","isFalse"] },
+  { field: "discardEffect",         label: "Discards Cards",     description: "Causes one or more cards to be discarded when played",          operators: ["isTrue","isFalse"] },
+  { field: "orbInteractions",       label: "Orb Interaction",    description: "Channels, evokes, or otherwise affects orbs when played",       operators: ["isTrue","isFalse"] },
 ];
 
 const RUNTIME_FILTER_FIELDS: FieldDef[] = [
@@ -116,6 +132,11 @@ const RUNTIME_FILTER_FIELDS: FieldDef[] = [
   { field: "enemies[0].hp",     label: "Enemy 0 HP",       description: "Current HP of the first enemy (index 0)",               operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
   { field: "stance",            label: "Stance",           description: "Watcher's current combat stance",                        operators: ["eq","neq"],                        runtime: true, enumValues: ["neutral","wrath","calm","divinity"] },
   { field: "orbs.length",       label: "Orb Count",        description: "Number of orbs currently channeled (Defect)",            operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "playedCards.length",label: "Cards Played",     description: "Cards played so far this combat",                        operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "hand",              label: "Hand (contains)",  description: "True if hand contains a card matching the sub-filter",   operators: ["contains","notContains"],          runtime: true, isPile: true },
+  { field: "draw",              label: "Draw (contains)",  description: "True if draw pile contains a card matching the sub-filter", operators: ["contains","notContains"],        runtime: true, isPile: true },
+  { field: "discard",           label: "Discard (contains)",description: "True if discard contains a card matching the sub-filter",operators: ["contains","notContains"],        runtime: true, isPile: true },
+  { field: "exhaust",           label: "Exhaust (contains)",description: "True if exhaust pile contains a card matching the sub-filter",operators: ["contains","notContains"],    runtime: true, isPile: true },
 ];
 
 const ALL_FILTER_FIELDS = [...CARD_FILTER_FIELDS, ...RUNTIME_FILTER_FIELDS];
@@ -135,7 +156,7 @@ const ACTION_VALUE_FIELDS: { field: string; label: string }[] = [
   { field: "damage.base",     label: "Card Base Damage" },
   { field: "block.base",      label: "Card Base Block" },
   { field: "cost.base",       label: "Card Energy Cost" },
-  { field: "draw",            label: "Card Draw Count" },
+  { field: "draw.base",       label: "Card Draw Count" },
 ];
 
 const OP_LABELS: Record<FilterOperator, string> = {
@@ -143,12 +164,10 @@ const OP_LABELS: Record<FilterOperator, string> = {
   gt: ">", lt: "<", gte: "≥", lte: "≤", isTrue: "is true", isFalse: "is false",
 };
 
+const RUNTIME_FIELD_SET = new Set(RUNTIME_FILTER_FIELDS.map(f => f.field));
+
 function isRuntimeField(field: string): boolean {
-  return field.startsWith("player.") || field.startsWith("enemies") ||
-    field.startsWith("hand.") || field.startsWith("draw.") ||
-    field.startsWith("discard.") || field.startsWith("exhaust.") ||
-    field.startsWith("stance") || field.startsWith("orbs") ||
-    field.startsWith("playerBuff:") || field.startsWith("playerDebuff:");
+  return RUNTIME_FIELD_SET.has(field);
 }
 
 function getNestedField(obj: Record<string, unknown>, path: string): unknown {
@@ -173,6 +192,7 @@ function isTruthy(v: unknown): boolean {
 
 function resolveFilterValue(fv: FilterValue, cardData: Record<string, unknown>): string | number {
   if (fv.kind === "literal") return fv.value;
+  if (fv.kind === "cardFilter") return "";
   if (isRuntimeField(fv.field)) return "";
   return String(getNestedField(cardData, fv.field) ?? "");
 }
@@ -217,7 +237,9 @@ function filterNodeToExpr(node: FilterNode): string {
     const fDef = ALL_FILTER_FIELDS.find(f => f.field === node.field);
     const lhs = fDef?.label ?? node.field;
     const op = OP_LABELS[node.operator] ?? node.operator;
-    const rhs = node.value.kind === "literal" ? node.value.value : `[${node.value.field}]`;
+    const rhs = node.value.kind === "literal" ? node.value.value
+      : node.value.kind === "field" ? `[${node.value.field}]`
+      : `(card where ${filterNodeToExpr(node.value.filter)})`;
     return `${lhs} ${op} ${rhs}`;
   }
   if (node.children.length === 0) return "(empty)";
@@ -237,16 +259,24 @@ function FilterLeafEditor({
   onChange,
   onDelete,
   onWrap,
+  cardFieldsOnly,
 }: {
   leaf: FilterLeaf;
   onChange: (updated: FilterLeaf) => void;
   onDelete: () => void;
   onWrap: () => void;
+  cardFieldsOnly?: boolean;
 }) {
-  const fDef = ALL_FILTER_FIELDS.find(f => f.field === leaf.field);
+  const availableFields = cardFieldsOnly ? CARD_FILTER_FIELDS : ALL_FILTER_FIELDS;
+  const fDef = availableFields.find(f => f.field === leaf.field) ?? ALL_FILTER_FIELDS.find(f => f.field === leaf.field);
   const runtime = fDef?.runtime ?? isRuntimeField(leaf.field);
   const hasEnum = (fDef?.enumValues ?? []).length > 0;
   const isBool = leaf.operator === "isTrue" || leaf.operator === "isFalse";
+  const isPileContains = (fDef?.isPile ?? false) && (leaf.operator === "contains" || leaf.operator === "notContains");
+
+  const subFilter = isPileContains && leaf.value.kind === "cardFilter"
+    ? leaf.value.filter
+    : isPileContains ? newGroup("AND") : null;
 
   return (
     <div className={`rounded-lg border px-2 py-1.5 ${runtime ? "border-amber-600/30 bg-amber-950/15" : "border-sky-600/30 bg-sky-950/15"}`}>
@@ -259,24 +289,38 @@ function FilterLeafEditor({
         value={leaf.field}
         onChange={e => {
           const newField = e.target.value;
-          const newDef = ALL_FILTER_FIELDS.find(f => f.field === newField);
+          const newDef = availableFields.find(f => f.field === newField) ?? ALL_FILTER_FIELDS.find(f => f.field === newField);
           const op = newDef?.operators[0] ?? "eq";
-          onChange({ ...leaf, field: newField, operator: op, value: { kind: "literal", value: "" } });
+          const value: FilterValue = (newDef?.isPile && (op === "contains" || op === "notContains"))
+            ? { kind: "cardFilter", filter: newGroup("AND") }
+            : { kind: "literal", value: "" };
+          onChange({ ...leaf, field: newField, operator: op, value });
         }}
         className="rounded border border-slate-600/50 bg-slate-800/80 px-1.5 py-0.5 text-[10px] text-slate-200 outline-none"
       >
         <optgroup label="Card Stats">
           {CARD_FILTER_FIELDS.map(f => <option key={f.field} value={f.field}>{f.label}</option>)}
         </optgroup>
-        <optgroup label="Runtime ⚡">
-          {RUNTIME_FILTER_FIELDS.map(f => <option key={f.field} value={f.field}>{f.label}</option>)}
-        </optgroup>
+        {!cardFieldsOnly && (
+          <optgroup label="Runtime ⚡">
+            {RUNTIME_FILTER_FIELDS.map(f => <option key={f.field} value={f.field}>{f.label}</option>)}
+          </optgroup>
+        )}
       </select>
 
       {/* Operator select */}
       <select
         value={leaf.operator}
-        onChange={e => onChange({ ...leaf, operator: e.target.value as FilterOperator })}
+        onChange={e => {
+          const newOp = e.target.value as FilterOperator;
+          const newLeaf: FilterLeaf = { ...leaf, operator: newOp };
+          if (fDef?.isPile && (newOp === "contains" || newOp === "notContains") && leaf.value.kind !== "cardFilter") {
+            newLeaf.value = { kind: "cardFilter", filter: newGroup("AND") };
+          } else if (fDef?.isPile && newOp !== "contains" && newOp !== "notContains" && leaf.value.kind === "cardFilter") {
+            newLeaf.value = { kind: "literal", value: "" };
+          }
+          onChange(newLeaf);
+        }}
         className="rounded border border-slate-600/50 bg-slate-800/80 px-1.5 py-0.5 text-[10px] text-slate-200 outline-none"
       >
         {(fDef?.operators ?? (["eq","neq"] as FilterOperator[])).map(op => (
@@ -284,8 +328,8 @@ function FilterLeafEditor({
         ))}
       </select>
 
-      {/* Value — literal or field-ref */}
-      {!isBool && (() => {
+      {/* Value — literal or field-ref (not shown for bool or pile-contains) */}
+      {!isBool && !isPileContains && (() => {
         const isFieldRef = leaf.value.kind === "field";
         return (
           <div className="flex items-center gap-1">
@@ -337,6 +381,19 @@ function FilterLeafEditor({
         <X className="h-3 w-3" strokeWidth={2.5} />
       </button>
       </div>
+
+      {/* Pile sub-filter editor */}
+      {isPileContains && subFilter && (
+        <div className="mt-1.5 border-l-2 border-amber-500/30 pl-2">
+          <p className="mb-1 text-[8px] font-bold uppercase tracking-wider text-amber-400/60">Card must match:</p>
+          <FilterGroupEditor
+            group={subFilter}
+            onChange={updated => onChange({ ...leaf, value: { kind: "cardFilter", filter: updated } })}
+            isRoot
+            cardFieldsOnly
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -346,11 +403,13 @@ function FilterGroupEditor({
   onChange,
   onDelete,
   isRoot,
+  cardFieldsOnly,
 }: {
   group: FilterGroup;
   onChange: (updated: FilterGroup) => void;
   onDelete?: () => void;
   isRoot?: boolean;
+  cardFieldsOnly?: boolean;
 }) {
   const groupColor = group.conjunction === "AND"
     ? "border-rose-500/40 bg-rose-950/15"
@@ -427,12 +486,14 @@ function FilterGroupEditor({
                 onChange={updated => updateChild(i, updated)}
                 onDelete={() => deleteChild(i)}
                 onWrap={() => wrapLeaf(i)}
+                cardFieldsOnly={cardFieldsOnly}
               />
             ) : (
               <FilterGroupEditor
                 group={child}
                 onChange={updated => updateChild(i, updated)}
                 onDelete={() => deleteChild(i)}
+                cardFieldsOnly={cardFieldsOnly}
               />
             )}
           </div>
@@ -458,15 +519,24 @@ function ActionFilterSection({
   filter,
   onChange,
   allCards,
+  label,
 }: {
   filter?: ActionFilter;
   onChange: (f: ActionFilter | undefined) => void;
   allCards: Record<string, unknown>[];
+  label?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const active = filter ?? null;
-  const matchCount = active ? filterMatchCount(active, allCards) : allCards.length;
+  const allPreviewCards = useMemo(
+    () => allCards.flatMap(c => [
+      { ...c, isUpgraded: false },
+      { ...c, isUpgraded: true },
+    ]),
+    [allCards],
+  );
+  const matchCount = active ? filterMatchCount(active, allPreviewCards) : allPreviewCards.length;
 
   return (
     <div className="rounded-lg border border-slate-700/50 bg-slate-900/40 px-2.5 py-2">
@@ -479,7 +549,7 @@ function ActionFilterSection({
           }}
           className="text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-200"
         >
-          Action Filter {expanded ? "▲" : "▶"}
+          {label ?? "Action Filter"} {expanded ? "▲" : "▶"}
         </button>
         {active ? (
           <>
@@ -532,20 +602,23 @@ function ActionFilterSection({
             <div className="flex items-center justify-between border-b border-slate-700/60 px-4 py-3">
               <div>
                 <p className="text-sm font-bold text-slate-100">Matching cards ({matchCount})</p>
-                <p className="mt-0.5 text-[9px] text-amber-400/80">⚡ Runtime conditions skipped in preview</p>
+                <p className="mt-0.5 text-[9px] text-slate-500">base + upgraded shown as separate entries</p>
               </div>
               <button onClick={() => setPreviewOpen(false)} className="text-slate-500 hover:text-slate-200">
                 <X className="h-4 w-4" strokeWidth={2} />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-2">
-              {allCards.filter(c => evaluateFilterNode(active, c)).slice(0, 200).map((card, i) => {
-                const name = String((card as Record<string, unknown>).name ?? "");
-                const type = String((card as Record<string, unknown>).type ?? "");
-                const rarity = String((card as Record<string, unknown>).rarity ?? "");
+              {allPreviewCards.filter(c => evaluateFilterNode(active, c)).slice(0, 400).map((card, i) => {
+                const c = card as Record<string, unknown>;
+                const name = String(c.name ?? "");
+                const isUpg = Boolean(c.isUpgraded);
+                const displayName = isUpg ? name + "+" : name;
+                const type = String(c.type ?? "");
+                const rarity = String(c.rarity ?? "");
                 return (
                   <div key={i} className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-slate-800/50">
-                    <span className="flex-1 text-[11px] text-slate-200">{name}</span>
+                    <span className={`flex-1 text-[11px] ${isUpg ? "text-amber-200/80" : "text-slate-200"}`}>{displayName}</span>
                     <span className="rounded bg-slate-700/60 px-1 py-0.5 text-[8px] text-slate-400">{type}</span>
                     <span className="rounded bg-slate-700/60 px-1 py-0.5 text-[8px] text-slate-400">{rarity}</span>
                   </div>
@@ -650,6 +723,7 @@ type CustomAction = {
   enemyIndex?: number;
   allEnemies?: boolean;
   filter?: ActionFilter;
+  cardPickerFilter?: ActionFilter;
 };
 
 type CustomActionsMap = Record<string, CustomAction[]>;
@@ -813,6 +887,7 @@ const allCards: { id: string; data: CardData }[] = Object.entries(
   .sort((a, b) => a.id.localeCompare(b.id));
 
 const allCardsFlat: Record<string, unknown>[] = allCards.map(c => c.data as Record<string, unknown>);
+const allCardsFlatById = new Map(allCards.map(c => [c.id, c.data as Record<string, unknown>]));
 
 type CharFilter = "all" | "ironclad" | "silent" | "defect" | "watcher" | "colorless" | "status" | "curse";
 
@@ -1172,6 +1247,12 @@ function ActionRow({
               initialSelected={action.cardNames ?? []}
               onSelect={(cardIds) => set({ cardNames: [...new Set([...(action.cardNames ?? []), ...cardIds])] })}
               onClose={() => setShowPicker(false)}
+              filterPredicate={action.cardPickerFilter
+                ? (c) => evaluateFilterNode(
+                    action.cardPickerFilter!,
+                    allCardsFlatById.get((c as { id?: string }).id ?? "") ?? c,
+                  )
+                : undefined}
             />
           )}
           <div>
@@ -1234,6 +1315,14 @@ function ActionRow({
               {action.hasInput ? "Lets you edit card & count before adding" : "Uses preset values directly"}
             </span>
           </div>
+
+          {/* Card picker filter */}
+          <ActionFilterSection
+            label="Restrict Pickable Cards"
+            filter={action.cardPickerFilter}
+            onChange={f => set({ cardPickerFilter: f })}
+            allCards={allCardsFlat}
+          />
         </div>
       )}
 
@@ -1608,8 +1697,54 @@ export default function CardActionsEditorClient() {
     setSearch("");
   }
 
+  // ─── Serialization ────────────────────────────────────────────────────────
+  // Strip fields that don't belong to each actionType before export.
+
+  const ACTION_FIELDS: Partial<Record<ActionType, Array<keyof CustomAction>>> = {
+    give_buff:          ["buffName","buffType","hasInput","defaultValue","valueRef"],
+    give_debuff:        ["buffName","buffType","hasInput","defaultValue","valueRef"],
+    remove_buff:        ["buffName"],
+    modify_hp:          ["hasInput","defaultValue","valueRef"],
+    modify_block:       ["hasInput","defaultValue","valueRef"],
+    modify_energy:      ["hasInput","defaultValue","valueRef"],
+    draw_cards:         ["hasInput","defaultValue","valueRef"],
+    move_to_pile:       ["pile"],
+    add_card:           ["cardNames","cardCount","pile","hasInput","cardPickerFilter"],
+    channel_orb:        ["orbType","orbCount"],
+    evoke_orbs:         ["hasInput","defaultValue","valueRef"],
+    set_stance:         ["stance"],
+    give_enemy_buff:    ["buffName","allEnemies","enemyIndex","hasInput","defaultValue","valueRef"],
+    give_enemy_debuff:  ["buffName","allEnemies","enemyIndex","hasInput","defaultValue","valueRef"],
+    modify_enemy_hp:    ["allEnemies","enemyIndex","hasInput","defaultValue","valueRef"],
+    modify_enemy_block: ["allEnemies","enemyIndex","hasInput","defaultValue","valueRef"],
+    remove_enemy_buff:  ["buffName","allEnemies","enemyIndex"],
+    trigger_orb_passive:[],
+    discard_hand:       [],
+    reshuffle_discard:  [],
+    set_orb_slots:      ["hasInput","defaultValue","valueRef"],
+    adjust_orb_slots:   ["hasInput","defaultValue","valueRef"],
+  };
+
+  function serializeAction(a: CustomAction): Partial<CustomAction> {
+    const allowed = new Set<keyof CustomAction>([
+      "label", "actionType", "filter",
+      ...(ACTION_FIELDS[a.actionType] ?? []),
+    ]);
+    return Object.fromEntries(
+      (Object.keys(a) as Array<keyof CustomAction>)
+        .filter(k => allowed.has(k) && a[k] !== undefined)
+        .map(k => [k, a[k]])
+    ) as Partial<CustomAction>;
+  }
+
+  function serializeData(d: CustomActionsMap): CustomActionsMap {
+    return Object.fromEntries(
+      Object.entries(d).map(([card, actions]) => [card, actions.map(serializeAction)])
+    ) as CustomActionsMap;
+  }
+
   function save() {
-    const json = JSON.stringify(data, null, 2);
+    const json = JSON.stringify(serializeData(data), null, 2);
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -1628,7 +1763,7 @@ export default function CardActionsEditorClient() {
     setSelectedCard(null);
     setSearch("");
     // Download the backup as the replacement JSON file
-    const json = JSON.stringify(backup, null, 2);
+    const json = JSON.stringify(serializeData(backup as CustomActionsMap), null, 2);
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -1929,7 +2064,7 @@ export default function CardActionsEditorClient() {
                         Preview JSON
                       </p>
                       <pre className="max-h-48 overflow-y-auto rounded-xl border border-slate-800 bg-slate-900/60 p-3 text-[10px] leading-relaxed text-slate-400 [scrollbar-width:thin]">
-                        {JSON.stringify(currentActions, null, 2)}
+                        {JSON.stringify(currentActions.map(serializeAction), null, 2)}
                       </pre>
                     </div>
                   )}
@@ -1948,7 +2083,7 @@ export default function CardActionsEditorClient() {
             for (const id of ids) {
               if (data[id]) subset[id] = data[id];
             }
-            const json = JSON.stringify(subset, null, 2);
+            const json = JSON.stringify(serializeData(subset), null, 2);
             const blob = new Blob([json], { type: "application/json" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");

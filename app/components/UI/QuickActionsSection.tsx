@@ -23,7 +23,10 @@ import CardPickerModal from "@/app/components/UI/CardPickerModal";
 // ─── Filter types (mirrored from CardActionsEditorClient) ────────────────────
 
 type FilterOperator = "eq" | "neq" | "contains" | "notContains" | "gt" | "lt" | "gte" | "lte" | "isTrue" | "isFalse";
-type FilterValue = { kind: "literal"; value: string } | { kind: "field"; field: string };
+type FilterValue =
+  | { kind: "literal"; value: string }
+  | { kind: "field"; field: string }
+  | { kind: "cardFilter"; filter: FilterGroup };
 type FilterLeaf = { type: "leaf"; id: string; field: string; operator: FilterOperator; value: FilterValue };
 type FilterGroup = { type: "group"; id: string; conjunction: "AND" | "OR"; children: FilterNode[] };
 type FilterNode = FilterLeaf | FilterGroup;
@@ -41,10 +44,25 @@ function getNestedField(obj: unknown, path: string): unknown {
 // Evaluate a filter against a full context object (card data merged with live game state).
 // No runtime auto-pass — every field resolves from ctx.
 function evaluateFilterLeaf(leaf: FilterLeaf, ctx: Record<string, unknown>): boolean {
+  // Pile-contains: hand/draw/discard/exhaust contains a card matching a sub-filter
+  if (leaf.value.kind === "cardFilter" && (leaf.operator === "contains" || leaf.operator === "notContains")) {
+    const pileVal = getNestedField(ctx, leaf.field) as { _cards?: unknown[] } | undefined;
+    const cards = pileVal?._cards ?? [];
+    const subFilter = leaf.value.filter;
+    const matched = cards.some(c => {
+      const name = (c as { name?: string }).name ?? "";
+      const cardEntry = STS_CARDS[name] ?? ({} as Record<string, unknown>);
+      return evaluateFilterNode(subFilter, cardEntry);
+    });
+    return leaf.operator === "contains" ? matched : !matched;
+  }
+
   const lhsRaw = getNestedField(ctx, leaf.field);
   const rhs = leaf.value.kind === "literal"
     ? leaf.value.value
-    : String(getNestedField(ctx, leaf.value.field) ?? "");
+    : leaf.value.kind === "field"
+      ? String(getNestedField(ctx, leaf.value.field) ?? "")
+      : "";
   const lhs = String(lhsRaw ?? "").toLowerCase();
   const rhsLow = rhs.toLowerCase();
   switch (leaf.operator) {
@@ -70,9 +88,14 @@ function evaluateFilterNode(node: FilterNode, ctx: Record<string, unknown>): boo
 
 // Build a merged evaluation context: card DB data + live game state fields.
 // Filter paths like draw.length, player.hp, stance, etc. resolve to real values.
+// _cards arrays enable pile-contains sub-filter evaluation.
 function buildEvalContext(cardData: Record<string, unknown>, gs: Record<string, unknown>): Record<string, unknown> {
   const player = (gs.player ?? {}) as Record<string, unknown>;
   const energy = (player.energy ?? {}) as Record<string, unknown>;
+  const handArr    = (gs.hand    as unknown[]) ?? [];
+  const drawArr    = (gs.draw    as unknown[]) ?? [];
+  const discardArr = (gs.discard as unknown[]) ?? [];
+  const exhaustArr = (gs.exhaust as unknown[]) ?? [];
   return {
     ...cardData,
     player: {
@@ -81,16 +104,17 @@ function buildEvalContext(cardData: Record<string, unknown>, gs: Record<string, 
       block:  player.currentBlock ?? 0,
       energy: player.currentEnergy ?? energy.base ?? 0,
     },
-    hand:    { length: ((gs.hand    as unknown[]) ?? []).length },
-    draw:    { length: ((gs.draw    as unknown[]) ?? []).length },
-    discard: { length: ((gs.discard as unknown[]) ?? []).length },
-    exhaust: { length: ((gs.exhaust as unknown[]) ?? []).length },
+    hand:    { length: handArr.length,    _cards: handArr },
+    draw:    { length: drawArr.length,    _cards: drawArr },
+    discard: { length: discardArr.length, _cards: discardArr },
+    exhaust: { length: exhaustArr.length, _cards: exhaustArr },
     enemies: Object.assign(
       ((gs.enemies as Record<string, unknown>[]) ?? []).map(e => ({ hp: e.hp, maxHp: e.maxHp })),
       { length: ((gs.enemies as unknown[]) ?? []).length },
     ),
-    stance: gs.stance ?? "neutral",
-    orbs:   { length: ((gs.orbs as unknown[]) ?? []).length },
+    stance:      gs.stance ?? "neutral",
+    orbs:        { length: ((gs.orbs as unknown[]) ?? []).length },
+    playedCards: { length: ((gs.playedCards as unknown[]) ?? []).length },
   };
 }
 
@@ -103,16 +127,31 @@ const OP_LABELS: Record<string, string> = {
 
 const FIELD_LABELS: Record<string, string> = {
   "type": "Type", "rarity": "Rarity", "characters": "Character", "name": "Name",
-  "damage.base": "Damage", "block.base": "Block", "draw": "Draw",
-  "cost.base": "Energy", "selfExhaustOnPlay": "Exhausts", "ethereal": "Ethereal",
-  "innate": "Innate", "retain": "Retain",
+  "damage.base": "Damage", "block.base": "Block",
+  "draw.base": "Draw", "cost.base": "Energy",
+  "selfExhaustOnPlay.base": "Exhausts", "ethereal.base": "Ethereal",
+  "innate.base": "Innate", "retain.base": "Retain",
+  "isUpgraded": "Is Upgraded",
+  "gainEnergy.base": "Energy Gain", "heal.base": "Heal", "focus.base": "Focus",
+  "scry.base": "Scry", "canAddCards": "Adds Cards", "xCost": "X-Cost",
+  "unplayable": "Unplayable", "costManipulation": "Manip. Costs",
+  "canUpgradeCards": "Upgrades Cards", "appliesDebuffs": "Applies Debuffs",
+  "multiHit": "Multi-Hit", "discardEffect": "Discards Cards", "orbInteractions": "Orb Interaction",
+  "player.hp": "Player HP", "player.maxHp": "Max HP", "player.block": "Block",
+  "player.energy": "Energy", "hand.length": "Hand Size", "draw.length": "Draw Pile",
+  "discard.length": "Discard", "exhaust.length": "Exhaust", "enemies.length": "Enemies",
+  "enemies[0].hp": "Enemy 0 HP", "stance": "Stance", "orbs.length": "Orbs",
+  "playedCards.length": "Cards Played",
+  "hand": "Hand", "draw": "Draw Pile", "discard": "Discard", "exhaust": "Exhaust",
 };
 
 function filterExpr(node: FilterNode): string {
   if (node.type === "leaf") {
     const lhs = FIELD_LABELS[node.field] ?? node.field;
     const op = OP_LABELS[node.operator] ?? node.operator;
-    const rhs = node.value.kind === "literal" ? node.value.value : `[${node.value.field}]`;
+    const rhs = node.value.kind === "literal" ? node.value.value
+      : node.value.kind === "field" ? `[${node.value.field}]`
+      : `(card where ${filterExpr(node.value.filter)})`;
     return `${lhs} ${op} ${rhs}`;
   }
   if (node.children.length === 0) return "(empty)";
@@ -125,7 +164,9 @@ function FilterExprColored({ node, cardData }: { node: FilterNode; cardData: Rec
   if (node.type === "leaf") {
     const fLabel = FIELD_LABELS[node.field] ?? node.field;
     const op = OP_LABELS[node.operator] ?? node.operator;
-    const expectedVal = node.value.kind === "literal" ? node.value.value : `[${node.value.field}]`;
+    const expectedVal = node.value.kind === "literal" ? node.value.value
+      : node.value.kind === "field" ? `[${node.value.field}]`
+      : `(card where ${filterExpr(node.value.filter)})`;
     const actualRaw = getNestedField(cardData, node.field);
     const matches = evaluateFilterLeaf(node, cardData);
     const actualStr = actualRaw === undefined || actualRaw === null ? "—" : String(actualRaw);
@@ -483,7 +524,10 @@ export default function QuickActionsSection() {
   const card = selected[0];
   const upg = card.isUpgraded ?? false;
   const sourceCard = { name: card.name, character: card.characters as string | undefined, cardType: card.type as string | undefined };
-  const evalCtx = buildEvalContext(getCardData(card.name), gameState as unknown as Record<string, unknown>);
+  const evalCtx = buildEvalContext(
+    { ...getCardData(card.name), isUpgraded: upg },
+    gameState as unknown as Record<string, unknown>,
+  );
 
   function openPopup(title: string, defaultValue: number, onApply: (v: number) => void) {
     setPopup({ title, defaultValue, onApply });

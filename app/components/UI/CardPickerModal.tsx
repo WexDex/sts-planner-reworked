@@ -77,6 +77,8 @@ interface Props {
   pile?: string;
   /** Pre-selected card IDs. */
   initialSelected?: string[];
+  /** When provided, only cards passing this predicate appear in the list. */
+  filterPredicate?: (card: Record<string, unknown>) => boolean;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -90,6 +92,7 @@ export default function CardPickerModal({
   defaultCount = 1,
   pile,
   initialSelected = [],
+  filterPredicate,
 }: Props) {
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState("");
@@ -116,6 +119,7 @@ export default function CardPickerModal({
     const q = search.trim().toLowerCase();
     return ALL_CARDS.filter((c) => {
       if (charFilter !== "all" && (c.characters ?? "").toLowerCase() !== charFilter) return false;
+      if (filterPredicate && !filterPredicate(c as unknown as Record<string, unknown>)) return false;
       if (!q) return true;
       return (
         c.id.toLowerCase().includes(q) ||
@@ -124,7 +128,7 @@ export default function CardPickerModal({
         (c.description ?? "").toLowerCase().includes(q)
       );
     });
-  }, [search, charFilter]);
+  }, [search, charFilter, filterPredicate]);
 
   function toggleCard(id: string) {
     setSelected((prev) => {
