@@ -3218,16 +3218,54 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       activityLog: gameState.activityLog.slice(0, entryIndex),
     } as CombatData;
 
-    // Fork sibling (child of active node's parent) capturing CURRENT state before any mutation
-    const activeNode = decisionNodes.find((n) => n.id === activeDecisionNodeId);
-    forkDecisionBranch(branchLabel, activeNode?.parentId ?? null);
+    // Find the canonical node for the VIEWED planner row (not the tree tip).
+    // lineage[0]=START, lineage[1]=T1, lineage[2]=T2, ...
+    const lineage = activeDecisionNodeId ? getDecisionPathFromRoot(decisionNodes, activeDecisionNodeId) : [];
+    const canonicalNode = lineage[currentTurnIndex + 1] ?? lineage[lineage.length - 1];
+    const parentIdForBranch = canonicalNode?.parentId ?? null;
 
-    // Apply reverted state to live game and save to current planner row
+    // Build the branch node directly so its snapshot is the CURRENT gameState (pre-revert,
+    // post-actions). forkDecisionBranch would copy the stored parent snapshot instead, which
+    // is wrong when the active tree tip (T4) differs from the viewed row (T1).
+    const childId = crypto.randomUUID();
+    let childSnap = cloneGameData(gameState);
+    childSnap.activityLog = [
+      ...(childSnap.activityLog ?? []),
+      createActivityLogEntry(
+        `Branched from "${canonicalNode?.label ?? 'T?'}"`,
+        undefined,
+        undefined,
+        undefined,
+        'system',
+      ),
+    ];
+
+    const branchNode: DecisionNode = {
+      id: childId,
+      parentId: parentIdForBranch,
+      label: branchLabel,
+      timelineRole: 'branch',
+      snapshot: childSnap,
+      plannerTurnSlotId: turns[currentTurnIndex]?.id ?? 1,
+      timelineAccentHex: pickDistinctTimelineAccentHex(decisionNodes.map((n) => n.timelineAccentHex ?? '')),
+      turnPhase,
+      createdAt: new Date().toISOString(),
+    };
+
+    const nextNodes = normalizeDecisionNodePlannerSlots([...decisionNodes, branchNode], turns);
+
+    // 1. Persist branch node; stay on canonicalNode (don't jump to the new branch)
+    setDecisionNodes(nextNodes);
+    if (canonicalNode) {
+      setActiveDecisionNodeId(canonicalNode.id);
+    }
+
+    // 2. Apply reverted state to live game and save to current planner row
     setGameState(revertedState);
     setTurns((prev) =>
       prev.map((t, i) => (i === currentTurnIndex ? { ...t, state: revertedState } : t)),
     );
-  }, [gameState, decisionNodes, activeDecisionNodeId, currentTurnIndex, forkDecisionBranch, setTurns]);
+  }, [gameState, decisionNodes, activeDecisionNodeId, currentTurnIndex, turns, turnPhase, setTurns]);
 
   // ---------------------------------------------------------------------------
   // Turn lock / complete

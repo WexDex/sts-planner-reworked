@@ -12,9 +12,12 @@ import type {
   ActivityLogCardRef,
   ActivityLogContextLine,
   ActivityLogEntry,
+  DecisionNode,
+  Turn,
 } from '@/app/types/gameTypes';
 import type { ActivityLogType } from '@/app/utils/activityLogger';
 import { useGameManager } from '@/app/context/GameContext';
+import { getDecisionPathFromRoot } from '@/app/utils/decisionTreeHelpers';
 
 export type ActivityLogInlineDensity = 'minimal' | 'detailed';
 
@@ -291,18 +294,22 @@ export function ActivityLogRowInline({
 
 /** Derive a branch name suggestion: T{turn}.{nextSiblingOrdinal}, validated unique. */
 function suggestBranchName(
-  decisionNodes: import('@/app/types/gameTypes').DecisionNode[],
+  decisionNodes: DecisionNode[],
   activeDecisionNodeId: string | null,
   currentTurnIndex: number,
+  turns: Turn[],
 ): string {
-  const turnNum = currentTurnIndex + 1;
-  const activeNode = decisionNodes.find((n) => n.id === activeDecisionNodeId);
-  const siblingCount = activeNode?.parentId
-    ? decisionNodes.filter((n) => n.parentId === activeNode.parentId).length
+  // lineage[0]=START, lineage[1]=T1, lineage[2]=T2, ...
+  const lineage = activeDecisionNodeId
+    ? getDecisionPathFromRoot(decisionNodes, activeDecisionNodeId)
+    : [];
+  const canonicalNode = lineage[currentTurnIndex + 1] ?? lineage[lineage.length - 1];
+  const turnNum = turns[currentTurnIndex]?.id ?? currentTurnIndex + 1;
+  const siblingCount = canonicalNode?.parentId
+    ? decisionNodes.filter((n) => n.parentId === canonicalNode.parentId).length
     : 0;
   const existingLabels = new Set(decisionNodes.map((n) => n.label));
-  let ordinal = siblingCount + 1;
-  if (ordinal < 2) ordinal = 2;
+  let ordinal = Math.max(siblingCount + 1, 2);
   let candidate = `T${turnNum}.${ordinal}`;
   while (existingLabels.has(candidate)) {
     ordinal++;
@@ -323,10 +330,10 @@ function RevertPanel({
   onClose: () => void;
   compact?: boolean;
 }) {
-  const { revertToLogEntry, saveBranchAndRevert, decisionNodes, activeDecisionNodeId, currentTurnIndex } = useGameManager();
+  const { revertToLogEntry, saveBranchAndRevert, decisionNodes, activeDecisionNodeId, currentTurnIndex, turns } = useGameManager();
   const [phase, setPhase] = useState<RevertPhase>('choosing');
   const [branchName, setBranchName] = useState(() =>
-    suggestBranchName(decisionNodes, activeDecisionNodeId, currentTurnIndex),
+    suggestBranchName(decisionNodes, activeDecisionNodeId, currentTurnIndex, turns),
   );
 
   function doRevertDirect() {
@@ -335,7 +342,7 @@ function RevertPanel({
   }
 
   function doSaveBranchAndRevert() {
-    const name = branchName.trim() || suggestBranchName(decisionNodes, activeDecisionNodeId, currentTurnIndex);
+    const name = branchName.trim() || suggestBranchName(decisionNodes, activeDecisionNodeId, currentTurnIndex, turns);
     saveBranchAndRevert(entry.id, name);
     onClose();
   }
