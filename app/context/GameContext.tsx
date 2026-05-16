@@ -51,6 +51,7 @@ import {
   formatPlayCardTargets,
   sourceCardContext,
   sourceCardRef,
+  captureSnapshot,
   type SourceCard,
 } from '@/app/utils/activityLogger';
 import {
@@ -247,6 +248,21 @@ interface GameContextType {
   // --- Smart draw reshuffle ---
   /** Complete a pending deck-exhaustion reshuffle; called by UI after PileOrderModal confirms. */
   confirmReshuffle: (orderedDiscard: import('@/app/types/gameTypes').Card[]) => void;
+
+  // --- Time-travel revert ---
+  /** Restore game state to the snapshot captured before `entryId` was applied; trims log to that point. */
+  revertToLogEntry: (entryId: string) => void;
+  /** Save current turn state as a new decision branch, then return the branch label. */
+  saveCurrentAsBranch: () => string;
+  /**
+   * Fork a SIBLING branch with the current state (not a child), then atomically revert
+   * live gameState + active planner turn row to the snapshot captured before `entryId`.
+   */
+  saveBranchAndRevert: (entryId: string, branchLabel: string) => void;
+
+  // --- Turn lock / complete ---
+  setTurnLocked: (turnId: number, locked: boolean) => void;
+  setTurnCompleted: (turnId: number, completed: boolean) => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -268,6 +284,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const decisionNodesRef = useRef<DecisionNode[]>([]);
   turnsRef.current = turns;
   decisionNodesRef.current = decisionNodes;
+
+  /** Read-time check — uses ref so callers don't need turns/currentTurnIndex in their deps. */
+  const isCurrentTurnLocked = () => turnsRef.current[currentTurnIndexRef.current]?.locked === true;
   /** Holds latest planner↔timeline sync impl so the sync effect avoids unstable deps (`turns` churn); reads refs inside sync. */
   const syncActiveDecisionNodeFromPlannerRef = useRef<() => void>(() => {});
   const [activeDecisionNodeId, setActiveDecisionNodeId] = useState<string | null>(null);
@@ -1831,6 +1850,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  /** Attaches a pre-action snapshot to a log entry so it can be reverted later. */
+  const withSnap = (entry: ActivityLogEntry, prev: CombatData): ActivityLogEntry => ({
+    ...entry,
+    preActionSnapshot: captureSnapshot(prev),
+  });
+
   const clearSelectionState = (state: CombatData): CombatData => ({
     ...state,
     draw: state.draw.map((card) => ({ ...card, isSelected: false })),
@@ -1901,6 +1926,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   };
 
   const playSelectedCards = useCallback(() => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
     const enemyIndicesSnapshot = combatTargetEnemyIndices;
     const targetSelfSnapshot = combatTargetSelf;
     setGameState((prevState) => {
@@ -1934,16 +1960,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         playedCards: newPlayedCards,
         activityLog: [
           ...newState.activityLog,
-          buildActionLogEntry('Played cards', selected, {
+          withSnap(buildActionLogEntry('Played cards', selected, {
             context: [{ label: 'Destination', value: 'Played area' }],
             ...(playTargetsLabel ? { playTargetsLabel } : {}),
-          }),
+          }), prevState),
         ],
       };
     });
   }, [combatTargetEnemyIndices, combatTargetSelf]);
 
   const useSelectedPower = () => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
     setGameState((prevState) => {
       if (!prevState) return prevState;
       const selected = getSelectedCards(prevState);
@@ -1972,15 +1999,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         playedCards: newPlayedCards,
         activityLog: [
           ...newState.activityLog,
-          buildActionLogEntry('Used Power', selected, {
+          withSnap(buildActionLogEntry('Used Power', selected, {
             context: [{ label: 'Destination', value: 'Played area' }],
-          }),
+          }), prevState),
         ],
       };
     });
   };
 
   const moveSelectedCards = (toLocation: string) => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
     setGameState((prevState) => {
       if (!prevState) return prevState;
       const selected = getSelectedCards(prevState);
@@ -2005,12 +2033,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
       return {
         ...newState,
-        activityLog: [...newState.activityLog, buildActionLogEntry('Moved cards', selected, { toPile: toLocation })],
+        activityLog: [...newState.activityLog, withSnap(buildActionLogEntry('Moved cards', selected, { toPile: toLocation }), prevState)],
       };
     });
   };
 
   const removeSelectedCards = () => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
     setGameState((prevState) => {
       if (!prevState) return prevState;
       const selected = getSelectedCards(prevState);
@@ -2033,12 +2062,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
       return {
         ...newState,
-        activityLog: [...newState.activityLog, buildActionLogEntry('Removed cards', selected)],
+        activityLog: [...newState.activityLog, withSnap(buildActionLogEntry('Removed cards', selected), prevState)],
       };
     });
   };
 
   const spendEnergyOnSelected = () => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
     setGameState((prevState) => {
       if (!prevState) return prevState;
       const selected = getSelectedCards(prevState);
@@ -2059,10 +2089,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         },
         activityLog: [
           ...prevState.activityLog,
-          buildEnergyLogEntry(prevState.player.currentEnergy ?? 0, newEnergy, {
+          withSnap(buildEnergyLogEntry(prevState.player.currentEnergy ?? 0, newEnergy, {
             reason: `Paid ${totalCost} energy for ${selected.length} card(s)`,
             cards: selected.map(({ card }) => card),
-          }),
+          }), prevState),
         ],
       };
     });
@@ -2083,6 +2113,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   };
 
   const drawCards = (amount: number, sourceCard?: SourceCard) => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
     setGameState((prevState) => {
       if (!prevState) return prevState;
       const phase1Cards = prevState.draw.slice(0, Math.min(amount, prevState.draw.length)).map(ensureUid);
@@ -2100,7 +2131,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           pendingReshuffle: null,
           activityLog: [
             ...prevState.activityLog,
-            createActivityLogEntry(
+            withSnap(createActivityLogEntry(
               `Drew ${phase1Cards.length} card${phase1Cards.length === 1 ? '' : 's'}${titleSuffix}`,
               `Draw pile: ${prevState.draw.length} cards`,
               `Draw pile: ${remainingDraw.length} cards`,
@@ -2117,7 +2148,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                   ...(sourceCard ? sourceCardContext(sourceCard) : []),
                 ],
               },
-            ),
+            ), prevState),
           ],
         };
       }
@@ -2130,7 +2161,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         pendingReshuffle: { remaining: remainingNeeded, phase1Cards },
         activityLog: [
           ...prevState.activityLog,
-          createActivityLogEntry(
+          withSnap(createActivityLogEntry(
             `Drew ${phase1Cards.length} card${phase1Cards.length === 1 ? '' : 's'} — draw pile exhausted, need ${remainingNeeded} more${titleSuffix}`,
             `Draw pile: ${prevState.draw.length} cards`,
             'Draw pile: 0 cards (exhausted)',
@@ -2145,7 +2176,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                 ...(sourceCard ? sourceCardContext(sourceCard) : []),
               ],
             },
-          ),
+          ), prevState),
         ],
       };
     });
@@ -2492,6 +2523,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   };
 
   const upgradeSelected = () => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
     setGameState((prevState) => {
       if (!prevState) return prevState;
       const selected = getSelectedCards(prevState);
@@ -2524,6 +2556,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   };
 
   const downgradeSelected = () => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
     setGameState((prevState) => {
       if (!prevState) return prevState;
       const selected = getSelectedCards(prevState);
@@ -2556,6 +2589,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   };
 
   const duplicateSelected = () => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
     setGameState((prevState) => {
       if (!prevState) return prevState;
       const selected = getSelectedCards(prevState);
@@ -2736,6 +2770,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   };
 
   const modifyPlayerHp = (delta: number, sourceCard?: SourceCard) => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
     setGameState((prevState) => {
       if (!prevState) return prevState;
       const appliedDelta =
@@ -2767,12 +2802,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           ...prevState.player,
           hp: newHp,
         },
-        activityLog: [...prevState.activityLog, logEntry],
+        activityLog: [...prevState.activityLog, withSnap(logEntry, prevState)],
       };
     });
   };
 
   const modifyPlayerBlock = (delta: number, sourceCard?: SourceCard) => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
     setGameState((prevState) => {
       if (!prevState) return prevState;
       const beforeBlock = prevState.player.currentBlock ?? 0;
@@ -2798,12 +2834,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           ...prevState.player,
           currentBlock: newBlock,
         },
-        activityLog: [...prevState.activityLog, logEntry],
+        activityLog: [...prevState.activityLog, withSnap(logEntry, prevState)],
       };
     });
   };
 
   const modifyPlayerEnergy = (delta: number, sourceCard?: SourceCard) => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
     setGameState((prevState) => {
       if (!prevState) return prevState;
       const beforeEnergy = prevState.player.currentEnergy ?? 0;
@@ -2827,12 +2864,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           ...prevState.player,
           currentEnergy: newEnergy,
         },
-        activityLog: [...prevState.activityLog, logEntry],
+        activityLog: [...prevState.activityLog, withSnap(logEntry, prevState)],
       };
     });
   };
 
   const modifyEnemyHp = (enemyIndex: number, delta: number) => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
     setGameState((prevState) => {
       if (!prevState || !prevState.enemies) return prevState;
       const nextEnemies = [...prevState.enemies];
@@ -2868,15 +2906,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         hp: newHp,
       };
       
-      return { 
-        ...prevState, 
+      return {
+        ...prevState,
         enemies: nextEnemies,
-        activityLog: [...prevState.activityLog, logEntry],
+        activityLog: [...prevState.activityLog, withSnap(logEntry, prevState)],
       };
     });
   };
 
   const modifyEnemyBlock = (enemyIndex: number, delta: number) => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
     setGameState((prevState) => {
       if (!prevState || !prevState.enemies) return prevState;
       const nextEnemies = [...prevState.enemies];
@@ -2897,10 +2936,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         currentBlock: newBlock,
       };
       
-      return { 
-        ...prevState, 
+      return {
+        ...prevState,
         enemies: nextEnemies,
-        activityLog: [...prevState.activityLog, logEntry],
+        activityLog: [...prevState.activityLog, withSnap(logEntry, prevState)],
       };
     });
   };
@@ -2918,6 +2957,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     );
 
   const addBuffDebuff = (target: 'player' | 'enemy', enemyIndex: number, name: string, type: 'buff' | 'debuff', stacks: number, description?: string, sourceCard?: SourceCard) => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
     setGameState((prevState) => {
       if (!prevState) return prevState;
       if (target === 'player') {
@@ -2957,7 +2997,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         return {
           ...prevState,
           player: { ...prevState.player, buffsDebuffs: nextBuffsDebuffs },
-          activityLog: [...prevState.activityLog, logEntry],
+          activityLog: [...prevState.activityLog, withSnap(logEntry, prevState)],
         };
       } else {
         if (!prevState.enemies) return prevState;
@@ -2993,16 +3033,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         }
         
         nextEnemies[enemyIndex] = { ...nextEnemies[enemyIndex], buffsDebuffs: nextBuffsDebuffs };
-        return { 
-          ...prevState, 
+        return {
+          ...prevState,
           enemies: nextEnemies,
-          activityLog: [...prevState.activityLog, logEntry],
+          activityLog: [...prevState.activityLog, withSnap(logEntry, prevState)],
         };
       }
     });
   };
 
   const removeBuffDebuff = (target: 'player' | 'enemy', enemyIndex: number, name: string) => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
     setGameState((prevState) => {
       if (!prevState) return prevState;
       if (target === 'player') {
@@ -3015,31 +3056,31 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             ...prevState.player,
             buffsDebuffs: buffsDebuffs.filter((bd) => bd.name !== name),
           },
-          activityLog: [...prevState.activityLog, logEntry],
+          activityLog: [...prevState.activityLog, withSnap(logEntry, prevState)],
         };
       } else {
         if (!prevState.enemies) return prevState;
         const nextEnemies = [...prevState.enemies];
         if (enemyIndex < 0 || enemyIndex >= nextEnemies.length) return prevState;
-        
+
         const enemyName = nextEnemies[enemyIndex].name || `Enemy ${enemyIndex + 1}`;
         const logEntry = buildDebuffRemovedLogEntry(name, 'enemy', enemyName);
-        
-        
+
         nextEnemies[enemyIndex] = {
           ...nextEnemies[enemyIndex],
           buffsDebuffs: (nextEnemies[enemyIndex].buffsDebuffs ?? []).filter((bd) => bd.name !== name),
         };
-        return { 
-          ...prevState, 
+        return {
+          ...prevState,
           enemies: nextEnemies,
-          activityLog: [...prevState.activityLog, logEntry],
+          activityLog: [...prevState.activityLog, withSnap(logEntry, prevState)],
         };
       }
     });
   };
 
   const reduceBuffDebuff = (target: 'player' | 'enemy', enemyIndex: number, name: string) => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
     setGameState((prevState) => {
       if (!prevState) return prevState;
       const isPlayer = target === 'player';
@@ -3074,7 +3115,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             ...prevState.player,
             buffsDebuffs: nextBuffsDebuffs,
           },
-          activityLog: [...prevState.activityLog, logEntry],
+          activityLog: [...prevState.activityLog, withSnap(logEntry, prevState)],
         };
       }
 
@@ -3124,7 +3165,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       return {
         ...prevState,
         enemies: nextEnemies,
-        activityLog: [...prevState.activityLog, logEntry],
+        activityLog: [...prevState.activityLog, withSnap(logEntry, prevState)],
       };
     });
   };
@@ -3132,6 +3173,73 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const updateBuffDebuffStacks = (target: 'player' | 'enemy', enemyIndex: number, name: string, stacks: number) => {
     addBuffDebuff(target, enemyIndex, name, 'buff', stacks);
   };
+
+  // ---------------------------------------------------------------------------
+  // Time-travel: revert to a past activity log entry
+  // ---------------------------------------------------------------------------
+
+  const revertToLogEntry = useCallback((entryId: string) => {
+    setGameState((prevState) => {
+      if (!prevState) return prevState;
+      const entryIndex = prevState.activityLog.findIndex((e) => e.id === entryId);
+      if (entryIndex < 0) return prevState;
+      const entry = prevState.activityLog[entryIndex];
+      if (!entry.preActionSnapshot) return prevState;
+      // Restore snapshot and trim log to entries before this one
+      const trimmedLog = prevState.activityLog.slice(0, entryIndex);
+      return {
+        ...entry.preActionSnapshot,
+        activityLog: trimmedLog,
+      } as CombatData;
+    });
+  }, []);
+
+  /** Save current live state as a new decision timeline branch, then return the new node label. */
+  const saveCurrentAsBranch = useCallback((): string => {
+    const label = `Branch @ ${new Date().toLocaleTimeString()}`;
+    saveCurrentTurn();
+    forkDecisionBranch(label);
+    return label;
+  }, [saveCurrentTurn, forkDecisionBranch]);
+
+  /**
+   * Fork a SIBLING branch with current state, then atomically revert gameState +
+   * the active planner turn row to the snapshot captured before `entryId`.
+   */
+  const saveBranchAndRevert = useCallback((entryId: string, branchLabel: string) => {
+    if (!gameState) return;
+    const entryIndex = gameState.activityLog.findIndex((e) => e.id === entryId);
+    if (entryIndex < 0) return;
+    const snapshot = gameState.activityLog[entryIndex]?.preActionSnapshot;
+    if (!snapshot) return;
+
+    const revertedState = {
+      ...snapshot,
+      activityLog: gameState.activityLog.slice(0, entryIndex),
+    } as CombatData;
+
+    // Fork sibling (child of active node's parent) capturing CURRENT state before any mutation
+    const activeNode = decisionNodes.find((n) => n.id === activeDecisionNodeId);
+    forkDecisionBranch(branchLabel, activeNode?.parentId ?? null);
+
+    // Apply reverted state to live game and save to current planner row
+    setGameState(revertedState);
+    setTurns((prev) =>
+      prev.map((t, i) => (i === currentTurnIndex ? { ...t, state: revertedState } : t)),
+    );
+  }, [gameState, decisionNodes, activeDecisionNodeId, currentTurnIndex, forkDecisionBranch, setTurns]);
+
+  // ---------------------------------------------------------------------------
+  // Turn lock / complete
+  // ---------------------------------------------------------------------------
+
+  const setTurnLocked = useCallback((turnId: number, locked: boolean) => {
+    setTurns((prev) => prev.map((t) => (t.id === turnId ? { ...t, locked } : t)));
+  }, []);
+
+  const setTurnCompleted = useCallback((turnId: number, completed: boolean) => {
+    setTurns((prev) => prev.map((t) => (t.id === turnId ? { ...t, completed } : t)));
+  }, []);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const contextValue = useMemo(() => ({
@@ -3230,6 +3338,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     discardHandWithExceptions,
     shuffleDiscardIntoDraw,
     confirmReshuffle,
+    revertToLogEntry,
+    saveCurrentAsBranch,
+    saveBranchAndRevert,
+    setTurnLocked,
+    setTurnCompleted,
   }), [
     // State
     gameState, turns, currentTurnIndex, turnPhase, isLoading, error, activeProject,
@@ -3249,6 +3362,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setDecisionTimelineNodePosition, mergeDecisionTimelinePositions,
     applyDecisionBranchToPlanner, isApplyDecisionBranchToPlannerSynced,
     linkDecisionTimelineParent, unlinkDecisionTimelineBranch, updateDecisionNodeTurnPhase,
+    revertToLogEntry, saveCurrentAsBranch, saveBranchAndRevert, setTurnLocked, setTurnCompleted,
     // Bucket B plain functions (setGameState(prev=>) only — safe stale closures, intentionally omitted from deps)
     // updateGameState, toggleRelic, toggleCardSelection, moveSelectedCards, removeSelectedCards,
     // spendEnergyOnSelected, deselectAllCards, addToActivityLog, drawCards, upgradeSelected,
@@ -3275,4 +3389,10 @@ export function useGameManager() {
     throw new Error('useGameManager must be used within a GameProvider');
   }
   return context;
+}
+
+/** Returns null when called outside a GameProvider (e.g. design gallery). */
+export function useOptionalGameManager(): GameContextType | null {
+  const context = useContext(GameContext);
+  return context ?? null;
 }

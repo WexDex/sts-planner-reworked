@@ -3,6 +3,7 @@ import type {
   ActivityLogContextLine,
   Card,
   CombatTurnPhase,
+  CombatStateSnapshot,
 } from '@/app/types/gameTypes';
 import { plannerCombatPhaseLong } from '@/app/utils/decisionTimelinePhaseUi';
 import { CARD_TYPE_COLORS } from '@/app/constants/colors';
@@ -52,8 +53,15 @@ export const formatCardNamesWithTypeColor = (cards: Card[]): CardNameWithTypeCol
   }));
 
 type LogExtras = Partial<
-  Pick<ActivityLogEntry, 'cardsInvolved' | 'context' | 'target' | 'phaseMarker'>
+  Pick<ActivityLogEntry, 'cardsInvolved' | 'context' | 'target' | 'phaseMarker' | 'preActionSnapshot'>
 >;
+
+/** Strip activityLog from a CombatData to produce a revert-safe snapshot. */
+export function captureSnapshot(state: { activityLog?: unknown;[k: string]: unknown }): CombatStateSnapshot {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { activityLog: _log, ...rest } = state;
+  return rest as CombatStateSnapshot;
+}
 
 export const createActivityLogEntry = (
   title: string,

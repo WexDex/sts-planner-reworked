@@ -18,17 +18,23 @@ import { IntentIncomingChips } from "@/app/components/UI/IntentIncomingChips";
 import { enemyIntentSlotTone } from "@/app/utils/enemyIntentSlotTone";
 import {
   CalendarClock,
+  CheckCheck,
   ChevronDown,
   ChevronRight,
   Copy,
   GitBranch,
+  Heart,
+  Lock,
   Pencil,
   RotateCcw,
   Save,
+  Shield,
   Skull,
   Sparkles,
   Swords,
+  Unlock,
   User,
+  Zap,
 } from "lucide-react";
 import { toast } from "@/app/utils/toast";
 import { formatTurnUidShort, liveCombatDiffersFromPlannerRow } from "@/app/utils/gameHelpers";
@@ -138,6 +144,8 @@ export default function TimelineBlock() {
     syncActiveDecisionNodeFromPlanner,
     updateDecisionNodeLabel,
     copyTurnStateToSlot,
+    setTurnLocked,
+    setTurnCompleted,
     isLoading,
   } = useGameManager();
 
@@ -326,6 +334,13 @@ export default function TimelineBlock() {
         ? outgoingDecisionBranchCountForPlannerSlot(decisionNodes, t.id, turns)
         : null,
       timelineAccentHex: decisionTimelineAccentHexBySlotId.get(t.id) ?? neutralStripe,
+      locked: t.locked ?? false,
+      completed: t.completed ?? false,
+      hp: t.state?.player?.hp ?? null,
+      maxHp: t.state?.player?.maxHp ?? null,
+      energy: t.state?.player?.currentEnergy ?? null,
+      block: t.state?.player?.currentBlock ?? null,
+      logCount: t.state?.activityLog?.length ?? 0,
     }));
   }, [displayTurns, summariesByTurn, decisionNodes, turns, decisionTimelineAccentHexBySlotId]);
 
@@ -577,17 +592,19 @@ export default function TimelineBlock() {
 
                 return (
                   <div key={row.id} className="flex w-full flex-col gap-2">
-                    <div ref={isActive ? activeTurnRef : undefined} className="w-full">
+                    <div ref={isActive ? activeTurnRef : undefined} className="relative w-full">
                     <button
                       type="button"
                       onClick={() => setCurrentTurn(row.id)}
                       title={`${row.combatName} · Turn ${turnCount} · ${turnSubtitle} · Planner row ${row.id} · uid ${row.uid}`}
                       className={`relative w-full max-w-full overflow-hidden rounded-xl border-2 p-2.5 pl-3 text-left transition-all duration-200 ${
-                        isActive && currentTurnHasUnsavedChanges
-                          ? "border-amber-400/75 bg-linear-to-b from-amber-950/70 via-amber-950/45 to-slate-950/90 text-slate-100 shadow-md shadow-amber-950/35 ring-1 ring-amber-300/30"
-                          : isActive
-                            ? "border-cyan-500/70 bg-slate-900/95 shadow-md shadow-cyan-950/30 ring-1 ring-cyan-400/15"
-                            : "border-slate-700/80 bg-slate-950/60 hover:border-slate-600 hover:bg-slate-900/50"
+                        row.locked
+                          ? "border-slate-700/50 bg-slate-950/40 opacity-60"
+                          : isActive && currentTurnHasUnsavedChanges
+                            ? "border-amber-400/75 bg-linear-to-b from-amber-950/70 via-amber-950/45 to-slate-950/90 text-slate-100 shadow-md shadow-amber-950/35 ring-1 ring-amber-300/30"
+                            : isActive
+                              ? "border-cyan-500/70 bg-slate-900/95 shadow-md shadow-cyan-950/30 ring-1 ring-cyan-400/15"
+                              : "border-slate-700/80 bg-slate-950/60 hover:border-slate-600 hover:bg-slate-900/50"
                       }`}
                     >
                       <span
@@ -635,6 +652,18 @@ export default function TimelineBlock() {
                                 Unsaved
                               </span>
                             ) : null}
+                            {row.completed ? (
+                              <span className="flex items-center gap-0.5 rounded-md bg-emerald-500/20 px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-emerald-300">
+                                <CheckCheck className="h-2.5 w-2.5 shrink-0" strokeWidth={2.5} />
+                                Done
+                              </span>
+                            ) : null}
+                            {row.locked ? (
+                              <span className="flex items-center gap-0.5 rounded-md bg-slate-700/50 px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-slate-400">
+                                <Lock className="h-2.5 w-2.5 shrink-0" strokeWidth={2.5} />
+                                Locked
+                              </span>
+                            ) : null}
                           </div>
                           <p
                             className="mt-0.5 font-mono text-[8px] font-medium tabular-nums text-slate-600"
@@ -664,11 +693,40 @@ export default function TimelineBlock() {
                             </p>
                           ) : null}
                         </div>
-                        {summary && summary.totalDamage > 0 ? (
-                          <div className="shrink-0 rounded-full border border-rose-500/35 bg-rose-950/40 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-rose-200">
-                            {summary.totalDamage} dmg
+                        <div className="flex shrink-0 flex-col items-end gap-1">
+                          {summary && summary.totalDamage > 0 ? (
+                            <div className="rounded-full border border-rose-500/35 bg-rose-950/40 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-rose-200">
+                              {summary.totalDamage} dmg
+                            </div>
+                          ) : null}
+                          {row.hp != null && row.maxHp != null ? (
+                            <div
+                              className={`flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold tabular-nums ${
+                                row.hp < row.maxHp * 0.3
+                                  ? "border-rose-500/40 bg-rose-950/40 text-rose-300"
+                                  : "border-slate-700/60 bg-slate-900/60 text-slate-400"
+                              }`}
+                              title={`HP: ${row.hp} / ${row.maxHp}`}
+                            >
+                              <Heart className="h-2.5 w-2.5 shrink-0" strokeWidth={2} />
+                              {row.hp}/{row.maxHp}
+                            </div>
+                          ) : null}
+                          <div className="flex items-center gap-1">
+                            {row.energy != null ? (
+                              <div className="flex items-center gap-0.5 rounded-full border border-amber-700/40 bg-amber-950/30 px-1.5 py-0.5 text-[9px] font-semibold tabular-nums text-amber-400" title={`Energy: ${row.energy}`}>
+                                <Zap className="h-2.5 w-2.5 shrink-0" strokeWidth={2} />
+                                {row.energy}
+                              </div>
+                            ) : null}
+                            {row.block != null && row.block > 0 ? (
+                              <div className="flex items-center gap-0.5 rounded-full border border-sky-600/40 bg-sky-950/30 px-1.5 py-0.5 text-[9px] font-semibold tabular-nums text-sky-300" title={`Block: ${row.block}`}>
+                                <Shield className="h-2.5 w-2.5 shrink-0" strokeWidth={2} />
+                                {row.block}
+                              </div>
+                            ) : null}
                           </div>
-                        ) : null}
+                        </div>
                       </div>
 
                       {lines.length > 0 ? (
@@ -746,6 +804,42 @@ export default function TimelineBlock() {
                         </div>
                       ) : null}
                     </button>
+                    {/* Lock / Complete controls — outside <button> to avoid nested interactive elements */}
+                    <div className="absolute bottom-2 right-2 z-10 flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTurnCompleted(row.id, !row.completed);
+                        }}
+                        title={row.completed ? "Mark as incomplete" : "Mark as complete"}
+                        className={`rounded-lg border p-1 transition-colors ${
+                          row.completed
+                            ? "border-emerald-500/50 bg-emerald-950/60 text-emerald-300 hover:bg-emerald-900/60"
+                            : "border-slate-600/60 bg-slate-900/60 text-slate-500 hover:border-emerald-500/40 hover:text-emerald-400"
+                        }`}
+                      >
+                        <CheckCheck className="h-3 w-3" strokeWidth={2.5} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTurnLocked(row.id, !row.locked);
+                        }}
+                        title={row.locked ? "Unlock turn" : "Lock turn (prevent edits)"}
+                        className={`rounded-lg border p-1 transition-colors ${
+                          row.locked
+                            ? "border-slate-500/60 bg-slate-800/70 text-slate-300 hover:bg-slate-700/60"
+                            : "border-slate-600/60 bg-slate-900/60 text-slate-500 hover:border-slate-400/50 hover:text-slate-300"
+                        }`}
+                      >
+                        {row.locked
+                          ? <Unlock className="h-3 w-3" strokeWidth={2.5} />
+                          : <Lock className="h-3 w-3" strokeWidth={2.5} />
+                        }
+                      </button>
+                    </div>
                     </div>
                     {index < plannerRows.length - 1 && (
                       <button

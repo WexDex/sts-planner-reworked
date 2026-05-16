@@ -1,7 +1,7 @@
 export { getFormattedDescription, tieredNumeric } from "./descriptionPlaceholders";
 
 const weakMultiplier = 0.75;
-const vulnerableMultiplier = 1.75;
+const vulnerableMultiplier = 1.5;
 const frailMultiplier = 0.75;
 
 export function getDamageStats(dmg: number | undefined) {

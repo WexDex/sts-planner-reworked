@@ -174,7 +174,8 @@
       "innate": {
         "base": false,
         "upgraded": true
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Aggregate": {
       "id": "Aggregate",
@@ -215,7 +216,8 @@
         "base": 10,
         "upgraded": 14
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "scalesWithStrength": true
     },
     "All-Out Attack": {
       "id": "All-Out Attack",
@@ -239,7 +241,8 @@
       "selfExhaustOnPlay": {
         "base": false,
         "upgraded": false
-      }
+      },
+      "scalesWithStrength": true
     },
     "Alpha": {
       "id": "Alpha",
@@ -285,7 +288,8 @@
         "base": 6,
         "upgraded": 8
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "scalesWithStrength": true
     },
     "Apotheosis": {
       "id": "Apotheosis",
@@ -335,7 +339,8 @@
       "block": {
         "base": 5
       },
-      "canUpgradeCards": true
+      "canUpgradeCards": true,
+      "scalesWithDexterity": true
     },
     "Ascender's Bane": {
       "id": "Ascender's Bane",
@@ -363,7 +368,8 @@
         "upgraded": 15,
         "conditioned": true,
         "trigger": "Have no Block."
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Backflip": {
       "id": "Backflip",
@@ -380,7 +386,8 @@
       },
       "draw": {
         "base": 2
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Backstab": {
       "id": "Backstab",
@@ -402,7 +409,8 @@
       "innate": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithStrength": true
     },
     "Ball Lightning": {
       "id": "Ball Lightning",
@@ -423,7 +431,8 @@
         "amount": {
           "base": 1
         }
-      }
+      },
+      "scalesWithStrength": true
     },
     "Bandage Up": {
       "id": "Bandage Up",
@@ -461,7 +470,8 @@
         "upgraded": 10,
         "conditioned": true,
         "trigger": "Enemy has Poison."
-      }
+      },
+      "scalesWithStrength": true
     },
     "Barrage": {
       "id": "Barrage",
@@ -475,7 +485,8 @@
       "damage": {
         "base": 4,
         "upgraded": 6
-      }
+      },
+      "scalesWithStrength": true
     },
     "Barricade": {
       "id": "Barricade",
@@ -514,7 +525,8 @@
       "selfExhaustOnPlay": {
         "base": false,
         "upgraded": false
-      }
+      },
+      "scalesWithStrength": true
     },
     "Battle Hymn": {
       "id": "Battle Hymn",
@@ -568,7 +580,8 @@
       "vulnerable": {
         "base": 1,
         "upgraded": 2
-      }
+      },
+      "scalesWithStrength": true
     },
     "Become Almighty": {
       "id": "Become Almighty",
@@ -639,7 +652,8 @@
       "heal": {
         "base": 2,
         "upgraded": 3
-      }
+      },
+      "scalesWithStrength": true
     },
     "Blade Dance": {
       "id": "Blade Dance",
@@ -704,7 +718,8 @@
         "base": 2,
         "upgraded": 3,
         "target": "all enemies"
-      }
+      },
+      "scalesWithStrength": true
     },
     "Blood for Blood": {
       "id": "Blood for Blood",
@@ -719,7 +734,8 @@
       "damage": {
         "base": 18,
         "upgraded": 22
-      }
+      },
+      "scalesWithStrength": true
     },
     "Bloodletting": {
       "id": "Bloodletting",
@@ -751,7 +767,8 @@
       "damage": {
         "base": 32,
         "upgraded": 42
-      }
+      },
+      "scalesWithStrength": true
     },
     "Blur": {
       "id": "Blur",
@@ -765,7 +782,8 @@
       "block": {
         "base": 5,
         "upgraded": 8
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Body Slam": {
       "id": "Body Slam",
@@ -798,7 +816,8 @@
       "innate": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Bouncing Flask": {
       "id": "Bouncing Flask",
@@ -835,7 +854,8 @@
       "damage": {
         "base": 7,
         "upgraded": 10
-      }
+      },
+      "scalesWithStrength": true
     },
     "Brilliance": {
       "id": "Brilliance",
@@ -849,7 +869,8 @@
       "damage": {
         "base": 12,
         "upgraded": 16
-      }
+      },
+      "scalesWithStrength": true
     },
     "Brutality": {
       "id": "Brutality",
@@ -914,7 +935,8 @@
       "lockon": {
         "base": 2,
         "upgraded": 3
-      }
+      },
+      "scalesWithStrength": true
     },
     "Burn": {
       "id": "Burn",
@@ -1006,7 +1028,8 @@
       "ethereal": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithStrength": true
     },
     "Carve Reality": {
       "id": "Carve Reality",
@@ -1021,7 +1044,8 @@
         "base": 6,
         "upgraded": 10
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "scalesWithStrength": true
     },
     "Catalyst": {
       "id": "Catalyst",
@@ -1069,7 +1093,8 @@
       "block": {
         "base": 7,
         "upgraded": 10
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Chill": {
       "id": "Chill",
@@ -1108,7 +1133,8 @@
       },
       "damage": {
         "base": 12
-      }
+      },
+      "scalesWithStrength": true
     },
     "Chrysalis": {
       "id": "Chrysalis",
@@ -1140,7 +1166,8 @@
         "upgraded": 18,
         "conditioned": true,
         "trigger": "Every card in your hand is an Attack."
-      }
+      },
+      "scalesWithStrength": true
     },
     "Claw": {
       "id": "Claw",
@@ -1154,7 +1181,8 @@
       "damage": {
         "base": 3,
         "upgraded": 5
-      }
+      },
+      "scalesWithStrength": true
     },
     "Cleave": {
       "id": "Cleave",
@@ -1169,7 +1197,8 @@
         "base": 8,
         "upgraded": 11,
         "target": "all enemies"
-      }
+      },
+      "scalesWithStrength": true
     },
     "Cloak and Dagger": {
       "id": "Cloak and Dagger",
@@ -1184,7 +1213,8 @@
       "block": {
         "base": 6
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "scalesWithDexterity": true
     },
     "Clothesline": {
       "id": "Clothesline",
@@ -1204,7 +1234,8 @@
           "base": 2,
           "upgraded": 3
         }
-      }
+      },
+      "scalesWithStrength": true
     },
     "Clumsy": {
       "id": "Clumsy",
@@ -1237,7 +1268,8 @@
           "base": 1
         },
         "verb": "channel"
-      }
+      },
+      "scalesWithStrength": true
     },
     "Collect": {
       "id": "Collect",
@@ -1287,7 +1319,8 @@
         "base": 1,
         "conditioned": true,
         "trigger": "Draw one card for each unique Orb."
-      }
+      },
+      "scalesWithStrength": true
     },
     "Concentrate": {
       "id": "Concentrate",
@@ -1318,7 +1351,8 @@
         "base": 12,
         "upgraded": 16,
         "target": "all enemies"
-      }
+      },
+      "scalesWithStrength": true
     },
     "Conjure Blade": {
       "id": "Conjure Blade",
@@ -1347,7 +1381,8 @@
         "base": 5,
         "upgraded": 8,
         "target": "all enemies"
-      }
+      },
+      "scalesWithStrength": true
     },
     "Consume": {
       "id": "Consume",
@@ -1407,7 +1442,8 @@
       },
       "artifact": {
         "base": 1
-      }
+      },
+      "scalesWithStrength": true
     },
     "Corpse Explosion": {
       "id": "Corpse Explosion",
@@ -1523,7 +1559,8 @@
       "vulnerable": {
         "base": 1,
         "upgraded": 2
-      }
+      },
+      "scalesWithStrength": true
     },
     "Curse of the Bell": {
       "id": "Curse of the Bell",
@@ -1552,7 +1589,8 @@
       "scry": {
         "base": 2,
         "upgraded": 3
-      }
+      },
+      "scalesWithStrength": true
     },
     "Dagger Spray": {
       "id": "Dagger Spray",
@@ -1572,7 +1610,8 @@
         "multiHitCount": {
           "base": 2
         }
-      }
+      },
+      "scalesWithStrength": true
     },
     "Dagger Throw": {
       "id": "Dagger Throw",
@@ -1594,7 +1633,8 @@
         "base": 1,
         "random": false,
         "fromHand": true
-      }
+      },
+      "scalesWithStrength": true
     },
     "Dark Embrace": {
       "id": "Dark Embrace",
@@ -1665,7 +1705,8 @@
       "block": {
         "base": 10,
         "upgraded": 13
-      }
+      },
+      "scalesWithStrength": true
     },
     "Dazed": {
       "id": "Dazed",
@@ -1716,7 +1757,8 @@
         "base": 4,
         "upgraded": 7
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "scalesWithDexterity": true
     },
     "Deep Breath": {
       "id": "Deep Breath",
@@ -1744,7 +1786,8 @@
       "block": {
         "base": 5,
         "upgraded": 8
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Defend_G": {
       "id": "Defend_G",
@@ -1758,7 +1801,8 @@
       "block": {
         "base": 5,
         "upgraded": 8
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Defend_P": {
       "id": "Defend_P",
@@ -1772,7 +1816,8 @@
       "block": {
         "base": 5,
         "upgraded": 8
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Defend_R": {
       "id": "Defend_R",
@@ -1786,7 +1831,8 @@
       "block": {
         "base": 5,
         "upgraded": 8
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Deflect": {
       "id": "Deflect",
@@ -1800,7 +1846,8 @@
       "block": {
         "base": 4,
         "upgraded": 7
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Defragment": {
       "id": "Defragment",
@@ -1876,7 +1923,8 @@
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithStrength": true
     },
     "Disarm": {
       "id": "Disarm",
@@ -1936,7 +1984,8 @@
       "block": {
         "base": 4,
         "upgraded": 6
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Doom and Gloom": {
       "id": "Doom and Gloom",
@@ -1960,7 +2009,8 @@
             "base": 1
           }
         }
-      ]
+      ],
+      "scalesWithStrength": true
     },
     "Doppelganger": {
       "id": "Doppelganger",
@@ -2029,7 +2079,8 @@
       "innate": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithStrength": true
     },
     "Dropkick": {
       "id": "Dropkick",
@@ -2048,7 +2099,8 @@
         "base": 1,
         "conditioned": true,
         "trigger": "the enemy has Vulnerable"
-      }
+      },
+      "scalesWithStrength": true
     },
     "Dual Wield": {
       "id": "Dual Wield",
@@ -2120,7 +2172,8 @@
       "block": {
         "base": 7,
         "upgraded": 10
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Empty Fist": {
       "id": "Empty Fist",
@@ -2134,7 +2187,8 @@
       "damage": {
         "base": 9,
         "upgraded": 14
-      }
+      },
+      "scalesWithStrength": true
     },
     "Empty Mind": {
       "id": "Empty Mind",
@@ -2167,7 +2221,8 @@
         "base": true,
         "upgraded": true
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "scalesWithStrength": true
     },
     "Enlightenment": {
       "id": "Enlightenment",
@@ -2214,7 +2269,8 @@
       "block": {
         "base": 13,
         "upgraded": 16
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Eruption": {
       "id": "Eruption",
@@ -2228,7 +2284,8 @@
       },
       "damage": {
         "base": 9
-      }
+      },
+      "scalesWithStrength": true
     },
     "Escape Plan": {
       "id": "Escape Plan",
@@ -2245,7 +2302,8 @@
       },
       "draw": {
         "base": 1
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Establishment": {
       "id": "Establishment",
@@ -2275,7 +2333,8 @@
         "base": 6,
         "upgraded": 10
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "scalesWithDexterity": true
     },
     "Eviscerate": {
       "id": "Eviscerate",
@@ -2295,7 +2354,8 @@
         "multiHitCount": {
           "base": 3
         }
-      }
+      },
+      "scalesWithStrength": true
     },
     "Evolve": {
       "id": "Evolve",
@@ -2352,7 +2412,8 @@
       "damage": {
         "base": 9,
         "upgraded": 15
-      }
+      },
+      "scalesWithStrength": true
     },
     "Fame and Fortune": {
       "id": "Fame and Fortune",
@@ -2384,7 +2445,8 @@
       "damage": {
         "base": 8,
         "upgraded": 11
-      }
+      },
+      "scalesWithStrength": true
     },
     "Feed": {
       "id": "Feed",
@@ -2402,7 +2464,8 @@
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithStrength": true
     },
     "Feel No Pain": {
       "id": "Feel No Pain",
@@ -2416,7 +2479,8 @@
       "block": {
         "base": 3,
         "upgraded": 4
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Fiend Fire": {
       "id": "Fiend Fire",
@@ -2434,7 +2498,8 @@
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithStrength": true
     },
     "Finesse": {
       "id": "Finesse",
@@ -2451,7 +2516,8 @@
       },
       "draw": {
         "base": 1
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Finisher": {
       "id": "Finisher",
@@ -2465,7 +2531,8 @@
       "damage": {
         "base": 6,
         "upgraded": 8
-      }
+      },
+      "scalesWithStrength": true
     },
     "Fire Breathing": {
       "id": "Fire Breathing",
@@ -2515,7 +2582,8 @@
       "block": {
         "base": 12,
         "upgraded": 16
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Flash of Steel": {
       "id": "Flash of Steel",
@@ -2532,7 +2600,8 @@
       },
       "draw": {
         "base": 1
-      }
+      },
+      "scalesWithStrength": true
     },
     "Flechettes": {
       "id": "Flechettes",
@@ -2546,7 +2615,8 @@
       "damage": {
         "base": 4,
         "upgraded": 6
-      }
+      },
+      "scalesWithStrength": true
     },
     "Flex": {
       "id": "Flex",
@@ -2570,7 +2640,8 @@
       "damage": {
         "base": 4,
         "upgraded": 6
-      }
+      },
+      "scalesWithStrength": true
     },
     "Flying Knee": {
       "id": "Flying Knee",
@@ -2584,7 +2655,8 @@
       "damage": {
         "base": 8,
         "upgraded": 11
-      }
+      },
+      "scalesWithStrength": true
     },
     "Flying Sleeves": {
       "id": "Flying Sleeves",
@@ -2608,7 +2680,8 @@
       "retain": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithStrength": true
     },
     "Follow-Up": {
       "id": "Follow-Up",
@@ -2622,7 +2695,8 @@
       "damage": {
         "base": 7,
         "upgraded": 11
-      }
+      },
+      "scalesWithStrength": true
     },
     "Footwork": {
       "id": "Footwork",
@@ -2646,7 +2720,8 @@
       "block": {
         "base": 12,
         "upgraded": 16
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Foreign Influence": {
       "id": "Foreign Influence",
@@ -2702,7 +2777,8 @@
         "base": 1,
         "conditioned": true,
         "trigger": "you have played less than 3 (4) cards this turn"
-      }
+      },
+      "scalesWithStrength": true
     },
     "Fusion": {
       "id": "Fusion",
@@ -2740,7 +2816,8 @@
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Ghostly Armor": {
       "id": "Ghostly Armor",
@@ -2758,7 +2835,8 @@
       "ethereal": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Glacier": {
       "id": "Glacier",
@@ -2782,7 +2860,8 @@
             "base": 2
           }
         }
-      ]
+      ],
+      "scalesWithDexterity": true
     },
     "Glass Knife": {
       "id": "Glass Knife",
@@ -2802,7 +2881,8 @@
         "multiHitCount": {
           "base": 2
         }
-      }
+      },
+      "scalesWithStrength": true
     },
     "Go for the Eyes": {
       "id": "Go for the Eyes",
@@ -2822,7 +2902,8 @@
           "base": 1,
           "upgraded": 2
         }
-      }
+      },
+      "scalesWithStrength": true
     },
     "Good Instincts": {
       "id": "Good Instincts",
@@ -2836,7 +2917,8 @@
       "block": {
         "base": 6,
         "upgraded": 9
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Grand Finale": {
       "id": "Grand Finale",
@@ -2852,7 +2934,8 @@
         "upgraded": 60,
         "conditioned": true,
         "trigger": "there are no cards in your draw pile"
-      }
+      },
+      "scalesWithStrength": true
     },
     "Halt": {
       "id": "Halt",
@@ -2872,7 +2955,8 @@
         "upgraded": 14,
         "conditioned": true,
         "trigger": "You are in Wrath."
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Hand of Greed": {
       "id": "Hand of Greed",
@@ -2886,7 +2970,8 @@
       "damage": {
         "base": 20,
         "upgraded": 25
-      }
+      },
+      "scalesWithStrength": true
     },
     "Havoc": {
       "id": "Havoc",
@@ -2911,7 +2996,8 @@
       "damage": {
         "base": 9,
         "upgraded": 12
-      }
+      },
+      "scalesWithStrength": true
     },
     "Heatsinks": {
       "id": "Heatsinks",
@@ -2941,7 +3027,8 @@
       },
       "damage": {
         "base": 14
-      }
+      },
+      "scalesWithStrength": true
     },
     "Heel Hook": {
       "id": "Heel Hook",
@@ -2960,7 +3047,8 @@
         "base": 1,
         "conditioned": true,
         "trigger": "the enemy has Weak"
-      }
+      },
+      "scalesWithStrength": true
     },
     "Hello World": {
       "id": "Hello World",
@@ -2990,7 +3078,8 @@
       "damage": {
         "base": 15,
         "upgraded": 20
-      }
+      },
+      "scalesWithStrength": true
     },
     "Hologram": {
       "id": "Hologram",
@@ -3010,7 +3099,8 @@
         "base": true,
         "upgraded": true
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "scalesWithDexterity": true
     },
     "Hyperbeam": {
       "id": "Hyperbeam",
@@ -3024,7 +3114,8 @@
       "damage": {
         "base": 26,
         "upgraded": 34
-      }
+      },
+      "scalesWithStrength": true
     },
     "Immolate": {
       "id": "Immolate",
@@ -3039,7 +3130,8 @@
         "base": 21,
         "upgraded": 28
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "scalesWithStrength": true
     },
     "Impatience": {
       "id": "Impatience",
@@ -3071,7 +3163,8 @@
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Indignation": {
       "id": "Indignation",
@@ -3215,7 +3308,8 @@
       "block": {
         "base": 5,
         "upgraded": 7
-      }
+      },
+      "scalesWithStrength": true
     },
     "J.A.X.": {
       "id": "J.A.X.",
@@ -3283,7 +3377,8 @@
       "block": {
         "base": 2,
         "upgraded": 3
-      }
+      },
+      "scalesWithStrength": true
     },
     "Leap": {
       "id": "Leap",
@@ -3297,7 +3392,8 @@
       "block": {
         "base": 9,
         "upgraded": 12
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Leg Sweep": {
       "id": "Leg Sweep",
@@ -3317,7 +3413,8 @@
           "base": 2,
           "upgraded": 3
         }
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Lesson Learned": {
       "id": "Lesson Learned",
@@ -3335,7 +3432,8 @@
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithStrength": true
     },
     "Like Water": {
       "id": "Like Water",
@@ -3349,7 +3447,8 @@
       "block": {
         "base": 5,
         "upgraded": 7
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Limit Break": {
       "id": "Limit Break",
@@ -3481,7 +3580,8 @@
       "damage": {
         "base": 12,
         "upgraded": 16
-      }
+      },
+      "scalesWithStrength": true
     },
     "Mayhem": {
       "id": "Mayhem",
@@ -3518,7 +3618,8 @@
       "damage": {
         "base": 10,
         "upgraded": 14
-      }
+      },
+      "scalesWithStrength": true
     },
     "Mental Fortress": {
       "id": "Mental Fortress",
@@ -3532,7 +3633,8 @@
       "block": {
         "base": 4,
         "upgraded": 6
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Metallicize": {
       "id": "Metallicize",
@@ -3546,7 +3648,8 @@
       "block": {
         "base": 3,
         "upgraded": 4
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Metamorphosis": {
       "id": "Metamorphosis",
@@ -3585,7 +3688,8 @@
             "base": 3
           }
         }
-      ]
+      ],
+      "scalesWithStrength": true
     },
     "Mind Blast": {
       "id": "Mind Blast",
@@ -3661,7 +3765,8 @@
           "base": 1,
           "upgraded": 2
         }
-      }
+      },
+      "scalesWithStrength": true
     },
     "Nightmare": {
       "id": "Nightmare",
@@ -3691,7 +3796,8 @@
       "block": {
         "base": 3,
         "upgraded": 4
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Normality": {
       "id": "Normality",
@@ -3842,7 +3948,8 @@
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Parasite": {
       "id": "Parasite",
@@ -3863,7 +3970,8 @@
       },
       "damage": {
         "base": 6
-      }
+      },
+      "scalesWithStrength": true
     },
     "Perseverance": {
       "id": "Perseverance",
@@ -3881,7 +3989,8 @@
       "retain": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Phantasmal Killer": {
       "id": "Phantasmal Killer",
@@ -3926,7 +4035,8 @@
           "base": 3,
           "upgraded": 4
         }
-      }
+      },
+      "scalesWithStrength": true
     },
     "Pommel Strike": {
       "id": "Pommel Strike",
@@ -3945,7 +4055,8 @@
       "draw": {
         "base": 1,
         "upgraded": 2
-      }
+      },
+      "scalesWithStrength": true
     },
     "Power Through": {
       "id": "Power Through",
@@ -3960,7 +4071,8 @@
         "base": 15,
         "upgraded": 20
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "scalesWithDexterity": true
     },
     "Pray": {
       "id": "Pray",
@@ -3985,7 +4097,8 @@
       "damage": {
         "base": 15,
         "upgraded": 20
-      }
+      },
+      "scalesWithStrength": true
     },
     "Prepared": {
       "id": "Prepared",
@@ -4052,7 +4165,8 @@
       "mantra": {
         "base": 2,
         "upgraded": 3
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Protect": {
       "id": "Protect",
@@ -4070,7 +4184,8 @@
       "retain": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Pummel": {
       "id": "Pummel",
@@ -4094,7 +4209,8 @@
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithStrength": true
     },
     "Purity": {
       "id": "Purity",
@@ -4121,7 +4237,8 @@
       },
       "draw": {
         "base": 1
-      }
+      },
+      "scalesWithStrength": true
     },
     "Rage": {
       "id": "Rage",
@@ -4135,7 +4252,8 @@
       "block": {
         "base": 3,
         "upgraded": 5
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Ragnarok": {
       "id": "Ragnarok",
@@ -4156,7 +4274,8 @@
           "base": 5,
           "upgraded": 6
         }
-      }
+      },
+      "scalesWithStrength": true
     },
     "Rainbow": {
       "id": "Rainbow",
@@ -4194,7 +4313,8 @@
       },
       "damage": {
         "base": 8
-      }
+      },
+      "scalesWithStrength": true
     },
     "Reach Heaven": {
       "id": "Reach Heaven",
@@ -4209,7 +4329,8 @@
         "base": 10,
         "upgraded": 15
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "scalesWithStrength": true
     },
     "Reaper": {
       "id": "Reaper",
@@ -4227,7 +4348,8 @@
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithStrength": true
     },
     "Reboot": {
       "id": "Reboot",
@@ -4259,7 +4381,8 @@
       "damage": {
         "base": 9,
         "upgraded": 12
-      }
+      },
+      "scalesWithStrength": true
     },
     "Reckless Charge": {
       "id": "Reckless Charge",
@@ -4274,7 +4397,8 @@
         "base": 7,
         "upgraded": 10
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "scalesWithStrength": true
     },
     "Recursion": {
       "id": "Recursion",
@@ -4346,7 +4470,8 @@
       "multiHit": {
         "blockUsesMainField": true,
         "multiHitEnergyScaling": true
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Reprogram": {
       "id": "Reprogram",
@@ -4376,7 +4501,8 @@
         "multiHitCount": {
           "base": 5
         }
-      }
+      },
+      "scalesWithStrength": true
     },
     "Rip and Tear": {
       "id": "Rip and Tear",
@@ -4396,7 +4522,8 @@
         "multiHitCount": {
           "base": 2
         }
-      }
+      },
+      "scalesWithStrength": true
     },
     "Ritual Dagger": {
       "id": "Ritual Dagger",
@@ -4413,7 +4540,8 @@
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithStrength": true
     },
     "Rupture": {
       "id": "Rupture",
@@ -4471,7 +4599,8 @@
       "retain": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Sanctity": {
       "id": "Sanctity",
@@ -4490,7 +4619,8 @@
         "base": 2,
         "conditioned": true,
         "trigger": "the last card played this combat was a Skill"
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Sands of Time": {
       "id": "Sands of Time",
@@ -4508,7 +4638,8 @@
       "retain": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithStrength": true
     },
     "Sash Whip": {
       "id": "Sash Whip",
@@ -4528,7 +4659,8 @@
           "base": 1,
           "upgraded": 2
         }
-      }
+      },
+      "scalesWithStrength": true
     },
     "Scrape": {
       "id": "Scrape",
@@ -4546,7 +4678,8 @@
       "draw": {
         "base": 4,
         "upgraded": 5
-      }
+      },
+      "scalesWithStrength": true
     },
     "Scrawl": {
       "id": "Scrawl",
@@ -4575,7 +4708,8 @@
       "damage": {
         "base": 12,
         "upgraded": 16
-      }
+      },
+      "scalesWithStrength": true
     },
     "Second Wind": {
       "id": "Second Wind",
@@ -4589,7 +4723,8 @@
       "block": {
         "base": 5,
         "upgraded": 7
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Secret Technique": {
       "id": "Secret Technique",
@@ -4677,7 +4812,8 @@
       "block": {
         "base": 5,
         "upgraded": 8
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Setup": {
       "id": "Setup",
@@ -4702,7 +4838,8 @@
       "damage": {
         "base": 16,
         "upgraded": 22
-      }
+      },
+      "scalesWithStrength": true
     },
     "Shame": {
       "id": "Shame",
@@ -4728,7 +4865,8 @@
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithStrength": true
     },
     "Shockwave": {
       "id": "Shockwave",
@@ -4769,7 +4907,8 @@
       },
       "draw": {
         "base": 1
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Signature Move": {
       "id": "Signature Move",
@@ -4783,7 +4922,8 @@
       "damage": {
         "base": 30,
         "upgraded": 40
-      }
+      },
+      "scalesWithStrength": true
     },
     "Simmering Fury": {
       "id": "Simmering Fury",
@@ -4813,7 +4953,8 @@
       "multiHit": {
         "damageUsesMainField": true,
         "multiHitEnergyScaling": true
-      }
+      },
+      "scalesWithStrength": true
     },
     "Skim": {
       "id": "Skim",
@@ -4841,7 +4982,8 @@
       "damage": {
         "base": 6,
         "upgraded": 9
-      }
+      },
+      "scalesWithStrength": true
     },
     "Slimed": {
       "id": "Slimed",
@@ -4877,7 +5019,8 @@
       "retain": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithStrength": true
     },
     "Sneaky Strike": {
       "id": "Sneaky Strike",
@@ -4891,7 +5034,8 @@
       "damage": {
         "base": 12,
         "upgraded": 16
-      }
+      },
+      "scalesWithStrength": true
     },
     "Spirit Shield": {
       "id": "Spirit Shield",
@@ -4905,7 +5049,8 @@
       "block": {
         "base": 3,
         "upgraded": 4
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Spot Weakness": {
       "id": "Spot Weakness",
@@ -4950,7 +5095,8 @@
       "block": {
         "base": 6,
         "upgraded": 8
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Storm": {
       "id": "Storm",
@@ -5001,7 +5147,8 @@
       "damage": {
         "base": 15,
         "upgraded": 20
-      }
+      },
+      "scalesWithStrength": true
     },
     "Strike_B": {
       "id": "Strike_B",
@@ -5015,7 +5162,8 @@
       "damage": {
         "base": 6,
         "upgraded": 9
-      }
+      },
+      "scalesWithStrength": true
     },
     "Strike_G": {
       "id": "Strike_G",
@@ -5029,7 +5177,8 @@
       "damage": {
         "base": 6,
         "upgraded": 9
-      }
+      },
+      "scalesWithStrength": true
     },
     "Strike_P": {
       "id": "Strike_P",
@@ -5043,7 +5192,8 @@
       "damage": {
         "base": 6,
         "upgraded": 9
-      }
+      },
+      "scalesWithStrength": true
     },
     "Strike_R": {
       "id": "Strike_R",
@@ -5057,7 +5207,8 @@
       "damage": {
         "base": 6,
         "upgraded": 9
-      }
+      },
+      "scalesWithStrength": true
     },
     "Study": {
       "id": "Study",
@@ -5089,7 +5240,8 @@
           "base": 1,
           "upgraded": 2
         }
-      }
+      },
+      "scalesWithStrength": true
     },
     "Sunder": {
       "id": "Sunder",
@@ -5103,7 +5255,8 @@
       "damage": {
         "base": 24,
         "upgraded": 32
-      }
+      },
+      "scalesWithStrength": true
     },
     "Survivor": {
       "id": "Survivor",
@@ -5122,7 +5275,8 @@
         "base": 1,
         "random": false,
         "fromHand": true
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Sweeping Beam": {
       "id": "Sweeping Beam",
@@ -5139,7 +5293,8 @@
       },
       "draw": {
         "base": 1
-      }
+      },
+      "scalesWithStrength": true
     },
     "Swift Strike": {
       "id": "Swift Strike",
@@ -5153,7 +5308,8 @@
       "damage": {
         "base": 7,
         "upgraded": 10
-      }
+      },
+      "scalesWithStrength": true
     },
     "Swivel": {
       "id": "Swivel",
@@ -5167,7 +5323,8 @@
       "block": {
         "base": 8,
         "upgraded": 11
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Sword Boomerang": {
       "id": "Sword Boomerang",
@@ -5187,7 +5344,8 @@
           "base": 3,
           "upgraded": 4
         }
-      }
+      },
+      "scalesWithStrength": true
     },
     "Tactician": {
       "id": "Tactician",
@@ -5221,7 +5379,8 @@
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithStrength": true
     },
     "Tantrum": {
       "id": "Tantrum",
@@ -5241,7 +5400,8 @@
           "base": 3,
           "upgraded": 4
         }
-      }
+      },
+      "scalesWithStrength": true
     },
     "Tempest": {
       "id": "Tempest",
@@ -5320,7 +5480,8 @@
       "block": {
         "base": 7,
         "upgraded": 9
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Through Violence": {
       "id": "Through Violence",
@@ -5342,7 +5503,8 @@
       "retain": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithStrength": true
     },
     "Thunder Strike": {
       "id": "Thunder Strike",
@@ -5356,7 +5518,8 @@
       "damage": {
         "base": 7,
         "upgraded": 9
-      }
+      },
+      "scalesWithStrength": true
     },
     "Thunderclap": {
       "id": "Thunderclap",
@@ -5370,7 +5533,8 @@
       "damage": {
         "base": 4,
         "upgraded": 7
-      }
+      },
+      "scalesWithStrength": true
     },
     "Tools of the Trade": {
       "id": "Tools of the Trade",
@@ -5448,7 +5612,8 @@
       "block": {
         "base": 7,
         "upgraded": 9
-      }
+      },
+      "scalesWithDexterity": true
     },
     "TURBO": {
       "id": "TURBO",
@@ -5480,7 +5645,8 @@
         "multiHitCount": {
           "base": 2
         }
-      }
+      },
+      "scalesWithStrength": true
     },
     "Unload": {
       "id": "Unload",
@@ -5494,7 +5660,8 @@
       "damage": {
         "base": 14,
         "upgraded": 18
-      }
+      },
+      "scalesWithStrength": true
     },
     "Uppercut": {
       "id": "Uppercut",
@@ -5521,7 +5688,8 @@
       "vulnerable": {
         "base": 1,
         "upgraded": 2
-      }
+      },
+      "scalesWithStrength": true
     },
     "Vault": {
       "id": "Vault",
@@ -5550,7 +5718,8 @@
       "block": {
         "base": 8,
         "upgraded": 12
-      }
+      },
+      "scalesWithDexterity": true
     },
     "Violence": {
       "id": "Violence",
@@ -5594,7 +5763,8 @@
       "damage": {
         "base": 9,
         "upgraded": 12
-      }
+      },
+      "scalesWithStrength": true
     },
     "Warcry": {
       "id": "Warcry",
@@ -5643,7 +5813,8 @@
       "damage": {
         "base": 4,
         "upgraded": 6
-      }
+      },
+      "scalesWithStrength": true
     },
     "Well-Laid Plans": {
       "id": "Well-Laid Plans",
@@ -5671,7 +5842,8 @@
       },
       "draw": {
         "base": 2
-      }
+      },
+      "scalesWithStrength": true
     },
     "Whirlwind": {
       "id": "Whirlwind",
@@ -5687,7 +5859,8 @@
       "multiHit": {
         "damageUsesMainField": true,
         "multiHitEnergyScaling": true
-      }
+      },
+      "scalesWithStrength": true
     },
     "White Noise": {
       "id": "White Noise",
@@ -5718,7 +5891,8 @@
         "base": 12,
         "upgraded": 17
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "scalesWithStrength": true
     },
     "Windmill Strike": {
       "id": "Windmill Strike",
@@ -5736,7 +5910,8 @@
       "retain": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "scalesWithStrength": true
     },
     "Wish": {
       "id": "Wish",

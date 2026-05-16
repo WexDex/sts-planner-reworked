@@ -41,6 +41,12 @@ export interface Card {
   xCost?: boolean;
   cost?: ValueNode;
   damage?: ValueNode;
+  /** True when this card's damage scales with player Strength. */
+  scalesWithStrength?: boolean;
+  /** True when this card's block scales with player Dexterity. */
+  scalesWithDexterity?: boolean;
+  /** Number of hits for multi-hit cards (resolved from DB multiHitCount at load time). Default 1. */
+  hitCount?: number;
   /**
    * Second damage line (e.g. Bane repeat hit). Same JSON shape as extended `damage` objects
    * (`base`, `upgraded`, optional `conditioned`, `trigger`); rendered as its own glyph cluster.
@@ -248,6 +254,12 @@ export interface ActivityLogContextLine {
   value: string;
 }
 
+/**
+ * Lightweight combat snapshot stored per activity-log entry for time-travel revert.
+ * Excludes `activityLog` to prevent exponential nesting.
+ */
+export type CombatStateSnapshot = Omit<CombatData, 'activityLog'>;
+
 export interface ActivityLogEntry {
   id: string;
   timestamp: string;
@@ -255,6 +267,8 @@ export interface ActivityLogEntry {
   before?: string;
   after?: string;
   details?: string;
+  /** Full combat state captured BEFORE this action was applied. Present when revert is supported. */
+  preActionSnapshot?: CombatStateSnapshot;
   type?:
     | 'info'
     | 'action'
@@ -288,6 +302,10 @@ export interface Turn {
   /** Stable row identity for tooling / logs / correlation (distinct from planner slot {@link Turn.id}). */
   uid: string;
   state: CombatData;
+  /** When true, all editing is blocked — mutations show a toast and are rejected. */
+  locked?: boolean;
+  /** Soft completion marker — visual only, does not block edits. */
+  completed?: boolean;
 }
 
 /** Saved payloads may omit `uid` until `migrateTurnRowsWithUids` runs. */

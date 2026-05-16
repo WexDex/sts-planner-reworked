@@ -37,16 +37,19 @@ import {
   LayoutDashboard,
   LayoutGrid,
   ListTree,
+  Lock,
   Maximize2,
   Minus,
   ScrollText,
   Search,
   SquareStack,
+  Unlock,
   User,
   X,
 } from "lucide-react";
 import PileOrderModal from "@/app/components/UI/PileOrderModal";
 import GlobalQuickActions from "@/app/components/UI/GlobalQuickActions";
+import LivePlaySummary from "@/app/components/UI/LivePlaySummary";
 
 import { toast } from "@/app/utils/toast";
 
@@ -199,7 +202,9 @@ export default function MainFieldBlock() {
     combatTargetSelf,
     toggleCombatTargetSelf,
     clearCombatTargets,
+    setTurnLocked,
   } = useGameManager();
+  const isCurrentTurnLocked = turns[currentTurnIndex]?.locked === true;
   const [activityLogOpen, setActivityLogOpen] = useState(false);
   const [activityLogFilter, setActivityLogFilter] = useState("");
   const [activityLogModalTurnIndex, setActivityLogModalTurnIndex] = useState(0);
@@ -463,6 +468,26 @@ export default function MainFieldBlock() {
 
   return (
     <div id="sts-battle-focus" className="mx-auto w-full max-w-6xl scroll-mt-2 space-y-4">
+      {/* Locked-turn banner */}
+      {isCurrentTurnLocked && (
+        <div className="flex items-center gap-3 rounded-xl border border-amber-500/40 bg-amber-950/30 px-4 py-3 ring-1 ring-amber-500/15">
+          <Lock className="h-4 w-4 shrink-0 text-amber-400" strokeWidth={2} />
+          <p className="flex-1 text-sm font-medium text-amber-100">
+            This turn is locked. Switch turns or unlock to make changes.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              const turn = turns[currentTurnIndex];
+              if (turn) setTurnLocked(turn.id, false);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/50 bg-amber-900/40 px-3 py-1.5 text-xs font-semibold text-amber-200 transition-colors hover:bg-amber-800/50"
+          >
+            <Unlock className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+            Unlock
+          </button>
+        </div>
+      )}
       {/* Targets */}
       <section className={`${SHELL} border-cyan-500/15 ring-1 ring-cyan-500/5`}>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -852,6 +877,9 @@ export default function MainFieldBlock() {
       <section className="rounded-xl border border-slate-700/60 bg-slate-900/50 px-3 py-2 flex items-center gap-2">
         <GlobalQuickActions compact />
       </section>
+
+      {/* Live Play Summary — visible when cards are selected */}
+      <LivePlaySummary />
 
       {/* Hand */}
       <section className={`${SHELL}`}>

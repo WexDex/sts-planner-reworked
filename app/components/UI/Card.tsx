@@ -10,6 +10,7 @@ import {
   getFormattedDescription,
 } from "@/app/utils/utils";
 import { useLegendHighlight } from "@/app/context/LegendHighlightContext";
+import { useOptionalGameManager } from "@/app/context/GameContext";
 import {
   DEFAULT_CARD_VISUAL_VARIANT,
   type CardTypeStyle,
@@ -256,6 +257,10 @@ function STSCard({
   onToggleSelect,
 }: GameCardProps) {
   const { setHoveredLegendCard } = useLegendHighlight();
+  const gameCtx = useOptionalGameManager();
+  const livePlayer = gameCtx?.gameState?.player ?? null;
+  const liveStance = gameCtx?.gameState?.stance ?? null;
+
   const inferredGallery = useMemo(() => inferGalleryCardEffects(card), [card]);
   const mergedEffectGlyphs =
     galleryEffectGlyphs ??
@@ -326,7 +331,10 @@ function STSCard({
 
   function getFullBlock() {
     if (card.block === undefined) return undefined;
-    return getBlockStats(getValue("block"));
+    const rawStats = getBlockStats(getValue("block"));
+    if (!rawStats) return undefined;
+    const beforeFrail = liveBlockBeforeFrail ?? rawStats.block;
+    return { block: liveBlockBase ?? rawStats.block, frail: Math.floor(beforeFrail * 0.75) };
   }
 
   /** Hide cost orb for curse / status / potions / STS `unplayable` (Necronomicurse, etc.). */
@@ -366,10 +374,42 @@ function STSCard({
 
   const damageStatLabel = attackDamageStatDisplay(card);
   const damageFormulaBase = galleryTierNumber(card, card.damage);
+
+  // Live-modified damage base (STR + Stance applied when player context is available).
+  const liveDamageBase = useMemo(() => {
+    if (livePlayer == null || typeof damageFormulaBase !== "number") return damageFormulaBase;
+    const str = (card.scalesWithStrength ?? false)
+      ? (livePlayer.buffsDebuffs?.find((b) => b.name === "Strength")?.stacks ?? 0)
+      : 0;
+    const withStr = Math.floor(damageFormulaBase + str);
+    const stanceMult = liveStance === "wrath" ? 2 : liveStance === "divinity" ? 3 : 1;
+    return Math.floor(withStr * stanceMult);
+  }, [livePlayer, liveStance, damageFormulaBase, card.scalesWithStrength]);
+  const damageModified = typeof liveDamageBase === "number" && liveDamageBase !== damageFormulaBase;
+
   const attackDamageBreakdown =
-    card.type === "Attack" && typeof damageFormulaBase === "number"
-      ? getDamageStats(damageFormulaBase)
+    card.type === "Attack" && typeof liveDamageBase === "number"
+      ? getDamageStats(liveDamageBase)
       : null;
+
+  // Live-modified block base (DEX + Frail applied when player context is available).
+  const rawBlockBase = typeof getValue("block") === "number" ? getValue("block") : undefined;
+  const { liveBlockBase, liveBlockBeforeFrail } = useMemo(() => {
+    if (livePlayer == null || rawBlockBase == null)
+      return { liveBlockBase: rawBlockBase, liveBlockBeforeFrail: rawBlockBase };
+    const scalesDex = card.scalesWithDexterity ?? false;
+    const dex = scalesDex ? (livePlayer.buffsDebuffs?.find((b) => b.name === "Dexterity")?.stacks ?? 0) : 0;
+    const frail = scalesDex ? (livePlayer.buffsDebuffs?.find((b) => b.name === "Frail")?.stacks ?? 0) : 0;
+    const withDex = rawBlockBase + dex;
+    return {
+      liveBlockBase: Math.floor(withDex * (frail > 0 ? 0.75 : 1)),
+      liveBlockBeforeFrail: withDex,
+    };
+  }, [livePlayer, rawBlockBase, card.scalesWithDexterity]);
+  const blockModified = liveBlockBase != null && liveBlockBase !== rawBlockBase;
+  const liveDamageLabel =
+    typeof liveDamageBase === "number" ? String(liveDamageBase) : (damageStatLabel ?? "?");
+  const modifiedRing = "ring-1 ring-amber-400/80";
 
   const damageStatTooltip =
     (() => {
@@ -540,7 +580,7 @@ function STSCard({
                   multihitHitLabel != null ? (
                     attackDamageBreakdown ? (
                       <span
-                        className={`${galleryDamageClusterShellClass} inline-flex max-w-full flex-row items-center gap-x-0.5 ${stat.statMain}`}
+                        className={`${galleryDamageClusterShellClass} inline-flex max-w-full flex-row items-center gap-x-0.5 ${stat.statMain} ${damageModified ? modifiedRing : ""}`}
                         title={damageStatTooltip}
                       >
                         {renderLeadingGlyphSegments(multihitLeadSegs, stat.galleryIcon)}
@@ -550,7 +590,7 @@ function STSCard({
                           {React.createElement(getEffectDisplay("damage").icon, {
                             className: `${stat.statIcon} inline shrink-0`,
                           })}
-                          {damageStatLabel ?? "?"}
+                          {liveDamageLabel}
                         </span>
                         <span
                           className="flex flex-col items-center justify-center leading-none text-sm font-semibold tabular-nums tracking-tight"
@@ -574,7 +614,7 @@ function STSCard({
                       </span>
                     ) : (
                       <span
-                        className={`${galleryDamageClusterShellClass} inline-flex max-w-full flex-row items-center gap-x-0.5 ${stat.statMain}`}
+                        className={`${galleryDamageClusterShellClass} inline-flex max-w-full flex-row items-center gap-x-0.5 ${stat.statMain} ${damageModified ? modifiedRing : ""}`}
                         title={damageStatTooltip}
                       >
                         {renderLeadingGlyphSegments(multihitLeadSegs, stat.galleryIcon)}
@@ -584,7 +624,7 @@ function STSCard({
                           {React.createElement(getEffectDisplay("damage").icon, {
                             className: `${stat.statIcon} inline shrink-0`,
                           })}
-                          {damageStatLabel ?? "?"}
+                          {liveDamageLabel}
                         </span>
                         <span className={MULTIHIT_INLINE_TIMES_CLASS}>×</span>
                         <span className={MULTIHIT_INLINE_COUNT_CLASS}>{multihitHitLabel}</span>
@@ -592,7 +632,7 @@ function STSCard({
                     )
                   ) : attackDamageBreakdown ? (
                     <span
-                      className={`${galleryDamageClusterShellClass} inline-flex max-w-full flex-row items-center gap-x-0.5 ${stat.statMain}`}
+                      className={`${galleryDamageClusterShellClass} inline-flex max-w-full flex-row items-center gap-x-0.5 ${stat.statMain} ${damageModified ? modifiedRing : ""}`}
                       title={damageStatTooltip}
                     >
                       {singleHitDamageLeadSegs.length > 0
@@ -607,7 +647,7 @@ function STSCard({
                         {React.createElement(getEffectDisplay("damage").icon, {
                           className: `${stat.statIcon} inline shrink-0`,
                         })}
-                        {damageStatLabel ?? "?"}
+                        {liveDamageLabel}
                       </span>
                       <span
                         className="flex flex-col items-center justify-center leading-none text-sm font-semibold tabular-nums tracking-tight"
@@ -630,7 +670,7 @@ function STSCard({
                   ) : singleHitDamageLeadSegs.length > 0 ? (
                     <span
                       title={damageStatTooltip}
-                      className={`${galleryDamageClusterShellClass} inline-flex max-w-full flex-row items-center gap-x-0.5 ${stat.statMain}`}
+                      className={`${galleryDamageClusterShellClass} inline-flex max-w-full flex-row items-center gap-x-0.5 ${stat.statMain} ${damageModified ? modifiedRing : ""}`}
                     >
                       {renderLeadingGlyphSegments(
                         singleHitDamageLeadSegs,
@@ -642,18 +682,18 @@ function STSCard({
                         {React.createElement(getEffectDisplay("damage").icon, {
                           className: `${stat.statIcon} inline shrink-0`,
                         })}
-                        {damageStatLabel ?? "?"}
+                        {liveDamageLabel}
                       </span>
                     </span>
                   ) : (
                     <span
                       title={damageStatTooltip}
-                      className={`${stat.statMain} inline-flex items-center gap-0.5 ${getEffectDisplay("damage").color}`}
+                      className={`${stat.statMain} inline-flex items-center gap-0.5 ${getEffectDisplay("damage").color} ${damageModified ? modifiedRing : ""}`}
                     >
                       {React.createElement(getEffectDisplay("damage").icon, {
                         className: `${stat.statIcon} inline`,
                       })}
-                      {damageStatLabel ?? "?"}
+                      {liveDamageLabel}
                     </span>
                   )
                 ) : null}
@@ -661,7 +701,7 @@ function STSCard({
             ) : null}
             {card.block !== undefined && !mergedSuppressStats?.block && (
               <div
-                className={BLOCK_FRAIL_CLUSTER_CLASS}
+                className={`${BLOCK_FRAIL_CLUSTER_CLASS} ${blockModified ? modifiedRing : ""}`}
                 title={formatBlockStatTitle(getValue("block"), card.type)}
               >
                 {blockMultihitHitLabel != null ? (

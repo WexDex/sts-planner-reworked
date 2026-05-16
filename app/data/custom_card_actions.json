@@ -93,38 +93,38 @@
     }
   ],
   "Grand Finale": [
-      {
-    "label": "",
-    "actionType": "move_to_pile",
-    "filter": {
-      "type": "group",
-      "id": "fsa3apm7y6e",
-      "conjunction": "AND",
-      "children": [
-        {
-          "type": "leaf",
-          "id": "34gh1fvcbpj",
-          "field": "isUpgraded",
-          "operator": "isTrue",
-          "value": {
-            "kind": "literal",
-            "value": ""
+    {
+      "label": "",
+      "actionType": "move_to_pile",
+      "filter": {
+        "type": "group",
+        "id": "fsa3apm7y6e",
+        "conjunction": "AND",
+        "children": [
+          {
+            "type": "leaf",
+            "id": "34gh1fvcbpj",
+            "field": "isUpgraded",
+            "operator": "isTrue",
+            "value": {
+              "kind": "literal",
+              "value": ""
+            }
+          },
+          {
+            "type": "leaf",
+            "id": "bul821xworg",
+            "field": "rarity",
+            "operator": "eq",
+            "value": {
+              "kind": "literal",
+              "value": "Rare"
+            }
           }
-        },
-        {
-          "type": "leaf",
-          "id": "bul821xworg",
-          "field": "rarity",
-          "operator": "eq",
-          "value": {
-            "kind": "literal",
-            "value": "Rare"
-          }
-        }
-      ]
-    },
-    "pile": "exhaust"
-  }
+        ]
+      },
+      "pile": "exhaust"
+    }
   ],
   "Adrenaline": [
     {
@@ -151,7 +151,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 1
+      "defaultValue": 1,
+      "scalesWithDexterity": true
     }
   ],
   "Alchemize": [
@@ -197,7 +198,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 5
+      "defaultValue": 5,
+      "scalesWithDexterity": true
     }
   ],
   "Ascender's Bane": [
@@ -213,7 +215,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 11
+      "defaultValue": 11,
+      "scalesWithDexterity": true
     }
   ],
   "Backflip": [
@@ -221,7 +224,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 5
+      "defaultValue": 5,
+      "scalesWithDexterity": true
     },
     {
       "label": "Draw Cards",
@@ -323,7 +327,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 5
+      "defaultValue": 5,
+      "scalesWithDexterity": true
     }
   ],
   "Boot Sequence": [
@@ -331,7 +336,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 10
+      "defaultValue": 10,
+      "scalesWithDexterity": true
     },
     {
       "label": "Self Exhaust",
@@ -411,7 +417,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 7
+      "defaultValue": 7,
+      "scalesWithDexterity": true
     }
   ],
   "Chill": [
@@ -435,7 +442,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 6
+      "defaultValue": 6,
+      "scalesWithDexterity": true
     }
   ],
   "Clumsy": [
@@ -569,7 +577,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 10
+      "defaultValue": 10,
+      "scalesWithDexterity": true
     }
   ],
   "Dazed": [
@@ -585,7 +594,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 4
+      "defaultValue": 4,
+      "scalesWithDexterity": true
     }
   ],
   "Deep Breath": [
@@ -601,7 +611,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 5
+      "defaultValue": 5,
+      "scalesWithDexterity": true
     }
   ],
   "Defend_G": [
@@ -609,7 +620,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 5
+      "defaultValue": 5,
+      "scalesWithDexterity": true
     }
   ],
   "Defend_P": [
@@ -617,7 +629,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 5
+      "defaultValue": 5,
+      "scalesWithDexterity": true
     }
   ],
   "Defend_R": [
@@ -625,7 +638,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 5
+      "defaultValue": 5,
+      "scalesWithDexterity": true
     }
   ],
   "Deflect": [
@@ -633,7 +647,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 4
+      "defaultValue": 4,
+      "scalesWithDexterity": true
     }
   ],
   "Demon Form": [
@@ -707,7 +722,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 4
+      "defaultValue": 4,
+      "scalesWithDexterity": true
     }
   ],
   "Doppelganger": [
@@ -755,7 +771,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 7
+      "defaultValue": 7,
+      "scalesWithDexterity": true
     }
   ],
   "Empty Mind": [
@@ -779,7 +796,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 13
+      "defaultValue": 13,
+      "scalesWithDexterity": true
     }
   ],
   "Escape Plan": [
@@ -787,7 +805,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 3
+      "defaultValue": 3,
+      "scalesWithDexterity": true
     },
     {
       "label": "Draw Cards",
@@ -811,7 +830,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 6
+      "defaultValue": 6,
+      "scalesWithDexterity": true
     }
   ],
   "Evolve": [
@@ -859,7 +879,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 3
+      "defaultValue": 3,
+      "scalesWithDexterity": true
     }
   ],
   "Fiend Fire": [
@@ -875,7 +896,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 2
+      "defaultValue": 2,
+      "scalesWithDexterity": true
     },
     {
       "label": "Draw Cards",
@@ -903,7 +925,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 12
+      "defaultValue": 12,
+      "scalesWithDexterity": true
     }
   ],
   "Flash of Steel": [
@@ -919,7 +942,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 12
+      "defaultValue": 12,
+      "scalesWithDexterity": true
     }
   ],
   "Foreign Influence": [
@@ -935,7 +959,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 1
+      "defaultValue": 1,
+      "scalesWithDexterity": true
     },
     {
       "label": "Self Exhaust",
@@ -949,7 +974,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 10
+      "defaultValue": 10,
+      "scalesWithDexterity": true
     },
     {
       "label": "Ethereal",
@@ -963,7 +989,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 7
+      "defaultValue": 7,
+      "scalesWithDexterity": true
     }
   ],
   "Good Instincts": [
@@ -971,7 +998,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 6
+      "defaultValue": 6,
+      "scalesWithDexterity": true
     }
   ],
   "Halt": [
@@ -979,7 +1007,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 3
+      "defaultValue": 3,
+      "scalesWithDexterity": true
     }
   ],
   "Heatsinks": [
@@ -1003,7 +1032,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 3
+      "defaultValue": 3,
+      "scalesWithDexterity": true
     },
     {
       "label": "Self Exhaust",
@@ -1025,7 +1055,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 30
+      "defaultValue": 30,
+      "scalesWithDexterity": true
     },
     {
       "label": "Self Exhaust",
@@ -1087,7 +1118,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 5
+      "defaultValue": 5,
+      "scalesWithDexterity": true
     }
   ],
   "Jack of All Trades": [
@@ -1103,7 +1135,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 2
+      "defaultValue": 2,
+      "scalesWithDexterity": true
     }
   ],
   "Leap": [
@@ -1111,7 +1144,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 9
+      "defaultValue": 9,
+      "scalesWithDexterity": true
     }
   ],
   "Leg Sweep": [
@@ -1119,7 +1153,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 11
+      "defaultValue": 11,
+      "scalesWithDexterity": true
     }
   ],
   "Lesson Learned": [
@@ -1135,7 +1170,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 5
+      "defaultValue": 5,
+      "scalesWithDexterity": true
     }
   ],
   "Limit Break": [
@@ -1181,7 +1217,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 4
+      "defaultValue": 4,
+      "scalesWithDexterity": true
     }
   ],
   "Metallicize": [
@@ -1189,7 +1226,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 3
+      "defaultValue": 3,
+      "scalesWithDexterity": true
     }
   ],
   "Metamorphosis": [
@@ -1227,7 +1265,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 3
+      "defaultValue": 3,
+      "scalesWithDexterity": true
     }
   ],
   "Noxious Fumes": [
@@ -1275,7 +1314,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 30
+      "defaultValue": 30,
+      "scalesWithDexterity": true
     },
     {
       "label": "Self Exhaust",
@@ -1289,7 +1329,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 5
+      "defaultValue": 5,
+      "scalesWithDexterity": true
     }
   ],
   "Piercing Wail": [
@@ -1313,7 +1354,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 15
+      "defaultValue": 15,
+      "scalesWithDexterity": true
     }
   ],
   "Predator": [
@@ -1345,7 +1387,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 4
+      "defaultValue": 4,
+      "scalesWithDexterity": true
     }
   ],
   "Protect": [
@@ -1353,7 +1396,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 12
+      "defaultValue": 12,
+      "scalesWithDexterity": true
     }
   ],
   "Pummel": [
@@ -1377,7 +1421,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 3
+      "defaultValue": 3,
+      "scalesWithDexterity": true
     }
   ],
   "Rainbow": [
@@ -1423,7 +1468,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 7
+      "defaultValue": 7,
+      "scalesWithDexterity": true
     }
   ],
   "Ritual Dagger": [
@@ -1455,7 +1501,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 12
+      "defaultValue": 12,
+      "scalesWithDexterity": true
     },
     {
       "label": "Self Exhaust",
@@ -1469,7 +1516,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 6
+      "defaultValue": 6,
+      "scalesWithDexterity": true
     },
     {
       "label": "Draw Cards",
@@ -1499,7 +1547,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 5
+      "defaultValue": 5,
+      "scalesWithDexterity": true
     }
   ],
   "Secret Technique": [
@@ -1539,7 +1588,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 5
+      "defaultValue": 5,
+      "scalesWithDexterity": true
     }
   ],
   "Shiv": [
@@ -1563,7 +1613,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 8
+      "defaultValue": 8,
+      "scalesWithDexterity": true
     },
     {
       "label": "Draw Cards",
@@ -1609,7 +1660,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 3
+      "defaultValue": 3,
+      "scalesWithDexterity": true
     }
   ],
   "Steam Barrier": [
@@ -1617,7 +1669,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 6
+      "defaultValue": 6,
+      "scalesWithDexterity": true
     }
   ],
   "Survivor": [
@@ -1625,7 +1678,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 8
+      "defaultValue": 8,
+      "scalesWithDexterity": true
     }
   ],
   "Sweeping Beam": [
@@ -1641,7 +1695,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 8
+      "defaultValue": 8,
+      "scalesWithDexterity": true
     }
   ],
   "Tactician": [
@@ -1657,7 +1712,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 2
+      "defaultValue": 2,
+      "scalesWithDexterity": true
     },
     {
       "label": "Self Exhaust",
@@ -1711,7 +1767,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 7
+      "defaultValue": 7,
+      "scalesWithDexterity": true
     }
   ],
   "Through Violence": [
@@ -1759,7 +1816,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 7
+      "defaultValue": 7,
+      "scalesWithDexterity": true
     }
   ],
   "Vault": [
@@ -1775,7 +1833,8 @@
       "label": "Add Block",
       "actionType": "modify_block",
       "hasInput": true,
-      "defaultValue": 8
+      "defaultValue": 8,
+      "scalesWithDexterity": true
     }
   ],
   "Violence": [

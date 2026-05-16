@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+import { RotateCcw, GitBranch } from 'lucide-react';
 import {
   ACTIVITY_LOG_COLORS,
   ACTIVITY_LOG_ICONS,
@@ -12,6 +14,7 @@ import type {
   ActivityLogEntry,
 } from '@/app/types/gameTypes';
 import type { ActivityLogType } from '@/app/utils/activityLogger';
+import { useGameManager } from '@/app/context/GameContext';
 
 export type ActivityLogInlineDensity = 'minimal' | 'detailed';
 
@@ -157,7 +160,12 @@ export function ActivityLogRowMinimal({ entry }: { entry: ActivityLogEntry }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-2">
             <p className={`min-w-0 truncate text-[13px] font-semibold leading-tight ${colors.text}`}>{entry.title}</p>
-            <time className="shrink-0 text-[10px] tabular-nums text-slate-500">{entry.timestamp}</time>
+            <div className="flex shrink-0 items-center gap-1.5">
+              {entry.preActionSnapshot ? (
+                <RevertEntryIconButton entry={entry} />
+              ) : null}
+              <time className="text-[10px] tabular-nums text-slate-500">{entry.timestamp}</time>
+            </div>
           </div>
           {entry.cardsInvolved && entry.cardsInvolved.length > 0 ? (
             <p className="mt-0.5 min-w-0 truncate text-[11px] leading-tight">
@@ -259,6 +267,12 @@ export function ActivityLogRowDetailed({ entry }: { entry: ActivityLogEntry }) {
             ) : null}
           </div>
         ) : null}
+
+        {entry.preActionSnapshot ? (
+          <div className="mt-2 flex justify-end border-t border-slate-700/30 pt-2">
+            <RevertEntryIconButton entry={entry} />
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -273,6 +287,184 @@ export function ActivityLogRowInline({
 }) {
   if (density === 'minimal') return <ActivityLogRowMinimal entry={entry} />;
   return <ActivityLogRowDetailed entry={entry} />;
+}
+
+/** Derive a branch name suggestion: T{turn}.{nextSiblingOrdinal}, validated unique. */
+function suggestBranchName(
+  decisionNodes: import('@/app/types/gameTypes').DecisionNode[],
+  activeDecisionNodeId: string | null,
+  currentTurnIndex: number,
+): string {
+  const turnNum = currentTurnIndex + 1;
+  const activeNode = decisionNodes.find((n) => n.id === activeDecisionNodeId);
+  const siblingCount = activeNode?.parentId
+    ? decisionNodes.filter((n) => n.parentId === activeNode.parentId).length
+    : 0;
+  const existingLabels = new Set(decisionNodes.map((n) => n.label));
+  let ordinal = siblingCount + 1;
+  if (ordinal < 2) ordinal = 2;
+  let candidate = `T${turnNum}.${ordinal}`;
+  while (existingLabels.has(candidate)) {
+    ordinal++;
+    candidate = `T${turnNum}.${ordinal}`;
+  }
+  return candidate;
+}
+
+type RevertPhase = 'idle' | 'choosing' | 'namingBranch';
+
+/** Shared revert panel rendered inside both compact and expanded log rows. */
+function RevertPanel({
+  entry,
+  onClose,
+  compact = false,
+}: {
+  entry: ActivityLogEntry;
+  onClose: () => void;
+  compact?: boolean;
+}) {
+  const { revertToLogEntry, saveBranchAndRevert, decisionNodes, activeDecisionNodeId, currentTurnIndex } = useGameManager();
+  const [phase, setPhase] = useState<RevertPhase>('choosing');
+  const [branchName, setBranchName] = useState(() =>
+    suggestBranchName(decisionNodes, activeDecisionNodeId, currentTurnIndex),
+  );
+
+  function doRevertDirect() {
+    revertToLogEntry(entry.id);
+    onClose();
+  }
+
+  function doSaveBranchAndRevert() {
+    const name = branchName.trim() || suggestBranchName(decisionNodes, activeDecisionNodeId, currentTurnIndex);
+    saveBranchAndRevert(entry.id, name);
+    onClose();
+  }
+
+  if (phase === 'namingBranch') {
+    return (
+      <div className={compact ? 'p-4' : 'mt-4 rounded-xl border border-emerald-500/30 bg-emerald-950/15 p-4'}>
+        <p className={`mb-2 font-semibold text-emerald-200 ${compact ? 'text-xs' : 'text-sm'}`}>
+          Name this branch
+        </p>
+        <p className="mb-3 text-xs leading-relaxed text-slate-400">
+          The current state will be saved under this name. T1 will be reverted.
+        </p>
+        <input
+          autoFocus
+          type="text"
+          value={branchName}
+          onChange={(e) => setBranchName(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') doSaveBranchAndRevert(); if (e.key === 'Escape') setPhase('choosing'); }}
+          className="mb-3 w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
+          placeholder="Branch name…"
+        />
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={doSaveBranchAndRevert}
+            className="flex items-center gap-1.5 rounded-lg border border-emerald-500/50 bg-emerald-950/50 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-900/50"
+          >
+            <GitBranch className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+            Save &amp; revert
+          </button>
+          <button
+            onClick={() => setPhase('choosing')}
+            className="rounded-lg border border-slate-600 bg-slate-900/60 px-3 py-1.5 text-xs font-semibold text-slate-400 hover:bg-slate-800/60"
+          >
+            Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={compact ? 'p-4' : 'mt-4 rounded-xl border border-amber-500/35 bg-amber-950/15 p-4'}>
+      <p className={`mb-1 font-semibold text-amber-200 ${compact ? 'text-xs' : 'text-sm'}`}>
+        Revert to this point?
+      </p>
+      <p className="mb-3 text-xs leading-relaxed text-slate-400">
+        Log entries after this point will be permanently removed.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => setPhase('namingBranch')}
+          className="flex items-center gap-1.5 rounded-lg border border-emerald-500/50 bg-emerald-950/50 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-900/50"
+        >
+          <GitBranch className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+          Save branch &amp; revert
+        </button>
+        <button
+          onClick={doRevertDirect}
+          className="flex items-center gap-1.5 rounded-lg border border-rose-500/50 bg-rose-950/50 px-3 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-900/50"
+        >
+          <RotateCcw className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+          Revert without saving
+        </button>
+        <button
+          onClick={onClose}
+          className="rounded-lg border border-slate-600 bg-slate-900/60 px-3 py-1.5 text-xs font-semibold text-slate-400 hover:bg-slate-800/60"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Compact revert button for inline log rows. */
+function RevertEntryIconButton({ entry }: { entry: ActivityLogEntry }) {
+  const [open, setOpen] = useState(false);
+  if (!entry.preActionSnapshot) return null;
+
+  if (open) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+        onClick={() => setOpen(false)}
+      >
+        <div
+          className="w-full max-w-sm rounded-2xl border border-amber-500/40 bg-slate-900 shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <RevertPanel entry={entry} onClose={() => setOpen(false)} compact />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+      title="Revert game state to before this action"
+      className="flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-950/20 px-1.5 py-0.5 text-[9px] font-semibold text-amber-400 transition-colors hover:bg-amber-900/30"
+    >
+      <RotateCcw className="h-2.5 w-2.5 shrink-0" strokeWidth={2} />
+      Revert
+    </button>
+  );
+}
+
+/** Full revert button for expanded (Big View) log rows. */
+function RevertEntryButton({ entry }: { entry: ActivityLogEntry }) {
+  const [open, setOpen] = useState(false);
+  if (!entry.preActionSnapshot) return null;
+
+  if (open) {
+    return <RevertPanel entry={entry} onClose={() => setOpen(false)} />;
+  }
+
+  return (
+    <div className="mt-4 flex justify-end">
+      <button
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-950/20 px-3 py-1.5 text-xs font-semibold text-amber-300 transition-colors hover:bg-amber-900/30"
+        title="Revert game state to before this action"
+      >
+        <RotateCcw className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+        Revert to here
+      </button>
+    </div>
+  );
 }
 
 export function ActivityLogRowExpanded({ entry }: { entry: ActivityLogEntry }) {
@@ -350,6 +542,8 @@ export function ActivityLogRowExpanded({ entry }: { entry: ActivityLogEntry }) {
           <p className="mt-2 text-base leading-relaxed text-slate-200 whitespace-pre-wrap break-words">{entry.details}</p>
         </div>
       ) : null}
+
+      <RevertEntryButton entry={entry} />
     </article>
   );
 }
