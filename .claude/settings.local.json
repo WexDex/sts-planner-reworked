@@ -20,7 +20,12 @@
       "Bash(node -e \"const db = require\\('./app/data/db/STS_CARDS_DB.json'\\); const cards = db.cards ?? db; const blockCard = Object.entries\\(cards\\).find\\(\\([,v]\\) => v.block\\); const energyCard = Object.entries\\(cards\\).find\\(\\([,v]\\) => v.cost || v.energyCost\\); console.log\\('block card:', JSON.stringify\\(blockCard?.[1], null, 2\\).substring\\(0, 300\\)\\); console.log\\('energy card:', JSON.stringify\\(energyCard?.[1], null, 2\\).substring\\(0, 200\\)\\);\")",
       "Bash(powershell -Command ' *)",
       "Bash(cd /d && find \"d:\\\\new Projects\\\\NextJS\\\\sts-planner-reworked\" -type f -name \"*.tsx\" -o -name \"*.ts\" -o -name \"*.json\" | head -30)",
-      "Read(//d/d/**)"
+      "Read(//d/d/**)",
+      "Bash(Get-ChildItem -Path \"d:\\\\new Projects\\\\NextJS\\\\sts-planner-reworked\" -Recurse -Depth 3)",
+      "Bash(Select-Object FullName)",
+      "Bash(ConvertTo-Csv -NoTypeInformation)",
+      "Bash(Out-String)",
+      "Bash(Get-ChildItem -Path \"d:\\\\new Projects\\\\NextJS\\\\sts-planner-reworked\" -Recurse -Directory -Depth 2)"
     ]
   }
 }

@@ -1820,8 +1820,29 @@
     {
       "label": "Self Exhaust",
       "actionType": "move_to_pile",
-      "pile": "exhaust",
-      "hasInput": false
+      "pile": "exhaust"
+    },
+    {
+      "label": "add Power to Hand",
+      "actionType": "add_card",
+      "hasInput": true,
+      "cardPickerFilter": {
+        "type": "group",
+        "id": "okxu9sanwp8",
+        "conjunction": "AND",
+        "children": [
+          {
+            "type": "leaf",
+            "id": "zz0x4ghkygq",
+            "field": "type",
+            "operator": "eq",
+            "value": {
+              "kind": "literal",
+              "value": "Power"
+            }
+          }
+        ]
+      }
     }
   ],
   "Wish": [
