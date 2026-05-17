@@ -46,7 +46,13 @@ type ActionType =
   | "discard_hand"
   | "reshuffle_discard"
   | "set_orb_slots"
-  | "adjust_orb_slots";
+  | "adjust_orb_slots"
+  | "upgrade_card"
+  | "downgrade_card"
+  | "mark_as_played"
+  | "exhaust_card"
+  | "duplicate_card"
+  | "remove_card";
 
 // ─── Filter types ────────────────────────────────────────────────────────────
 
@@ -78,6 +84,15 @@ type FilterGroup = {
 
 type FilterNode = FilterLeaf | FilterGroup;
 type ActionFilter = FilterGroup;
+
+type CardTarget =
+  | { kind: "self" }
+  | {
+      kind: "filter";
+      sourcePiles: Array<"hand" | "draw" | "discard" | "exhaust" | "playedCards">;
+      filter?: ActionFilter;
+      excludeSelf?: boolean;
+    };
 
 // ─── Card field descriptors ──────────────────────────────────────────────────
 
@@ -731,6 +746,8 @@ type CustomAction = {
   allEnemies?: boolean;
   filter?: ActionFilter;
   cardPickerFilter?: ActionFilter;
+  /** Target selector for card-affecting actions. Undefined = self (default). */
+  cardTarget?: CardTarget;
 };
 
 type CustomActionsMap = Record<string, CustomAction[]>;
@@ -868,6 +885,43 @@ const ACTION_TYPES: { value: ActionType; label: string; description: string; col
     activeClass: "border-violet-300/60 bg-violet-900/40 text-violet-300 ring-1 ring-violet-300/25",
     inactiveClass: "border-violet-300/40 bg-violet-900/30 text-violet-400/80 ring-1 ring-violet-300/20",
   },
+  // ── Card-affecting actions (support the Target selector) ──
+  {
+    value: "upgrade_card", label: "Upgrade Card", description: "Upgrade target card(s) to their + version. Self by default — or use a filter to upgrade all matching cards (e.g. all Attacks in hand). Ex: Armaments upgrades one card.",
+    color: "emerald",
+    activeClass: "border-emerald-400/70 bg-emerald-950/55 text-emerald-200 ring-1 ring-emerald-400/30",
+    inactiveClass: "border-emerald-400/40 bg-emerald-900/25 text-emerald-400/80 ring-1 ring-emerald-400/20",
+  },
+  {
+    value: "downgrade_card", label: "Downgrade Card", description: "Revert target card(s) to their base (un-upgraded) version. Self by default.",
+    color: "slate",
+    activeClass: "border-slate-300/70 bg-slate-800/60 text-slate-200 ring-1 ring-slate-300/30",
+    inactiveClass: "border-slate-300/40 bg-slate-900/30 text-slate-400/80 ring-1 ring-slate-300/20",
+  },
+  {
+    value: "mark_as_played", label: "Mark as Played", description: "Move target card(s) to the Played Cards pile (for Powers or tracking play state). Self by default. Ex: move all hand cards except curses to played.",
+    color: "teal",
+    activeClass: "border-teal-400/70 bg-teal-950/55 text-teal-200 ring-1 ring-teal-400/30",
+    inactiveClass: "border-teal-400/40 bg-teal-900/25 text-teal-400/80 ring-1 ring-teal-400/20",
+  },
+  {
+    value: "exhaust_card", label: "Exhaust Card", description: "Move target card(s) to the Exhaust pile — gone for this combat. Self by default. Ex: exhaust all Status cards in hand/draw/discard.",
+    color: "orange",
+    activeClass: "border-orange-400/70 bg-orange-950/55 text-orange-200 ring-1 ring-orange-400/30",
+    inactiveClass: "border-orange-400/40 bg-orange-900/25 text-orange-400/80 ring-1 ring-orange-400/20",
+  },
+  {
+    value: "duplicate_card", label: "Duplicate Card", description: "Copy target card(s) into a destination pile. Self by default. Requires a Destination Pile field. Ex: Dual Wield duplicates the target card into hand.",
+    color: "fuchsia",
+    activeClass: "border-fuchsia-400/70 bg-fuchsia-950/55 text-fuchsia-200 ring-1 ring-fuchsia-400/30",
+    inactiveClass: "border-fuchsia-400/40 bg-fuchsia-900/25 text-fuchsia-400/80 ring-1 ring-fuchsia-400/20",
+  },
+  {
+    value: "remove_card", label: "Remove Card", description: "Permanently remove target card(s) from the game — no pile destination, gone entirely. Self by default.",
+    color: "rose",
+    activeClass: "border-rose-400/70 bg-rose-950/55 text-rose-200 ring-1 ring-rose-400/30",
+    inactiveClass: "border-rose-400/40 bg-rose-900/25 text-rose-400/80 ring-1 ring-rose-400/20",
+  },
 ];
 
 const PILE_OPTIONS: { value: string; label: string; activeClass: string }[] = [
@@ -936,6 +990,12 @@ const ACTION_TYPE_ROW: Record<ActionType, { border: string; bg: string; header: 
   reshuffle_discard:  { border: "border-slate-400/55",   bg: "bg-slate-800/40",   header: "text-slate-200" },
   set_orb_slots:      { border: "border-violet-500/55",  bg: "bg-violet-950/30",  header: "text-violet-300" },
   adjust_orb_slots:   { border: "border-violet-400/45",  bg: "bg-violet-900/25",  header: "text-violet-300" },
+  upgrade_card:       { border: "border-emerald-500/55", bg: "bg-emerald-950/30", header: "text-emerald-300" },
+  downgrade_card:     { border: "border-slate-400/50",   bg: "bg-slate-800/35",   header: "text-slate-300" },
+  mark_as_played:     { border: "border-teal-500/55",    bg: "bg-teal-950/30",    header: "text-teal-300" },
+  exhaust_card:       { border: "border-orange-500/55",  bg: "bg-orange-950/30",  header: "text-orange-300" },
+  duplicate_card:     { border: "border-fuchsia-500/55", bg: "bg-fuchsia-950/30", header: "text-fuchsia-300" },
+  remove_card:        { border: "border-rose-500/55",    bg: "bg-rose-950/30",    header: "text-rose-300" },
 };
 
 function typeChipCls(type?: string): string {
@@ -984,6 +1044,13 @@ function actionSummary(a: CustomAction): string {
     case "reshuffle_discard": return "Reshuffle discard";
     case "set_orb_slots":     return `Set orb slots: ${a.defaultValue ?? 3}`;
     case "adjust_orb_slots":  return `Adjust orb slots: ${(a.defaultValue ?? 1) >= 0 ? `+${a.defaultValue ?? 1}` : a.defaultValue}`;
+    case "upgrade_card":      return `Upgrade card (${a.cardTarget?.kind === "filter" ? "filter" : "self"})`;
+    case "downgrade_card":    return `Downgrade card (${a.cardTarget?.kind === "filter" ? "filter" : "self"})`;
+    case "mark_as_played":    return `Mark as played (${a.cardTarget?.kind === "filter" ? "filter" : "self"})`;
+    case "exhaust_card":      return `Exhaust card (${a.cardTarget?.kind === "filter" ? "filter" : "self"})`;
+    case "duplicate_card":    return `Duplicate → ${a.pile ?? "hand"} (${a.cardTarget?.kind === "filter" ? "filter" : "self"})`;
+    case "remove_card":       return `Remove card (${a.cardTarget?.kind === "filter" ? "filter" : "self"})`;
+    default:                  return "";
   }
 }
 
@@ -993,6 +1060,128 @@ const PILE_ADD_OPTIONS: { value: string; label: string; activeClass: string }[] 
   { value: "discard", label: "Discard", activeClass: "border-rose-500/70 bg-rose-950/60 text-rose-200 ring-1 ring-rose-500/30" },
   { value: "exhaust", label: "Exhaust", activeClass: "border-amber-500/70 bg-amber-950/60 text-amber-200 ring-1 ring-amber-500/30" },
 ];
+
+// ─── CardTargetEditor ─────────────────────────────────────────────────────────
+
+const CARD_AFFECTING_TYPES = new Set<ActionType>([
+  "move_to_pile", "upgrade_card", "downgrade_card",
+  "mark_as_played", "exhaust_card", "duplicate_card", "remove_card",
+]);
+
+const TARGET_PILE_OPTIONS: { value: "hand" | "draw" | "discard" | "exhaust" | "playedCards"; label: string }[] = [
+  { value: "hand",        label: "Hand" },
+  { value: "draw",        label: "Draw" },
+  { value: "discard",     label: "Discard" },
+  { value: "exhaust",     label: "Exhaust" },
+  { value: "playedCards", label: "Played" },
+];
+
+function CardTargetEditor({
+  target,
+  onChange,
+  allCards,
+}: {
+  target?: CardTarget;
+  onChange: (t: CardTarget | undefined) => void;
+  allCards: Record<string, unknown>[];
+}) {
+  const kind = target?.kind ?? "self";
+  const filterTarget = kind === "filter" ? target as Extract<CardTarget, { kind: "filter" }> : null;
+
+  return (
+    <div className="rounded-lg border border-slate-700/50 bg-slate-900/40 px-2.5 py-2 space-y-2">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Target</p>
+
+      {/* Kind selector */}
+      <div className="flex gap-1.5">
+        <button
+          type="button"
+          onClick={() => onChange(undefined)}
+          className={`rounded-lg border px-3 py-1 text-[10px] font-semibold transition ${
+            kind === "self"
+              ? "border-cyan-500/65 bg-cyan-950/50 text-cyan-200"
+              : "border-slate-700/50 bg-slate-900/40 text-slate-400 hover:border-slate-600 hover:text-slate-300"
+          }`}
+        >
+          Self
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange({ kind: "filter", sourcePiles: ["hand"], excludeSelf: false })}
+          className={`rounded-lg border px-3 py-1 text-[10px] font-semibold transition ${
+            kind === "filter"
+              ? "border-violet-500/65 bg-violet-950/50 text-violet-200"
+              : "border-slate-700/50 bg-slate-900/40 text-slate-400 hover:border-slate-600 hover:text-slate-300"
+          }`}
+        >
+          Filter
+        </button>
+      </div>
+
+      {kind === "self" && (
+        <p className="text-[9px] italic text-slate-600">
+          The action operates on the card it is attached to (default behaviour).
+        </p>
+      )}
+
+      {kind === "filter" && filterTarget && (
+        <div className="space-y-2 pt-0.5">
+          {/* Source piles */}
+          <div>
+            <p className="mb-1 text-[9px] font-semibold text-slate-500">Source piles — scan these for matching cards</p>
+            <div className="flex flex-wrap gap-1.5">
+              {TARGET_PILE_OPTIONS.map((p) => {
+                const active = filterTarget.sourcePiles.includes(p.value);
+                return (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => {
+                      const next = active
+                        ? filterTarget.sourcePiles.filter(x => x !== p.value)
+                        : [...filterTarget.sourcePiles, p.value];
+                      onChange({ ...filterTarget, sourcePiles: next.length ? next : [p.value] });
+                    }}
+                    className={`rounded-lg border px-2.5 py-1 text-[10px] font-semibold transition ${
+                      active
+                        ? "border-violet-500/65 bg-violet-950/50 text-violet-200"
+                        : "border-slate-700/50 bg-slate-900/40 text-slate-400 hover:border-slate-600 hover:text-slate-300"
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Exclude self toggle */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onChange({ ...filterTarget, excludeSelf: !filterTarget.excludeSelf })}
+              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 transition-colors ${
+                filterTarget.excludeSelf ? "border-violet-500/60 bg-violet-500/30" : "border-slate-600 bg-slate-800"
+              }`}
+            >
+              <span className={`inline-block h-3.5 w-3.5 -translate-y-px rounded-full bg-white shadow transition-transform ${filterTarget.excludeSelf ? "translate-x-3.5" : "translate-x-0"}`} />
+            </button>
+            <span className="text-[9px] text-slate-500">Exclude self (skip the card this action is on)</span>
+          </div>
+
+          {/* Condition filter */}
+          <ActionFilterSection
+            label="Conditions"
+            filter={filterTarget.filter}
+            onChange={f => onChange({ ...filterTarget, filter: f })}
+            allCards={allCards}
+            contextNote="'The card' here = each card found in the source piles above. Card fields test that card's own properties."
+          />
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
@@ -1460,6 +1649,30 @@ function ActionRow({
         </p>
       )}
 
+      {/* Card target selector — shown for card-affecting action types */}
+      {CARD_AFFECTING_TYPES.has(action.actionType) && (
+        <CardTargetEditor
+          target={action.cardTarget}
+          onChange={t => set({ cardTarget: t })}
+          allCards={allCardsFlat}
+        />
+      )}
+
+      {/* Destination pile for actions that move/duplicate cards to a chosen pile */}
+      {(action.actionType === "duplicate_card") && (
+        <div>
+          <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">Destination pile</label>
+          <div className="flex flex-wrap gap-1.5">
+            {PILE_OPTIONS.map((p) => (
+              <button key={p.value} type="button" onClick={() => set({ pile: p.value })}
+                className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${action.pile === p.value ? p.activeClass : "border-slate-700/50 bg-slate-900/50 text-slate-400 hover:border-slate-600 hover:bg-slate-800/50 hover:text-slate-300"}`}>
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Has input + default value — only for simple numeric action types */}
       {(action.actionType === "give_buff" || action.actionType === "give_debuff" || action.actionType === "modify_hp" || action.actionType === "modify_block" || action.actionType === "modify_energy" || action.actionType === "draw_cards" || action.actionType === "evoke_orbs" || action.actionType === "set_orb_slots" || action.actionType === "adjust_orb_slots") && (
         <div className="space-y-1.5">
@@ -1742,7 +1955,7 @@ export default function CardActionsEditorClient() {
     modify_block:       ["hasInput","defaultValue","valueRef"],
     modify_energy:      ["hasInput","defaultValue","valueRef"],
     draw_cards:         ["hasInput","defaultValue","valueRef"],
-    move_to_pile:       ["pile"],
+    move_to_pile:       ["pile","cardTarget"],
     add_card:           ["cardNames","cardCount","pile","hasInput","cardPickerFilter"],
     channel_orb:        ["orbType","orbCount"],
     evoke_orbs:         ["hasInput","defaultValue","valueRef"],
@@ -1757,6 +1970,12 @@ export default function CardActionsEditorClient() {
     reshuffle_discard:  [],
     set_orb_slots:      ["hasInput","defaultValue","valueRef"],
     adjust_orb_slots:   ["hasInput","defaultValue","valueRef"],
+    upgrade_card:       ["cardTarget"],
+    downgrade_card:     ["cardTarget"],
+    mark_as_played:     ["cardTarget"],
+    exhaust_card:       ["cardTarget"],
+    duplicate_card:     ["cardTarget","pile"],
+    remove_card:        ["cardTarget"],
   };
 
   function serializeAction(a: CustomAction): Partial<CustomAction> {

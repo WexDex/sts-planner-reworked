@@ -351,6 +351,13 @@ function STSCard({
     isSelected: !!card.isSelected,
   });
 
+  const isActionTarget = (() => {
+    const uids = gameCtx?.hoveredActionTargetUids;
+    if (!uids || uids.size === 0) return false;
+    const uid = (card as Record<string, unknown>)._uid as string | undefined;
+    return uid ? uids.has(uid) : uids.has(card.name);
+  })();
+
   const rawGalleryGlyphs = mergedEffectGlyphs ?? [];
   const prefixDamageGlyphs = stat
     ? rawGalleryGlyphs.filter((g) => g.prefixDamageRow)
@@ -487,7 +494,7 @@ function STSCard({
             }
           : undefined
       }
-      className={`${sz.frame} ${chrome.root}`}
+      className={`${sz.frame} ${chrome.root}${isActionTarget ? " ring-[3px] ring-cyan-400/80 brightness-110 scale-[1.04] -translate-y-1" : ""}`}
       title={descriptionHoverTitle}
     >
       <div className={chrome.topLine} />

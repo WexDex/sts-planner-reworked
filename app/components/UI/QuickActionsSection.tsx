@@ -32,6 +32,15 @@ type FilterGroup = { type: "group"; id: string; conjunction: "AND" | "OR"; child
 type FilterNode = FilterLeaf | FilterGroup;
 type ActionFilter = FilterGroup;
 
+type CardTarget =
+  | { kind: "self" }
+  | {
+      kind: "filter";
+      sourcePiles: Array<"hand" | "draw" | "discard" | "exhaust" | "playedCards">;
+      filter?: ActionFilter;
+      excludeSelf?: boolean;
+    };
+
 function getNestedField(obj: unknown, path: string): unknown {
   return path.split(".").reduce<unknown>((acc, k) => {
     if (acc === null || acc === undefined) return undefined;
@@ -116,6 +125,48 @@ function buildEvalContext(cardData: Record<string, unknown>, gs: Record<string, 
     orbs:        { length: ((gs.orbs as unknown[]) ?? []).length },
     playedCards: { length: ((gs.playedCards as unknown[]) ?? []).length },
   };
+}
+
+// Build a context for evaluating a filter against a specific card instance in a live pile.
+// Card DB fields come from the card object directly; pile membership fields are per-card.
+function buildCardEvalCtx(card: Record<string, unknown>, gs: Record<string, unknown>): Record<string, unknown> {
+  const name = String(card.name ?? card.card_ID ?? "");
+  const inPile = (pile: unknown[]) => {
+    const has = pile.some((c: unknown) => {
+      const cn = (c as Record<string, unknown>);
+      return (cn.name ?? cn.card_ID) === name;
+    });
+    return { length: has ? 1 : 0, _cards: has ? [{ name }] : [] };
+  };
+  const handArr    = (gs.hand    as unknown[]) ?? [];
+  const drawArr    = (gs.draw    as unknown[]) ?? [];
+  const discardArr = (gs.discard as unknown[]) ?? [];
+  const exhaustArr = (gs.exhaust as unknown[]) ?? [];
+  return {
+    ...card,
+    hand:    inPile(handArr),
+    draw:    inPile(drawArr),
+    discard: inPile(discardArr),
+    exhaust: inPile(exhaustArr),
+  };
+}
+
+// Resolve which cards from the live game state should be targeted by a card action.
+function resolveTargetCards(
+  target: CardTarget | undefined,
+  gs: Record<string, unknown>,
+  selfCard: Record<string, unknown>,
+): Record<string, unknown>[] {
+  if (!target || target.kind === "self") return [selfCard];
+  const { sourcePiles, filter, excludeSelf } = target;
+  const allCards: Record<string, unknown>[] = sourcePiles.flatMap(pile =>
+    ((gs[pile] as unknown[]) ?? []) as Record<string, unknown>[]
+  );
+  return allCards.filter(c => {
+    if (excludeSelf && c === selfCard) return false;
+    if (!filter) return true;
+    return evaluateFilterNode(filter, buildCardEvalCtx(c, gs));
+  });
 }
 
 // ─── Filter expression renderer ──────────────────────────────────────────────
@@ -293,7 +344,15 @@ type CustomAction = {
     | "discard_hand"
     | "reshuffle_discard"
     | "set_orb_slots"
-    | "adjust_orb_slots";
+    | "adjust_orb_slots"
+    | "upgrade_card"
+    | "downgrade_card"
+    | "mark_as_played"
+    | "exhaust_card"
+    | "duplicate_card"
+    | "remove_card";
+  /** Target selector for card-affecting actions. Undefined = self (default). */
+  cardTarget?: CardTarget;
   buffName?: string;
   buffType?: "buff" | "debuff";
   hasInput?: boolean;
@@ -410,6 +469,8 @@ function QAButton({
   badge,
   filter,
   onClick,
+  onMouseEnter,
+  onMouseLeave,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -418,12 +479,16 @@ function QAButton({
   badge?: string;
   filter?: ActionFilter;
   onClick: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }) {
   const expr = filter ? filterExpr(filter) : null;
   return (
     <button
       type="button"
       onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       title={hint}
       className={`group relative flex w-full items-start gap-2.5 rounded-xl border px-3 py-2.5 text-left transition active:scale-[0.99] ${color}`}
     >
@@ -483,6 +548,12 @@ export default function QuickActionsSection() {
     gameState,
     useSelectedPower,
     moveSelectedCards,
+    moveCardsByUids,
+    upgradeCardsByUids,
+    downgradeCardsByUids,
+    duplicateCardsByUids,
+    removeCardsByUids,
+    setHoveredActionTargetUids,
     modifyPlayerBlock,
     modifyPlayerHp,
     modifyPlayerEnergy,
@@ -528,6 +599,17 @@ export default function QuickActionsSection() {
   const card = selected[0];
   const upg = card.isUpgraded ?? false;
   const sourceCard = { name: card.name, character: card.characters as string | undefined, cardType: card.type as string | undefined };
+
+  function previewTargetUids(ca: CustomAction) {
+    const targets = resolveTargetCards(
+      ca.cardTarget,
+      gameState as unknown as Record<string, unknown>,
+      card as unknown as Record<string, unknown>,
+    );
+    setHoveredActionTargetUids(new Set(targets.map(c => (c._uid ?? c.name) as string)));
+  }
+  function clearPreviewTargetUids() { setHoveredActionTargetUids(new Set()); }
+
   const evalCtx = buildEvalContext(
     { ...getCardData(card.name), isUpgraded: upg },
     gameState as unknown as Record<string, unknown>,
@@ -769,9 +851,48 @@ export default function QuickActionsSection() {
       case "draw_cards":
         drawCards(Math.round(v), sourceCard);
         break;
-      case "move_to_pile":
-        moveSelectedCards(ca.pile ?? "hand");
+      case "move_to_pile": {
+        const targets = resolveTargetCards(ca.cardTarget, gameState as unknown as Record<string, unknown>, card as unknown as Record<string, unknown>);
+        const uids = targets.map(c => (c._uid ?? c.name) as string);
+        if (uids.length) moveCardsByUids(uids, ca.pile ?? "hand");
         break;
+      }
+      case "upgrade_card": {
+        const targets = resolveTargetCards(ca.cardTarget, gameState as unknown as Record<string, unknown>, card as unknown as Record<string, unknown>);
+        const uids = targets.map(c => (c._uid ?? c.name) as string);
+        if (uids.length) upgradeCardsByUids(uids);
+        break;
+      }
+      case "downgrade_card": {
+        const targets = resolveTargetCards(ca.cardTarget, gameState as unknown as Record<string, unknown>, card as unknown as Record<string, unknown>);
+        const uids = targets.map(c => (c._uid ?? c.name) as string);
+        if (uids.length) downgradeCardsByUids(uids);
+        break;
+      }
+      case "mark_as_played": {
+        const targets = resolveTargetCards(ca.cardTarget, gameState as unknown as Record<string, unknown>, card as unknown as Record<string, unknown>);
+        const uids = targets.map(c => (c._uid ?? c.name) as string);
+        if (uids.length) moveCardsByUids(uids, "playedCards");
+        break;
+      }
+      case "exhaust_card": {
+        const targets = resolveTargetCards(ca.cardTarget, gameState as unknown as Record<string, unknown>, card as unknown as Record<string, unknown>);
+        const uids = targets.map(c => (c._uid ?? c.name) as string);
+        if (uids.length) moveCardsByUids(uids, "exhaust");
+        break;
+      }
+      case "duplicate_card": {
+        const targets = resolveTargetCards(ca.cardTarget, gameState as unknown as Record<string, unknown>, card as unknown as Record<string, unknown>);
+        const uids = targets.map(c => (c._uid ?? c.name) as string);
+        if (uids.length) duplicateCardsByUids(uids, ca.pile ?? "hand");
+        break;
+      }
+      case "remove_card": {
+        const targets = resolveTargetCards(ca.cardTarget, gameState as unknown as Record<string, unknown>, card as unknown as Record<string, unknown>);
+        const uids = targets.map(c => (c._uid ?? c.name) as string);
+        if (uids.length) removeCardsByUids(uids);
+        break;
+      }
       case "add_card": {
         const names = (ca as any).cardNames as string[] | undefined ?? (ca.cardName ? [ca.cardName] : []);
         if (names.length > 0) {
@@ -893,6 +1014,8 @@ export default function QuickActionsSection() {
                       filter={ca.filter}
                       color="border-teal-500/50 bg-teal-950/40 text-teal-100 hover:bg-teal-900/55 hover:border-teal-400/65"
                       onClick={() => triggerCustomAction(ca)}
+                      onMouseEnter={() => previewTargetUids(ca)}
+                      onMouseLeave={clearPreviewTargetUids}
                     />
                   );
                 })}
@@ -920,6 +1043,8 @@ export default function QuickActionsSection() {
                       filter={ca.filter}
                       color="border-amber-500/50 bg-amber-950/40 text-amber-100 hover:bg-amber-900/55 hover:border-amber-400/65"
                       onClick={() => triggerCustomAction(ca)}
+                      onMouseEnter={() => previewTargetUids(ca)}
+                      onMouseLeave={clearPreviewTargetUids}
                     />
                   );
                 })}

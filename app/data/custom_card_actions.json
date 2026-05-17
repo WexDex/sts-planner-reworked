@@ -173,10 +173,45 @@
   ],
   "Apotheosis": [
     {
-      "label": "Self Exhaust",
-      "actionType": "move_to_pile",
-      "pile": "exhaust",
-      "hasInput": false
+      "label": "Upgrade ALL",
+      "actionType": "upgrade_card",
+      "cardTarget": {
+        "kind": "filter",
+        "sourcePiles": [
+          "hand",
+          "draw",
+          "discard",
+          "exhaust"
+        ],
+        "excludeSelf": true,
+        "filter": {
+          "type": "group",
+          "id": "ggpq4sfcaqi",
+          "conjunction": "AND",
+          "children": [
+            {
+              "type": "leaf",
+              "id": "7u3tltqeltw",
+              "field": "type",
+              "operator": "neq",
+              "value": {
+                "kind": "literal",
+                "value": "Curse"
+              }
+            },
+            {
+              "type": "leaf",
+              "id": "hzgc5isot6o",
+              "field": "type",
+              "operator": "neq",
+              "value": {
+                "kind": "literal",
+                "value": "Status"
+              }
+            }
+          ]
+        }
+      }
     }
   ],
   "Apparition": [
@@ -1979,8 +2014,8 @@
             "field": "type",
             "operator": "eq",
             "value": {
-              "kind": "field",
-              "field": "type"
+              "kind": "literal",
+              "value": "Power"
             }
           }
         ]

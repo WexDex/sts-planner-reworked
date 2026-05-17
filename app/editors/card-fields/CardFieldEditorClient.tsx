@@ -1199,7 +1199,7 @@ export default function CardFieldEditorClient({
                       {allFieldKeys.map((key) => {
                         const vnf = VALUE_NODE_FIELDS.find((f) => f.key === key);
                         if (vnf) return (
-                          <div key={key} className="border-b border-slate-800/40 pb-2 last:border-0 last:pb-0">
+                          <div key={key} className=" border-b pb-2 last:border-0 last:pb-0 border border-slate-800/50 rounded-lg bg-slate-900/50 p-3 hover:bg-slate-800/70 transition">
                             <ValueNodeRow label={vnf.label} fieldKey={key} value={card[key]} error={errors[key]}
                               onChangeRaw={(obj) => updateCard({ [key]: obj })}
                               onRef={() => handleRef(key)}
@@ -1208,7 +1208,7 @@ export default function CardFieldEditorClient({
                         );
                         const bf = BONUS_FIELDS.find((f) => f.key === key);
                         if (bf) return (
-                          <div key={key} className="border-b border-slate-800/40 pb-2 last:border-0 last:pb-0">
+                          <div key={key} className="border-b pb-2 last:border-0 last:pb-0 border border-slate-800/50 rounded-lg bg-slate-900/50 p-3 hover:bg-slate-800/70 transition">
                             <ValueNodeRow label={bf.label} fieldKey={key} value={card[key]}
                               onChangeRaw={(obj) => updateCard({ [key]: obj })}
                               onRef={() => handleRef(key)}
@@ -1218,7 +1218,7 @@ export default function CardFieldEditorClient({
                         const exists = key in card;
                         const effectiveValue = exists ? card[key] : defaultValueForField(key);
                         return (
-                          <div key={key} className="border-b border-slate-800/40 pb-1 last:border-0 last:pb-0">
+                          <div key={key} className="border-b pb-2 last:border-0 last:pb-0 border border-slate-800/50 rounded-lg bg-slate-900/50 p-3 hover:bg-slate-800/70 transition">
                             <RecursiveField
                               label={key}
                               fieldPath={key}

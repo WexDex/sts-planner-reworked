@@ -104,12 +104,15 @@
       "id": "Accuracy",
       "type": "Power",
       "rarity": "Uncommon",
-      "description": "Shivs deal 4 additional damage.",
+      "description": "Shivs deal [SHIV_DMG] additional damage.",
       "characters": "silent",
       "cost": {
         "base": 1
       },
-      "descriptionUpgraded": "Shivs deal 6 additional damage."
+      "shiv_dmg": {
+        "base": 4,
+        "upgraded": 6
+      }
     },
     "Acrobatics": {
       "id": "Acrobatics",
@@ -128,10 +131,6 @@
         "base": 1,
         "random": false,
         "fromHand": true
-      },
-      "selfExhaustOnPlay": {
-        "base": false,
-        "upgraded": false
       }
     },
     "Adrenaline": {
@@ -175,16 +174,26 @@
         "base": false,
         "upgraded": true
       },
-      "scalesWithDexterity": true
+      "scalesWithDexterity": false
     },
     "Aggregate": {
       "id": "Aggregate",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Gain [B] for every 4 (3) cards in your draw pile.",
+      "description": "Gain Energy for every [AGGREGATE_GAIN_COND] cards in your draw pile.",
       "characters": "defect",
       "cost": {
         "base": 1
+      },
+      "aggregate_gain_cond": {
+        "base": 4,
+        "upgraded": 3
+      },
+      "gainEnergy": {
+        "base": 0,
+        "upgraded": 0,
+        "conditioned": true,
+        "trigger": "number of cards in draw pile"
       }
     },
     "Alchemize": {
@@ -217,7 +226,8 @@
         "upgraded": 14
       },
       "canAddCards": true,
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "unplayable": false
     },
     "All-Out Attack": {
       "id": "All-Out Attack",
@@ -273,7 +283,8 @@
       "descriptionUpgraded": "This turn, your next 2 Power cards are played twice.",
       "cost": {
         "base": 1
-      }
+      },
+      "canDoublePlayCards": true
     },
     "Anger": {
       "id": "Anger",
@@ -311,9 +322,9 @@
       "id": "Apparition",
       "type": "Skill",
       "rarity": "Special",
-      "description": "Ethereal. Gain 1 Intangible. Exhaust.",
+      "description": "Ethereal. Gain [INTANGIBLE] Intangible. Exhaust.",
       "characters": "colorless",
-      "descriptionUpgraded": "Gain 1 Intangible. Exhaust.",
+      "descriptionUpgraded": "Gain [INTANGIBLE] Intangible. Exhaust.",
       "cost": {
         "base": 1
       },
@@ -324,6 +335,9 @@
       "ethereal": {
         "base": true,
         "upgraded": false
+      },
+      "Intangible": {
+        "base": 1
       }
     },
     "Armaments": {
@@ -352,7 +366,8 @@
       "ethereal": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "cannotBeRemoved": true
     },
     "Auto-Shields": {
       "id": "Auto-Shields",
@@ -416,7 +431,7 @@
       "id": "Ball Lightning",
       "type": "Attack",
       "rarity": "Common",
-      "description": "Deal [DMG] damage. Channel 1 Lightning.",
+      "description": "Deal [DMG] damage. [ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE].",
       "characters": "defect",
       "cost": {
         "base": 1
@@ -426,8 +441,8 @@
         "upgraded": 10
       },
       "orbInteractions": {
-        "verb": "channel",
-        "orbtype": "lightning",
+        "verb": "Channel",
+        "orbtype": "Lightning",
         "amount": {
           "base": 1
         }
@@ -438,7 +453,7 @@
       "id": "Bandage Up",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Heal 4 (6) HP. Exhaust.",
+      "description": "Heal [HEAL] HP. Exhaust.",
       "characters": "colorless",
       "cost": {
         "base": 0
@@ -456,7 +471,7 @@
       "id": "Bane",
       "type": "Attack",
       "rarity": "Common",
-      "description": "Deal [DMG] damage. If the enemy has Poison, Deal [DMG] damage again.",
+      "description": "Deal [DMG] damage. If the enemy has Poison, Deal [BONUSDMG] damage again.",
       "characters": "silent",
       "cost": {
         "base": 1
@@ -522,10 +537,6 @@
         "base": 2,
         "upgraded": 3
       },
-      "selfExhaustOnPlay": {
-        "base": false,
-        "upgraded": false
-      },
       "scalesWithStrength": true
     },
     "Battle Hymn": {
@@ -587,15 +598,23 @@
       "id": "Become Almighty",
       "type": "Power",
       "rarity": "Special",
-      "description": "Gain 3 (4) Strength.",
+      "description": "Gain [STRENGTH_GAIN] Strength.",
       "characters": "colorless",
-      "unplayable": true
+      "unplayable": false,
+      "strength_gain": {
+        "base": 3,
+        "upgraded": 4
+      },
+      "cost": {
+        "base": 0,
+        "upgraded": 0
+      }
     },
     "Berserk": {
       "id": "Berserk",
       "type": "Power",
       "rarity": "Rare",
-      "description": "Gain 2 Vulnerable. At the start of your turn, gain [R].",
+      "description": "Gain [SELF_VULNERABLE] Vulnerable. At the start of your turn, gain [R] Energy.",
       "characters": "ironclad",
       "cost": {
         "base": 0
@@ -604,7 +623,10 @@
         "base": 1,
         "upgraded": 1
       },
-      "descriptionUpgraded": "Gain 1 Vulnerable. At the start of your turn, gain [R]."
+      "self_vulnerable": {
+        "base": 2,
+        "upgraded": 1
+      }
     },
     "Beta": {
       "id": "Beta",
@@ -626,7 +648,7 @@
       "id": "Biased Cognition",
       "type": "Power",
       "rarity": "Rare",
-      "description": "Gain [FOCUS] Focus. At the start of your turn, lose 1 Focus.",
+      "description": "Gain [FOCUS] Focus. At the start of your turn, lose [FOCUS_LOSS] Focus.",
       "characters": "defect",
       "cost": {
         "base": 1
@@ -634,7 +656,8 @@
       "focus": {
         "base": 4,
         "upgraded": 5
-      }
+      },
+      "focus_loss": 1
     },
     "Bite": {
       "id": "Bite",
@@ -659,20 +682,24 @@
       "id": "Blade Dance",
       "type": "Skill",
       "rarity": "Common",
-      "description": "Add 3 (4) Shivs into your hand.",
+      "description": "Add [SHIV_ADD] Shivs into your hand.",
       "characters": "silent",
       "cost": {
         "base": 1
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "shiv_add": {
+        "base": 3,
+        "upgraded": 4
+      }
     },
     "Blasphemy": {
       "id": "Blasphemy",
       "type": "Skill",
       "rarity": "Rare",
-      "description": "Enter Divinity. Die next turn. Exhaust.",
+      "description": "Enter [CHANGE_STANCE]. Die next turn. Exhaust.",
       "characters": "watcher",
-      "descriptionUpgraded": "Retain. Enter Divinity. Die next turn. Exhaust.",
+      "descriptionUpgraded": "Retain. Enter [CHANGE_STANCE]. Die next turn. Exhaust.",
       "cost": {
         "base": 1
       },
@@ -683,15 +710,18 @@
       "retain": {
         "base": false,
         "upgraded": true
+      },
+      "change_stance": {
+        "base": "Divinity"
       }
     },
     "Blind": {
       "id": "Blind",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Apply 2 Weak.",
+      "description": "Apply [WEAK] Weak.",
       "characters": "colorless",
-      "descriptionUpgraded": "Apply 2 Weak to ALL enemies.",
+      "descriptionUpgraded": "Apply [WEAK] Weak to ALL enemies.",
       "cost": {
         "base": 0
       },
@@ -725,7 +755,7 @@
       "id": "Blood for Blood",
       "type": "Attack",
       "rarity": "Uncommon",
-      "description": "Costs 1 less [R] for each time you lose HP this combat. Deal [DMG] damage.",
+      "description": "Costs 1 less Energy for each time you lose HP this combat. Deal [DMG] damage.",
       "characters": "ironclad",
       "cost": {
         "base": 4,
@@ -735,15 +765,15 @@
         "base": 18,
         "upgraded": 22
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "costManipulation": true
     },
     "Bloodletting": {
       "id": "Bloodletting",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Lose 3 HP. Gain [R] Energy.",
+      "description": "Lose [TAKEDMG] HP. Gain [R] Energy.",
       "characters": "ironclad",
-      "descriptionUpgraded": "Lose 3 HP. Gain [R] Energy.",
       "cost": {
         "base": 0
       },
@@ -870,35 +900,38 @@
         "base": 12,
         "upgraded": 16
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "scalesWithMantraTotal": true
     },
     "Brutality": {
       "id": "Brutality",
       "type": "Power",
       "rarity": "Rare",
-      "description": "At the start of your turn, lose 1 HP and draw 1 card.",
+      "description": "At the start of your turn, lose [TAKEDMG] HP and draw [DRAW] card.",
       "characters": "ironclad",
-      "descriptionUpgraded": "Innate. At the start of your turn, lose 1 HP and draw 1 card.",
+      "descriptionUpgraded": "Innate. At the start of your turn, lose [TAKEDMG] HP and draw [DRAW] card.",
       "cost": {
         "base": 0
       },
       "draw": {
         "base": 1,
         "conditioned": true,
-        "trigger": "Start of turn : lose 1hp."
+        "trigger": "Start of turn."
       },
       "innate": {
         "upgraded": true,
         "base": false
+      },
+      "hpcost": {
+        "base": 1
       }
     },
     "Buffer": {
       "id": "Buffer",
       "type": "Power",
       "rarity": "Rare",
-      "description": "Prevent the next time you would lose HP.",
+      "description": "Prevent the next [BUFFER] time(s) you would lose HP.",
       "characters": "defect",
-      "descriptionUpgraded": "Prevent the next 2 times you would lose HP.",
       "cost": {
         "base": 2
       },
@@ -923,7 +956,7 @@
       "id": "Bullseye",
       "type": "Attack",
       "rarity": "Uncommon",
-      "description": "Deal [DMG] damage. Apply 2 (3) Lock-On.",
+      "description": "Deal [DMG] damage. Apply [LOCKON] Lock-On.",
       "characters": "defect",
       "cost": {
         "base": 1
@@ -942,9 +975,13 @@
       "id": "Burn",
       "type": "Status",
       "rarity": "Common",
-      "description": "Unplayable. At the end of your turn, take 2 damage.",
+      "description": "Unplayable. At the end of your turn, take [TAKEDMG] damage.",
       "characters": "status",
-      "unplayable": true
+      "unplayable": true,
+      "hpcost": {
+        "base": 2,
+        "upgraded": 4
+      }
     },
     "Burning Pact": {
       "id": "Burning Pact",
@@ -958,7 +995,8 @@
       "draw": {
         "base": 2,
         "upgraded": 3
-      }
+      },
+      "canExhaustCards": true
     },
     "Burst": {
       "id": "Burst",
@@ -969,7 +1007,8 @@
       "descriptionUpgraded": "This turn, your next 2 Skills are played twice.",
       "cost": {
         "base": 1
-      }
+      },
+      "canDoublePlayCards": true
     },
     "Calculated Gamble": {
       "id": "Calculated Gamble",
@@ -984,6 +1023,12 @@
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": false
+      },
+      "draw": {
+        "base": 0,
+        "upgraded": 0,
+        "conditioned": true,
+        "triogger": "number of cards discarded"
       }
     },
     "Caltrops": {
@@ -999,17 +1044,23 @@
         "base": 3,
         "upgraded": 5,
         "conditioned": true,
-        "trigger": "You get attacked."
+        "trigger": "You get attacked. Thorns"
       }
     },
     "Capacitor": {
       "id": "Capacitor",
       "type": "Power",
       "rarity": "Uncommon",
-      "description": "Gain 2 (3) Orb slots.",
+      "description": "Gain [ORBINTERACTIONS.ORBSLOT_GAIN] Orb slots.",
       "characters": "defect",
       "cost": {
         "base": 1
+      },
+      "orbInteractions": {
+        "orbslot_gain": {
+          "base": 2,
+          "upgraded": 3
+        }
       }
     },
     "Carnage": {
@@ -1060,21 +1111,28 @@
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
+      },
+      "appliesDebuffs": {
+        "poison": {
+          "base": 0,
+          "upgraded": 0,
+          "conditioned": true,
+          "trigger": "enemy has poison already"
+        }
       }
     },
     "Chaos": {
       "id": "Chaos",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Channel 1 random Orb.",
+      "description": "[ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE] Orb(s).",
       "characters": "defect",
-      "descriptionUpgraded": "Channel 2 random Orbs.",
       "cost": {
         "base": 1
       },
       "orbInteractions": {
-        "verb": "channel",
-        "orbtype": "random",
+        "verb": "Channel",
+        "orbtype": "Random",
         "amount": {
           "base": 1,
           "upgraded": 2
@@ -1085,7 +1143,7 @@
       "id": "Charge Battery",
       "type": "Skill",
       "rarity": "Common",
-      "description": "Gain [BLOCK] Block. Next turn, gain [B].",
+      "description": "Gain [BLOCK] Block. Next turn, gain [R] energy.",
       "characters": "defect",
       "cost": {
         "base": 1
@@ -1094,15 +1152,18 @@
         "base": 7,
         "upgraded": 10
       },
-      "scalesWithDexterity": true
+      "scalesWithDexterity": true,
+      "gainEnergy": {
+        "base": 1
+      }
     },
     "Chill": {
       "id": "Chill",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Channel 1 Frost for each enemy in combat. Exhaust.",
+      "description": "[ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE] for each enemy in combat. Exhaust.",
       "characters": "defect",
-      "descriptionUpgraded": "Innate. Channel 1 Frost for each enemy in combat. Exhaust.",
+      "descriptionUpgraded": "Innate. [ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE] for each enemy in combat. Exhaust.",
       "cost": {
         "base": 0
       },
@@ -1111,8 +1172,8 @@
         "upgraded": true
       },
       "orbInteractions": {
-        "verb": "channel",
-        "orbtype": "frost",
+        "verb": "Channel",
+        "orbtype": "Frost",
         "amount": {
           "base": 1
         }
@@ -1126,7 +1187,7 @@
       "id": "Choke",
       "type": "Attack",
       "rarity": "Uncommon",
-      "description": "Deal [DMG] damage. Whenever you play a card this turn, the enemy loses 3 (5) HP.",
+      "description": "Deal [DMG] damage. Whenever you play a card this turn, the enemy loses [CHOKE_DMG] HP.",
       "characters": "silent",
       "cost": {
         "base": 2
@@ -1134,13 +1195,17 @@
       "damage": {
         "base": 12
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "choke_dmg": {
+        "base": 3,
+        "upgraded": 5
+      }
     },
     "Chrysalis": {
       "id": "Chrysalis",
       "type": "Skill",
       "rarity": "Rare",
-      "description": "Shuffle 3 (5) random Skills into your draw pile. They cost 0 this combat. Exhaust.",
+      "description": "Shuffle [NUMBER_OF_CARDS_TO_ADD] random Skills into your draw pile. They cost 0 this combat. Exhaust.",
       "characters": "colorless",
       "cost": {
         "base": 2
@@ -1150,7 +1215,11 @@
         "upgraded": true
       },
       "costManipulation": true,
-      "canAddCards": true
+      "canAddCards": true,
+      "number_of_cards_to_add": {
+        "base": 3,
+        "upgraded": 5
+      }
     },
     "Clash": {
       "id": "Clash",
@@ -1182,7 +1251,8 @@
         "base": 3,
         "upgraded": 5
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "is_claw": true
     },
     "Cleave": {
       "id": "Cleave",
@@ -1204,9 +1274,8 @@
       "id": "Cloak and Dagger",
       "type": "Skill",
       "rarity": "Common",
-      "description": "Gain [BLOCK] Block. Add 1 Shiv into your hand.",
+      "description": "Gain [BLOCK] Block. Add [SHIV_ADD] Shiv into your hand.",
       "characters": "silent",
-      "descriptionUpgraded": "Gain [BLOCK] Block. Add 2 Shivs into your hand.",
       "cost": {
         "base": 1
       },
@@ -1214,7 +1283,11 @@
         "base": 6
       },
       "canAddCards": true,
-      "scalesWithDexterity": true
+      "scalesWithDexterity": true,
+      "shiv_add": {
+        "base": 1,
+        "upgraded": 2
+      }
     },
     "Clothesline": {
       "id": "Clothesline",
@@ -1253,7 +1326,7 @@
       "id": "Cold Snap",
       "type": "Attack",
       "rarity": "Common",
-      "description": "Deal [DMG] damage. Channel 1 Frost.",
+      "description": "Deal [DMG] damage. [ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE].",
       "characters": "defect",
       "cost": {
         "base": 1
@@ -1263,11 +1336,11 @@
         "upgraded": 9
       },
       "orbInteractions": {
-        "orbtype": "frost",
+        "orbtype": "Frost",
         "amount": {
           "base": 1
         },
-        "verb": "channel"
+        "verb": "Channel"
       },
       "scalesWithStrength": true
     },
@@ -1277,19 +1350,22 @@
       "rarity": "Uncommon",
       "description": "Put a Miracle+ into your hand at the start of your next X turns. Exhaust.",
       "characters": "watcher",
-      "descriptionUpgraded": "Put a Miracle+ into your hand at the start of your next X+1 turns. Exhaust.",
+      "descriptionUpgraded": "Put [MIRACLE_TO_ADD] Miracle+ into your hand at the start of your next X+1 turns. Exhaust.",
       "xCost": true,
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "miracle_to_add": {
+        "base": 1
+      }
     },
     "Combust": {
       "id": "Combust",
       "type": "Power",
       "rarity": "Uncommon",
-      "description": "At the end of your turn, lose 1 HP and Deal [DMG] damage to ALL enemies.",
+      "description": "At the end of your turn, lose [TAKEDMG] HP and Deal [DMG] damage to ALL enemies.",
       "characters": "ironclad",
       "cost": {
         "base": 1
@@ -1298,8 +1374,11 @@
         "base": 5,
         "upgraded": 7,
         "conditioned": true,
-        "trigger": "End of turn : lose 1 HP.",
+        "trigger": "End of turn.",
         "target": "all enemies"
+      },
+      "hpcost": {
+        "base": 1
       }
     },
     "Compile Driver": {
@@ -1316,9 +1395,10 @@
         "upgraded": 10
       },
       "draw": {
-        "base": 1,
+        "base": 0,
         "conditioned": true,
-        "trigger": "Draw one card for each unique Orb."
+        "trigger": "Draw one card for each unique Orb.",
+        "upgraded": 0
       },
       "scalesWithStrength": true
     },
@@ -1326,7 +1406,7 @@
       "id": "Concentrate",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Discard [DISCARD] cards. Gain [G] [G].",
+      "description": "Discard [DISCARD] cards. Gain [G].",
       "characters": "silent",
       "cost": {
         "base": 0
@@ -1336,6 +1416,9 @@
         "upgraded": 2,
         "random": false,
         "fromHand": true
+      },
+      "gainEnergy": {
+        "base": 2
       }
     },
     "Conclude": {
@@ -1388,7 +1471,7 @@
       "id": "Consume",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Gain [FOCUS] Focus. Lose 1 Orb slot.",
+      "description": "Gain [FOCUS] Focus. Lose [ORBINTERACTIONS.ORBSLOT_LOSS] Orb slot.",
       "characters": "defect",
       "cost": {
         "base": 2
@@ -1396,13 +1479,18 @@
       "focus": {
         "base": 2,
         "upgraded": 3
+      },
+      "orbInteractions": {
+        "orbslot_loss": {
+          "base": 1
+        }
       }
     },
     "Coolheaded": {
       "id": "Coolheaded",
       "type": "Skill",
       "rarity": "Common",
-      "description": "Channel 1 Frost. Draw [DRAW] card.",
+      "description": "[ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE]. Draw [DRAW] card.",
       "characters": "defect",
       "cost": {
         "base": 1
@@ -1411,13 +1499,9 @@
         "base": 1,
         "upgraded": 2
       },
-      "selfExhaustOnPlay": {
-        "base": false,
-        "upgraded": false
-      },
       "orbInteractions": {
-        "verb": "channel",
-        "orbtype": "frost",
+        "verb": "Channel",
+        "orbtype": "Frost",
         "amount": {
           "base": 1
         }
@@ -1427,7 +1511,7 @@
       "id": "Core Surge",
       "type": "Attack",
       "rarity": "Rare",
-      "description": "Deal [DMG] damage. Gain 1 Artifact. Exhaust.",
+      "description": "Deal [DMG] damage. Gain [ART] Artifact. Exhaust.",
       "characters": "defect",
       "cost": {
         "base": 1
@@ -1449,7 +1533,7 @@
       "id": "Corpse Explosion",
       "type": "Skill",
       "rarity": "Rare",
-      "description": "Apply 6 (9) Poison. When the enemy dies, deal damage equal to its Max HP to ALL enemies.",
+      "description": "Apply [PSN] Poison. When the enemy dies, deal damage equal to its Max HP to ALL enemies.",
       "characters": "silent",
       "cost": {
         "base": 2
@@ -1475,7 +1559,8 @@
         "base": 3,
         "upgraded": 2
       },
-      "costManipulation": true
+      "costManipulation": true,
+      "canExhaustCards": true
     },
     "Creative AI": {
       "id": "Creative AI",
@@ -1493,7 +1578,7 @@
       "id": "Crescendo",
       "type": "Skill",
       "rarity": "Common",
-      "description": "Retain. Enter Wrath. Exhaust.",
+      "description": "Retain. Enter [CHANGE_STANCE]. Exhaust.",
       "characters": "watcher",
       "cost": {
         "base": 1,
@@ -1506,13 +1591,16 @@
       "retain": {
         "base": true,
         "upgraded": true
+      },
+      "change_stance": {
+        "base": "Wrath"
       }
     },
     "Crippling Cloud": {
       "id": "Crippling Cloud",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Apply 4 (7) Poison and 2 Weak to ALL enemies. Exhaust.",
+      "description": "Apply [PSN] Poison and [WEAK] Weak to ALL enemies. Exhaust.",
       "characters": "silent",
       "cost": {
         "base": 2
@@ -1568,13 +1656,14 @@
       "rarity": "Special",
       "description": "Unplayable. Cannot be removed from your deck.",
       "characters": "curse",
-      "unplayable": true
+      "unplayable": true,
+      "cannotBeRemoved": true
     },
     "Cut Through Fate": {
       "id": "Cut Through Fate",
       "type": "Attack",
       "rarity": "Common",
-      "description": "Deal [DMG] damage. Scry 2 (3). Draw [DRAW] card.",
+      "description": "Deal [DMG] damage. Scry [SCRY]. Draw [DRAW] card.",
       "characters": "watcher",
       "cost": {
         "base": 1
@@ -1640,7 +1729,7 @@
       "id": "Dark Embrace",
       "type": "Power",
       "rarity": "Uncommon",
-      "description": "Whenever a card is Exhausted, draw 1 card.",
+      "description": "Whenever a card is Exhausted, draw [DRAW] card.",
       "characters": "ironclad",
       "cost": {
         "base": 2,
@@ -1656,7 +1745,7 @@
       "id": "Dark Shackles",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Enemy loses 9 (15) Strength this turn. Exhaust.",
+      "description": "Enemy loses [APPLIESDEBUFFS.LOSESTRENGTH] Strength this turn. Exhaust.",
       "characters": "colorless",
       "cost": {
         "base": 0
@@ -1676,17 +1765,18 @@
       "id": "Darkness",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Channel 1 Dark.",
+      "description": "[ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE].",
       "characters": "defect",
-      "descriptionUpgraded": "Channel 1 Dark. Trigger the passive ability of all Dark orbs.",
+      "descriptionUpgraded": "[ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE]. Trigger the passive ability of all Dark orbs.",
       "cost": {
         "base": 1
       },
       "orbInteractions": {
-        "orbtype": "dark",
+        "orbtype": "Dark",
         "amount": {
           "base": 1
-        }
+        },
+        "verb": "Channel"
       }
     },
     "Dash": {
@@ -1706,7 +1796,8 @@
         "base": 10,
         "upgraded": 13
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "scalesWithDexterity": true
     },
     "Dazed": {
       "id": "Dazed",
@@ -1724,7 +1815,7 @@
       "id": "Deadly Poison",
       "type": "Skill",
       "rarity": "Common",
-      "description": "Apply 5 (7) Poison.",
+      "description": "Apply [PSN] Poison.",
       "characters": "silent",
       "cost": {
         "base": 1
@@ -1740,9 +1831,12 @@
       "id": "Decay",
       "type": "Curse",
       "rarity": "Curse",
-      "description": "Unplayable. At the end of your turn, take 2 damage.",
+      "description": "Unplayable. At the end of your turn, take [TAKEDMG] damage.",
       "characters": "curse",
-      "unplayable": true
+      "unplayable": true,
+      "hpcost": {
+        "base": 2
+      }
     },
     "Deceive Reality": {
       "id": "Deceive Reality",
@@ -1853,58 +1947,77 @@
       "id": "Defragment",
       "type": "Power",
       "rarity": "Uncommon",
-      "description": "Gain 1 (2) Focus.",
+      "description": "Gain [FOCUS] Focus.",
       "characters": "defect",
       "cost": {
         "base": 1
+      },
+      "focus": {
+        "base": 1,
+        "upgraded": 2
       }
     },
     "Demon Form": {
       "id": "Demon Form",
       "type": "Power",
       "rarity": "Rare",
-      "description": "At the start of your turn, gain 2 (3) Strength.",
+      "description": "At the start of your turn, gain [STRENGTH_GAIN] Strength.",
       "characters": "ironclad",
       "cost": {
         "base": 3
+      },
+      "strength_gain": {
+        "base": 2,
+        "upgraded": 3
       }
     },
     "Deus Ex Machina": {
       "id": "Deus Ex Machina",
       "type": "Skill",
       "rarity": "Rare",
-      "description": "Unplayable. When you draw this card, add 2 (3) Miracles to your hand and Exhaust.",
+      "description": "Unplayable. When you draw this card, add [MIRACLE_TO_ADD] Miracles to your hand and Exhaust.",
       "characters": "watcher",
       "unplayable": true,
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "miracle_to_add": {
+        "base": 2,
+        "upgraded": 3
+      }
     },
     "Deva Form": {
       "id": "Deva Form",
       "type": "Power",
       "rarity": "Rare",
-      "description": "Ethereal. At the start of your turn, gain [W] and increase this gain by 1.",
+      "description": "Ethereal. At the start of your turn, gain [R] and increase this gain by 1.",
       "characters": "watcher",
-      "descriptionUpgraded": "At the start of your turn, gain [W] and increase this gain by 1.",
+      "descriptionUpgraded": "At the start of your turn, gain [R] and increase this gain by 1.",
       "cost": {
         "base": 3
       },
       "ethereal": {
         "base": true,
         "upgraded": false
+      },
+      "gainEnergy": {
+        "base": 1
       }
     },
     "Devotion": {
       "id": "Devotion",
       "type": "Power",
       "rarity": "Rare",
-      "description": "At the start of your turn, gain 2 (3) Mantra.",
+      "description": "At the start of your turn, gain [MANTRA] Mantra.",
       "characters": "watcher",
       "cost": {
         "base": 1
+      },
+      "mantra": {
+        "base": 2,
+        "upgraded": 3
       }
     },
     "Die Die Die": {
@@ -1930,7 +2043,7 @@
       "id": "Disarm",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Enemy loses 2 (3) Strength. Exhaust.",
+      "description": "Enemy loses [APPLIESDEBUFFS.LOSESTRENGTH] Strength. Exhaust.",
       "characters": "ironclad",
       "cost": {
         "base": 1
@@ -1938,6 +2051,12 @@
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
+      },
+      "appliesDebuffs": {
+        "losestrength": {
+          "base": 2,
+          "upgraded": 3
+        }
       }
     },
     "Discovery": {
@@ -1991,7 +2110,7 @@
       "id": "Doom and Gloom",
       "type": "Attack",
       "rarity": "Uncommon",
-      "description": "Deal [DMG] damage to ALL enemies. Channel 1 Dark.",
+      "description": "Deal [DMG] damage to ALL enemies. [ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE].",
       "characters": "defect",
       "cost": {
         "base": 2
@@ -2000,29 +2119,38 @@
         "base": 10,
         "upgraded": 14
       },
-      "orbInteractions": [
-        {
-          "verb": "channel",
-          "orbIcon": "DARK_ORB",
-          "presentation": "DARK_ORB 1",
-          "amount": {
-            "base": 1
-          }
-        }
-      ],
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "orbInteractions": {
+        "verb": "Channel",
+        "amount": {
+          "base": 1
+        },
+        "orbtype": "Dark"
+      }
     },
     "Doppelganger": {
       "id": "Doppelganger",
       "type": "Skill",
       "rarity": "Rare",
-      "description": "Next turn, draw X cards and gain X [G]. Exhaust.",
+      "description": "Next turn, draw X cards and gain X Energy. Exhaust.",
       "characters": "silent",
-      "descriptionUpgraded": "Next turn, draw X+1 cards and gain X+1 [G]. Exhaust.",
+      "descriptionUpgraded": "Next turn, draw X+1 cards and gain X+1 Energy. Exhaust.",
       "xCost": true,
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
+      },
+      "gainEnergy": {
+        "base": 0,
+        "upgraded": 0,
+        "conditioned": true,
+        "trigger": "next turn X"
+      },
+      "draw": {
+        "base": 0,
+        "upgraded": 0,
+        "conditioned": true,
+        "trigger": "next turn X"
       }
     },
     "Double Energy": {
@@ -2038,6 +2166,12 @@
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
+      },
+      "gainEnergy": {
+        "base": 0,
+        "upgraded": 0,
+        "conditioned": true,
+        "trigger": "Doubles your Energy"
       }
     },
     "Double Tap": {
@@ -2049,15 +2183,19 @@
       "descriptionUpgraded": "This turn, your next 2 Attacks are played twice.",
       "cost": {
         "base": 1
-      }
+      },
+      "canDoublePlayCards": true
     },
     "Doubt": {
       "id": "Doubt",
       "type": "Curse",
       "rarity": "Curse",
-      "description": "Unplayable. At the end of your turn, gain 1 Weak.",
+      "description": "Unplayable. At the end of your turn, gain [SELF_WEAK] Weak.",
       "characters": "curse",
-      "unplayable": true
+      "unplayable": true,
+      "self_weak": {
+        "base": 1
+      }
     },
     "Dramatic Entrance": {
       "id": "Dramatic Entrance",

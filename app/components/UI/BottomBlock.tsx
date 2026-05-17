@@ -64,7 +64,7 @@ const PILES: {
 ];
 
 export default function BottomBlock() {
-  const { gameState, drawCards, toggleCardSelection, selectAllInPile, shufflePile, reorderPile } = useGameManager();
+  const { gameState, drawCards, toggleCardSelection, selectAllInPile, shufflePile, reorderPile, hoveredActionTargetUids } = useGameManager();
   const [expandedPile, setExpandedPile] = useState<PileType | null>(null);
   const [reorderingPile, setReorderingPile] = useState<PileType | null>(null);
   const [drawAmount, setDrawAmount] = useState(5);
@@ -284,13 +284,16 @@ export default function BottomBlock() {
             const isOpen = expandedPile === id;
             const selCount = getSelectedCount(id);
             const hasSel = selCount > 0;
+            const hasActionTarget = hoveredActionTargetUids.size > 0 && (gameState?.[id as keyof typeof gameState] as { _uid?: string; name: string }[] | undefined)?.some(
+              c => c._uid ? hoveredActionTargetUids.has(c._uid) : hoveredActionTargetUids.has(c.name)
+            );
             return (
               <button
                 key={id}
                 type="button"
                 onClick={() => toggleExpand(id)}
                 className={`flex min-h-10 items-center justify-between gap-1 rounded-xl border px-2 py-1.5 text-left text-xs font-medium transition-all duration-200 max-md:min-w-0 max-md:pr-1.5 md:gap-2 md:px-3 md:py-2 md:text-sm ${
-                  isOpen ? active : hasSel ? "border-yellow-400/70 bg-yellow-950/45 text-yellow-100 shadow-[0_0_14px_rgba(234,179,8,0.22)] ring-1 ring-yellow-400/30" : idle
+                  isOpen ? active : hasSel ? "border-yellow-400/70 bg-yellow-950/45 text-yellow-100 shadow-[0_0_14px_rgba(234,179,8,0.22)] ring-1 ring-yellow-400/30" : hasActionTarget ? "border-cyan-400/70 bg-cyan-950/40 text-cyan-100 shadow-[0_0_14px_rgba(34,211,238,0.22)] ring-1 ring-cyan-400/30" : idle
                 }`}
               >
                 <div className="flex min-w-0 items-center gap-1.5 md:gap-2">

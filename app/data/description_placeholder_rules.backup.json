@@ -1,26 +1,268 @@
 [
-  { "token": "[DMG]",    "label": "Damage",             "resolverType": "field",  "fieldKey": "damage" },
-  { "token": "[BLOCK]",  "label": "Block",               "resolverType": "field",  "fieldKey": "block" },
-  { "token": "[B]",      "label": "Block (short)",       "resolverType": "field",  "fieldKey": "block" },
-  { "token": "[DRAW]",   "label": "Draw",                "resolverType": "field",  "fieldKey": "draw" },
-  { "token": "[COST]",   "label": "Cost",                "resolverType": "field",  "fieldKey": "cost" },
-  { "token": "[TAKEDMG]","label": "Lose HP / self-hit",  "resolverType": "field",  "fieldKey": "takeDamage" },
-  { "token": "[GAINE]",  "label": "Gain energy",         "resolverType": "field",  "fieldKey": "energyGain" },
-  { "token": "[G]",      "label": "Gain energy (short)", "resolverType": "field",  "fieldKey": "energyGain" },
-  { "token": "[R]",      "label": "Energy (STS red pip)","resolverType": "field",  "fieldKey": "energyGain" },
-  { "token": "[MANTRA]", "label": "Mantra stacks",       "resolverType": "field",  "fieldKey": "mantra" },
-  { "token": "[HEAL]",   "label": "Heal",                "resolverType": "field",  "fieldKey": "heal" },
-  { "token": "[STR]",    "label": "Strength",            "resolverType": "field",  "fieldKey": "strength" },
-  { "token": "[DEX]",    "label": "Dexterity",           "resolverType": "field",  "fieldKey": "dexterity" },
-  { "token": "[FOCUS]",  "label": "Focus",               "resolverType": "field",  "fieldKey": "focus" },
-  { "token": "[ART]",    "label": "Artifact",            "resolverType": "field",  "fieldKey": "artifact" },
-  { "token": "[VULN]",   "label": "Vulnerable stacks",   "resolverType": "debuff", "fieldKey": "vulnerable" },
-  { "token": "[WEAK]",   "label": "Weak stacks",         "resolverType": "debuff", "fieldKey": "weak" },
-  { "token": "[PSN]",    "label": "Poison stacks",       "resolverType": "debuff", "fieldKey": "poison" },
-  { "token": "[POISON]", "label": "Poison stacks (long)","resolverType": "debuff", "fieldKey": "poison" },
-  { "token": "[WOUND]",  "label": "Wound stacks",        "resolverType": "debuff", "fieldKey": "wound" },
-  { "token": "[FRAIL]",  "label": "Frail stacks",        "resolverType": "debuff", "fieldKey": "frail" },
-  { "token": "[LOCK]",   "label": "Lock-On stacks",      "resolverType": "debuff", "fieldKey": "lockOn" },
-  { "token": "[DISCARD]","label": "Discard count",       "resolverType": "custom", "fieldKey": "discardEffect", "customId": "discard" },
-  { "token": "[HITS]",   "label": "Multi-hit count",     "resolverType": "custom", "fieldKey": "multiHit",      "customId": "hits" }
+  {
+    "token": "[DMG]",
+    "label": "Damage",
+    "resolverType": "field",
+    "fieldKey": "damage"
+  },
+  {
+    "token": "[BLOCK]",
+    "label": "Block",
+    "resolverType": "field",
+    "fieldKey": "block"
+  },
+  {
+    "token": "[B]",
+    "label": "Block (short)",
+    "resolverType": "field",
+    "fieldKey": "block"
+  },
+  {
+    "token": "[DRAW]",
+    "label": "Draw",
+    "resolverType": "field",
+    "fieldKey": "draw"
+  },
+  {
+    "token": "[COST]",
+    "label": "Cost",
+    "resolverType": "field",
+    "fieldKey": "cost"
+  },
+  {
+    "token": "[TAKEDMG]",
+    "label": "Lose HP / self-hit",
+    "resolverType": "field",
+    "fieldKey": "hpcost"
+  },
+  {
+    "token": "[GAINE]",
+    "label": "Gain energy",
+    "resolverType": "field",
+    "fieldKey": "gainEnergy"
+  },
+  {
+    "token": "[G]",
+    "label": "Gain energy (short)",
+    "resolverType": "field",
+    "fieldKey": "gainEnergy"
+  },
+  {
+    "token": "[R]",
+    "label": "Energy (STS red pip)",
+    "resolverType": "field",
+    "fieldKey": "gainEnergy"
+  },
+  {
+    "token": "[MANTRA]",
+    "label": "Mantra stacks",
+    "resolverType": "field",
+    "fieldKey": "mantra"
+  },
+  {
+    "token": "[HEAL]",
+    "label": "Heal",
+    "resolverType": "field",
+    "fieldKey": "heal"
+  },
+  {
+    "token": "[STR]",
+    "label": "Strength",
+    "resolverType": "field",
+    "fieldKey": "strength"
+  },
+  {
+    "token": "[DEX]",
+    "label": "Dexterity",
+    "resolverType": "field",
+    "fieldKey": "dexterity"
+  },
+  {
+    "token": "[FOCUS]",
+    "label": "Focus",
+    "resolverType": "field",
+    "fieldKey": "focus"
+  },
+  {
+    "token": "[ART]",
+    "label": "Artifact",
+    "resolverType": "field",
+    "fieldKey": "artifact"
+  },
+  {
+    "token": "[VULN]",
+    "label": "Vulnerable stacks",
+    "resolverType": "debuff",
+    "fieldKey": "vulnerable"
+  },
+  {
+    "token": "[WEAK]",
+    "label": "Weak stacks",
+    "resolverType": "debuff",
+    "fieldKey": "weak"
+  },
+  {
+    "token": "[PSN]",
+    "label": "Poison stacks",
+    "resolverType": "debuff",
+    "fieldKey": "poison"
+  },
+  {
+    "token": "[POISON]",
+    "label": "Poison stacks (long)",
+    "resolverType": "debuff",
+    "fieldKey": "poison"
+  },
+  {
+    "token": "[WOUND]",
+    "label": "Wound stacks",
+    "resolverType": "debuff",
+    "fieldKey": "wound"
+  },
+  {
+    "token": "[FRAIL]",
+    "label": "Frail stacks",
+    "resolverType": "debuff",
+    "fieldKey": "frail"
+  },
+  {
+    "token": "[LOCK]",
+    "label": "Lock-On stacks",
+    "resolverType": "debuff",
+    "fieldKey": "lockOn"
+  },
+  {
+    "token": "[DISCARD]",
+    "label": "Discard count",
+    "resolverType": "custom",
+    "fieldKey": "discardEffect",
+    "customId": "discard"
+  },
+  {
+    "token": "[HITS]",
+    "label": "Multi-hit count",
+    "resolverType": "custom",
+    "fieldKey": "multiHit",
+    "customId": "hits"
+  },
+  {
+    "token": "[ORBINTERACTIONS.ORBTYPE]",
+    "label": "Orb Interactions.orbtype",
+    "resolverType": "field",
+    "fieldKey": "orbInteractions.orbtype"
+  },
+  {
+    "token": "[ORBINTERACTIONS.VERB]",
+    "label": "Orb Interactions.verb",
+    "resolverType": "field",
+    "fieldKey": "orbInteractions.verb"
+  },
+  {
+    "token": "[BONUSDMG]",
+    "label": "Bonus Damage",
+    "resolverType": "field",
+    "fieldKey": "bonusDamage"
+  },
+  {
+    "token": "[STRENGTH_GAIN]",
+    "label": "Strength_gain",
+    "resolverType": "field",
+    "fieldKey": "strength_gain"
+  },
+  {
+    "token": "[SELF_VULNERABLE]",
+    "label": "Self_vulnerable",
+    "resolverType": "field",
+    "fieldKey": "self_vulnerable"
+  },
+  {
+    "token": "[FOCUS_LOSS]",
+    "label": "Focus_loss",
+    "resolverType": "field",
+    "fieldKey": "focus_loss"
+  },
+  {
+    "token": "[SHIV_ADD]",
+    "label": "Shiv_add",
+    "resolverType": "field",
+    "fieldKey": "shiv_add"
+  },
+  {
+    "token": "[CHANGE_STANCE]",
+    "label": "Change_stance",
+    "resolverType": "field",
+    "fieldKey": "change_stance"
+  },
+  {
+    "token": "[BUFFER]",
+    "label": "Buffer",
+    "resolverType": "field",
+    "fieldKey": "buffer"
+  },
+  {
+    "token": "[LOCKON]",
+    "label": "Lockon",
+    "resolverType": "field",
+    "fieldKey": "lockon"
+  },
+  {
+    "token": "[ORBINTERACTIONS.ORBSLOT_GAIN]",
+    "label": "Orb Interactions.orbslot_gain",
+    "resolverType": "field",
+    "fieldKey": "orbInteractions.orbslot_gain"
+  },
+  {
+    "token": "[ORBINTERACTIONS.AMOUNT]",
+    "label": "Orb Interactions.amount",
+    "resolverType": "field",
+    "fieldKey": "orbInteractions.amount"
+  },
+  {
+    "token": "[CHOKE_DMG]",
+    "label": "Choke_dmg",
+    "resolverType": "field",
+    "fieldKey": "choke_dmg"
+  },
+  {
+    "token": "[NUMBER_OF_CARDS_TO_ADD]",
+    "label": "Number_of_cards_to_add",
+    "resolverType": "field",
+    "fieldKey": "number_of_cards_to_add"
+  },
+  {
+    "token": "[SHIV_DMG]",
+    "label": "Shiv_dmg",
+    "resolverType": "field",
+    "fieldKey": "shiv_dmg"
+  },
+  {
+    "token": "[AGGREGATE_GAIN_COND]",
+    "label": "Aggregate_gain_cond",
+    "resolverType": "field",
+    "fieldKey": "aggregate_gain_cond"
+  },
+  {
+    "token": "[INTANGIBLE]",
+    "label": "Intangible",
+    "resolverType": "field",
+    "fieldKey": "Intangible"
+  },
+  {
+    "token": "[SELF_WEAK]",
+    "label": "Self_weak",
+    "resolverType": "field",
+    "fieldKey": "self_weak"
+  },
+  {
+    "token": "[APPLIESDEBUFFS.LOSESTRENGTH]",
+    "label": "Applies Debuffs.losestrength",
+    "resolverType": "field",
+    "fieldKey": "appliesDebuffs.losestrength"
+  },
+  {
+    "token": "[MIRACLE_TO_ADD]",
+    "label": "Miracle_to_add",
+    "resolverType": "field",
+    "fieldKey": "miracle_to_add"
+  }
 ]

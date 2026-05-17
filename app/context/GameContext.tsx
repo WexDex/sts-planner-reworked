@@ -160,6 +160,11 @@ interface GameContextType {
   upgradeSelected: () => void;
   downgradeSelected: () => void;
   duplicateSelected: () => void;
+  moveCardsByUids: (uids: string[], toLocation: string) => void;
+  upgradeCardsByUids: (uids: string[]) => void;
+  downgradeCardsByUids: (uids: string[]) => void;
+  duplicateCardsByUids: (uids: string[], toLocation: string) => void;
+  removeCardsByUids: (uids: string[]) => void;
   setSelectedCostZero: () => void;
   setSelectedCustomCost: () => void;
   transformSelectedType: () => void;
@@ -184,6 +189,10 @@ interface GameContextType {
   combatTargetSelf: boolean;
   toggleCombatTargetSelf: () => void;
   clearCombatTargets: () => void;
+
+  /** Ephemeral hover-highlight: UIDs of cards currently previewed by a quick-action target hover. */
+  hoveredActionTargetUids: ReadonlySet<string>;
+  setHoveredActionTargetUids: (uids: Set<string>) => void;
 
   /** Branching decision overlay (full snapshots per node). */
   decisionNodes: DecisionNode[];
@@ -294,6 +303,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [combatTargetMode, setCombatTargetModeState] = useState<'single' | 'multi'>('single');
   const [combatTargetEnemyIndices, setCombatTargetEnemyIndices] = useState<number[]>([]);
   const [combatTargetSelf, setCombatTargetSelf] = useState(false);
+  const [hoveredActionTargetUids, setHoveredActionTargetUids] = useState<ReadonlySet<string>>(new Set());
   const [activeProject, setActiveProject] = useState<ProjectMeta | null>(null);
 
   const normalizeRelicEffects = (data: CombatData): CombatData => ({
@@ -319,16 +329,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setActiveProject(null);
       const normalizedData = normalizeRelicEffects(data);
       const hydratedData = hydrateCombatData(normalizedData);
+      const stampUid = (card: Card): Card =>
+        card._uid ? card : { ...card, _uid: crypto.randomUUID().slice(0, 8) };
       const withPiles = {
         ...hydratedData,
-        draw: (hydratedData.deck as Card[]).map((card) => ({
+        draw: (hydratedData.deck as Card[]).map((card) => stampUid({
           ...card,
           isChanged: card.isChanged ?? false,
           isSelected: card.isSelected ?? false,
         })),
-        discard: [],
-        exhaust: [],
-        hand: [],
+        discard: ((hydratedData as CombatData).discard ?? []).map(stampUid),
+        exhaust: ((hydratedData as CombatData).exhaust ?? []).map(stampUid),
+        hand: ((hydratedData as CombatData).hand ?? []).map(stampUid),
         playedCards: [],
         activityLog: [],
         player: {
@@ -2614,6 +2626,130 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  // ─── UID-based card operations (used by Quick Actions card target system) ────
+
+  // Resolve cards by _uid (or name fallback) across all piles. Returns entries sorted
+  // for safe splicing (highest index first within each pile).
+  const getCardsByUids = (state: CombatData, uids: string[]) => {
+    const uidSet = new Set(uids);
+    const locations = ['hand', 'draw', 'discard', 'exhaust', 'playedCards'];
+    const found: { card: Card; location: string; index: number }[] = [];
+    locations.forEach(loc => {
+      const pile = state[loc as keyof CombatData] as Card[];
+      pile.forEach((card, idx) => {
+        const match = card._uid ? uidSet.has(card._uid) : uidSet.has(card.name);
+        if (match) found.push({ card, location: loc, index: idx });
+      });
+    });
+    return [...found].sort((a, b) =>
+      a.location === b.location ? b.index - a.index : a.location.localeCompare(b.location)
+    );
+  };
+
+  const moveCardsByUids = (uids: string[], toLocation: string) => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
+    setGameState((prevState) => {
+      if (!prevState || !uids.length) return prevState;
+      const found = getCardsByUids(prevState, uids);
+      if (!found.length) return prevState;
+      const newState = {
+        ...prevState,
+        draw: [...prevState.draw], discard: [...prevState.discard],
+        exhaust: [...prevState.exhaust], hand: [...prevState.hand], playedCards: [...prevState.playedCards],
+      };
+      const toPile = (newState as any)[toLocation] as Card[];
+      found.forEach(({ card, location, index }) => {
+        const fromPile = (newState as any)[location] as Card[];
+        fromPile.splice(index, 1);
+        toPile.push({ ...card, isSelected: false });
+      });
+      return {
+        ...newState,
+        activityLog: [...newState.activityLog, withSnap(buildActionLogEntry('Moved cards', found, { toPile: toLocation }), prevState)],
+      };
+    });
+  };
+
+  const upgradeCardsByUids = (uids: string[]) => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
+    setGameState((prevState) => {
+      if (!prevState || !uids.length) return prevState;
+      const found = getCardsByUids(prevState, uids);
+      if (!found.length) return prevState;
+      const newState = {
+        ...prevState,
+        draw: [...prevState.draw], discard: [...prevState.discard],
+        exhaust: [...prevState.exhaust], hand: [...prevState.hand], playedCards: [...prevState.playedCards],
+      };
+      found.forEach(({ location, index }) => {
+        const pile = (newState as any)[location] as Card[];
+        const cur = pile[index];
+        pile[index] = { ...cur, isUpgraded: true, isChanged: true, ...stsTierDescriptionPatch(cur?.name ?? '', true) };
+      });
+      return { ...newState, activityLog: [...newState.activityLog, buildActionLogEntry('Upgraded', found)] };
+    });
+  };
+
+  const downgradeCardsByUids = (uids: string[]) => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
+    setGameState((prevState) => {
+      if (!prevState || !uids.length) return prevState;
+      const found = getCardsByUids(prevState, uids);
+      if (!found.length) return prevState;
+      const newState = {
+        ...prevState,
+        draw: [...prevState.draw], discard: [...prevState.discard],
+        exhaust: [...prevState.exhaust], hand: [...prevState.hand], playedCards: [...prevState.playedCards],
+      };
+      found.forEach(({ location, index }) => {
+        const pile = (newState as any)[location] as Card[];
+        const cur = pile[index];
+        pile[index] = { ...cur, isUpgraded: false, isChanged: true, ...stsTierDescriptionPatch(cur?.name ?? '', false) };
+      });
+      return { ...newState, activityLog: [...newState.activityLog, buildActionLogEntry('Downgraded', found)] };
+    });
+  };
+
+  const duplicateCardsByUids = (uids: string[], toLocation: string) => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
+    setGameState((prevState) => {
+      if (!prevState || !uids.length) return prevState;
+      const found = getCardsByUids(prevState, uids);
+      if (!found.length) return prevState;
+      const newState = {
+        ...prevState,
+        draw: [...prevState.draw], discard: [...prevState.discard],
+        exhaust: [...prevState.exhaust], hand: [...prevState.hand], playedCards: [...prevState.playedCards],
+      };
+      const toPile = (newState as any)[toLocation] as Card[];
+      found.forEach(({ card }) => {
+        toPile.push({ ...card, isSelected: false, isChanged: true, _uid: undefined });
+      });
+      return { ...newState, activityLog: [...newState.activityLog, buildActionLogEntry('Duplicated', found)] };
+    });
+  };
+
+  const removeCardsByUids = (uids: string[]) => {
+    if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
+    setGameState((prevState) => {
+      if (!prevState || !uids.length) return prevState;
+      const found = getCardsByUids(prevState, uids);
+      if (!found.length) return prevState;
+      const newState = {
+        ...prevState,
+        draw: [...prevState.draw], discard: [...prevState.discard],
+        exhaust: [...prevState.exhaust], hand: [...prevState.hand], playedCards: [...prevState.playedCards],
+      };
+      found.forEach(({ location, index }) => {
+        const pile = (newState as any)[location] as Card[];
+        pile.splice(index, 1);
+      });
+      return { ...newState, activityLog: [...newState.activityLog, withSnap(buildActionLogEntry('Removed cards', found), prevState)] };
+    });
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────────
+
   const toggleCardSelection = (location: string, index: number) => {
     setGameState((prevState) => {
       if (!prevState) return prevState;
@@ -2694,11 +2830,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const buildCardFromDatabase = (cardId: string, isUpgraded: boolean): Card | null => {
     const fromSts = gameCardFromDatabaseId(cardId, { isUpgraded });
     if (fromSts) {
-      return { ...fromSts, isChanged: true, isSelected: false };
+      return ensureUid({ ...fromSts, isChanged: true, isSelected: false });
     }
     const potion = getPotionByName(cardId);
     if (potion) {
-      return { ...buildCardFromPotion(potion), isChanged: true, isSelected: false };
+      return ensureUid({ ...buildCardFromPotion(potion), isChanged: true, isSelected: false });
     }
     return null;
   };
@@ -3316,6 +3452,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     useSelectedPower,
     moveSelectedCards,
     removeSelectedCards,
+    moveCardsByUids,
+    upgradeCardsByUids,
+    downgradeCardsByUids,
+    duplicateCardsByUids,
+    removeCardsByUids,
     spendEnergyOnSelected,
     deselectAllCards,
     addToActivityLog,
@@ -3345,6 +3486,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     combatTargetSelf,
     toggleCombatTargetSelf,
     clearCombatTargets,
+    hoveredActionTargetUids,
+    setHoveredActionTargetUids: (uids: Set<string>) => setHoveredActionTargetUids(uids),
     decisionNodes,
     activeDecisionNodeId,
     forkDecisionBranch,
