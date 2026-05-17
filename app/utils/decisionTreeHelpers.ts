@@ -47,8 +47,8 @@ export function estimateDecisionTimelineBranchFootprint(
   if (n.timelineRole === 'timeline_start') {
     return { w: DECISION_TIMELINE_START_CARD_W, h: DECISION_TIMELINE_START_CARD_H };
   }
-  // 56px floating toolbar clearance + 52px collapsed bar = 108 → round to 110
-  return { w: DECISION_TIMELINE_BRANCH_CARD_W, h: 110 };
+  // 56px floating toolbar clearance + 96px 3-row collapsed card + 8px margin = 160
+  return { w: DECISION_TIMELINE_BRANCH_CARD_W, h: 160 };
 }
 
 /** All node ids in the subtree rooted at `rootId` (including `rootId`). */

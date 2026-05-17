@@ -11,15 +11,18 @@ import type {
   CombatTurnPhase,
   DeckEntry,
   Enemy,
+  OrbType,
   ValueNode,
 } from '@/app/types/gameTypes';
 import { cardTypeStyles } from '@/app/types/types';
 import { getPlayerMaxEnergy } from '@/app/utils/gameHelpers';
 import {
+  Beaker,
   ChevronDown,
   ChevronRight,
   Hand,
   Heart,
+  Hexagon,
   Layers,
   Play,
   Shield,
@@ -480,6 +483,10 @@ export function DtlBranchCombatIntel({
   );
 
   const enemies = snapshot.enemies ?? [];
+  const orbs: OrbType[] = snapshot.orbs ?? [];
+  const orbMaxSlots = snapshot.orbChannelSize ?? orbs.length;
+  const potions: (Card | null)[] = snapshot.potionBelt ?? [];
+  const filledPotions = potions.filter((p): p is Card => p !== null && 'name' in p);
 
   const totalPileCards = drawPile.length + discardPile.length + exhaustPile.length;
 
@@ -611,6 +618,54 @@ export function DtlBranchCombatIntel({
       )}
 
       {showStats && statsGrid}
+
+      {/* Orbs + Potions row — only shown when the snapshot has either */}
+      {showStats && (orbs.length > 0 || orbMaxSlots > 0 || potions.length > 0) && (
+        <div className="flex flex-wrap items-center gap-3">
+          {(orbs.length > 0 || orbMaxSlots > 0) && (
+            <div className="flex items-center gap-1">
+              <Hexagon className="h-3 w-3 shrink-0 text-slate-500" strokeWidth={1.5} aria-hidden />
+              <span className="text-[9px] font-bold uppercase tracking-wide text-slate-500 mr-0.5">Orbs</span>
+              {Array.from({ length: Math.max(orbMaxSlots, orbs.length) }).map((_, i) => {
+                const orb = orbs[i];
+                if (!orb) return (
+                  <span key={i} className="text-[11px] text-slate-700" title="Empty slot">○</span>
+                );
+                const [sym, cls, title] =
+                  orb === 'lightning' ? ['⚡', 'text-yellow-300', 'Lightning'] :
+                  orb === 'dark'      ? ['◆',  'text-violet-400', 'Dark']      :
+                  orb === 'frost'     ? ['❄',  'text-sky-300',    'Frost']     :
+                  orb === 'plasma'    ? ['✦',  'text-pink-300',   'Plasma']    :
+                                       ['○',  'text-slate-400',  orb];
+                return <span key={i} className={`text-[13px] leading-none ${cls}`} title={title}>{sym}</span>;
+              })}
+            </div>
+          )}
+          {potions.length > 0 && (
+            <div className="flex items-center gap-1">
+              <Beaker className="h-3 w-3 shrink-0 text-slate-500" strokeWidth={1.5} aria-hidden />
+              <span className="text-[9px] font-bold uppercase tracking-wide text-slate-500 mr-0.5">Potions</span>
+              {potions.map((p, i) => {
+                const filled = p !== null && 'name' in p;
+                return (
+                  <span
+                    key={i}
+                    title={filled ? (p as Card).name : 'Empty'}
+                    className={`text-[11px] leading-none ${filled ? 'text-amber-300' : 'text-slate-700'}`}
+                  >
+                    {filled ? '🧪' : '○'}
+                  </span>
+                );
+              })}
+              {filledPotions.length > 0 && (
+                <span className="text-[9px] text-slate-500">
+                  ({filledPotions.map((p) => p.name).join(', ')})
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {section === 'all' ? (
         <div className="grid gap-2 sm:grid-cols-2">

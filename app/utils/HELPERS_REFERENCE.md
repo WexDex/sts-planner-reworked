@@ -26,7 +26,7 @@ downloadGameData(gameState, 'my-combat.json');
 // STS playable cards: `app/data/db/STS_CARDS_DB.json` — browsed in UI as "Cards (STS)".
 // Potions: `app/data/db/POTIONS_DB.json` — type `Potion`, amber chrome; category tags from
 // `POTION_CATEGORIES` in `@/app/types/types`. Add via the same "Add card / potion" modal → Potions tab.
-// Potion tag row on cards = `KEY_POTION` + per-tag PTAG_* glyphs (icons in `STS_ICON_GLYPH`).
+// Potion tag row on cards = `KEY_POTION` + per-tag PTAG\_\* glyphs (icons in `STS_ICON_GLYPH`).
 //
 // Card design gallery (`/card-design-gallery`): previews STS cards and potions side-by-side;
 // picker uses STS ids or `potion|` + exact potion name; random STS / random potions load from the DBs.
@@ -41,10 +41,10 @@ const newPlayer = healPlayer(player, 5);
 
 // Apply damage modifiers (vulnerable/weak)
 const newPlayer = applyDamageWithModifiers(
-  player,
-  20,      // base damage
-  true,    // is vulnerable?
-  false    // is weak?
+player,
+20, // base damage
+true, // is vulnerable?
+false // is weak?
 );
 
 // Reset player to full health
@@ -76,8 +76,8 @@ const newDeck = removeCardFromDeck(deck, 0);
 
 // Add relic
 const newPlayer = addRelic(player, {
-  name: 'My Relic',
-  description: 'Does something cool'
+name: 'My Relic',
+description: 'Does something cool'
 });
 
 // Remove relic by name
@@ -102,9 +102,9 @@ const clone = cloneGameData(gameState);
 // Get game statistics
 const stats = getGameStats(gameState);
 // Returns: {
-//   totalDamageInDeck: number,
-//   totalBlockInDeck: number,
-//   totalRelics: number,
-//   deckSize: number,
-//   hpPercent: number
+// totalDamageInDeck: number,
+// totalBlockInDeck: number,
+// totalRelics: number,
+// deckSize: number,
+// hpPercent: number
 // }

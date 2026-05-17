@@ -2480,7 +2480,7 @@
         "base": 3,
         "upgraded": 4
       },
-      "scalesWithDexterity": true
+      "scalesWithDexterity": false
     },
     "Fiend Fire": {
       "id": "Fiend Fire",

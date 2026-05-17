@@ -38,16 +38,22 @@ import {
 import '@xyflow/react/dist/style.css';
 import {
   ArrowLeft,
+  ArrowLeftRight,
   ArrowRight,
   ChevronDown,
   ChevronRight,
   ChevronUp,
+  ChevronsDownUp,
+  ChevronsUpDown,
   GripVertical,
   LayoutDashboard,
+  LayoutGrid,
   Link2,
+  Maximize2,
   Minus,
   Palette,
   Pencil,
+  RotateCcw,
   ScrollText,
   Skull,
   Trash2,
@@ -109,6 +115,8 @@ import { enemyIntentSlotTone } from '@/app/utils/enemyIntentSlotTone';
 import { useRouter } from 'next/navigation';
 import { formatTurnUidShort } from '@/app/utils/gameHelpers';
 import { DtlBranchCombatIntel } from '@/app/decision-timeline/dtl-branch-combat-panel';
+import { DtlNodeFullModal } from '@/app/decision-timeline/dtl-node-full-modal';
+import { DtlNodeCompareModal } from '@/app/decision-timeline/dtl-node-compare-modal';
 
 /** Match Turn timeline: collapse long enemy lists on branch cards. */
 const BRANCH_INTENT_PREVIEW_MAX = 4;
@@ -231,6 +239,8 @@ type DecisionCardData = {
   isForkParentHoverHighlight?: boolean;
   /** Present on branch cards only — START omits. */
   branchDisplay?: DecisionTimelineBranchCardDisplay;
+  /** When true, collapsed nodes render only the large turn number (minimalistic mode). */
+  minimalisticView?: boolean;
 };
 
 /** Background grouping for all checkpoints at the same tree depth (same planner row / branch alternates). */
@@ -262,6 +272,9 @@ type TimelineInteractCtx = {
   /** Relink panel pick modes — parent mode uses {@link reparentHoverParentId} for hover ring on valid targets. */
   relinkPickMode: null | 'child' | 'parent';
   relinkChildId: string | null;
+  /** Incrementing counters — cards useEffect on these to collapse/expand in response to global buttons. */
+  collapseAllSignal: number;
+  expandAllSignal: number;
 };
 
 const TimelineInteractContext = createContext<TimelineInteractCtx | null>(null);
@@ -973,6 +986,8 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
       eligibleRelinkPanelParents?.has(decisionNode.id));
 
   const [cardExpanded, setCardExpanded] = useState(false);
+  const [nodeModalOpen, setNodeModalOpen] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
   const nodeId = useNodeId();
   const updateNodeInternals = useUpdateNodeInternals();
 
@@ -1056,9 +1071,43 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
     return () => window.removeEventListener('keydown', onKey);
   }, [logModalOpen]);
 
+  // Collapse / expand all signals from the organize panel
+  useEffect(() => {
+    if (interact?.collapseAllSignal) setCardExpanded(false);
+  }, [interact?.collapseAllSignal]);
+
+  useEffect(() => {
+    if (interact?.expandAllSignal) setCardExpanded(true);
+  }, [interact?.expandAllSignal]);
+
+  // Per-node keyboard shortcuts when this node is selected
+  useEffect(() => {
+    if (!data.isGraphSelected) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === ' ') { e.preventDefault(); setCardExpanded((v) => !v); }
+      else if (e.key === 'e' || e.key === 'E') { setNodeModalOpen(true); }
+      else if (e.key === 'Escape') { if (cardExpanded) { setCardExpanded(false); } }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [data.isGraphSelected, cardExpanded]);
+
   const collapsedHp = decisionNode.snapshot.player.hp;
   const collapsedMaxHp = decisionNode.snapshot.player.maxHp;
   const collapsedBlock = decisionNode.snapshot.player.currentBlock ?? 0;
+  const collapsedEnergy = decisionNode.snapshot.player.currentEnergy ?? 0;
+  const collapsedMaxEnergy = (decisionNode.snapshot.player.energy?.base ?? 3);
+  const collapsedStance = decisionNode.snapshot.stance ?? 'neutral';
+  const collapsedOrbs = decisionNode.snapshot.orbs ?? [];
+  const collapsedPotions = (decisionNode.snapshot.potionBelt ?? []).filter(Boolean);
+  const collapsedDrawCount = decisionNode.snapshot.draw?.length ?? 0;
+  const collapsedDiscardCount = decisionNode.snapshot.discard?.length ?? 0;
+  const collapsedEnemies = decisionNode.snapshot.enemies ?? [];
+  const hpPct = collapsedMaxHp > 0 ? collapsedHp / collapsedMaxHp : 1;
+  const hpColorClass = hpPct < 0.30 ? 'text-rose-300' : hpPct < 0.60 ? 'text-amber-300' : 'text-emerald-300';
+  const hpTintClass = hpPct < 0.30 ? 'ring-1 ring-rose-800/40' : hpPct < 0.60 ? 'ring-1 ring-amber-700/30' : '';
+  const minimalisticMode = (data.minimalisticView ?? false) && !cardExpanded;
 
   const pathStats = useMemo<PathStats>(
     () => computePathStats(decisionNodes, decisionNode.id),
@@ -1422,38 +1471,27 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
         </>
       ) : null}
 
-      {/* ── COLLAPSED BAR ──────────────────────────────────────────── */}
+      {/* ── COLLAPSED CARD ─────────────────────────────────────────── */}
       {!cardExpanded ? (
-        <div className="nodrag nopan flex min-h-[52px] items-center gap-2 px-4 py-2" onPointerDown={(e) => e.stopPropagation()}>
-          <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: branchAccentHex }} aria-hidden />
-          <TurnSlugTypography slug={autoTurnSlug} size="md" title={breadcrumbDisplay} accentHex={branchAccentHex} />
-          {showRenamedTitle && (
-            <span className="max-w-[110px] truncate text-[10px] font-semibold text-violet-200">{customLabelRaw}</span>
-          )}
-          <span className="text-[10px] text-slate-600" aria-hidden>·</span>
-          <span className="font-mono text-[10px] tabular-nums text-slate-300">
-            HP <span className="text-emerald-300">{collapsedHp}</span><span className="text-slate-600">/</span>{collapsedMaxHp}
-          </span>
-          {collapsedBlock > 0 && (
-            <span className="font-mono text-[10px] tabular-nums text-sky-300">Blk {collapsedBlock}</span>
-          )}
-          {pathStats.dealt > 0 && (
-            <span className="font-mono text-[10px] font-bold text-emerald-400">⚔ {pathStats.dealt}</span>
-          )}
-          {pathStats.taken > 0 && (
-            <span className="font-mono text-[10px] font-bold text-rose-400">💔 {pathStats.taken}</span>
-          )}
-          {hpDelta !== 0 && (
-            <span className={`font-mono text-[10px] font-bold ${hpDelta > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-              {hpDelta > 0 ? '+' : ''}{hpDelta} HP
+        minimalisticMode ? (
+          /* Minimalistic: big turn number only */
+          <div
+            className={`nodrag nopan flex min-h-[100px] flex-col items-center justify-center gap-1 px-4 py-3 ${hpTintClass}`}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <span className="text-5xl font-black leading-none text-white tabular-nums" style={{ color: branchAccentHex }}>
+              {effectivePlannerSlotId}
             </span>
-          )}
-          <div className="ml-auto flex shrink-0 items-center gap-1.5">
+            {showRenamedTitle ? (
+              <span className="max-w-[200px] truncate text-[11px] font-semibold text-violet-300">{customLabelRaw}</span>
+            ) : (
+              <span className="text-[11px] font-bold text-slate-400">{autoTurnSlug}</span>
+            )}
             <button
               type="button"
               disabled={isPinned}
               title={isPinned ? 'Active on current path' : 'Set as active checkpoint'}
-              className={`nodrag nopan rounded-lg border px-2 py-1 text-[10px] font-semibold transition-colors ${
+              className={`nodrag nopan mt-1 rounded-md border px-2.5 py-0.5 text-[10px] font-semibold transition-colors ${
                 isPinned
                   ? 'cursor-default border-slate-600/55 bg-slate-900/50 text-slate-500'
                   : setActiveSuggested
@@ -1464,16 +1502,120 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
             >
               {isPinned ? 'Active' : 'Set Active'}
             </button>
-            <button
-              type="button"
-              title="Expand card"
-              className="nodrag nopan flex h-7 w-7 items-center justify-center rounded-lg border border-slate-600/70 bg-slate-900/60 text-slate-400 transition-colors hover:bg-slate-800/80 hover:text-slate-200"
-              onClick={(e) => { e.stopPropagation(); setCardExpanded(true); }}
-            >
-              <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
-            </button>
           </div>
-        </div>
+        ) : (
+          /* Rich 3-row collapsed card */
+          <div className={`nodrag nopan ${hpTintClass}`} onPointerDown={(e) => e.stopPropagation()}>
+            {/* Row 1: identity + action buttons */}
+            <div className="flex min-h-[38px] items-center gap-2 px-3 py-1.5">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: branchAccentHex }} aria-hidden />
+              <TurnSlugTypography slug={autoTurnSlug} size="md" title={breadcrumbDisplay} accentHex={branchAccentHex} />
+              {showRenamedTitle && (
+                <span className="max-w-[180px] truncate text-[10px] font-semibold text-violet-200">{customLabelRaw}</span>
+              )}
+              <div className="ml-auto flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  title="Full view (E)"
+                  className="nodrag nopan flex h-6 w-6 items-center justify-center rounded border border-slate-600/60 bg-slate-900/50 text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
+                  onClick={(e) => { e.stopPropagation(); setNodeModalOpen(true); }}
+                >
+                  <Maximize2 className="h-3 w-3" strokeWidth={2} aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  title="Compare with another node"
+                  className="nodrag nopan flex h-6 w-6 items-center justify-center rounded border border-slate-600/60 bg-slate-900/50 text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
+                  onClick={(e) => { e.stopPropagation(); setCompareOpen(true); }}
+                >
+                  <ArrowLeftRight className="h-3 w-3" strokeWidth={2} aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  title="Expand card (Space)"
+                  className="nodrag nopan flex h-6 w-6 items-center justify-center rounded border border-slate-600/60 bg-slate-900/50 text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
+                  onClick={(e) => { e.stopPropagation(); setCardExpanded(true); }}
+                >
+                  <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                </button>
+              </div>
+            </div>
+
+            {/* Row 2: vital stats */}
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 border-t border-slate-700/40 px-3 py-1 text-[10px] tabular-nums">
+              <span className={`font-mono font-semibold ${hpColorClass}`}>❤ {collapsedHp}/{collapsedMaxHp}</span>
+              {collapsedBlock > 0 && <span className="font-mono text-sky-300">🛡 {collapsedBlock}</span>}
+              {collapsedEnergy < collapsedMaxEnergy && (
+                <span className="font-mono text-amber-300">⚡ {collapsedEnergy}/{collapsedMaxEnergy}</span>
+              )}
+              {collapsedStance !== 'neutral' && (
+                <span className={`rounded px-1 py-px text-[9px] font-bold uppercase tracking-wide ${
+                  collapsedStance === 'wrath' ? 'bg-red-900/60 text-red-200' :
+                  collapsedStance === 'calm' ? 'bg-sky-900/60 text-sky-200' :
+                  collapsedStance === 'divinity' ? 'bg-violet-900/60 text-violet-200' :
+                  'bg-slate-800 text-slate-300'
+                }`}>{collapsedStance}</span>
+              )}
+              {collapsedOrbs.length > 0 && (
+                <span className="flex items-center gap-0.5">
+                  {collapsedOrbs.slice(0, 5).map((orb, i) => {
+                    const [sym, cls] =
+                      orb === 'lightning' ? ['⚡', 'text-yellow-300'] :
+                      orb === 'dark'      ? ['◆', 'text-violet-400'] :
+                      orb === 'frost'     ? ['❄', 'text-sky-300']    :
+                      orb === 'plasma'    ? ['✦', 'text-pink-300']   :
+                                           ['○', 'text-slate-400'];
+                    return <span key={i} className={`text-[10px] leading-none ${cls}`}>{sym}</span>;
+                  })}
+                  {collapsedOrbs.length > 5 && <span className="text-[9px] text-slate-500">+{collapsedOrbs.length - 5}</span>}
+                </span>
+              )}
+              <span className="text-slate-500">Draw:{collapsedDrawCount} Dis:{collapsedDiscardCount}</span>
+              {pathStats.dealt > 0 && <span className="font-bold text-emerald-400">⚔ {pathStats.dealt}</span>}
+              {pathStats.taken > 0 && <span className="font-bold text-rose-400">💔 {pathStats.taken}</span>}
+              {hpDelta !== 0 && (
+                <span className={`font-bold ${hpDelta > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {hpDelta > 0 ? '+' : ''}{hpDelta} HP
+                </span>
+              )}
+            </div>
+
+            {/* Row 3: context + enemies + set active */}
+            <div className="flex items-center gap-2 border-t border-slate-700/40 px-3 py-1 text-[9px] text-slate-500">
+              <span>Phase: <span className="text-slate-400 capitalize">{decisionNode.turnPhase}</span></span>
+              <span>· T{effectivePlannerSlotId}</span>
+              {collapsedPotions.length > 0 && (
+                <span className="text-amber-400/80">🧪×{collapsedPotions.length}</span>
+              )}
+              {collapsedEnemies.length > 0 && (
+                <span className="min-w-0 flex-1 truncate">
+                  · {collapsedEnemies.length} {collapsedEnemies.length === 1 ? 'enemy' : 'enemies'}{': '}
+                  {collapsedEnemies.slice(0, 2).map((e, i) => (
+                    <span key={i}>{i > 0 ? ' · ' : ''}{e.name} {e.hp}/{e.maxHp}</span>
+                  ))}
+                  {collapsedEnemies.length > 2 && <span>…</span>}
+                </span>
+              )}
+              <div className="ml-auto flex shrink-0">
+                <button
+                  type="button"
+                  disabled={isPinned}
+                  title={isPinned ? 'Active on current path' : 'Set as active checkpoint'}
+                  className={`nodrag nopan rounded-md border px-2 py-0.5 text-[9px] font-semibold transition-colors ${
+                    isPinned
+                      ? 'cursor-default border-slate-600/55 bg-slate-900/50 text-slate-500'
+                      : setActiveSuggested
+                        ? 'border-sky-400/65 bg-sky-950/45 text-sky-50 hover:bg-sky-900/55'
+                        : 'border-cyan-500/45 bg-cyan-950/50 text-cyan-100 hover:bg-cyan-900/55'
+                  } disabled:pointer-events-none`}
+                  onClick={(e) => { e.stopPropagation(); jumpToDecisionNode(decisionNode.id); }}
+                >
+                  {isPinned ? 'Active' : 'Set Active'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
       ) : (
         /* ── EXPANDED 3-COL LAYOUT ───────────────────────────────── */
         <div className={`relative z-[2] ${!clusterSnapLocked ? 'px-6 pb-[calc(2rem+0.5rem)] pt-[calc(5px+2rem+0.5rem)]' : 'p-3'}`}>
@@ -1488,14 +1630,24 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
                     {formatTurnUidShort(plannerTurnUid)}
                   </span>
                 ) : null}
+                <div className="ml-auto flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  title="Full view (E)"
+                  className="nodrag nopan flex h-6 w-6 items-center justify-center rounded border border-slate-600/70 bg-slate-900/60 text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
+                  onClick={(e) => { e.stopPropagation(); setNodeModalOpen(true); }}
+                >
+                  <Maximize2 className="h-3 w-3" strokeWidth={2} aria-hidden />
+                </button>
                 <button
                   type="button"
                   title="Collapse card"
-                  className="nodrag nopan ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded border border-slate-600/70 bg-slate-900/60 text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
+                  className="nodrag nopan flex h-6 w-6 shrink-0 items-center justify-center rounded border border-slate-600/70 bg-slate-900/60 text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
                   onClick={(e) => { e.stopPropagation(); setCardExpanded(false); }}
                 >
                   <ChevronUp className="h-3 w-3" strokeWidth={2} aria-hidden />
                 </button>
+                </div>
               </div>
 
               {showRenamedTitle ? (
@@ -1963,6 +2115,21 @@ const DecisionBranchCard = memo(function DecisionBranchCard({ data }: { id: stri
           document.body,
         )
       : null}
+    {nodeModalOpen && (
+      <DtlNodeFullModal
+        decisionNode={decisionNode}
+        turns={turns}
+        onClose={() => setNodeModalOpen(false)}
+      />
+    )}
+    {compareOpen && (
+      <DtlNodeCompareModal
+        nodeA={decisionNode}
+        allNodes={decisionNodes}
+        turns={turns}
+        onClose={() => setCompareOpen(false)}
+      />
+    )}
     </>
   );
 });
@@ -2083,6 +2250,7 @@ function buildFlowGraph(
   reparentHoverParentId: string | null = null,
   relinkPickMode: null | 'child' | 'parent' = null,
   forkParentHoverHighlightId: string | null = null,
+  minimalisticView = false,
 ): { nodes: Node<DecisionFlowNodeData>[]; edges: Edge[] } {
   const byId = new Map(decisionNodes.map((n) => [n.id, n] as const));
   const layoutPos = layoutDecisionTreeNodes(decisionNodes, turns);
@@ -2202,6 +2370,7 @@ function buildFlowGraph(
         isOrphan,
         isGraphSelected,
         isForkParentHoverHighlight,
+        minimalisticView,
         ...(setActiveSuggested ? { setActiveSuggested: true } : {}),
         ...(branchDisplay ? { branchDisplay } : {}),
       },
@@ -2381,6 +2550,11 @@ function DecisionTimelineCanvas({
   const [relinkPickMode, setRelinkPickMode] = useState<null | 'child' | 'parent'>(null);
   const [relinkPanelMinimized, setRelinkPanelMinimized] = useState(false);
   const [snapLockedDepths, setSnapLockedDepths] = useState<Set<number>>(() => new Set());
+  const [minimalisticView, setMinimalisticView] = useState<boolean>(() => {
+    try { return localStorage.getItem('dtl_minimalistic_view') === '1'; } catch { return false; }
+  });
+  const [collapseAllSignal, setCollapseAllSignal] = useState(0);
+  const [expandAllSignal, setExpandAllSignal] = useState(0);
   const clusterDragSessionRef = useRef<{
     clusterId: string;
     clusterStart: { x: number; y: number };
@@ -2421,8 +2595,10 @@ function DecisionTimelineCanvas({
       disarmMovingBranchFromCard,
       relinkPickMode,
       relinkChildId,
+      collapseAllSignal,
+      expandAllSignal,
     }),
-    [reparentSourceId, reparentHoverParentId, disarmMovingBranchFromCard, relinkPickMode, relinkChildId],
+    [reparentSourceId, reparentHoverParentId, disarmMovingBranchFromCard, relinkPickMode, relinkChildId, collapseAllSignal, expandAllSignal],
   );
 
   const eligibleParentIdSet = useMemo(() => {
@@ -2480,6 +2656,8 @@ function DecisionTimelineCanvas({
   }, [decisionNodes, decisionTimelinePositions, mergeDecisionTimelinePositions, turns]);
 
   const applyTimelineOrganize = useCallback(() => {
+    // Collapse all expanded cards so layout positions don't overlap with expanded heights
+    setCollapseAllSignal((v) => v + 1);
     const patch = computeOrganizePositionPatch(decisionNodes, turns, organizeOrientation);
     if (Object.keys(patch).length === 0) return;
     mergeDecisionTimelinePositions(patch);
@@ -2506,6 +2684,24 @@ function DecisionTimelineCanvas({
     if (isLoading || !gameState) return;
     applyTimelineOrganize();
   }, [decisionNodes, applyTimelineOrganize, isLoading, gameState]);
+
+  // Global keyboard shortcuts: M = minimalistic, O = organize
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'm' || e.key === 'M') {
+        setMinimalisticView((v) => {
+          const next = !v;
+          try { localStorage.setItem('dtl_minimalistic_view', next ? '1' : '0'); } catch {}
+          return next;
+        });
+      } else if (e.key === 'o' || e.key === 'O') {
+        applyTimelineOrganize();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [applyTimelineOrganize]);
 
   const clusterSnapContextValue = useMemo<ClusterSnapCtx>(
     () => ({
@@ -2556,6 +2752,7 @@ function DecisionTimelineCanvas({
       reparentHoverParentId,
       relinkPickMode,
       forkParentHoverHighlightId,
+      minimalisticView,
     );
     setEdges(nextEdges);
     setNodes((curr) => {
@@ -2613,6 +2810,7 @@ function DecisionTimelineCanvas({
     reparentHoverParentId,
     relinkPickMode,
     forkParentHoverHighlightId,
+    minimalisticView,
     timelineGraphRefreshNonce,
     setNodes,
     setEdges,
@@ -3047,11 +3245,69 @@ function DecisionTimelineCanvas({
       </div>
       <button
         type="button"
-        className="nodrag nopan w-full rounded-lg border border-emerald-500/45 bg-emerald-950/55 px-2 py-5.5 text-xl font-bold text-emerald-100 transition-colors hover:bg-emerald-900/55"
+        className="nodrag nopan flex w-full items-center justify-center gap-1.5 rounded-lg border border-emerald-500/45 bg-emerald-950/55 px-2 py-2 text-[11px] font-bold text-emerald-100 transition-colors hover:bg-emerald-900/55"
         title={`Reset to compact ${organizeOrientation} tree (saved with the game)`}
         onClick={applyTimelineOrganize}
       >
-        Organize
+        <RotateCcw className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} aria-hidden />
+        Organize Tree
+      </button>
+      <button
+        type="button"
+        className="nodrag nopan flex w-full items-center justify-center gap-1.5 rounded-lg border border-violet-500/45 bg-violet-950/55 px-2 py-2 text-[11px] font-semibold text-violet-100 transition-colors hover:bg-violet-900/55"
+        title="Spread same-depth rows and re-center (saved with the game)"
+        onClick={applyTimelineScatter}
+      >
+        <LayoutGrid className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden />
+        Scatter Layout
+      </button>
+
+      <div className="border-t border-slate-700/50 pt-1">
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">View</span>
+      </div>
+
+      <div className="flex gap-1">
+        <button
+          type="button"
+          className="nodrag nopan flex flex-1 items-center justify-center gap-1 rounded-lg border border-slate-600 bg-slate-900 px-2 py-1.5 text-[10px] font-semibold text-slate-200 transition-colors hover:bg-slate-800"
+          title="Collapse all nodes"
+          onClick={() => setCollapseAllSignal((v) => v + 1)}
+        >
+          <ChevronsDownUp className="h-3 w-3 shrink-0" strokeWidth={2} aria-hidden />
+          Collapse
+        </button>
+        <button
+          type="button"
+          className="nodrag nopan flex flex-1 items-center justify-center gap-1 rounded-lg border border-slate-600 bg-slate-900 px-2 py-1.5 text-[10px] font-semibold text-slate-200 transition-colors hover:bg-slate-800"
+          title="Expand all nodes"
+          onClick={() => setExpandAllSignal((v) => v + 1)}
+        >
+          <ChevronsUpDown className="h-3 w-3 shrink-0" strokeWidth={2} aria-hidden />
+          Expand
+        </button>
+      </div>
+
+      <button
+        type="button"
+        role="switch"
+        aria-checked={minimalisticView}
+        className={`nodrag nopan flex w-full items-center gap-2 rounded-lg border px-2 py-1.5 text-[10px] font-semibold transition-colors ${
+          minimalisticView
+            ? 'border-sky-500/50 bg-sky-950/50 text-sky-200'
+            : 'border-slate-600 bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+        }`}
+        title="Toggle minimalistic node view (M)"
+        onClick={() => {
+          setMinimalisticView((v) => {
+            const next = !v;
+            try { localStorage.setItem('dtl_minimalistic_view', next ? '1' : '0'); } catch {}
+            return next;
+          });
+        }}
+      >
+        <LayoutDashboard className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden />
+        <span className="flex-1 text-left">Minimalistic</span>
+        <span className={`h-2 w-2 rounded-full ${minimalisticView ? 'bg-sky-400' : 'bg-slate-600'}`} aria-hidden />
       </button>
     </>
   );
@@ -3160,14 +3416,6 @@ function DecisionTimelineCanvas({
                 Straight
               </button>
             </div>
-            <button
-              type="button"
-              className="nodrag nopan w-full rounded-lg border border-violet-500/45 bg-violet-950/55 px-2 py-1.5 text-[10px] font-semibold text-violet-100 transition-colors hover:bg-violet-900/55"
-              title="Spread same-depth rows and re-center (saved with the game)"
-              onClick={applyTimelineScatter}
-            >
-              Scatter layout
-            </button>
           </Panel>
           {organizePanelMount
             ? createPortal(
@@ -3203,6 +3451,11 @@ function DecisionTimelineCanvas({
               const node = data?.decisionNode;
               if (!node) return '#475569';
               if (data.isOrphan) return '#e11d48';
+              const hp = node.snapshot?.player?.hp ?? 0;
+              const maxHp = node.snapshot?.player?.maxHp ?? 1;
+              const hpPct = maxHp > 0 ? hp / maxHp : 1;
+              if (hpPct < 0.3) return '#7f1d1d';
+              if (hpPct < 0.6) return '#451a03';
               return minimapHexForDecisionNodePreview(
                 node,
                 !!data?.isPinned,

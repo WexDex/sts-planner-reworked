@@ -437,6 +437,49 @@
       "hasInput": false
     }
   ],
+  "Clash": [
+    {
+      "label": "CVLASHED",
+      "actionType": "modify_enemy_hp",
+      "hasInput": true,
+      "defaultValue": 1,
+      "allEnemies": true,
+      "enemyIndex": 0,
+      "filter": {
+        "type": "group",
+        "id": "pv9xklfc54d",
+        "conjunction": "AND",
+        "children": [
+          {
+            "type": "leaf",
+            "id": "dplrohbx7c9",
+            "field": "hand",
+            "operator": "notContains",
+            "value": {
+              "kind": "cardFilter",
+              "filter": {
+                "type": "group",
+                "id": "s2qqa225asj",
+                "conjunction": "AND",
+                "children": [
+                  {
+                    "type": "leaf",
+                    "id": "4ygc048ie3p",
+                    "field": "type",
+                    "operator": "neq",
+                    "value": {
+                      "kind": "literal",
+                      "value": "Attack"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
   "Cloak and Dagger": [
     {
       "label": "Add Block",
@@ -460,6 +503,46 @@
       "actionType": "move_to_pile",
       "pile": "exhaust",
       "hasInput": false
+    }
+  ],
+  "Dual Wield": [
+    {
+      "label": "Double card",
+      "actionType": "add_card",
+      "hasInput": true,
+      "cardPickerFilter": {
+        "type": "group",
+        "id": "fex96oif5w",
+        "conjunction": "AND",
+        "children": [
+          {
+            "type": "leaf",
+            "id": "v5e5uuo58mp",
+            "field": "hand",
+            "operator": "contains",
+            "value": {
+              "kind": "cardFilter",
+              "filter": {
+                "type": "group",
+                "id": "4d52idf7p1p",
+                "conjunction": "AND",
+                "children": [
+                  {
+                    "type": "leaf",
+                    "id": "2ynamgjd646",
+                    "field": "type",
+                    "operator": "eq",
+                    "value": {
+                      "kind": "literal",
+                      "value": "Attack"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
     }
   ],
   "Combust": [
@@ -1896,12 +1979,13 @@
             "field": "type",
             "operator": "eq",
             "value": {
-              "kind": "literal",
-              "value": "Power"
+              "kind": "field",
+              "field": "type"
             }
           }
         ]
-      }
+      },
+      "pile": "hand"
     }
   ],
   "Wish": [

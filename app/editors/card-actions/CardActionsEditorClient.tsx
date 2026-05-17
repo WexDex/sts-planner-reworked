@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -91,52 +92,52 @@ type FieldDef = {
 };
 
 const CARD_FILTER_FIELDS: FieldDef[] = [
-  { field: "type",                  label: "Card Type",          description: "Attack, Skill, Power, Status, or Curse",                        operators: ["eq","neq"],                        enumValues: ["Attack","Skill","Power","Curse","Status"] },
-  { field: "rarity",                label: "Rarity",             description: "Basic, Common, Uncommon, Rare, Special, or Curse",              operators: ["eq","neq"],                        enumValues: ["Basic","Common","Uncommon","Rare","Special","Curse"] },
-  { field: "characters",            label: "Character",          description: "Which character class the card belongs to",                     operators: ["eq","neq"],                        enumValues: ["Ironclad","Silent","Defect","Watcher","Colorless","Curse"] },
-  { field: "name",                  label: "Card Name",          description: "Exact or partial match on the card's name string",              operators: ["eq","neq","contains","notContains"] },
-  { field: "damage.base",           label: "Base Damage",        description: "Damage value in the card definition (pre-upgrade)",             operators: ["eq","neq","gt","lt","gte","lte"] },
-  { field: "block.base",            label: "Base Block",         description: "Block value in the card definition (pre-upgrade)",              operators: ["eq","neq","gt","lt","gte","lte"] },
-  { field: "draw.base",             label: "Draw Count",         description: "Cards drawn when this card is played",                          operators: ["eq","gt","lt","gte","lte"] },
-  { field: "cost.base",             label: "Energy Cost",        description: "Energy required to play the card (base cost)",                  operators: ["eq","gt","lt","gte","lte"] },
-  { field: "selfExhaustOnPlay.base",label: "Exhausts on Play",   description: "Card moves to the Exhaust pile after being played",             operators: ["isTrue","isFalse"] },
-  { field: "ethereal.base",         label: "Ethereal",           description: "Card is exhausted at end of turn if still in hand",             operators: ["isTrue","isFalse"] },
-  { field: "innate.base",           label: "Innate",             description: "Card starts in your opening hand at combat start",              operators: ["isTrue","isFalse"] },
-  { field: "retain.base",           label: "Retain",             description: "Card is not discarded at end of turn",                          operators: ["isTrue","isFalse"] },
-  { field: "isUpgraded",            label: "Is Upgraded",        description: "True for the upgraded version of a card (preview only)",        operators: ["isTrue","isFalse"] },
-  { field: "gainEnergy.base",       label: "Energy Gain",        description: "Energy added to the player's pool when played",                 operators: ["eq","gt","lt","gte","lte"] },
-  { field: "heal.base",             label: "Heal Amount",        description: "HP restored when played",                                       operators: ["eq","gt","lt","gte","lte"] },
-  { field: "focus.base",            label: "Focus Gain",         description: "Defect Focus stacks granted when played",                       operators: ["eq","gt","lt","gte","lte"] },
-  { field: "scry.base",             label: "Scry Count",         description: "Cards scryed when played (Watcher)",                            operators: ["eq","gt","lt","gte","lte"] },
-  { field: "canAddCards",           label: "Adds Cards",         description: "Adds or shuffles cards into hand/piles when played",            operators: ["isTrue","isFalse"] },
-  { field: "xCost",                 label: "X-Cost",             description: "Effect scales with energy spent (costs X energy)",              operators: ["isTrue","isFalse"] },
-  { field: "unplayable",            label: "Unplayable",         description: "Cannot be played from hand (curses/statuses)",                  operators: ["isTrue","isFalse"] },
-  { field: "costManipulation",      label: "Manipulates Costs",  description: "Changes the play cost of other cards in hand or deck",          operators: ["isTrue","isFalse"] },
-  { field: "canUpgradeCards",       label: "Upgrades Cards",     description: "Upgrades other cards in hand or deck when played",              operators: ["isTrue","isFalse"] },
-  { field: "appliesDebuffs",        label: "Applies Debuffs",    description: "Inflicts at least one debuff on an enemy when played",          operators: ["isTrue","isFalse"] },
-  { field: "multiHit",              label: "Multi-Hit",          description: "Hits or repeats its effect multiple times",                     operators: ["isTrue","isFalse"] },
-  { field: "discardEffect",         label: "Discards Cards",     description: "Causes one or more cards to be discarded when played",          operators: ["isTrue","isFalse"] },
-  { field: "orbInteractions",       label: "Orb Interaction",    description: "Channels, evokes, or otherwise affects orbs when played",       operators: ["isTrue","isFalse"] },
+  { field: "type",                  label: "Card Type",          description: "The card's category. Values: Attack · Skill · Power · Status · Curse. Ex: type = Attack matches Strike, Bash, Headbutt but not Defend.",                                             operators: ["eq","neq"],                        enumValues: ["Attack","Skill","Power","Curse","Status"] },
+  { field: "rarity",                label: "Rarity",             description: "The card's rarity tier. Values: Basic · Common · Uncommon · Rare · Special · Curse. Ex: rarity = Rare matches Reaper, Demon Form, Impervious.",                                       operators: ["eq","neq"],                        enumValues: ["Basic","Common","Uncommon","Rare","Special","Curse"] },
+  { field: "characters",            label: "Character",          description: "Which character class the card belongs to. Values: Ironclad · Silent · Defect · Watcher · Colorless · Curse. Ex: characters = Silent matches Shiv, Predator, Poison-related cards.",   operators: ["eq","neq"],                        enumValues: ["Ironclad","Silent","Defect","Watcher","Colorless","Curse"] },
+  { field: "name",                  label: "Card Name",          description: "Match on the card's internal DB name. Ex: name contains Strike matches Strike, Strike+, Perfected Strike, Twin Strike. Use eq for exact match.",                                        operators: ["eq","neq","contains","notContains"] },
+  { field: "damage.base",           label: "Base Damage",        description: "The card's raw damage value before upgrades, Strength, or Pen Nib effects. Ex: damage.base >= 10 matches high-damage single-hit attacks like Sword Boomerang, Carnage.",              operators: ["eq","neq","gt","lt","gte","lte"] },
+  { field: "block.base",            label: "Base Block",         description: "The card's raw block value before upgrades or Dexterity. Ex: block.base >= 8 matches Defend+, Feel No Pain, Impervious but not Defend (base 5).",                                     operators: ["eq","neq","gt","lt","gte","lte"] },
+  { field: "draw.base",             label: "Draw Count",         description: "How many cards the card draws when played. Ex: draw.base >= 2 matches Acrobatics, Calculated Gamble, Adrenaline.",                                                                      operators: ["eq","gt","lt","gte","lte"] },
+  { field: "cost.base",             label: "Energy Cost",        description: "Energy cost to play the card before any cost reduction. Ex: cost.base = 0 matches Shiv, Seeing Red, Havoc. Ex: cost.base >= 2 matches expensive cards like Reaper, Whirlwind.",       operators: ["eq","gt","lt","gte","lte"] },
+  { field: "selfExhaustOnPlay.base",label: "Exhausts on Play",   description: "TRUE if the card exhausts itself when played (moves to Exhaust pile, gone for the rest of combat). Ex: Offering, Impervious, Exhume, Chrysalis all exhaust.",                         operators: ["isTrue","isFalse"] },
+  { field: "ethereal.base",         label: "Ethereal",           description: "TRUE if the card is automatically exhausted at end of turn if still in hand — use it or lose it. Ex: Apparition, Void, Chaos.",                                                       operators: ["isTrue","isFalse"] },
+  { field: "innate.base",           label: "Innate",             description: "TRUE if the card always starts in your opening hand at the start of combat. Ex: Burning Pact, Normality, Sentinel (upgraded).",                                                        operators: ["isTrue","isFalse"] },
+  { field: "retain.base",           label: "Retain",             description: "TRUE if the card is NOT discarded at end of your turn — stays in hand into the next turn. Ex: Skewer, Equilibrium, Secret Technique.",                                                 operators: ["isTrue","isFalse"] },
+  { field: "isUpgraded",            label: "Is Upgraded",        description: "TRUE when evaluating the upgraded (+) version of a card. Useful to restrict a picker to only upgraded cards, or only un-upgraded.",                                                      operators: ["isTrue","isFalse"] },
+  { field: "gainEnergy.base",       label: "Energy Gain",        description: "Energy added to your pool when the card is played. Ex: gainEnergy.base >= 1 matches Offering (+2 energy), Energize, Crippling Cloud.",                                                 operators: ["eq","gt","lt","gte","lte"] },
+  { field: "heal.base",             label: "Heal Amount",        description: "HP restored when the card is played. Ex: heal.base >= 1 matches Bite (+1 HP per hit) and healing-flavored cards.",                                                                      operators: ["eq","gt","lt","gte","lte"] },
+  { field: "focus.base",            label: "Focus Gain",         description: "Defect-specific: Focus stacks granted when the card is played. Focus scales orb passives. Ex: focus.base >= 1 matches Glacier, Defragment, Consume.",                                  operators: ["eq","gt","lt","gte","lte"] },
+  { field: "scry.base",             label: "Scry Count",         description: "Watcher-specific: how many cards the card scryes (look at top N, discard any) when played. Ex: scry.base >= 2 matches Evaluate, Foresight, Pray.",                                     operators: ["eq","gt","lt","gte","lte"] },
+  { field: "canAddCards",           label: "Adds Cards",         description: "TRUE if the card generates new cards and puts them into hand or piles. Ex: Arm Day, Havoc, Sword Boomerang (adds Shivs or Wounds).",                                                   operators: ["isTrue","isFalse"] },
+  { field: "xCost",                 label: "X-Cost",             description: "TRUE if the card costs X energy — its effect scales with how much energy you spend. Ex: Whirlwind, Expunger, Shockwave, Brutality.",                                                   operators: ["isTrue","isFalse"] },
+  { field: "unplayable",            label: "Unplayable",         description: "TRUE if the card CANNOT be played from hand (curses, statuses). Ex: Burn, Dazed, Wound, Clumsy, Pain, Normality.",                                                                     operators: ["isTrue","isFalse"] },
+  { field: "costManipulation",      label: "Manipulates Costs",  description: "TRUE if the card reduces or modifies the energy cost of other cards. Ex: Madness, Nightmare, Snecko Skull relic effect-cards.",                                                        operators: ["isTrue","isFalse"] },
+  { field: "canUpgradeCards",       label: "Upgrades Cards",     description: "TRUE if the card upgrades other cards in your hand or deck when played. Ex: Armaments (all or 1), Master of Strategy.",                                                                 operators: ["isTrue","isFalse"] },
+  { field: "appliesDebuffs",        label: "Applies Debuffs",    description: "TRUE if the card inflicts at least one debuff on an enemy when played. Ex: Poisoned Stab (Poison), Shockwave (Weak+Vulnerable), Noxious Fumes.",                                       operators: ["isTrue","isFalse"] },
+  { field: "multiHit",              label: "Multi-Hit",          description: "TRUE if the card deals damage or repeats its effect multiple times per play. Ex: Sword Boomerang (3 hits), Twin Strike (2 hits), Cleave (hits all).",                                   operators: ["isTrue","isFalse"] },
+  { field: "discardEffect",         label: "Discards Cards",     description: "TRUE if the card causes other cards to be discarded when played. Ex: Calculated Gamble (discard all, redraw), Burning Pact (exhaust 1, draw 2).",                                       operators: ["isTrue","isFalse"] },
+  { field: "orbInteractions",       label: "Orb Interaction",    description: "TRUE if the card channels, evokes, or directly modifies orbs when played (Defect). Ex: Chill (Frost), Electrodynamics, Consume (Dark), Ball Lightning.",                               operators: ["isTrue","isFalse"] },
 ];
 
 const RUNTIME_FILTER_FIELDS: FieldDef[] = [
-  { field: "player.hp",         label: "Player HP",        description: "Player's current hit points",                            operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
-  { field: "player.maxHp",      label: "Player Max HP",    description: "Player's maximum hit point cap",                         operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
-  { field: "player.block",      label: "Player Block",     description: "Block the player has this turn (absorbs damage)",        operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
-  { field: "player.energy",     label: "Current Energy",   description: "Energy remaining for the player this turn",              operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
-  { field: "hand.length",       label: "Hand Size",        description: "Number of cards currently in the player's hand",         operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
-  { field: "draw.length",       label: "Draw Pile Size",   description: "Cards remaining in the draw pile",                       operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
-  { field: "discard.length",    label: "Discard Size",     description: "Cards currently in the discard pile",                    operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
-  { field: "exhaust.length",    label: "Exhaust Size",     description: "Cards that have been exhausted this combat",             operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
-  { field: "enemies.length",    label: "Enemy Count",      description: "Number of enemies still alive in the encounter",         operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
-  { field: "enemies[0].hp",     label: "Enemy 0 HP",       description: "Current HP of the first enemy (index 0)",               operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
-  { field: "stance",            label: "Stance",           description: "Watcher's current combat stance",                        operators: ["eq","neq"],                        runtime: true, enumValues: ["neutral","wrath","calm","divinity"] },
-  { field: "orbs.length",       label: "Orb Count",        description: "Number of orbs currently channeled (Defect)",            operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
-  { field: "playedCards.length",label: "Cards Played",     description: "Cards played so far this combat",                        operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
-  { field: "hand",              label: "Hand (contains)",  description: "True if hand contains a card matching the sub-filter",   operators: ["contains","notContains"],          runtime: true, isPile: true },
-  { field: "draw",              label: "Draw (contains)",  description: "True if draw pile contains a card matching the sub-filter", operators: ["contains","notContains"],        runtime: true, isPile: true },
-  { field: "discard",           label: "Discard (contains)",description: "True if discard contains a card matching the sub-filter",operators: ["contains","notContains"],        runtime: true, isPile: true },
-  { field: "exhaust",           label: "Exhaust (contains)",description: "True if exhaust pile contains a card matching the sub-filter",operators: ["contains","notContains"],    runtime: true, isPile: true },
+  { field: "player.hp",         label: "Player HP",          description: "⚡ Live — player's current HP when the button is clicked. Ex: player.hp <= 30 → only show this action when HP is critical.",                                                                                                                                                                                                            operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "player.maxHp",      label: "Player Max HP",      description: "⚡ Live — player's maximum HP cap. Combine with player.hp to reason about % health. Ex: player.maxHp >= 80 → only show when the player has a large HP pool.",                                                                                                                                                                          operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "player.block",      label: "Player Block",       description: "⚡ Live — block the player currently has this turn (absorbs incoming damage first). Ex: player.block = 0 → show only when the player has zero protection.",                                                                                                                                                                             operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "player.energy",     label: "Current Energy",     description: "⚡ Live — energy remaining for the player this turn. Ex: player.energy >= 3 → action visible only when 3+ energy is still available.",                                                                                                                                                                                                  operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "hand.length",       label: "Hand Size",          description: "⚡ Live — number of cards currently held in hand. Ex: hand.length >= 4 → action visible only when holding 4 or more cards.",                                                                                                                                                                                                           operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "draw.length",       label: "Draw Pile Size",     description: "⚡ Live — cards remaining in the draw pile (not yet drawn this turn cycle). Ex: draw.length = 0 → show only when the draw pile is empty.",                                                                                                                                                                                             operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "discard.length",    label: "Discard Size",       description: "⚡ Live — cards currently sitting in the discard pile. Ex: discard.length >= 5 → show after 5+ cards have been discarded.",                                                                                                                                                                                                           operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "exhaust.length",    label: "Exhaust Size",       description: "⚡ Live — cards exhausted so far in this combat (permanently removed). Ex: exhaust.length >= 1 → show only after at least one card has been exhausted.",                                                                                                                                                                               operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "enemies.length",    label: "Enemy Count",        description: "⚡ Live — number of enemies still alive in the encounter. Ex: enemies.length = 1 → show only when fighting a single enemy (boss fight).",                                                                                                                                                                                              operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "enemies[0].hp",     label: "Enemy 0 HP",         description: "⚡ Live — current HP of the first enemy (index 0 = leftmost in the UI). Ex: enemies[0].hp <= 10 → action visible only when enemy is almost dead.",                                                                                                                                                                                    operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "stance",            label: "Stance",             description: "⚡ Live — Watcher's current combat stance. Values: neutral · wrath · calm · divinity. Ex: stance = wrath → action only visible while in Wrath. Ex: stance = neutral → show only before entering a stance.",                                                                                                                             operators: ["eq","neq"],                        runtime: true, enumValues: ["neutral","wrath","calm","divinity"] },
+  { field: "orbs.length",       label: "Orb Count",          description: "⚡ Live — number of orbs currently channeled in the Defect's orb slots. Ex: orbs.length >= 3 → show only when all 3 default slots are filled.",                                                                                                                                                                                       operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "playedCards.length",label: "Cards Played",       description: "⚡ Live — total cards played since the start of this combat (cumulative counter). Ex: playedCards.length >= 10 → show after playing many cards (e.g. for a 'combo turn' indicator).",                                                                                                                                                   operators: ["eq","neq","gt","lt","gte","lte"], runtime: true },
+  { field: "hand",              label: "Hand (contains)",    description: "⚡ Pile check — the hand contains at least one card matching the sub-filter below. Two uses:\n• Action Filter (gate): button shows only when a matching card is currently in hand. Ex: hand contains (type = Attack) → visible if you hold any Attack.\n• Card Picker Filter: only shows cards in the picker that are BOTH in your hand AND match the sub-filter. Ex: hand contains (type = Attack) → picker lists only your hand's Attack cards.",    operators: ["contains","notContains"], runtime: true, isPile: true },
+  { field: "draw",              label: "Draw (contains)",    description: "⚡ Pile check — the draw pile contains at least one card matching the sub-filter below.\n• Action Filter: button visible only when a matching card is in the draw pile.\n• Card Picker Filter: only shows DB cards currently sitting in your draw pile that match the sub-filter.",                                                                                                                                                             operators: ["contains","notContains"], runtime: true, isPile: true },
+  { field: "discard",           label: "Discard (contains)", description: "⚡ Pile check — the discard pile contains at least one card matching the sub-filter below.\n• Action Filter: button visible only when a matching card is discarded. Ex: discard contains (type = Power) → show only if a Power was discarded.\n• Card Picker Filter: only shows DB cards currently in your discard pile that match.",                                                                                                              operators: ["contains","notContains"], runtime: true, isPile: true },
+  { field: "exhaust",           label: "Exhaust (contains)", description: "⚡ Pile check — the exhaust pile contains at least one card matching the sub-filter below.\n• Action Filter: button visible only when a matching card has been exhausted. Ex: exhaust contains (name = Sentinel).\n• Card Picker Filter: only shows DB cards that are currently in your exhaust pile and match the sub-filter.",                                                                                                                   operators: ["contains","notContains"], runtime: true, isPile: true },
 ];
 
 const ALL_FILTER_FIELDS = [...CARD_FILTER_FIELDS, ...RUNTIME_FILTER_FIELDS];
@@ -520,11 +521,13 @@ function ActionFilterSection({
   onChange,
   allCards,
   label,
+  contextNote,
 }: {
   filter?: ActionFilter;
   onChange: (f: ActionFilter | undefined) => void;
   allCards: Record<string, unknown>[];
   label?: string;
+  contextNote?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -574,6 +577,10 @@ function ActionFilterSection({
           <span className="text-[9px] text-slate-600 italic">No filter — matches all cards</span>
         )}
       </div>
+
+      {contextNote && (
+        <p className="mt-1.5 text-[9px] italic leading-relaxed text-slate-500">{contextNote}</p>
+      )}
 
       {expanded && active && (
         <div className="mt-2">
@@ -730,133 +737,133 @@ type CustomActionsMap = Record<string, CustomAction[]>;
 
 const ACTION_TYPES: { value: ActionType; label: string; description: string; color: string; activeClass: string; inactiveClass: string }[] = [
   {
-    value: "give_buff", label: "Give Buff", description: "Apply a named buff",
+    value: "give_buff", label: "Give Buff", description: "Apply a named buff to the player (e.g. Strength, Dexterity, Metallicize). Specify the buff name and stack count.",
     color: "emerald",
     activeClass: "border-emerald-500/70 bg-emerald-950/60 text-emerald-200 ring-1 ring-emerald-500/30",
     inactiveClass: "border-emerald-500/40 bg-emerald-900/30 text-emerald-400/80 ring-1 ring-emerald-500/20",
   },
   {
-    value: "give_debuff", label: "Give Debuff", description: "Apply a named debuff",
+    value: "give_debuff", label: "Give Debuff", description: "Apply a named debuff to the player (e.g. Weak, Frail, Vulnerable). Specify name and stack count.",
     color: "orange",
     activeClass: "border-orange-500/70 bg-orange-950/60 text-orange-200 ring-1 ring-orange-500/30",
     inactiveClass: "border-orange-500/40 bg-orange-900/30 text-orange-400/80 ring-1 ring-orange-500/20",
   },
   {
-    value: "remove_buff", label: "Remove Buff", description: "Remove buff/debuff",
+    value: "remove_buff", label: "Remove Buff", description: "Remove a specific buff or debuff from the player by exact name (e.g. 'Strength', 'Poison').",
     color: "rose",
     activeClass: "border-rose-500/70 bg-rose-950/60 text-rose-200 ring-1 ring-rose-500/30",
     inactiveClass: "border-rose-500/40 bg-rose-900/30 text-rose-400/80 ring-1 ring-rose-500/20",
   },
   {
-    value: "modify_hp", label: "Modify HP", description: "Change player HP",
+    value: "modify_hp", label: "Modify HP", description: "Change player HP. Positive = heal. Negative = take damage (bypasses block). Ex: −5 to simulate taking 5 damage.",
     color: "red",
     activeClass: "border-red-500/70 bg-red-950/60 text-red-200 ring-1 ring-red-500/30",
     inactiveClass: "border-red-500/40 bg-red-900/30 text-red-400/80 ring-1 ring-red-500/20",
   },
   {
-    value: "modify_block", label: "Modify Block", description: "Add/remove block",
+    value: "modify_block", label: "Modify Block", description: "Add or remove block from the player. Positive = gain block. Negative = strip block. Ex: +5 to simulate Defend being played.",
     color: "sky",
     activeClass: "border-sky-500/70 bg-sky-950/60 text-sky-200 ring-1 ring-sky-500/30",
     inactiveClass: "border-sky-500/40 bg-sky-900/30 text-sky-400/80 ring-1 ring-sky-500/20",
   },
   {
-    value: "modify_energy", label: "Modify Energy", description: "Add/remove energy",
+    value: "modify_energy", label: "Modify Energy", description: "Add or remove energy this turn. Positive = gain energy. Negative = lose energy. Ex: +1 to simulate Pocketwatch or Offering effect.",
     color: "amber",
     activeClass: "border-amber-500/70 bg-amber-950/60 text-amber-200 ring-1 ring-amber-500/30",
     inactiveClass: "border-amber-500/40 bg-amber-900/30 text-amber-400/80 ring-1 ring-amber-500/20",
   },
   {
-    value: "draw_cards", label: "Draw Cards", description: "Draw N cards",
+    value: "draw_cards", label: "Draw Cards", description: "Draw N cards from the draw pile into hand. Ex: 2 to simulate Acrobatics or Adrenaline.",
     color: "violet",
     activeClass: "border-violet-500/70 bg-violet-950/60 text-violet-200 ring-1 ring-violet-500/30",
     inactiveClass: "border-violet-500/40 bg-violet-900/30 text-violet-400/80 ring-1 ring-violet-500/20",
   },
   {
-    value: "move_to_pile", label: "Move to Pile", description: "Move card to a pile",
+    value: "move_to_pile", label: "Move to Pile", description: "Move THIS card (the one this action is attached to) to another pile. E.g. self-exhaust it, return it to draw, or discard it.",
     color: "slate",
     activeClass: "border-slate-400/60 bg-slate-700/60 text-slate-200 ring-1 ring-slate-400/25",
     inactiveClass: "border-slate-400/40 bg-slate-900/30 text-slate-400/80 ring-1 ring-slate-400/20",
   },
   {
-    value: "add_card", label: "Add Card", description: "Add a DB card to a pile",
+    value: "add_card", label: "Add Card", description: "Fetch a card from the STS database and add it to a pile. Pre-select cards or let the player pick at runtime. Ex: White Noise → add a random Power to hand.",
     color: "fuchsia",
     activeClass: "border-fuchsia-500/70 bg-fuchsia-950/60 text-fuchsia-200 ring-1 ring-fuchsia-500/30",
     inactiveClass: "border-fuchsia-500/40 bg-fuchsia-900/30 text-fuchsia-400/80 ring-1 ring-fuchsia-500/20",
   },
   {
-    value: "channel_orb", label: "Channel Orb", description: "Channel orb type N times",
+    value: "channel_orb", label: "Channel Orb", description: "Channel an orb of the chosen type N times into the Defect's orb queue. Ex: channel 2× Lightning to simulate Ball Lightning.",
     color: "blue",
     activeClass: "border-blue-500/70 bg-blue-950/60 text-blue-200 ring-1 ring-blue-500/30",
     inactiveClass: "border-blue-500/40 bg-blue-900/30 text-blue-400/80 ring-1 ring-blue-500/20",
   },
   {
-    value: "evoke_orbs", label: "Evoke Orbs", description: "Evoke N orbs",
+    value: "evoke_orbs", label: "Evoke Orbs", description: "Trigger (evoke) the next N orbs in the orb queue. Lightning deals damage, Frost gives block, Dark deals massive damage, Plasma restores energy.",
     color: "cyan",
     activeClass: "border-cyan-500/70 bg-cyan-950/60 text-cyan-200 ring-1 ring-cyan-500/30",
     inactiveClass: "border-cyan-500/40 bg-cyan-900/30 text-cyan-400/80 ring-1 ring-cyan-500/20",
   },
   {
-    value: "set_stance", label: "Set Stance", description: "Change Watcher stance",
+    value: "set_stance", label: "Set Stance", description: "Switch the Watcher to the chosen stance (Wrath doubles damage dealt/received, Calm gives energy on exit, Divinity = 3× damage). Neutral exits any stance.",
     color: "purple",
     activeClass: "border-purple-500/70 bg-purple-950/60 text-purple-200 ring-1 ring-purple-500/30",
     inactiveClass: "border-purple-500/40 bg-purple-900/30 text-purple-400/80 ring-1 ring-purple-500/20",
   },
   {
-    value: "give_enemy_buff", label: "Enemy Buff", description: "Give buff to enemy",
+    value: "give_enemy_buff", label: "Enemy Buff", description: "Apply a named buff to one or all enemies (e.g. Strength, Ritual, Spore Cloud). Choose Single or All enemies and specify stacks.",
     color: "teal",
     activeClass: "border-teal-500/70 bg-teal-950/60 text-teal-200 ring-1 ring-teal-500/30",
     inactiveClass: "border-teal-500/40 bg-teal-900/30 text-teal-400/80 ring-1 ring-teal-500/20",
   },
   {
-    value: "give_enemy_debuff", label: "Enemy Debuff", description: "Debuff an enemy",
+    value: "give_enemy_debuff", label: "Enemy Debuff", description: "Apply a named debuff to one or all enemies (e.g. Vulnerable, Weak, Poison, Constricted). Choose Single or All enemies.",
     color: "yellow",
     activeClass: "border-yellow-500/70 bg-yellow-950/60 text-yellow-200 ring-1 ring-yellow-500/30",
     inactiveClass: "border-yellow-500/40 bg-yellow-900/30 text-yellow-400/80 ring-1 ring-yellow-500/20",
   },
   {
-    value: "modify_enemy_hp", label: "Enemy HP", description: "Damage or heal enemy",
+    value: "modify_enemy_hp", label: "Enemy HP", description: "Change an enemy's HP directly. Negative = deal damage (bypasses block). Positive = heal the enemy. Targets single enemy by index or all enemies.",
     color: "pink",
     activeClass: "border-pink-500/70 bg-pink-950/60 text-pink-200 ring-1 ring-pink-500/30",
     inactiveClass: "border-pink-500/40 bg-pink-900/30 text-pink-400/80 ring-1 ring-pink-500/20",
   },
   {
-    value: "modify_enemy_block", label: "Enemy Block", description: "Add/remove enemy block",
+    value: "modify_enemy_block", label: "Enemy Block", description: "Add or remove block from an enemy. Positive = give the enemy block. Negative = strip block. Targets single or all enemies.",
     color: "indigo",
     activeClass: "border-indigo-500/70 bg-indigo-950/60 text-indigo-200 ring-1 ring-indigo-500/30",
     inactiveClass: "border-indigo-500/40 bg-indigo-900/30 text-indigo-400/80 ring-1 ring-indigo-500/20",
   },
   {
-    value: "remove_enemy_buff", label: "Remove Enemy Buff", description: "Remove enemy buff/debuff",
+    value: "remove_enemy_buff", label: "Remove Enemy Buff", description: "Remove a specific buff or debuff from an enemy by exact name. Ex: remove 'Strength' from boss, remove 'Ritual'. Targets single or all.",
     color: "lime",
     activeClass: "border-lime-500/70 bg-lime-950/60 text-lime-200 ring-1 ring-lime-500/30",
     inactiveClass: "border-lime-500/40 bg-lime-900/30 text-lime-400/80 ring-1 ring-lime-500/20",
   },
   {
-    value: "trigger_orb_passive", label: "Orb Passive", description: "Trigger all orb passives",
+    value: "trigger_orb_passive", label: "Orb Passive", description: "Trigger the passive effect of all currently channeled orbs once (Lightning deal 3 dmg, Frost gain 2 block, etc.). No input needed.",
     color: "sky",
     activeClass: "border-sky-400/70 bg-sky-950/60 text-sky-200 ring-1 ring-sky-400/30",
     inactiveClass: "border-sky-400/40 bg-sky-900/30 text-sky-400/80 ring-1 ring-sky-400/20",
   },
   {
-    value: "discard_hand", label: "Discard Hand", description: "Discard all cards in hand",
+    value: "discard_hand", label: "Discard Hand", description: "Discard every card currently in hand to the discard pile. Fires immediately — no input. Ex: simulate Calculated Gamble or end-of-turn discard.",
     color: "orange",
     activeClass: "border-orange-400/70 bg-orange-950/60 text-orange-200 ring-1 ring-orange-400/30",
     inactiveClass: "border-orange-400/40 bg-orange-900/30 text-orange-400/80 ring-1 ring-orange-400/20",
   },
   {
-    value: "reshuffle_discard", label: "Reshuffle Discard", description: "Shuffle discard into draw",
+    value: "reshuffle_discard", label: "Reshuffle Discard", description: "Shuffle the entire discard pile back into the draw pile. Fires immediately. Ex: simulate Sundial, Apotheosis trigger, or end-of-turn reshuffle.",
     color: "slate",
     activeClass: "border-slate-300/70 bg-slate-700/60 text-slate-100 ring-1 ring-slate-300/30",
     inactiveClass: "border-slate-300/40 bg-slate-900/30 text-slate-400/80 ring-1 ring-slate-300/20",
   },
   {
-    value: "set_orb_slots", label: "Set Orb Slots", description: "Set orb slot count exactly",
+    value: "set_orb_slots", label: "Set Orb Slots", description: "Set the Defect's orb channel size to an exact number. Ex: 5 to simulate Inserter relic or Capacitor card. Default is 3.",
     color: "violet",
     activeClass: "border-violet-400/70 bg-violet-950/60 text-violet-200 ring-1 ring-violet-400/30",
     inactiveClass: "border-violet-400/40 bg-violet-900/30 text-violet-400/80 ring-1 ring-violet-400/20",
   },
   {
-    value: "adjust_orb_slots", label: "Adjust Orb Slots", description: "+/− orb slot count",
+    value: "adjust_orb_slots", label: "Adjust Orb Slots", description: "Add or remove orb channel slots relative to the current count. Positive = more slots. Negative = fewer. Ex: +2 to simulate Capacitor.",
     color: "violet",
     activeClass: "border-violet-300/60 bg-violet-900/40 text-violet-300 ring-1 ring-violet-300/25",
     inactiveClass: "border-violet-300/40 bg-violet-900/30 text-violet-400/80 ring-1 ring-violet-300/20",
@@ -1056,14 +1063,22 @@ function ActionRow({
           onChange={(e) => set({ label: e.target.value })}
           className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-100 outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/30"
         />
+        <p className="mt-0.5 text-[9px] text-slate-600">Text shown on the quick-action button. Keep it short (1–4 words).</p>
       </div>
 
       {/* Action Filter */}
-      <ActionFilterSection
-        filter={action.filter}
-        onChange={f => set({ filter: f })}
-        allCards={allCardsFlat}
-      />
+      <div>
+        <p className="mb-1 text-[9px] text-slate-600">
+          <span className="font-bold text-slate-500">Visibility condition</span> — this button is only shown when ALL conditions below are true.
+          Leave empty to always show the button.
+        </p>
+        <ActionFilterSection
+          filter={action.filter}
+          onChange={f => set({ filter: f })}
+          allCards={allCardsFlat}
+          contextNote="'The card' here refers to the card this action is attached to (e.g. if you're editing Strike, card fields test Strike's own properties)."
+        />
+      </div>
 
       {/* Action type */}
       <div>
@@ -1089,7 +1104,7 @@ function ActionRow({
         })()}
       </div>
 
-      {typeModalOpen && (
+      {typeModalOpen && typeof document !== 'undefined' && createPortal(
         <div
           className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-sm"
           onClick={() => setTypeModalOpen(false)}
@@ -1152,7 +1167,8 @@ function ActionRow({
               })}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Buff/debuff name */}
@@ -1168,15 +1184,17 @@ function ActionRow({
             onChange={(e) => set({ buffName: e.target.value })}
             className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-100 outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/30"
           />
+          <p className="mt-0.5 text-[9px] text-slate-600">Exact internal STS buff/debuff name. Ex: Strength · Dexterity · Poison · Vulnerable · Accuracy</p>
         </div>
       )}
 
       {/* Pile selector */}
       {action.actionType === "move_to_pile" && (
         <div>
-          <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+          <label className="mb-0.5 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
             Destination pile
           </label>
+          <p className="mb-1.5 text-[9px] text-slate-600">Hand = immediately playable · Draw = shuffled into deck · Discard = sits in discard · Exhaust = removed for this combat</p>
           <div className="flex flex-wrap gap-1.5">
             {PILE_OPTIONS.map((p) => {
               const active = (action.pile ?? "hand") === p.value;
@@ -1256,9 +1274,10 @@ function ActionRow({
             />
           )}
           <div>
-            <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            <label className="mb-0.5 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
               Add to pile
             </label>
+            <p className="mb-1.5 text-[9px] text-slate-600">Hand = card goes to hand immediately · Draw = shuffled into draw pile · Discard = top of discard · Exhaust = permanently removed</p>
             <div className="flex flex-wrap gap-1.5">
               {PILE_ADD_OPTIONS.map((p) => {
                 const active = (action.pile ?? "hand") === p.value;
@@ -1290,6 +1309,7 @@ function ActionRow({
               onChange={(e) => set({ cardCount: Math.max(1, Number(e.target.value)) })}
               className="w-32 rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm tabular-nums text-slate-100 outline-none focus:border-fuchsia-500/60 focus:ring-1 focus:ring-fuchsia-500/30"
             />
+            <p className="mt-0.5 text-[9px] text-slate-600">Copies of each selected card to add. Ex: 2 = add 2 copies of every picked card.</p>
           </div>
           {/* Prompt on click toggle */}
           <div className="flex items-center gap-2.5 pt-1">
@@ -1317,12 +1337,19 @@ function ActionRow({
           </div>
 
           {/* Card picker filter */}
-          <ActionFilterSection
-            label="Restrict Pickable Cards"
-            filter={action.cardPickerFilter}
-            onChange={f => set({ cardPickerFilter: f })}
-            allCards={allCardsFlat}
-          />
+          <div>
+            <p className="mb-1 text-[9px] text-slate-600">
+              <span className="font-bold text-slate-500">Card Picker Filter</span> — limits which cards appear in the picker when this button is clicked.
+              Card fields (Type, Rarity…) filter the DB. Pile fields (Hand contains…) additionally check if the card is currently in that pile.
+            </p>
+            <ActionFilterSection
+              label="Restrict Pickable Cards"
+              filter={action.cardPickerFilter}
+              onChange={f => set({ cardPickerFilter: f })}
+              allCards={allCardsFlat}
+              contextNote="'The card' here refers to each individual card shown in the picker — card fields (Type, Rarity…) decide whether to include that DB card. Pile fields (Hand contains…) check if that specific card is currently in the given pile."
+            />
+          </div>
         </div>
       )}
 
@@ -1397,6 +1424,7 @@ function ActionRow({
               <input type="number" min={0} value={action.enemyIndex ?? 0}
                 onChange={(e) => set({ enemyIndex: Math.max(0, Number(e.target.value) || 0) })}
                 className="w-24 rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm tabular-nums text-slate-100 outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/30" />
+              <p className="mt-0.5 text-[9px] text-slate-600">0 = first enemy (leftmost), 1 = second, etc.</p>
             </div>
           )}
           {/* Stacks hasInput + defaultValue for enemy buff/debuff */}
@@ -1434,6 +1462,11 @@ function ActionRow({
 
       {/* Has input + default value — only for simple numeric action types */}
       {(action.actionType === "give_buff" || action.actionType === "give_debuff" || action.actionType === "modify_hp" || action.actionType === "modify_block" || action.actionType === "modify_energy" || action.actionType === "draw_cards" || action.actionType === "evoke_orbs" || action.actionType === "set_orb_slots" || action.actionType === "adjust_orb_slots") && (
+        <div className="space-y-1.5">
+          <p className="text-[9px] text-slate-600">
+            <span className="font-bold text-slate-500">Show input ON</span>: a popup asks for a value before executing — default value is pre-filled.
+            <span className="font-bold text-slate-500"> OFF</span>: fires immediately using the default value, no prompt.
+          </p>
         <div className="flex items-end gap-3">
           <div className="flex items-center gap-2">
             <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
@@ -1466,6 +1499,7 @@ function ActionRow({
               onChangeRef={ref => set({ valueRef: ref })}
             />
           </div>
+        </div>
         </div>
       )}
     </div>}

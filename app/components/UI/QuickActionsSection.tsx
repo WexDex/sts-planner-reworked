@@ -307,6 +307,8 @@ type CustomAction = {
   enemyIndex?: number;
   allEnemies?: boolean;
   filter?: ActionFilter;
+  /** Optional filter tree applied to the card picker when actionType is "add_card". */
+  cardPickerFilter?: FilterGroup;
 };
 
 type CustomActionsMap = Record<string, CustomAction[]>;
@@ -321,6 +323,8 @@ type CardPickerState = {
   pile: string;
   defaultCount: number;
   initialSelected: string[];
+  filterPredicate?: (card: Record<string, unknown>) => boolean;
+  filterLabel?: string;
 } | null;
 
 function resolveValue(node: ValueNode | undefined, isUpgraded: boolean): number | null {
@@ -690,7 +694,36 @@ export default function QuickActionsSection() {
     if (ca.actionType === "add_card") {
       if (!ca.hasInput) { fireCustomAction(ca); return; }
       const preSelected = (ca as any).cardNames as string[] | undefined ?? (ca.cardName ? [ca.cardName] : []);
-      setCardPicker({ pile: ca.pile ?? "hand", defaultCount: ca.cardCount ?? 1, initialSelected: preSelected });
+      // Snapshot the current hand/draw/discard/exhaust card names at trigger time.
+      // For each DB card shown in the picker we synthesise a context where the pile
+      // arrays only contain that specific card if it is actually in that pile — so
+      // "hand contains (type = Attack)" correctly means "this card is in hand AND is Attack".
+      const makePileCtx = (pileCards: unknown[], cardId: string) => {
+        const isInPile = pileCards.some(
+          (c: unknown) => ((c as Record<string, unknown>).name ?? (c as Record<string, unknown>).card_ID) === cardId
+        );
+        return { length: isInPile ? 1 : 0, _cards: isInPile ? [{ name: cardId }] : [] };
+      };
+      const snapHand    = [...(gameState?.hand    ?? [])];
+      const snapDraw    = [...(gameState?.draw    ?? [])];
+      const snapDiscard = [...(gameState?.discard ?? [])];
+      const snapExhaust = [...(gameState?.exhaust ?? [])];
+
+      const filterPredicate = ca.cardPickerFilter
+        ? (card: Record<string, unknown>) => {
+            const id = String(card.id ?? '');
+            const ctx: Record<string, unknown> = {
+              ...card,
+              hand:    makePileCtx(snapHand,    id),
+              draw:    makePileCtx(snapDraw,    id),
+              discard: makePileCtx(snapDiscard, id),
+              exhaust: makePileCtx(snapExhaust, id),
+            };
+            return evaluateFilterNode(ca.cardPickerFilter!, ctx);
+          }
+        : undefined;
+      const filterLabel = ca.cardPickerFilter ? filterExpr(ca.cardPickerFilter) : undefined;
+      setCardPicker({ pile: ca.pile ?? "hand", defaultCount: ca.cardCount ?? 1, initialSelected: preSelected, filterPredicate, filterLabel });
       return;
     }
     if (ENEMY_ACTION_TYPES.has(ca.actionType)) {
@@ -915,6 +948,8 @@ export default function QuickActionsSection() {
           defaultCount={cardPicker.defaultCount}
           pile={cardPicker.pile}
           initialSelected={cardPicker.initialSelected}
+          filterPredicate={cardPicker.filterPredicate}
+          filterLabel={cardPicker.filterLabel}
           onSelect={(cardIds, count) => {
             addCardFromDB(
               cardIds.flatMap((id) => Array(count).fill(id)),

@@ -79,6 +79,8 @@ interface Props {
   initialSelected?: string[];
   /** When provided, only cards passing this predicate appear in the list. */
   filterPredicate?: (card: Record<string, unknown>) => boolean;
+  /** Human-readable description of the active filter, shown as a banner below search. */
+  filterLabel?: string;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -93,6 +95,7 @@ export default function CardPickerModal({
   pile,
   initialSelected = [],
   filterPredicate,
+  filterLabel,
 }: Props) {
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState("");
@@ -200,6 +203,12 @@ export default function CardPickerModal({
               </button>
             ))}
           </div>
+          {filterLabel && (
+            <div className="flex items-center gap-1.5 rounded-lg border border-violet-700/40 bg-violet-950/30 px-2.5 py-1.5">
+              <span className="text-[9px] font-bold uppercase tracking-widest text-violet-400">Filter</span>
+              <span className="text-[11px] font-semibold text-violet-200">{filterLabel}</span>
+            </div>
+          )}
           <p className="text-[10px] text-slate-600">
             {filtered.length} card{filtered.length !== 1 ? "s" : ""}
             {multiSelect && (
