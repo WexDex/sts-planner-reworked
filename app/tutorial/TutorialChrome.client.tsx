@@ -198,10 +198,9 @@ export default function TutorialChrome({
       >
         <div className="mx-auto max-w-6xl">
           <strong className="font-semibold text-amber-100">Docs highlight (v{TUTORIAL_DOC_PASS_VERSION}):</strong> Panels with the
-          amber left stripe are new or revised in this pass — Card Actions rail (left-rail swap, persistent selection), Quick
-          Actions per card (block, draw, energy, heal, focus, mantra, exhaust, Power apply/remove), and the new{" "}
-          <code className="font-mono text-[10px] text-amber-200/90">/editors/card-actions</code> route for configuring custom
-          per-card actions. Next doc update: remove old stripes, bump version, sync route list in{" "}
+          amber left stripe are new or revised in this pass — card-action <strong className="text-amber-200">Target selector</strong> (self or filter-based multi-card targeting),
+          6 new action types (Upgrade, Downgrade, Exhaust, Mark as Played, Duplicate, Remove), hover highlight (cyan ring on affected cards and pile buttons),
+          and per-card UUID stamping for precise copy-level identity. Next doc update: remove old stripes, bump version, sync route list in{" "}
           <code className="font-mono text-[10px] text-amber-200/90">docUpdateHighlight.ts</code>, then restripe only what changed.
         </div>
       </aside>

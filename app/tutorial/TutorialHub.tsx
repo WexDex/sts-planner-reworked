@@ -3,6 +3,7 @@ import {
   Activity,
   BookOpen,
   CalendarClock,
+  ChevronDown,
   FileCode2,
   FlaskConical,
   FolderOpen,
@@ -16,6 +17,7 @@ import {
   Shuffle,
   Sparkles,
   Swords,
+  Target,
   Wrench,
   Zap,
 } from "lucide-react";
@@ -52,91 +54,135 @@ export default function TutorialHub() {
       <section id="whats-new" className={`scroll-mt-28 space-y-4 rounded-2xl border border-indigo-500/35 bg-indigo-950/20 p-5 sm:p-6 ${TUTORIAL_DOC_UPDATE_CLASS}`}>
         <h2 className="flex items-center gap-2 text-base font-bold text-indigo-100">
           <Sparkles className="h-4 w-4 text-indigo-400" strokeWidth={2} aria-hidden />
-          What&apos;s new — 2026.05.14
+          What&apos;s new — 2026.05.18
         </h2>
         <p className="text-sm text-slate-400">
-          Feature expansion shipped in this pass. All items below are live from the main planner shell.
+          Card-action targeting overhaul, new action types, hover highlight, and per-card UUID stamping.
         </p>
 
-        {/* ── Latest drop ── */}
-        <div className="rounded-xl border border-indigo-400/40 bg-indigo-950/30 p-4">
-          <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-indigo-300">
-            <Sparkles className="h-3 w-3 shrink-0" strokeWidth={2.5} aria-hidden />
-            Latest additions
+        {/* ── Card Action Target System ── */}
+        <div className="rounded-xl border border-cyan-400/30 bg-cyan-950/20 p-4">
+          <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-cyan-300">
+            <Target className="h-3 w-3 shrink-0" strokeWidth={2.5} aria-hidden />
+            Card Action — Target selector
           </p>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-lg border border-indigo-500/25 bg-slate-900/60 p-3 text-xs">
-              <p className="mb-1 flex items-center gap-1 font-bold text-indigo-200">
-                <Zap className="h-3 w-3 shrink-0" strokeWidth={2.5} aria-hidden />
-                Quick Actions panel
-              </p>
+          <p className="mb-3 text-xs leading-relaxed text-slate-400">
+            Card-affecting quick actions now declare <strong className="text-slate-200">who they act on</strong> — not just the card the action is attached to. Open the Card Actions editor (<code className="font-mono text-[10px]">/editors/card-actions</code>) to configure targets on any card-affecting action type.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-cyan-500/20 bg-slate-900/60 p-3 text-xs">
+              <p className="mb-1 font-bold text-cyan-200">Self (default)</p>
               <p className="leading-relaxed text-slate-400">
-                Collapsible panel in the topbar (indigo button). Houses orb channel, stance toggle, hand discard tools,
-                scry, and shuffle discard → draw — all logged. Click the button to expand; click again to dismiss.
+                No change from previous behavior. Actions without a target field default to self — all existing JSON actions are unaffected.
               </p>
             </div>
-            <div className="rounded-lg border border-sky-500/25 bg-slate-900/60 p-3 text-xs">
-              <p className="mb-1 flex items-center gap-1 font-bold text-sky-200">
-                <Layers className="h-3 w-3 shrink-0" strokeWidth={2.5} aria-hidden />
-                Pile Order Modal
-              </p>
+            <div className="rounded-lg border border-cyan-500/20 bg-slate-900/60 p-3 text-xs">
+              <p className="mb-1 font-bold text-cyan-200">Filter mode</p>
               <p className="leading-relaxed text-slate-400">
-                Shared drag-sort dialog used by Scry, Shuffle discard → draw, and the auto-reshuffle on deck exhaustion.
-                Drag rows to set the final sequence before confirming.
-              </p>
-            </div>
-            <div className="rounded-lg border border-emerald-500/25 bg-slate-900/60 p-3 text-xs">
-              <p className="mb-1 flex items-center gap-1 font-bold text-emerald-200">
-                <FlaskConical className="h-3 w-3 shrink-0" strokeWidth={2.5} aria-hidden />
-                Potion belt
-              </p>
-              <p className="leading-relaxed text-slate-400">
-                Belt strip in the bottom pile bar — 1–5 slots (default 2, +/− to resize). Add potions via the card
-                DB picker. Tap a filled slot to <strong className="text-slate-300">Use</strong> or{" "}
-                <strong className="text-slate-300">Discard</strong>; both log the action.
+                Choose one or more <strong className="text-slate-300">source piles</strong> (hand / draw / discard / exhaust / played), add optional <strong className="text-slate-300">conditions</strong> (type, cost, keywords…), and optionally <strong className="text-slate-300">exclude self</strong>. Every card that matches is targeted.
               </p>
             </div>
           </div>
         </div>
 
-        {/* ── Full feature grid ── */}
+        {/* ── New action types + hover highlight ── */}
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border border-indigo-500/30 bg-slate-900/50 p-4 text-sm">
-            <p className="mb-1 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-indigo-300">
+          <div className="rounded-xl border border-violet-500/30 bg-slate-900/50 p-4 text-sm">
+            <p className="mb-1 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-violet-300">
               <Zap className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
-              Quick Actions — detail
+              6 new action types
             </p>
             <ul className="space-y-1 text-slate-400 text-xs leading-relaxed">
-              <li><strong className="text-slate-200">Orb channel</strong> — channel Lightning ⚡, Dark 🌑, Frost 🔵, or Plasma orbs. Evoke N (configurable); Trigger All Passives. Channel size displayed as filled/total.</li>
-              <li><strong className="text-slate-200">Stance toggle</strong> — 4-button row: Neutral / Wrath / Calm / Divinity. Active stance highlighted; switches logged.</li>
-              <li><strong className="text-slate-200">Discard whole hand</strong> — dumps all cards to discard in one click.</li>
-              <li><strong className="text-slate-200">Discard with exceptions</strong> — chip-picker lets you keep specific cards; rest go to discard.</li>
-              <li><strong className="text-slate-200">Scry N</strong> — peek and reorder the top N cards of your draw pile via the order modal.</li>
-              <li><strong className="text-slate-200">Shuffle discard → draw</strong> — opens the order modal to set the resulting draw sequence.</li>
+              <li><strong className="text-slate-200">Upgrade Card</strong> — upgrade target card(s) to their + version. Ex: Armaments.</li>
+              <li><strong className="text-slate-200">Downgrade Card</strong> — revert target card(s) to base (un-upgraded) version.</li>
+              <li><strong className="text-slate-200">Exhaust Card</strong> — send target card(s) to the exhaust pile.</li>
+              <li><strong className="text-slate-200">Mark as Played</strong> — move target card(s) to the Played Cards pile (Power tracking).</li>
+              <li><strong className="text-slate-200">Duplicate Card</strong> — copy target card(s) into a destination pile.</li>
+              <li><strong className="text-slate-200">Remove Card</strong> — permanently remove target card(s) from the game.</li>
+            </ul>
+          </div>
+          <div className="rounded-xl border border-cyan-500/30 bg-slate-900/50 p-4 text-sm">
+            <p className="mb-1 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-cyan-300">
+              <Sparkles className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
+              Hover highlight &amp; UUID stamping
+            </p>
+            <ul className="space-y-1 text-slate-400 text-xs leading-relaxed">
+              <li><strong className="text-slate-200">Action hover glow</strong> — hovering a card quick-action button highlights every card that would be affected with a cyan ring. Collapsed pile buttons also glow if they contain affected cards.</li>
+              <li><strong className="text-slate-200">Per-card UUID</strong> — every card now receives a unique <code className="font-mono text-[10px]">_uid</code> on load. This lets the engine target a specific copy of a card even when multiple identical cards are in the same pile. Older saves without UIDs are stamped automatically on next load.</li>
+              <li><strong className="text-slate-200">Exclude self (precise)</strong> — the "Exclude self" toggle skips only the exact card instance the action is attached to, not all cards with that name.</li>
             </ul>
           </div>
           <div className="rounded-xl border border-amber-500/30 bg-slate-900/50 p-4 text-sm">
             <p className="mb-1 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-amber-300">
-              <Hand className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
-              Deck &amp; draw improvements
+              <FileCode2 className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
+              Editor — context notes
             </p>
             <ul className="space-y-1 text-slate-400 text-xs leading-relaxed">
-              <li><strong className="text-slate-200">Smart draw</strong> — detects deck exhaustion mid-draw, logs both phases, opens the order modal to set reshuffle sequence before drawing the remainder.</li>
-              <li><strong className="text-slate-200">Card play order</strong> — multi-selected cards show numbered indigo badges (1, 2, 3…). Deselecting renumbers. Play resolves in badge order.</li>
-            </ul>
-          </div>
-          <div className="rounded-xl border border-teal-500/30 bg-slate-900/50 p-4 text-sm">
-            <p className="mb-1 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-teal-300">
-              <CalendarClock className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
-              Turn maker upgrades
-            </p>
-            <ul className="space-y-1 text-slate-400 text-xs leading-relaxed">
-              <li><strong className="text-slate-200">Drag-reorder</strong> — drag intent rows in the sidebar to rearrange sequence; turn numbers renumber automatically.</li>
-              <li><strong className="text-slate-200">Duplicate turn</strong> — one-click clone of the selected turn appended at the next slot.</li>
-              <li><strong className="text-slate-200">HP overrides</strong> — collapsible section per enemy: define <em>If HP ≤ X% → use Turn N</em> conditional rules. Affected turns show a ⚠ badge.</li>
+              <li><strong className="text-slate-200">Action Filter</strong> — italic note clarifies that <em>"The card"</em> in field descriptions refers to the <strong className="text-slate-300">trigger card</strong> (the one the action is attached to).</li>
+              <li><strong className="text-slate-200">Card Picker Filter</strong> — matching note clarifies that <em>"The card"</em> refers to each DB card being evaluated in the picker.</li>
+              <li><strong className="text-slate-200">Target Filter</strong> — in the new CardTargetEditor, the note explains <em>"The card"</em> is each card found in the selected source piles.</li>
             </ul>
           </div>
         </div>
+
+        {/* ── Previous releases (collapsible) ── */}
+        <details className="group rounded-xl border border-slate-700/50 bg-slate-900/40">
+          <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-xs font-semibold text-slate-400 hover:text-slate-200">
+            <ChevronDown className="h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-180" strokeWidth={2.5} aria-hidden />
+            Previous releases — 2026.05.14
+          </summary>
+          <div className="space-y-3 border-t border-slate-700/40 px-4 pb-4 pt-3">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-lg border border-indigo-500/25 bg-slate-900/60 p-3 text-xs">
+                <p className="mb-1 flex items-center gap-1 font-bold text-indigo-200">
+                  <Zap className="h-3 w-3 shrink-0" strokeWidth={2.5} aria-hidden />
+                  Quick Actions panel
+                </p>
+                <p className="leading-relaxed text-slate-400">
+                  Collapsible panel in the topbar (indigo button). Houses orb channel, stance toggle, hand discard tools,
+                  scry, and shuffle discard → draw — all logged.
+                </p>
+              </div>
+              <div className="rounded-lg border border-sky-500/25 bg-slate-900/60 p-3 text-xs">
+                <p className="mb-1 flex items-center gap-1 font-bold text-sky-200">
+                  <Layers className="h-3 w-3 shrink-0" strokeWidth={2.5} aria-hidden />
+                  Pile Order Modal
+                </p>
+                <p className="leading-relaxed text-slate-400">
+                  Shared drag-sort dialog used by Scry, Shuffle discard → draw, and auto-reshuffle on deck exhaustion.
+                </p>
+              </div>
+              <div className="rounded-lg border border-emerald-500/25 bg-slate-900/60 p-3 text-xs">
+                <p className="mb-1 flex items-center gap-1 font-bold text-emerald-200">
+                  <FlaskConical className="h-3 w-3 shrink-0" strokeWidth={2.5} aria-hidden />
+                  Potion belt
+                </p>
+                <p className="leading-relaxed text-slate-400">
+                  Belt strip in the bottom pile bar — 1–5 slots. Add potions via the DB picker. Tap a slot to Use or Discard; both log.
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-indigo-500/20 bg-slate-900/40 p-3 text-xs">
+                <p className="mb-1 font-bold text-indigo-300">Quick Actions — detail</p>
+                <ul className="space-y-0.5 text-slate-400 leading-relaxed">
+                  <li><strong className="text-slate-300">Orb channel</strong> — Lightning ⚡, Dark 🌑, Frost 🔵, Plasma. Evoke N; Trigger All Passives.</li>
+                  <li><strong className="text-slate-300">Stance toggle</strong> — Neutral / Wrath / Calm / Divinity.</li>
+                  <li><strong className="text-slate-300">Discard whole hand / with exceptions</strong> — chip-picker to keep specific cards.</li>
+                  <li><strong className="text-slate-300">Scry N / Shuffle discard → draw</strong> — both open the order modal.</li>
+                </ul>
+              </div>
+              <div className="rounded-xl border border-amber-500/20 bg-slate-900/40 p-3 text-xs">
+                <p className="mb-1 font-bold text-amber-300">Deck, draw &amp; Turn maker</p>
+                <ul className="space-y-0.5 text-slate-400 leading-relaxed">
+                  <li><strong className="text-slate-300">Smart draw</strong> — detects exhaustion mid-draw, logs both phases, opens order modal.</li>
+                  <li><strong className="text-slate-300">Card play order</strong> — numbered badges; play resolves in badge order.</li>
+                  <li><strong className="text-slate-300">Drag-reorder intents</strong>, <strong className="text-slate-300">Duplicate turn</strong>, <strong className="text-slate-300">HP overrides</strong> in Turn maker.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </details>
       </section>
 
       <section id="overview" className="scroll-mt-28 space-y-3">
