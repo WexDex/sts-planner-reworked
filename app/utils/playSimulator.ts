@@ -21,6 +21,7 @@ function resolveNumeric(
 // ---------------------------------------------------------------------------
 // Damage formula
 // floor( floor( floor(base + STR) × stance ) × weak ) × vuln
+// stance multiplier only applies when scalesWithStrength is true
 // ---------------------------------------------------------------------------
 
 export function computeDamage(
@@ -33,7 +34,9 @@ export function computeDamage(
   const str = scalesWithStrength ? getStack(player.buffsDebuffs, 'Strength') : 0;
   const withStr = Math.floor(base + str);
 
-  const stanceMult = stance === 'wrath' ? 2 : stance === 'divinity' ? 3 : 1;
+  const stanceMult = scalesWithStrength
+    ? (stance === 'wrath' ? 2 : stance === 'divinity' ? 3 : 1)
+    : 1;
   const withStance = Math.floor(withStr * stanceMult);
 
   const weakStacks = getStack(player.buffsDebuffs, 'Weak');

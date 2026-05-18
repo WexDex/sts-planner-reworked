@@ -10,8 +10,10 @@ import CardDBModal from "@/app/components/CardDBModal";
 import PlannerPhaseActionsBar from "@/app/components/UI/PlannerPhaseActionsBar";
 import {
   getCardEffectLegendItems,
+  getCustomGlyphLegendItems,
   type CardIconLegendItem,
 } from "@/app/components/UI/cardIconLegend";
+import * as LucideIcons from "lucide-react";
 import { Activity, BookOpen, CalendarClock, ChevronDown, ChevronUp, CircleHelp, FileDown, FolderOpen, GitBranch, Minus, Plus, Save, X } from "lucide-react";
 import type { OrbType, StanceType } from "@/app/types/gameTypes";
 
@@ -23,7 +25,7 @@ const ORB_CFG: { type: OrbType; label: string; emoji: string; bg: string; border
 ];
 import DeckPreviewModal from "@/app/components/UI/DeckPreviewModal";
 
-const CARD_EFFECT_LEGEND = getCardEffectLegendItems();
+const STATIC_LEGEND_ITEMS = getCardEffectLegendItems();
 
 function clampPct(n: number) {
   return Math.max(0, Math.min(100, n));
@@ -63,14 +65,32 @@ function TopBarLegendChip({
       ? "text-xs font-medium leading-snug text-slate-100"
       : "text-[11px] font-medium leading-snug text-slate-100";
 
+  const ResolvedIcon = item.Icon ?? (item.lucideIconName
+    ? ((LucideIcons as Record<string, unknown>)[item.lucideIconName] as typeof item.Icon)
+    : undefined);
+
+  const iconNode = ResolvedIcon ? (
+    <ResolvedIcon className={`${iconSize} shrink-0 ${item.iconClass}`} strokeWidth={2.25} aria-hidden />
+  ) : item.svgData ? (
+    <span
+      className={`${iconSize} shrink-0 ${item.iconClass} [&_svg]:h-full [&_svg]:w-full`}
+      aria-hidden
+      dangerouslySetInnerHTML={{ __html: item.svgData }}
+    />
+  ) : (
+    <span className={`${iconSize} shrink-0 rounded-sm bg-slate-600 ${item.iconClass}`} aria-hidden />
+  );
+
+  const chipTitle = item.tooltip ?? item.label;
+
   /** Hover-only: float label beside icon so flex row width never toggles (avoids jitter on last chip). */
   if (!labelForced) {
     return (
-      <span className="group/chip relative inline-flex shrink-0" title={item.label} aria-label={item.label}>
+      <span className="group/chip relative inline-flex shrink-0" title={chipTitle} aria-label={item.label}>
         <span
           className={`inline-flex items-center justify-center rounded-md border p-1 shadow-sm shadow-black/20 transition-[opacity,box-shadow,border-color,background-color] ${shellCls}`}
         >
-          <item.Icon className={`${iconSize} shrink-0 ${item.iconClass}`} strokeWidth={2.25} aria-hidden />
+          {iconNode}
         </span>
         <span
           className={`pointer-events-none absolute left-1/2 top-full z-30 mt-1 w-max max-w-[min(14rem,calc(100vw-1.5rem))] -translate-x-1/2 whitespace-normal rounded-md border border-slate-600/70 bg-slate-900/95 px-2.5 py-1.5 text-center shadow-lg shadow-black/40 opacity-0 transition-opacity duration-150 group-hover/chip:opacity-100 ${tooltipLabelTextCls}`}
@@ -83,11 +103,11 @@ function TopBarLegendChip({
 
   return (
     <span
-      title={item.label}
+      title={chipTitle}
       aria-label={item.label}
       className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 shadow-sm shadow-black/20 transition-[opacity,box-shadow,border-color,background-color] ${shellCls}`}
     >
-      <item.Icon className={`${iconSize} shrink-0 ${item.iconClass}`} strokeWidth={2.25} aria-hidden />
+      {iconNode}
       <span
         className={`truncate ${size === "mobile" ? "max-w-[5.5rem]" : "max-w-[10rem] sm:max-w-[12rem]"} ${labelTextCls}`}
       >
@@ -152,15 +172,20 @@ export default function TopBarBlock() {
         : "Live combat already matches this planner row — nothing to save"
     : "Save live combat into this planner turn row (same as timeline quick action)";
   const { hoveredCard, highlightIds } = useLegendHighlight();
+  const [legendItems, setLegendItems] = useState<CardIconLegendItem[]>(STATIC_LEGEND_ITEMS);
+  useEffect(() => {
+    const custom = getCustomGlyphLegendItems();
+    if (custom.length > 0) setLegendItems([...STATIC_LEGEND_ITEMS, ...custom]);
+  }, []);
   const sortedLegend = useMemo(() => {
-    if (!hoveredCard) return CARD_EFFECT_LEGEND;
+    if (!hoveredCard) return legendItems;
     const hi: CardIconLegendItem[] = [];
     const lo: CardIconLegendItem[] = [];
-    for (const item of CARD_EFFECT_LEGEND) {
+    for (const item of legendItems) {
       (highlightIds.has(item.id) ? hi : lo).push(item);
     }
     return [...hi, ...lo];
-  }, [hoveredCard, highlightIds]);
+  }, [hoveredCard, highlightIds, legendItems]);
   const [legendShowAllLabels, setLegendShowAllLabels] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deckPreviewOpen, setDeckPreviewOpen] = useState(false);

@@ -1,0 +1,31 @@
+[
+  {
+    "key": "INTANGIBLE",
+    "shortLabel": "intangible",
+    "iconClass": "text-lime-300",
+    "source": {
+      "type": "svg",
+      "svgData": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-atom-icon lucide-atom\"><circle cx=\"12\" cy=\"12\" r=\"1\"/><path d=\"M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z\"/><path d=\"M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z\"/></svg>"
+    },
+    "fieldLink": {
+      "mode": "numeric",
+      "fieldName": "intangible",
+      "showNumber": true
+    }
+  },
+  {
+    "key": "CLAW",
+    "shortLabel": "claw is law",
+    "iconClass": "text-red-400",
+    "source": {
+      "type": "url",
+      "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXN1bi1tb29uLWljb24gbHVjaWRlLXN1bi1tb29uIj48cGF0aCBkPSJNMTIgMnYyIi8+PHBhdGggZD0iTTE0LjgzNyAxNi4zODVhNiA2IDAgMSAxLTcuMjIzLTcuMjIyYy42MjQtLjE0Ny45Ny42Ni43MTUgMS4yNDhhNCA0IDAgMCAwIDUuMjYgNS4yNTljLjU4OS0uMjU1IDEuMzk2LjA5IDEuMjQ4LjcxNSIvPjxwYXRoIGQ9Ik0xNiAxMmE0IDQgMCAwIDAtNC00Ii8+PHBhdGggZD0ibTE5IDUtMS4yNTYgMS4yNTYiLz48cGF0aCBkPSJNMjAgMTJoMiIvPjwvc3ZnPg==",
+      "cachedSvg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-sun-moon-icon lucide-sun-moon\"><path d=\"M12 2v2\"/><path d=\"M14.837 16.385a6 6 0 1 1-7.223-7.222c.624-.147.97.66.715 1.248a4 4 0 0 0 5.26 5.259c.589-.255 1.396.09 1.248.715\"/><path d=\"M16 12a4 4 0 0 0-4-4\"/><path d=\"m19 5-1.256 1.256\"/><path d=\"M20 12h2\"/></svg>"
+    },
+    "fieldLink": {
+      "mode": "boolean",
+      "fieldName": "is_claw"
+    }
+  }
+]
+

@@ -43,6 +43,7 @@ import {
 import type { Card } from "@/app/types/gameTypes";
 import { getEffectDisplay } from "@/app/utils/effectDisplay";
 import raw from "@/app/data/db/STS_CARDS_DB.json";
+import { loadCustomGlyphs, loadBuiltinGlyphOverrides } from "@/app/utils/customGlyphRegistry";
 
 export type GalleryGlyphSegment = {
   Icon?: LucideIcon;
@@ -58,6 +59,16 @@ export type GalleryGlyph = {
   /** Single-icon glyph (legacy / simple) */
   Icon?: LucideIcon;
   iconClass?: string;
+  /** Lucide icon name for custom glyphs — resolved at render time in Card.tsx. */
+  lucideIconName?: string;
+  /** Raw SVG markup for custom glyphs that use an uploaded/fetched SVG instead of a Lucide icon. */
+  svgData?: string;
+  /** Numeric value to render alongside the icon (custom glyphs with mode="numeric" + showNumber). */
+  numericValue?: number;
+  /** When true, suppress all numeric text segments and numericValue at render time. */
+  hideNumber?: boolean;
+  /** Hover tooltip text; overrides label as the title attribute on the chip. */
+  tooltip?: string;
   /** Inline cluster: icons + text in order */
   segments?: GalleryGlyphSegment[];
   /** Tailwind for cluster wrapper */
@@ -2010,15 +2021,128 @@ export function galleryGlyphsInsideCardOnly(
   card: Card,
   glyphs: GalleryGlyph[],
 ): GalleryGlyph[] {
+  const c = card as Record<string, unknown>;
   const drawCond = galleryDrawIsConditional(card);
 
   return glyphs.filter((g) => {
-    if (g.id === "draw-main" && card.draw != undefined && !drawCond) return false;
-    if (g.id === "block" && card.block != undefined) return false;
-    if (g.id === "damage" && card.damage != undefined) return false;
-    if (g.id === "heal-main" && (card as Record<string, unknown>).heal != undefined) return false;
-    if (g.id === "focus-main" && (card as Record<string, unknown>).focus != undefined) return false;
+    // When a field has hideNumber:true the stat strip is suppressed, so keep the
+    // glyph chip — it's the only remaining way to show the icon for that field.
+    if (g.id === "draw-main"  && card.draw != undefined && !drawCond          && !fieldHasHideNumber(card.draw)) return false;
+    if (g.id === "block"      && card.block != undefined                       && !fieldHasHideNumber(c.block))   return false;
+    if (g.id === "damage"     && card.damage != undefined                      && !fieldHasHideNumber(c.damage))  return false;
+    if (g.id === "heal-main"  && c.heal != undefined                           && !fieldHasHideNumber(c.heal))    return false;
+    if (g.id === "focus-main" && c.focus != undefined                          && !fieldHasHideNumber(c.focus))   return false;
     return true;
+  });
+}
+
+/** True when a field value object carries `hideNumber: true`. */
+function fieldHasHideNumber(val: unknown): boolean {
+  if (!val || typeof val !== "object" || Array.isArray(val)) return false;
+  return (val as Record<string, unknown>).hideNumber === true;
+}
+
+/** Append custom glyphs that match the given card's fields. */
+function appendCustomGlyphs(card: Card, glyphs: GalleryGlyph[]): GalleryGlyph[] {
+  const customGlyphs = loadCustomGlyphs();
+  if (customGlyphs.length === 0) return glyphs;
+  const cardRec = card as Record<string, unknown>;
+  const out = [...glyphs];
+  for (const cg of customGlyphs) {
+    const link = cg.fieldLink;
+    if (link.mode === "none") continue;
+    const fn = link.fieldName;
+    const fieldVal = cardRec[fn] ?? cardRec[fn.charAt(0).toUpperCase() + fn.slice(1)];
+    let show = false;
+    if (link.mode === "boolean")  show = galleryTieredBoolActive(card, fieldVal);
+    if (link.mode === "presence") show = fieldVal != null;
+    if (link.mode === "numeric")  show = galleryTierNumber(card, fieldVal) !== undefined;
+    if (!show) continue;
+    const num =
+      link.mode === "numeric" && link.showNumber
+        ? galleryTierNumber(card, fieldVal)
+        : undefined;
+    const svgData =
+      cg.source.type === "svg"
+        ? cg.source.svgData
+        : cg.source.type === "url"
+          ? cg.source.cachedSvg
+          : undefined;
+    out.push({
+      id: `custom-${cg.key}`,
+      catalogKey: cg.key,
+      label: num !== undefined ? `${cg.shortLabel} ${num}` : cg.shortLabel,
+      lucideIconName: cg.source.type === "lucide" ? cg.source.iconName : undefined,
+      svgData,
+      iconClass: cg.iconClass,
+      numericValue: num,
+      // hideNumber: either the glyph definition sets it, or the card field data does
+      hideNumber: (cg.hideNumber === true || fieldHasHideNumber(fieldVal)) ? true : undefined,
+      tooltip: cg.tooltip,
+    });
+  }
+  return out;
+}
+
+/** Glyph id-prefix → accessor for the card field that drives this glyph's number. */
+const GLYPH_ID_PREFIX_FIELD: Array<{
+  prefix: string;
+  getField: (c: Record<string, unknown>) => unknown;
+}> = [
+  { prefix: "draw",        getField: (c) => c.draw },
+  { prefix: "block",       getField: (c) => c.block },
+  { prefix: "gain-energy", getField: (c) => c.energyGain ?? c.gainEnergy },
+  { prefix: "scry",        getField: (c) => c.scry },
+  { prefix: "hp-cost",     getField: (c) => c.hpcost ?? c.hpCost },
+  { prefix: "artifact",    getField: (c) => c.artifact },
+  { prefix: "buffer",      getField: (c) => c.buffer },
+  { prefix: "mantra",      getField: (c) => c.mantra },
+  { prefix: "discard",     getField: (c) => c.discardEffect },
+  { prefix: "structured-random-discard", getField: (c) => c.discardEffect },
+];
+
+/** CatalogKey → accessor for the card field that drives this glyph's number. */
+const GLYPH_CATALOG_FIELD: Partial<Record<string, (c: Record<string, unknown>) => unknown>> = {
+  DRAW_ICON:        (c) => c.draw,
+  DISCARD_ICON:     (c) => c.discardEffect,
+  GAIN_ENERGY_ICON: (c) => c.energyGain ?? c.gainEnergy,
+  SCRY_ICON:        (c) => c.scry,
+  HP_COST:          (c) => c.hpcost ?? c.hpCost,
+};
+
+/**
+ * Apply `hideNumber` from card field data.
+ * When a card field (e.g. `draw: { base: 3, hideNumber: true }`) carries `hideNumber: true`,
+ * the corresponding glyph gets `hideNumber: true` for this specific card.
+ */
+function applyFieldLevelHideNumbers(card: Card, glyphs: GalleryGlyph[]): GalleryGlyph[] {
+  const c = card as Record<string, unknown>;
+  return glyphs.map((g) => {
+    if (g.hideNumber) return g; // already set by override or custom glyph definition
+    let fieldVal: unknown = undefined;
+    // Check by catalogKey first
+    if (g.catalogKey) {
+      const fn = GLYPH_CATALOG_FIELD[g.catalogKey];
+      if (fn) fieldVal = fn(c);
+    }
+    // Fallback to id-prefix matching
+    if (fieldVal === undefined) {
+      for (const { prefix, getField } of GLYPH_ID_PREFIX_FIELD) {
+        if (g.id.startsWith(prefix)) { fieldVal = getField(c); break; }
+      }
+    }
+    return fieldHasHideNumber(fieldVal) ? { ...g, hideNumber: true } : g;
+  });
+}
+
+/** Apply per-catalogKey hideNumber overrides from localStorage (set via Glyph Editor). */
+function applyBuiltinOverrides(glyphs: GalleryGlyph[]): GalleryGlyph[] {
+  const overrides = loadBuiltinGlyphOverrides();
+  if (Object.keys(overrides).length === 0) return glyphs;
+  return glyphs.map((g) => {
+    if (!g.catalogKey) return g;
+    const ov = overrides[g.catalogKey];
+    return ov ? { ...g, hideNumber: ov.hideNumber ?? g.hideNumber } : g;
   });
 }
 
@@ -2027,24 +2151,39 @@ export function inferGalleryCardEffects(card: Card): {
   glyphs: GalleryGlyph[];
   suppressStats: GallerySuppressedStats;
 } {
+  function finalize(raw: GalleryGlyph[]): GalleryGlyph[] {
+    return applyFieldLevelHideNumbers(card, applyBuiltinOverrides(appendCustomGlyphs(card, finalizeGlyphDisplayOrder(card, raw))));
+  }
+
+  /** Suppress stat strip values when the card field carries `hideNumber: true`. */
+  function fieldStatSuppression(base: GallerySuppressedStats): GallerySuppressedStats {
+    const c = card as Record<string, unknown>;
+    const out = { ...base };
+    if (fieldHasHideNumber(c.block)) out.block = true;
+    if (fieldHasHideNumber(c.damage)) out.damage = true;
+    if (fieldHasHideNumber(c.draw)) out.draw = true;
+    if (fieldHasHideNumber(energyGainNode(card))) out.energyGain = true;
+    if (fieldHasHideNumber(c.heal)) out.heal = true;
+    if (fieldHasHideNumber(c.focus)) out.focus = true;
+    if (fieldHasHideNumber(c.hpcost ?? c.hpCost)) out.hpcost = true;
+    return out;
+  }
+
   if (card.type === "Potion") {
-    return {
-      glyphs: finalizeGlyphDisplayOrder(card, []),
-      suppressStats: {},
-    };
+    return { glyphs: finalize([]), suppressStats: {} };
   }
 
   const structured = tryStructuredGalleryGlyphs(card);
   if (structured) {
     return {
-      glyphs: finalizeGlyphDisplayOrder(card, structured.glyphs),
-      suppressStats: structured.suppressStats,
+      glyphs: finalize(structured.glyphs),
+      suppressStats: fieldStatSuppression(structured.suppressStats),
     };
   }
   const legacyGlyphs = inferLegacyCardGalleryGlyphs(card);
   const insideOnly = galleryGlyphsInsideCardOnly(card, legacyGlyphs);
-  const glyphs = finalizeGlyphDisplayOrder(card, insideOnly);
-  const suppressStats: GallerySuppressedStats = { ...legacyGallerySuppressStats(card) };
+  const glyphs = finalize(insideOnly);
+  const suppressStats: GallerySuppressedStats = fieldStatSuppression({ ...legacyGallerySuppressStats(card) });
   if (
     glyphs.some(
       (g) => g.id === "gain-energy-main" && (g.segments?.length ?? 0) > 0,

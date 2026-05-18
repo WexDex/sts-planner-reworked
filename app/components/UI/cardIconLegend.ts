@@ -1,12 +1,16 @@
 import type { LucideIcon } from "lucide-react";
 import { getEffectDisplay } from "@/app/utils/effectDisplay";
 import { STS_ICON_GLYPH } from "@/app/card-design-gallery/galleryStsGlyphs";
+import { loadCustomGlyphs } from "@/app/utils/customGlyphRegistry";
 
 export type CardIconLegendItem = {
   id: string;
-  Icon: LucideIcon;
+  Icon?: LucideIcon;
+  lucideIconName?: string;
+  svgData?: string;
   iconClass: string;
   label: string;
+  tooltip?: string;
 };
 
 const STAT_KEYS = [
@@ -90,4 +94,20 @@ export function getCardEffectLegendItems(): CardIconLegendItem[] {
   });
 
   return [...fromStats, ...fromSts];
+}
+
+/** Custom glyph items from localStorage — must be called client-side only. */
+export function getCustomGlyphLegendItems(): CardIconLegendItem[] {
+  const customGlyphs = loadCustomGlyphs();
+  return customGlyphs.map((cg) => ({
+    id: `custom-${cg.key}`,
+    lucideIconName: cg.source.type === "lucide" ? cg.source.iconName : undefined,
+    svgData:
+      cg.source.type === "svg" ? cg.source.svgData :
+      cg.source.type === "url" ? cg.source.cachedSvg :
+      undefined,
+    iconClass: cg.iconClass,
+    label: cg.shortLabel,
+    tooltip: cg.tooltip,
+  }));
 }

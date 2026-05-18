@@ -56,7 +56,7 @@ interface EffectDisplay {
 
 const ICONS: Record<EffectType, LucideIcon> = {
   weak: ArrowDown,
-  vulnerable: AlertCircle,
+  vulnerable: HeartCrack,
   frail: ShieldOff,
   damage: Zap,
   block: Shield,

@@ -1,4 +1,5 @@
 import React, { memo, useMemo } from "react";
+import * as LucideIcons from "lucide-react";
 import { Card } from "@/app/types/gameTypes";
 import { LOCATION } from "@/app/types/types";
 import { getEffectDisplay } from "@/app/utils/effectDisplay";
@@ -206,11 +207,21 @@ function renderGalleryGlyphCluster(
   const row = ["inline-flex", "items-center", "gap-0.5", shell, textBaseCls]
     .filter(Boolean)
     .join(" ");
+  const chipTitle = g.tooltip ?? g.label;
+
+  const resolvedIcon =
+    g.Icon ??
+    (g.lucideIconName
+      ? ((LucideIcons as Record<string, unknown>)[g.lucideIconName] as React.ComponentType<React.SVGProps<SVGSVGElement>> | undefined)
+      : undefined);
 
   if (g.segments?.length) {
+    const visibleSegments = g.hideNumber
+      ? g.segments.filter((s) => !(s.text != null && s.text !== "" && !isNaN(parseFloat(s.text))))
+      : g.segments;
     return (
-      <span title={g.label} className={row}>
-        {g.segments.map((s, i) => (
+      <span title={chipTitle} className={row}>
+        {visibleSegments.map((s, i) => (
           <React.Fragment key={i}>
             {s.Icon ? (
               <s.Icon
@@ -227,15 +238,39 @@ function renderGalleryGlyphCluster(
     );
   }
 
-  if (g.Icon) {
+  if (resolvedIcon) {
+    const Icon = resolvedIcon;
     return (
       <span
-        title={g.label}
+        title={chipTitle}
         className={["inline-flex", "items-center", "gap-0.5", shell, g.iconClass ?? "", textBaseCls]
           .filter(Boolean)
           .join(" ")}
       >
-        <g.Icon className={`${iconCls} shrink-0`} aria-hidden />
+        <Icon className={`${iconCls} shrink-0`} aria-hidden />
+        {!g.hideNumber && g.numericValue !== undefined ? (
+          <span className="tabular-nums font-bold leading-none">{g.numericValue}</span>
+        ) : null}
+      </span>
+    );
+  }
+
+  if (g.svgData) {
+    return (
+      <span
+        title={chipTitle}
+        className={["inline-flex", "items-center", "gap-0.5", shell, g.iconClass ?? "", textBaseCls]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        <span
+          className={`${iconCls} inline-flex shrink-0 items-center justify-center [&>svg]:h-full [&>svg]:w-full`}
+          dangerouslySetInnerHTML={{ __html: g.svgData }}
+          aria-hidden
+        />
+        {!g.hideNumber && g.numericValue !== undefined ? (
+          <span className="tabular-nums font-bold leading-none">{g.numericValue}</span>
+        ) : null}
       </span>
     );
   }
@@ -389,7 +424,10 @@ function STSCard({
       ? (livePlayer.buffsDebuffs?.find((b) => b.name === "Strength")?.stacks ?? 0)
       : 0;
     const withStr = Math.floor(damageFormulaBase + str);
-    const stanceMult = liveStance === "wrath" ? 2 : liveStance === "divinity" ? 3 : 1;
+    const scalesWithStr = card.scalesWithStrength ?? false;
+    const stanceMult = scalesWithStr
+      ? (liveStance === "wrath" ? 2 : liveStance === "divinity" ? 3 : 1)
+      : 1;
     return Math.floor(withStr * stanceMult);
   }, [livePlayer, liveStance, damageFormulaBase, card.scalesWithStrength]);
   const damageModified = typeof liveDamageBase === "number" && liveDamageBase !== damageFormulaBase;

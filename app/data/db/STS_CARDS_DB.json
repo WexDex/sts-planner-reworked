@@ -193,7 +193,8 @@
         "base": 0,
         "upgraded": 0,
         "conditioned": true,
-        "trigger": "number of cards in draw pile"
+        "trigger": "number of cards in draw pile",
+        "hideNumber": true
       }
     },
     "Alchemize": {

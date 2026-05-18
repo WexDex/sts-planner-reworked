@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Clipboard, Zap } from "lucide-react";
+import { ArrowRight, Clipboard, Palette, Zap } from "lucide-react";
 
 const EDITORS = [
   {
@@ -27,6 +27,18 @@ const EDITORS = [
     badgeCls: "border-sky-500/30 bg-sky-950/50 text-sky-300/80",
     border: "border-sky-500/25 hover:border-sky-400/45",
     bg: "bg-sky-950/10 hover:bg-sky-950/20",
+  },
+  {
+    href: "/editors/glyphs",
+    icon: <Palette className="h-5 w-5" strokeWidth={2} />,
+    iconCls: "border-violet-500/50 bg-violet-950/60 text-violet-300",
+    title: "Glyph Editor",
+    description:
+      "Browse all 38 built-in STS icon glyphs and create custom entries — backed by Lucide icons, inline SVG, or online SVG URLs. Link glyphs to card fields (boolean, numeric, presence) and export as JSON.",
+    badge: "38 built-in",
+    badgeCls: "border-violet-500/30 bg-violet-950/50 text-violet-300/80",
+    border: "border-violet-500/25 hover:border-violet-400/45",
+    bg: "bg-violet-950/10 hover:bg-violet-950/20",
   },
 ];
 

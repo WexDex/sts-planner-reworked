@@ -81,6 +81,10 @@ function addDiscardLegendKeys(card: Card, ids: Set<string>): void {
 
 function addGlyphLegendHints(card: Card, glyphs: GalleryGlyph[], ids: Set<string>): void {
   for (const g of glyphs) {
+    if (g.id?.startsWith("custom-")) {
+      ids.add(g.id);
+      continue;
+    }
     if (g.catalogKey) ids.add(mapCatalogToLegendId(g.catalogKey));
 
     switch (g.id) {
