@@ -1,0 +1,3137 @@
+{
+  "_meta": {
+    "note": "Claude-completed cards from STS_CARDS_DB.json. Contains only cards from 'Infernal Blade' onward (the ~180 cards after 'Indignation'). Each card was reviewed against the first-190-card patterns and completed/corrected. Anomalies are summarised in STS_CARDS_DB_CLAUDE_notes.json.",
+    "sourceDb": "app/data/db/STS_CARDS_DB.json",
+    "completedBy": "claude-sonnet-4-6",
+    "completedAt": "2026-05-22"
+  },
+  "cards": {
+    "Infernal Blade": {
+      "id": "Infernal Blade",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Add a random Attack into your hand. It costs 0 this turn. Exhaust.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 1,
+        "upgraded": 0
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "canAddCards": true
+    },
+    "Infinite Blades": {
+      "id": "Infinite Blades",
+      "type": "Power",
+      "rarity": "Uncommon",
+      "description": "At the start of your turn, add a Shiv into your hand.",
+      "characters": "silent",
+      "descriptionUpgraded": "Innate. At the start of your turn, add a Shiv into your hand.",
+      "cost": {
+        "base": 1
+      },
+      "canAddCards": true,
+      "innate": {
+        "base": false,
+        "upgraded": true
+      },
+      "cards_meant": [
+        "Shiv"
+      ]
+    },
+    "Inflame": {
+      "id": "Inflame",
+      "type": "Power",
+      "rarity": "Uncommon",
+      "description": "Gain [STRENGTH_GAIN] Strength.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 1
+      },
+      "strength_gain": {
+        "base": 2,
+        "upgraded": 3
+      }
+    },
+    "Injury": {
+      "id": "Injury",
+      "type": "Curse",
+      "rarity": "Curse",
+      "description": "Unplayable.",
+      "characters": "curse",
+      "unplayable": true
+    },
+    "Inner Peace": {
+      "id": "Inner Peace",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "If you are in Calm, draw [DRAW] cards, otherwise enter Calm.",
+      "characters": "watcher",
+      "cost": {
+        "base": 1
+      },
+      "draw": {
+        "base": 3,
+        "upgraded": 4,
+        "conditioned": true,
+        "trigger": "if you are in Calm"
+      },
+      "change_stance": {
+        "base": "Calm",
+        "conditioned": true,
+        "trigger": "if you are NOT in Calm"
+      }
+    },
+    "Insight": {
+      "id": "Insight",
+      "type": "Skill",
+      "rarity": "Special",
+      "description": "Retain. Draw 2 (3) cards. Exhaust.",
+      "characters": "colorless",
+      "cost": {
+        "base": 0
+      },
+      "draw": {
+        "base": 2,
+        "upgraded": 3
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "retain": {
+        "base": true,
+        "upgraded": true
+      }
+    },
+    "Intimidate": {
+      "id": "Intimidate",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Apply 1 (2) Weak to ALL enemies. Exhaust.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 0
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "appliesDebuffs": {
+        "weak": {
+          "base": 1,
+          "upgraded": 2
+        }
+      }
+    },
+    "Iron Wave": {
+      "id": "Iron Wave",
+      "type": "Attack",
+      "rarity": "Common",
+      "description": "Gain [BLOCK] Block. Deal [DMG] damage.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 5,
+        "upgraded": 7
+      },
+      "block": {
+        "base": 5,
+        "upgraded": 7
+      },
+      "scalesWithStrength": true,
+      "scalesWithDexterity": true
+    },
+    "J.A.X.": {
+      "id": "J.A.X.",
+      "type": "Skill",
+      "rarity": "Special",
+      "description": "Lose [TAKEDMG] HP. Gain [STRENGTH_GAIN] Strength.",
+      "characters": "colorless",
+      "cost": {
+        "base": 0
+      },
+      "hpcost": {
+        "base": 3
+      },
+      "strength_gain": {
+        "base": 2,
+        "upgraded": 3
+      }
+    },
+    "Jack of All Trades": {
+      "id": "Jack of All Trades",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Add 1 random Colorless card into your hand. Exhaust.",
+      "characters": "colorless",
+      "descriptionUpgraded": "Add 2 random Colorless cards into your hand. Exhaust.",
+      "cost": {
+        "base": 0
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "canAddCards": true
+    },
+    "Judgment": {
+      "id": "Judgment",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "If the enemy has [JUDGMENT_THRESHOLD] or less HP, set their HP to 0.",
+      "characters": "watcher",
+      "cost": {
+        "base": 1
+      },
+      "judgment_threshold": {
+        "base": 30,
+        "upgraded": 40
+      }
+    },
+    "Juggernaut": {
+      "id": "Juggernaut",
+      "type": "Power",
+      "rarity": "Rare",
+      "description": "Whenever you gain Block, Deal [DMG] damage to a random enemy.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 2
+      },
+      "damage": {
+        "base": 5,
+        "upgraded": 7,
+        "conditioned": true,
+        "trigger": "whenever you gain Block"
+      },
+      "scalesWithStrength": true
+    },
+    "Just Lucky": {
+      "id": "Just Lucky",
+      "type": "Attack",
+      "rarity": "Common",
+      "description": "Scry 1 (2). Gain [BLOCK] Block. Deal [DMG] damage.",
+      "characters": "watcher",
+      "cost": {
+        "base": 0
+      },
+      "damage": {
+        "base": 3,
+        "upgraded": 4
+      },
+      "block": {
+        "base": 2,
+        "upgraded": 3
+      },
+      "scalesWithStrength": true
+    },
+    "Leap": {
+      "id": "Leap",
+      "type": "Skill",
+      "rarity": "Common",
+      "description": "Gain [BLOCK] Block.",
+      "characters": "defect",
+      "cost": {
+        "base": 1
+      },
+      "block": {
+        "base": 9,
+        "upgraded": 12
+      },
+      "scalesWithDexterity": true
+    },
+    "Leg Sweep": {
+      "id": "Leg Sweep",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Apply 2 (3) Weak. Gain [BLOCK] Block.",
+      "characters": "silent",
+      "cost": {
+        "base": 2
+      },
+      "block": {
+        "base": 11,
+        "upgraded": 14
+      },
+      "appliesDebuffs": {
+        "weak": {
+          "base": 2,
+          "upgraded": 3
+        }
+      },
+      "scalesWithDexterity": true
+    },
+    "Lesson Learned": {
+      "id": "Lesson Learned",
+      "type": "Attack",
+      "rarity": "Rare",
+      "description": "Deal [DMG] damage. If Fatal, Upgrade a random card in your deck. Exhaust.",
+      "characters": "watcher",
+      "cost": {
+        "base": 2
+      },
+      "damage": {
+        "base": 10,
+        "upgraded": 13
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "scalesWithStrength": true
+    },
+    "Like Water": {
+      "id": "Like Water",
+      "type": "Power",
+      "rarity": "Uncommon",
+      "description": "At the end of your turn, if you are in Calm, Gain [BLOCK] Block.",
+      "characters": "watcher",
+      "cost": {
+        "base": 1
+      },
+      "block": {
+        "base": 5,
+        "upgraded": 7,
+        "conditioned": true,
+        "trigger": "at the end of your turn, if you are in Calm"
+      },
+      "scalesWithDexterity": true
+    },
+    "Limit Break": {
+      "id": "Limit Break",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Double your Strength. Exhaust.",
+      "characters": "ironclad",
+      "descriptionUpgraded": "Double your Strength.",
+      "cost": {
+        "base": 1
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": false
+      }
+    },
+    "Live Forever": {
+      "id": "Live Forever",
+      "type": "Power",
+      "rarity": "Special",
+      "description": "Gain [PLATED_ARMOR] Plated Armor.",
+      "characters": "colorless",
+      "unplayable": true,
+      "plated_armor": {
+        "base": 6,
+        "upgraded": 8
+      }
+    },
+    "Loop": {
+      "id": "Loop",
+      "type": "Power",
+      "rarity": "Uncommon",
+      "description": "At the start of your turn, trigger the passive ability of your next Orb.",
+      "characters": "defect",
+      "descriptionUpgraded": "At the start of your turn, trigger the passive ability of your next Orb 2 times.",
+      "cost": {
+        "base": 1
+      }
+    },
+    "Machine Learning": {
+      "id": "Machine Learning",
+      "type": "Power",
+      "rarity": "Rare",
+      "description": "At the start of your turn, draw 1 additional card.",
+      "characters": "defect",
+      "descriptionUpgraded": "Innate. At the start of your turn, draw 1 additional card.",
+      "cost": {
+        "base": 1
+      },
+      "innate": {
+        "base": false,
+        "upgraded": true
+      }
+    },
+    "Madness": {
+      "id": "Madness",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Reduce the cost of a random card in your hand to 0 this combat. Exhaust.",
+      "characters": "colorless",
+      "cost": {
+        "base": 1,
+        "upgraded": 0
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      }
+    },
+    "Magnetism": {
+      "id": "Magnetism",
+      "type": "Power",
+      "rarity": "Rare",
+      "description": "At the start of your turn, add a random Colorless card into your hand.",
+      "characters": "colorless",
+      "cost": {
+        "base": 2,
+        "upgraded": 1
+      },
+      "canAddCards": true
+    },
+    "Malaise": {
+      "id": "Malaise",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Enemy loses X Strength. Apply X Weak. Exhaust.",
+      "characters": "silent",
+      "descriptionUpgraded": "Enemy loses X+1 Strength. Apply X+1 Weak. Exhaust.",
+      "xCost": true,
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "appliesDebuffs": {
+        "weak": { "xNumber": true },
+        "losestrength": { "xNumber": true }
+      }
+    },
+    "Master of Strategy": {
+      "id": "Master of Strategy",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Draw 3 (4) cards. Exhaust.",
+      "characters": "colorless",
+      "cost": {
+        "base": 0
+      },
+      "draw": {
+        "base": 3,
+        "upgraded": 4
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      }
+    },
+    "Master Reality": {
+      "id": "Master Reality",
+      "type": "Power",
+      "rarity": "Rare",
+      "description": "Whenever a card is created during combat, Upgrade it.",
+      "characters": "watcher",
+      "cost": {
+        "base": 1,
+        "upgraded": 0
+      }
+    },
+    "Masterful Stab": {
+      "id": "Masterful Stab",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Costs 1 additional [G] for each time you lose HP this combat. Deal [DMG] damage.",
+      "characters": "silent",
+      "cost": {
+        "base": 0
+      },
+      "damage": {
+        "base": 12,
+        "upgraded": 16
+      },
+      "scalesWithStrength": true
+    },
+    "Mayhem": {
+      "id": "Mayhem",
+      "type": "Power",
+      "rarity": "Rare",
+      "description": "At the start of your turn, play the top card of your draw pile.",
+      "characters": "colorless",
+      "cost": {
+        "base": 2,
+        "upgraded": 1
+      }
+    },
+    "Meditate": {
+      "id": "Meditate",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Put a card from your discard pile into your hand and Retain it. Enter Calm. End your turn.",
+      "characters": "watcher",
+      "descriptionUpgraded": "Put 2 cards from your discard pile into your hand and Retain them. Enter Calm. End your turn.",
+      "cost": {
+        "base": 1
+      },
+      "canAddCards": true
+    },
+    "Melter": {
+      "id": "Melter",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Remove all Block from the enemy. Deal [DMG] damage.",
+      "characters": "defect",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 10,
+        "upgraded": 14
+      },
+      "scalesWithStrength": true
+    },
+    "Mental Fortress": {
+      "id": "Mental Fortress",
+      "type": "Power",
+      "rarity": "Uncommon",
+      "description": "Whenever you change Stances, Gain [BLOCK] Block.",
+      "characters": "watcher",
+      "cost": {
+        "base": 1
+      },
+      "block": {
+        "base": 4,
+        "upgraded": 6,
+        "conditioned": true,
+        "trigger": "whenever you change Stances"
+      },
+      "scalesWithDexterity": true
+    },
+    "Metallicize": {
+      "id": "Metallicize",
+      "type": "Power",
+      "rarity": "Uncommon",
+      "description": "At the end of your turn, Gain [BLOCK] Block.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 1
+      },
+      "block": {
+        "base": 3,
+        "upgraded": 4,
+        "conditioned": true,
+        "trigger": "at the end of your turn"
+      },
+      "scalesWithDexterity": true
+    },
+    "Metamorphosis": {
+      "id": "Metamorphosis",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Shuffle 3 (5) random Attacks into your draw pile. They cost 0 this combat. Exhaust.",
+      "characters": "colorless",
+      "cost": {
+        "base": 2
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "canAddCards": true
+    },
+    "Meteor Strike": {
+      "id": "Meteor Strike",
+      "type": "Attack",
+      "rarity": "Rare",
+      "description": "Deal [DMG] damage. [ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE].",
+      "characters": "defect",
+      "cost": {
+        "base": 5
+      },
+      "damage": {
+        "base": 24,
+        "upgraded": 30
+      },
+      "orbInteractions": {
+        "orbtype": "Plasma",
+        "amount": {
+          "base": 3
+        },
+        "verb": "Channel"
+      },
+      "scalesWithStrength": true
+    },
+    "Mind Blast": {
+      "id": "Mind Blast",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Innate. Deal damage equal to the number of cards in your draw pile.",
+      "characters": "colorless",
+      "cost": {
+        "base": 2,
+        "upgraded": 1
+      },
+      "innate": {
+        "base": true,
+        "upgraded": true
+      }
+    },
+    "Miracle": {
+      "id": "Miracle",
+      "type": "Skill",
+      "rarity": "Special",
+      "description": "Retain. Gain [G] Energy. Exhaust.",
+      "characters": "colorless",
+      "descriptionUpgraded": "Retain. Gain [G] Energy. Exhaust.",
+      "cost": {
+        "base": 0
+      },
+      "gainEnergy": {
+        "base": 1,
+        "upgraded": 2
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "retain": {
+        "base": true,
+        "upgraded": true
+      }
+    },
+    "Multi-Cast": {
+      "id": "Multi-Cast",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Evoke your next Orb X times.",
+      "characters": "defect",
+      "descriptionUpgraded": "Evoke your next Orb X+1 times.",
+      "xCost": true,
+      "orbInteractions": {
+        "verb": "Evoke",
+        "amount": {
+          "base": 0,
+          "upgraded": 0,
+          "xNumber": true
+        }
+      }
+    },
+    "Necronomicurse": {
+      "id": "Necronomicurse",
+      "type": "Curse",
+      "rarity": "Special",
+      "description": "Unplayable. There is no escape from this Curse.",
+      "characters": "curse",
+      "unplayable": true
+    },
+    "Neutralize": {
+      "id": "Neutralize",
+      "type": "Attack",
+      "rarity": "Basic",
+      "description": "Deal [DMG] damage. Apply 1 (2) Weak.",
+      "characters": "silent",
+      "cost": {
+        "base": 0
+      },
+      "damage": {
+        "base": 3,
+        "upgraded": 4
+      },
+      "appliesDebuffs": {
+        "weak": {
+          "base": 1,
+          "upgraded": 2
+        }
+      },
+      "scalesWithStrength": true
+    },
+    "Nightmare": {
+      "id": "Nightmare",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Choose a card. Next turn, add 3 copies of that card into your hand. Exhaust.",
+      "characters": "silent",
+      "cost": {
+        "base": 3,
+        "upgraded": 2
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "canAddCards": true
+    },
+    "Nirvana": {
+      "id": "Nirvana",
+      "type": "Power",
+      "rarity": "Uncommon",
+      "description": "Whenever you Scry, Gain [BLOCK] Block.",
+      "characters": "watcher",
+      "cost": {
+        "base": 1
+      },
+      "block": {
+        "base": 3,
+        "upgraded": 4,
+        "conditioned": true,
+        "trigger": "whenever you Scry"
+      },
+      "scalesWithDexterity": true
+    },
+    "Normality": {
+      "id": "Normality",
+      "type": "Curse",
+      "rarity": "Curse",
+      "description": "Unplayable. While in hand, you cannot play more than 3 cards this turn.",
+      "characters": "curse",
+      "unplayable": true
+    },
+    "Noxious Fumes": {
+      "id": "Noxious Fumes",
+      "type": "Power",
+      "rarity": "Uncommon",
+      "description": "At the start of your turn, apply 2 (3) Poison to ALL enemies.",
+      "characters": "silent",
+      "cost": {
+        "base": 1
+      },
+      "appliesDebuffs": {
+        "poison": {
+          "base": 2,
+          "upgraded": 3
+        }
+      }
+    },
+    "Offering": {
+      "id": "Offering",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Lose [TAKEDMG] HP. Gain [R] [R]. Draw [DRAW] cards. Exhaust.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 0
+      },
+      "hpcost": {
+        "base": 6
+      },
+      "gainEnergy": {
+        "base": 2
+      },
+      "draw": {
+        "base": 3,
+        "upgraded": 5
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      }
+    },
+    "Omega": {
+      "id": "Omega",
+      "type": "Power",
+      "rarity": "Special",
+      "description": "At the end of your turn, Deal [DMG] damage to ALL enemies.",
+      "characters": "colorless",
+      "cost": {
+        "base": 3
+      },
+      "damage": {
+        "base": 50,
+        "upgraded": 60,
+        "conditioned": true,
+        "trigger": "at the end of your turn",
+        "target": "all enemies"
+      }
+    },
+    "Omniscience": {
+      "id": "Omniscience",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Choose a card in your draw pile. Play the chosen card twice and exhaust it. Exhaust.",
+      "characters": "watcher",
+      "cost": {
+        "base": 4,
+        "upgraded": 3
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      }
+    },
+    "Outmaneuver": {
+      "id": "Outmaneuver",
+      "type": "Skill",
+      "rarity": "Common",
+      "description": "Next turn, gain [G] [G].",
+      "characters": "silent",
+      "descriptionUpgraded": "Next turn, gain [G] [G] [G].",
+      "cost": {
+        "base": 1
+      },
+      "gainEnergy": {
+        "base": 2,
+        "upgraded": 3,
+        "conditioned": true,
+        "trigger": "next turn"
+      }
+    },
+    "Overclock": {
+      "id": "Overclock",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Draw 2 (3) cards. Add a Burn into your discard pile.",
+      "characters": "defect",
+      "cost": {
+        "base": 0
+      },
+      "draw": {
+        "base": 2,
+        "upgraded": 3
+      },
+      "canAddCards": true,
+      "cards_meant": [
+        "Burn"
+      ]
+    },
+    "Pain": {
+      "id": "Pain",
+      "type": "Curse",
+      "rarity": "Curse",
+      "description": "Unplayable. While in hand, lose 1 HP whenever you play another card.",
+      "characters": "curse",
+      "unplayable": true
+    },
+    "Panacea": {
+      "id": "Panacea",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Gain 1 (2) Artifact. Exhaust.",
+      "characters": "colorless",
+      "cost": {
+        "base": 0
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "artifact": {
+        "base": 1,
+        "upgraded": 2
+      }
+    },
+    "Panache": {
+      "id": "Panache",
+      "type": "Power",
+      "rarity": "Rare",
+      "description": "Every time you play 5 cards in a single turn, Deal [DMG] damage to ALL enemies.",
+      "characters": "colorless",
+      "cost": {
+        "base": 0
+      },
+      "damage": {
+        "base": 10,
+        "upgraded": 14,
+        "conditioned": true,
+        "trigger": "every time you play 5 cards in a single turn",
+        "target": "all enemies"
+      }
+    },
+    "Panic Button": {
+      "id": "Panic Button",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Gain [BLOCK] Block. You cannot gain Block from cards for 2 turns. Exhaust.",
+      "characters": "colorless",
+      "cost": {
+        "base": 0
+      },
+      "block": {
+        "base": 30,
+        "upgraded": 40
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "scalesWithDexterity": true
+    },
+    "Parasite": {
+      "id": "Parasite",
+      "type": "Curse",
+      "rarity": "Curse",
+      "description": "Unplayable. If transformed or removed from your deck, lose 3 Max HP.",
+      "characters": "curse",
+      "unplayable": true
+    },
+    "Perfected Strike": {
+      "id": "Perfected Strike",
+      "type": "Attack",
+      "rarity": "Common",
+      "description": "Deal [DMG] damage. Deals [PERFECTED_STRIKE_BONUS_DMG] additional damage for ALL your cards containing \"Strike\".",
+      "characters": "ironclad",
+      "cost": {
+        "base": 2
+      },
+      "damage": {
+        "base": 6
+      },
+      "perfected_strike_bonus_dmg": {
+        "base": 2,
+        "upgraded": 3
+      },
+      "scalesWithStrength": true
+    },
+    "Perseverance": {
+      "id": "Perseverance",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Retain. Gain [BLOCK] Block. When Retained, increase its Block by 2 (3) this combat.",
+      "characters": "watcher",
+      "cost": {
+        "base": 1
+      },
+      "block": {
+        "base": 5,
+        "upgraded": 7
+      },
+      "retain": {
+        "base": true,
+        "upgraded": true
+      },
+      "scalesWithDexterity": true
+    },
+    "Phantasmal Killer": {
+      "id": "Phantasmal Killer",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Next turn, your Attacks deal double damage.",
+      "characters": "silent",
+      "cost": {
+        "base": 1,
+        "upgraded": 0
+      }
+    },
+    "Piercing Wail": {
+      "id": "Piercing Wail",
+      "type": "Skill",
+      "rarity": "Common",
+      "description": "ALL enemies lose [APPLIESDEBUFFS.LOSESTRENGTH] Strength this turn. Exhaust.",
+      "characters": "silent",
+      "cost": {
+        "base": 1
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "appliesDebuffs": {
+        "losestrength": {
+          "base": 6,
+          "upgraded": 8,
+          "target": "all enemies"
+        }
+      }
+    },
+    "Poisoned Stab": {
+      "id": "Poisoned Stab",
+      "type": "Attack",
+      "rarity": "Common",
+      "description": "Deal [DMG] damage. Apply 3 (4) Poison.",
+      "characters": "silent",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 6,
+        "upgraded": 8
+      },
+      "appliesDebuffs": {
+        "poison": {
+          "base": 3,
+          "upgraded": 4
+        }
+      },
+      "scalesWithStrength": true
+    },
+    "Pommel Strike": {
+      "id": "Pommel Strike",
+      "type": "Attack",
+      "rarity": "Common",
+      "description": "Deal [DMG] damage. Draw 1 card.",
+      "characters": "ironclad",
+      "descriptionUpgraded": "Deal [DMG] damage. Draw 2 cards.",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 9,
+        "upgraded": 10
+      },
+      "draw": {
+        "base": 1,
+        "upgraded": 2
+      },
+      "scalesWithStrength": true
+    },
+    "Power Through": {
+      "id": "Power Through",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Add 2 Wounds into your hand. Gain [BLOCK] Block.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 1
+      },
+      "block": {
+        "base": 15,
+        "upgraded": 20
+      },
+      "canAddCards": true,
+      "scalesWithDexterity": true,
+      "cards_meant": [
+        "Wound"
+      ]
+    },
+    "Pray": {
+      "id": "Pray",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Gain [MANTRA] Mantra. Shuffle an Insight into your draw pile.",
+      "characters": "watcher",
+      "cost": {
+        "base": 1
+      },
+      "mantra": {
+        "base": 3,
+        "upgraded": 4
+      },
+      "canAddCards": true,
+      "cards_meant": [
+        "Insight"
+      ]
+    },
+    "Predator": {
+      "id": "Predator",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Deal [DMG] damage. Next turn, draw 2 additional cards.",
+      "characters": "silent",
+      "cost": {
+        "base": 2
+      },
+      "damage": {
+        "base": 15,
+        "upgraded": 20
+      },
+      "draw": {
+        "base": 2,
+        "conditioned": true,
+        "trigger": "next turn"
+      },
+      "scalesWithStrength": true
+    },
+    "Prepared": {
+      "id": "Prepared",
+      "type": "Skill",
+      "rarity": "Common",
+      "description": "Draw 1 card. Discard 1 card.",
+      "characters": "silent",
+      "descriptionUpgraded": "Draw 2 cards. Discard 2 cards.",
+      "cost": {
+        "base": 0
+      },
+      "draw": {
+        "base": 1,
+        "upgraded": 2
+      },
+      "discardEffect": {
+        "base": 1,
+        "upgraded": 2,
+        "random": false,
+        "fromHand": true
+      }
+    },
+    "Pressure Points": {
+      "id": "Pressure Points",
+      "type": "Skill",
+      "rarity": "Common",
+      "description": "Apply [MARK] Mark. ALL enemies lose HP equal to their Mark.",
+      "characters": "watcher",
+      "cost": {
+        "base": 1
+      },
+      "mark": {
+        "base": 8,
+        "upgraded": 11
+      }
+    },
+    "Pride": {
+      "id": "Pride",
+      "type": "Curse",
+      "rarity": "Special",
+      "description": "Innate. At the end of your turn, put a copy of this card on top of your draw pile. Exhaust.",
+      "characters": "curse",
+      "cost": {
+        "base": 1
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "innate": {
+        "base": true,
+        "upgraded": true
+      },
+      "canAddCards": true,
+      "cards_meant": [
+        "Pride"
+      ]
+    },
+    "Prostrate": {
+      "id": "Prostrate",
+      "type": "Skill",
+      "rarity": "Common",
+      "description": "Gain 2 (3) Mantra. Gain [BLOCK] Block.",
+      "characters": "watcher",
+      "cost": {
+        "base": 0
+      },
+      "block": {
+        "base": 4
+      },
+      "mantra": {
+        "base": 2,
+        "upgraded": 3
+      },
+      "scalesWithDexterity": true
+    },
+    "Protect": {
+      "id": "Protect",
+      "type": "Skill",
+      "rarity": "Common",
+      "description": "Retain. Gain [BLOCK] Block.",
+      "characters": "watcher",
+      "cost": {
+        "base": 2
+      },
+      "block": {
+        "base": 12,
+        "upgraded": 16
+      },
+      "retain": {
+        "base": true,
+        "upgraded": true
+      },
+      "scalesWithDexterity": true
+    },
+    "Pummel": {
+      "id": "Pummel",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Deal [DMG] damage 4 (5) times. Exhaust.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 2
+      },
+      "multiHit": {
+        "damageUsesMainField": true,
+        "multiHitCount": {
+          "base": 4,
+          "upgraded": 5
+        }
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "scalesWithStrength": true
+    },
+    "Purity": {
+      "id": "Purity",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Exhaust up to 3 (5) cards in your hand. Exhaust.",
+      "characters": "colorless",
+      "cost": {
+        "base": 0
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      }
+    },
+    "Quick Slash": {
+      "id": "Quick Slash",
+      "type": "Attack",
+      "rarity": "Common",
+      "description": "Deal [DMG] damage. Draw 1 card.",
+      "characters": "silent",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 8,
+        "upgraded": 12
+      },
+      "draw": {
+        "base": 1
+      },
+      "scalesWithStrength": true
+    },
+    "Rage": {
+      "id": "Rage",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Whenever you play an Attack this turn, Gain [BLOCK] Block.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 0
+      },
+      "block": {
+        "base": 3,
+        "upgraded": 5,
+        "conditioned": true,
+        "trigger": "whenever you play an Attack this turn"
+      },
+      "scalesWithDexterity": true
+    },
+    "Ragnarok": {
+      "id": "Ragnarok",
+      "type": "Attack",
+      "rarity": "Rare",
+      "description": "Deal [DMG] damage to a random enemy 5 (6) times.",
+      "characters": "watcher",
+      "cost": {
+        "base": 3
+      },
+      "damage": {
+        "base": 5,
+        "upgraded": 6
+      },
+      "multiHit": {
+        "damageUsesMainField": true,
+        "multiHitCount": {
+          "base": 5,
+          "upgraded": 6
+        }
+      },
+      "scalesWithStrength": true
+    },
+    "Rainbow": {
+      "id": "Rainbow",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Channel 1 Lightning. Channel 1 Frost. Channel 1 Dark. Exhaust.",
+      "characters": "defect",
+      "descriptionUpgraded": "Channel 1 Lightning. Channel 1 Frost. Channel 1 Dark.",
+      "cost": {
+        "base": 2
+      },
+      "orbInteractions": [
+        {
+          "orbtype": "Lightning",
+          "amount": {
+            "base": 1
+          },
+          "verb": "Channel"
+        },
+        {
+          "orbtype": "Frost",
+          "amount": {
+            "base": 1
+          },
+          "verb": "Channel"
+        },
+        {
+          "orbtype": "Dark",
+          "amount": {
+            "base": 1
+          },
+          "verb": "Channel"
+        }
+      ],
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": false
+      }
+    },
+    "Rampage": {
+      "id": "Rampage",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Deal [DMG] damage. Increase this card's damage by [RAMPAGE_BONUS_DMG] this combat.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 8
+      },
+      "rampage_bonus_dmg": {
+        "base": 5,
+        "upgraded": 8
+      },
+      "scalesWithStrength": true
+    },
+    "Reach Heaven": {
+      "id": "Reach Heaven",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Deal [DMG] damage. Shuffle a Through Violence into your draw pile.",
+      "characters": "watcher",
+      "cost": {
+        "base": 2
+      },
+      "damage": {
+        "base": 10,
+        "upgraded": 15
+      },
+      "canAddCards": true,
+      "scalesWithStrength": true,
+      "cards_meant": [
+        "Through Violence"
+      ]
+    },
+    "Reaper": {
+      "id": "Reaper",
+      "type": "Attack",
+      "rarity": "Rare",
+      "description": "Deal [DMG] damage to ALL enemies. Heal HP equal to unblocked damage. Exhaust.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 2
+      },
+      "damage": {
+        "base": 4,
+        "upgraded": 5,
+        "target": "all enemies"
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "scalesWithStrength": true
+    },
+    "Reboot": {
+      "id": "Reboot",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Shuffle ALL your cards into your draw pile. Draw 4 (6) cards. Exhaust.",
+      "characters": "defect",
+      "cost": {
+        "base": 0
+      },
+      "draw": {
+        "base": 4,
+        "upgraded": 6
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      }
+    },
+    "Rebound": {
+      "id": "Rebound",
+      "type": "Attack",
+      "rarity": "Common",
+      "description": "Deal [DMG] damage. Put the next card you play this turn on top of your draw pile.",
+      "characters": "defect",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 9,
+        "upgraded": 12
+      },
+      "scalesWithStrength": true
+    },
+    "Reckless Charge": {
+      "id": "Reckless Charge",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Deal [DMG] damage. Shuffle a Dazed into your draw pile.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 0
+      },
+      "damage": {
+        "base": 7,
+        "upgraded": 10
+      },
+      "canAddCards": true,
+      "scalesWithStrength": true,
+      "cards_meant": [
+        "Dazed"
+      ]
+    },
+    "Recursion": {
+      "id": "Recursion",
+      "type": "Skill",
+      "rarity": "Common",
+      "description": "Evoke your next Orb. Channel the Orb that was just Evoked.",
+      "characters": "defect",
+      "cost": {
+        "base": 1,
+        "upgraded": 0
+      },
+      "orbInteractions": [
+        {
+          "verb": "Evoke"
+        },
+        {
+          "verb": "Channel"
+        }
+      ]
+    },
+    "Recycle": {
+      "id": "Recycle",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Exhaust a card. Gain [B] equal to its cost.",
+      "characters": "defect",
+      "cost": {
+        "base": 1,
+        "upgraded": 0
+      }
+    },
+    "Reflex": {
+      "id": "Reflex",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Unplayable. If this card is discarded from your hand, draw 2 cards.",
+      "characters": "silent",
+      "descriptionUpgraded": "Unplayable. If this card is discarded from your hand, draw 3 cards.",
+      "unplayable": true,
+      "draw": {
+        "base": 2,
+        "upgraded": 3,
+        "conditioned": true,
+        "trigger": "this card is discarded from your hand"
+      }
+    },
+    "Regret": {
+      "id": "Regret",
+      "type": "Curse",
+      "rarity": "Curse",
+      "description": "Unplayable. At the end of your turn, lose HP equal to the number of cards in your hand.",
+      "characters": "curse",
+      "unplayable": true
+    },
+    "Reinforced Body": {
+      "id": "Reinforced Body",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Gain [BLOCK] Block X times.",
+      "characters": "defect",
+      "xCost": true,
+      "block": {
+        "base": 7,
+        "upgraded": 11
+      },
+      "multiHit": {
+        "blockUsesMainField": true,
+        "multiHitEnergyScaling": true
+      },
+      "scalesWithDexterity": true
+    },
+    "Reprogram": {
+      "id": "Reprogram",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Lose [FOCUS_LOSS] Focus. Gain [STRENGTH_GAIN] Strength. Gain [DEXTERITY_GAIN] Dexterity.",
+      "characters": "defect",
+      "cost": {
+        "base": 1
+      },
+      "focus_loss": {
+        "base": 1,
+        "upgraded": 2
+      },
+      "strength_gain": {
+        "base": 1,
+        "upgraded": 2
+      },
+      "dexterity_gain": {
+        "base": 1,
+        "upgraded": 2
+      }
+    },
+    "Riddle with Holes": {
+      "id": "Riddle with Holes",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Deal [DMG] damage 5 times.",
+      "characters": "silent",
+      "cost": {
+        "base": 2
+      },
+      "damage": {
+        "base": 3,
+        "upgraded": 4
+      },
+      "multiHit": {
+        "damageUsesMainField": true,
+        "multiHitCount": {
+          "base": 5
+        }
+      },
+      "scalesWithStrength": true
+    },
+    "Rip and Tear": {
+      "id": "Rip and Tear",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Deal [DMG] damage to a random enemy twice.",
+      "characters": "defect",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 7,
+        "upgraded": 9
+      },
+      "multiHit": {
+        "damageUsesMainField": true,
+        "multiHitCount": {
+          "base": 2
+        }
+      },
+      "scalesWithStrength": true
+    },
+    "Ritual Dagger": {
+      "id": "Ritual Dagger",
+      "type": "Attack",
+      "rarity": "Special",
+      "description": "Deal [DMG] damage. If Fatal, permanently increase this card's damage by 3 (5). Exhaust.",
+      "characters": "colorless",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 15
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "scalesWithStrength": true
+    },
+    "Rupture": {
+      "id": "Rupture",
+      "type": "Power",
+      "rarity": "Uncommon",
+      "description": "Whenever you lose HP from a card, Gain [STRENGTH_GAIN] Strength.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 1
+      },
+      "strength_gain": {
+        "base": 1,
+        "upgraded": 2,
+        "conditioned": true,
+        "trigger": "whenever you lose HP from a card"
+      }
+    },
+    "Rushdown": {
+      "id": "Rushdown",
+      "type": "Power",
+      "rarity": "Uncommon",
+      "description": "Whenever you enter Wrath, draw 2 cards.",
+      "characters": "watcher",
+      "cost": {
+        "base": 1,
+        "upgraded": 0
+      },
+      "draw": {
+        "base": 2,
+        "conditioned": true,
+        "trigger": "Whenever you enter Wrath"
+      }
+    },
+    "Sadistic Nature": {
+      "id": "Sadistic Nature",
+      "type": "Power",
+      "rarity": "Rare",
+      "description": "Whenever you apply a debuff to an enemy, they take [DMG] damage.",
+      "characters": "colorless",
+      "cost": {
+        "base": 0
+      },
+      "damage": {
+        "base": 5,
+        "upgraded": 7,
+        "conditioned": true,
+        "trigger": "whenever you apply a debuff to an enemy"
+      }
+    },
+    "Safety": {
+      "id": "Safety",
+      "type": "Skill",
+      "rarity": "Special",
+      "description": "Retain. Gain [BLOCK] Block. Exhaust.",
+      "characters": "colorless",
+      "cost": {
+        "base": 1
+      },
+      "block": {
+        "base": 12,
+        "upgraded": 16
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "retain": {
+        "base": true,
+        "upgraded": true
+      },
+      "scalesWithDexterity": true
+    },
+    "Sanctity": {
+      "id": "Sanctity",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Gain [BLOCK] Block. If the last card played this combat was a Skill, draw 2 cards.",
+      "characters": "watcher",
+      "cost": {
+        "base": 1
+      },
+      "block": {
+        "base": 6,
+        "upgraded": 9
+      },
+      "draw": {
+        "base": 2,
+        "conditioned": true,
+        "trigger": "the last card played this combat was a Skill"
+      },
+      "scalesWithDexterity": true
+    },
+    "Sands of Time": {
+      "id": "Sands of Time",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Retain. Deal [DMG] damage. When Retained, lower its cost by 1 this combat.",
+      "characters": "watcher",
+      "cost": {
+        "base": 4
+      },
+      "damage": {
+        "base": 20,
+        "upgraded": 26
+      },
+      "retain": {
+        "base": true,
+        "upgraded": true
+      },
+      "scalesWithStrength": true
+    },
+    "Sash Whip": {
+      "id": "Sash Whip",
+      "type": "Attack",
+      "rarity": "Common",
+      "description": "Deal [DMG] damage. If the last card played this combat was an Attack, apply 1 (2) Weak.",
+      "characters": "watcher",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 8,
+        "upgraded": 10
+      },
+      "appliesDebuffs": {
+        "weak": {
+          "base": 1,
+          "upgraded": 2,
+          "conditioned": true,
+          "trigger": "if the last card played this combat was an Attack"
+        }
+      },
+      "scalesWithStrength": true
+    },
+    "Scrape": {
+      "id": "Scrape",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Deal [DMG] damage. Draw 4 (5) cards. Discard all cards drawn this way that do not cost 0.",
+      "characters": "defect",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 7,
+        "upgraded": 10
+      },
+      "draw": {
+        "base": 4,
+        "upgraded": 5
+      },
+      "scalesWithStrength": true,
+      "discardEffect": {
+        "base": 0,
+        "hideNumber": true,
+        "conditioned": true,
+        "trigger": "cards that don't cost 0"
+      }
+    },
+    "Scrawl": {
+      "id": "Scrawl",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Draw cards until your hand is full. Exhaust.",
+      "characters": "watcher",
+      "cost": {
+        "base": 1,
+        "upgraded": 0
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      }
+    },
+    "Searing Blow": {
+      "id": "Searing Blow",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Deal [DMG] damage. Can be Upgraded any number of times.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 2
+      },
+      "damage": {
+        "base": 12,
+        "upgraded": 16
+      },
+      "scalesWithStrength": true
+    },
+    "Second Wind": {
+      "id": "Second Wind",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Exhaust all non-Attack cards in your hand. Gain [BLOCK] Block for each card Exhausted.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 1
+      },
+      "block": {
+        "base": 5,
+        "upgraded": 7
+      },
+      "scalesWithDexterity": true
+    },
+    "Secret Technique": {
+      "id": "Secret Technique",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Put a Skill from your draw pile into your hand. Exhaust.",
+      "characters": "colorless",
+      "descriptionUpgraded": "Put a Skill from your draw pile into your hand.",
+      "cost": {
+        "base": 0
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": false
+      },
+      "canAddCards": true
+    },
+    "Secret Weapon": {
+      "id": "Secret Weapon",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Put an Attack from your draw pile into your hand. Exhaust.",
+      "characters": "colorless",
+      "descriptionUpgraded": "Put an Attack from your draw pile into your hand.",
+      "cost": {
+        "base": 0
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": false
+      },
+      "canAddCards": true
+    },
+    "Seeing Red": {
+      "id": "Seeing Red",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Gain [R] [R]. Exhaust.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 1,
+        "upgraded": 0
+      },
+      "gainEnergy": {
+        "base": 2
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      }
+    },
+    "Seek": {
+      "id": "Seek",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Put 1 card from your draw pile into your hand. Exhaust.",
+      "characters": "defect",
+      "descriptionUpgraded": "Put 2 cards from your draw pile into your hand. Exhaust.",
+      "cost": {
+        "base": 0
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "canAddCards": true
+    },
+    "Self Repair": {
+      "id": "Self Repair",
+      "type": "Power",
+      "rarity": "Uncommon",
+      "description": "At the end of combat, Heal [HEAL] HP.",
+      "characters": "defect",
+      "cost": {
+        "base": 1
+      },
+      "heal": {
+        "base": 7,
+        "upgraded": 10
+      }
+    },
+    "Sentinel": {
+      "id": "Sentinel",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Gain [BLOCK] Block. If this card is Exhausted, gain [R] [R].",
+      "characters": "ironclad",
+      "descriptionUpgraded": "Gain [BLOCK] Block. If this card is Exhausted, gain [R] [R] [R].",
+      "cost": {
+        "base": 1
+      },
+      "block": {
+        "base": 5,
+        "upgraded": 8
+      },
+      "gainEnergy": {
+        "base": 2,
+        "upgraded": 3,
+        "conditioned": true,
+        "trigger": "if this card is Exhausted"
+      },
+      "scalesWithDexterity": true
+    },
+    "Setup": {
+      "id": "Setup",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Put a card from your hand on top of your draw pile. It costs 0 until played.",
+      "characters": "silent",
+      "cost": {
+        "base": 1,
+        "upgraded": 0
+      }
+    },
+    "Sever Soul": {
+      "id": "Sever Soul",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Exhaust all non-Attack cards in your hand. Deal [DMG] damage.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 2
+      },
+      "damage": {
+        "base": 16,
+        "upgraded": 22
+      },
+      "scalesWithStrength": true
+    },
+    "Shame": {
+      "id": "Shame",
+      "type": "Curse",
+      "rarity": "Curse",
+      "description": "Unplayable. At the end of your turn, gain 1 Frail.",
+      "characters": "curse",
+      "unplayable": true
+    },
+    "Shiv": {
+      "id": "Shiv",
+      "type": "Attack",
+      "rarity": "Special",
+      "description": "Deal [DMG] damage. Exhaust.",
+      "characters": "colorless",
+      "cost": {
+        "base": 0
+      },
+      "damage": {
+        "base": 4,
+        "upgraded": 6
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "scalesWithStrength": true
+    },
+    "Shockwave": {
+      "id": "Shockwave",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Apply 3 (5) Weak and Vulnerable to ALL enemies. Exhaust.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 2
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "appliesDebuffs": {
+        "weak": {
+          "base": 3,
+          "upgraded": 5,
+          "target": "all enemies"
+        },
+        "vulnerable": {
+          "base": 3,
+          "upgraded": 5,
+          "target": "all enemies"
+        }
+      }
+    },
+    "Shrug It Off": {
+      "id": "Shrug It Off",
+      "type": "Skill",
+      "rarity": "Common",
+      "description": "Gain [BLOCK] Block. Draw 1 card.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 1
+      },
+      "block": {
+        "base": 8,
+        "upgraded": 11
+      },
+      "draw": {
+        "base": 1
+      },
+      "scalesWithDexterity": true
+    },
+    "Signature Move": {
+      "id": "Signature Move",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Can only be played if this is the only Attack in your hand. Deal [DMG] damage.",
+      "characters": "watcher",
+      "cost": {
+        "base": 2
+      },
+      "damage": {
+        "base": 30,
+        "upgraded": 40
+      },
+      "scalesWithStrength": true
+    },
+    "Simmering Fury": {
+      "id": "Simmering Fury",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "At the start of your next turn, enter Wrath and draw [DRAW] cards.",
+      "characters": "watcher",
+      "cost": {
+        "base": 1
+      },
+      "draw": {
+        "base": 2,
+        "upgraded": 3,
+        "conditioned": true,
+        "trigger": "at the start of your next turn"
+      },
+      "change_stance": {
+        "base": "Wrath",
+        "conditioned": true,
+        "trigger": "at the start of your next turn"
+      }
+    },
+    "Skewer": {
+      "id": "Skewer",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Deal [DMG] damage X times.",
+      "characters": "silent",
+      "xCost": true,
+      "damage": {
+        "base": 7,
+        "upgraded": 10
+      },
+      "multiHit": {
+        "damageUsesMainField": true,
+        "multiHitEnergyScaling": true
+      },
+      "scalesWithStrength": true
+    },
+    "Skim": {
+      "id": "Skim",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Draw 3 (4) cards.",
+      "characters": "defect",
+      "cost": {
+        "base": 1
+      },
+      "draw": {
+        "base": 3,
+        "upgraded": 4
+      }
+    },
+    "Slice": {
+      "id": "Slice",
+      "type": "Attack",
+      "rarity": "Common",
+      "description": "Deal [DMG] damage.",
+      "characters": "silent",
+      "cost": {
+        "base": 0
+      },
+      "damage": {
+        "base": 6,
+        "upgraded": 9
+      },
+      "scalesWithStrength": true
+    },
+    "Slimed": {
+      "id": "Slimed",
+      "type": "Status",
+      "rarity": "Common",
+      "description": "Exhaust.",
+      "characters": "status",
+      "cost": {
+        "base": 1
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      }
+    },
+    "Smite": {
+      "id": "Smite",
+      "type": "Attack",
+      "rarity": "Special",
+      "description": "Retain. Deal [DMG] damage. Exhaust.",
+      "characters": "colorless",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 12,
+        "upgraded": 16
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "retain": {
+        "base": true,
+        "upgraded": true
+      },
+      "scalesWithStrength": true
+    },
+    "Sneaky Strike": {
+      "id": "Sneaky Strike",
+      "type": "Attack",
+      "rarity": "Common",
+      "description": "Deal [DMG] damage. If you have discarded a card this turn, gain [G] [G].",
+      "characters": "silent",
+      "cost": {
+        "base": 2
+      },
+      "damage": {
+        "base": 12,
+        "upgraded": 16
+      },
+      "gainEnergy": {
+        "base": 2,
+        "conditioned": true,
+        "trigger": "if you have discarded a card this turn"
+      },
+      "scalesWithStrength": true
+    },
+    "Spirit Shield": {
+      "id": "Spirit Shield",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Gain [BLOCK] Block for each card in your hand.",
+      "characters": "watcher",
+      "cost": {
+        "base": 2
+      },
+      "block": {
+        "base": 3,
+        "upgraded": 4
+      },
+      "scalesWithDexterity": true
+    },
+    "Spot Weakness": {
+      "id": "Spot Weakness",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "If the enemy intends to attack, Gain [STRENGTH_GAIN] Strength.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 1
+      },
+      "strength_gain": {
+        "base": 3,
+        "upgraded": 4,
+        "conditioned": true,
+        "trigger": "if the enemy intends to attack"
+      }
+    },
+    "Stack": {
+      "id": "Stack",
+      "type": "Skill",
+      "rarity": "Common",
+      "description": "Gain Block equal to the number of cards in your discard pile.",
+      "characters": "defect",
+      "descriptionUpgraded": "Gain Block equal to the number of cards in your discard pile +3.",
+      "cost": {
+        "base": 1
+      },
+      "block": {
+        "base": 0,
+        "hideNumber": true
+      }
+    },
+    "Static Discharge": {
+      "id": "Static Discharge",
+      "type": "Power",
+      "rarity": "Uncommon",
+      "description": "Whenever you receive unblocked attack damage, [ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE].",
+      "characters": "defect",
+      "cost": {
+        "base": 1
+      },
+      "orbInteractions": {
+        "orbtype": "Lightning",
+        "amount": {
+          "base": 1,
+          "upgraded": 2
+        },
+        "verb": "Channel",
+        "conditioned": true,
+        "trigger": "whenever you receive unblocked attack damage"
+      }
+    },
+    "Steam Barrier": {
+      "id": "Steam Barrier",
+      "type": "Skill",
+      "rarity": "Common",
+      "description": "Gain [BLOCK] Block. Decrease this card's Block by 1 this combat.",
+      "characters": "defect",
+      "cost": {
+        "base": 0
+      },
+      "block": {
+        "base": 6,
+        "upgraded": 8
+      },
+      "scalesWithDexterity": true
+    },
+    "Storm": {
+      "id": "Storm",
+      "type": "Power",
+      "rarity": "Uncommon",
+      "description": "Whenever you play a Power card, [ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE].",
+      "characters": "defect",
+      "descriptionUpgraded": "Innate. Whenever you play a Power card, [ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE].",
+      "cost": {
+        "base": 1
+      },
+      "orbInteractions": {
+        "orbtype": "Lightning",
+        "amount": {
+          "base": 1
+        },
+        "verb": "Channel"
+      },
+      "innate": {
+        "base": false,
+        "upgraded": true
+      }
+    },
+    "Storm of Steel": {
+      "id": "Storm of Steel",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Discard your hand. Add 1 Shiv into your hand for each card discarded.",
+      "characters": "silent",
+      "descriptionUpgraded": "Discard your hand. Add 1 Shiv+ into your hand for each card discarded.",
+      "cost": {
+        "base": 1
+      },
+      "canAddCards": true,
+      "cards_meant": [
+        "Shiv"
+      ]
+    },
+    "Streamline": {
+      "id": "Streamline",
+      "type": "Attack",
+      "rarity": "Common",
+      "description": "Deal [DMG] damage. Reduce this card's cost by 1 this combat.",
+      "characters": "defect",
+      "cost": {
+        "base": 2
+      },
+      "damage": {
+        "base": 15,
+        "upgraded": 20
+      },
+      "scalesWithStrength": true
+    },
+    "Strike_B": {
+      "id": "Strike_B",
+      "type": "Attack",
+      "rarity": "Basic",
+      "description": "Deal [DMG] damage.",
+      "character": "defect",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 6,
+        "upgraded": 9
+      },
+      "scalesWithStrength": true
+    },
+    "Strike_G": {
+      "id": "Strike_G",
+      "type": "Attack",
+      "rarity": "Basic",
+      "description": "Deal [DMG] damage.",
+      "character": "silent",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 6,
+        "upgraded": 9
+      },
+      "scalesWithStrength": true
+    },
+    "Strike_P": {
+      "id": "Strike_P",
+      "type": "Attack",
+      "rarity": "Basic",
+      "description": "Deal [DMG] damage.",
+      "character": "watcher",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 6,
+        "upgraded": 9
+      },
+      "scalesWithStrength": true
+    },
+    "Strike_R": {
+      "id": "Strike_R",
+      "type": "Attack",
+      "rarity": "Basic",
+      "description": "Deal [DMG] damage.",
+      "character": "ironclad",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 6,
+        "upgraded": 9
+      },
+      "scalesWithStrength": true
+    },
+    "Study": {
+      "id": "Study",
+      "type": "Power",
+      "rarity": "Uncommon",
+      "description": "At the end of your turn, shuffle an Insight into your draw pile.",
+      "characters": "watcher",
+      "cost": {
+        "base": 2,
+        "upgraded": 1
+      },
+      "canAddCards": true,
+      "cards_meant": [
+        "Insight"
+      ]
+    },
+    "Sucker Punch": {
+      "id": "Sucker Punch",
+      "type": "Attack",
+      "rarity": "Common",
+      "description": "Deal [DMG] damage. Apply 1 (2) Weak.",
+      "characters": "silent",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 7,
+        "upgraded": 9
+      },
+      "appliesDebuffs": {
+        "weak": {
+          "base": 1,
+          "upgraded": 2
+        }
+      },
+      "scalesWithStrength": true
+    },
+    "Sunder": {
+      "id": "Sunder",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Deal [DMG] damage. If this kills an enemy, gain [B] [B] [B].",
+      "characters": "defect",
+      "cost": {
+        "base": 3
+      },
+      "damage": {
+        "base": 24,
+        "upgraded": 32
+      },
+      "gainEnergy": {
+        "base": 3,
+        "conditioned": true,
+        "trigger": "if this kills an enemy"
+      },
+      "scalesWithStrength": true
+    },
+    "Survivor": {
+      "id": "Survivor",
+      "type": "Skill",
+      "rarity": "Basic",
+      "description": "Gain [BLOCK] Block. Discard 1 card.",
+      "characters": "silent",
+      "cost": {
+        "base": 1
+      },
+      "block": {
+        "base": 8,
+        "upgraded": 11
+      },
+      "discardEffect": {
+        "base": 1,
+        "random": false,
+        "fromHand": true
+      },
+      "scalesWithDexterity": true
+    },
+    "Sweeping Beam": {
+      "id": "Sweeping Beam",
+      "type": "Attack",
+      "rarity": "Common",
+      "description": "Deal [DMG] damage to ALL enemies. Draw 1 card.",
+      "characters": "defect",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 6,
+        "upgraded": 9,
+        "target": "all enemies"
+      },
+      "draw": {
+        "base": 1
+      },
+      "scalesWithStrength": true
+    },
+    "Swift Strike": {
+      "id": "Swift Strike",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Deal [DMG] damage.",
+      "characters": "colorless",
+      "cost": {
+        "base": 0
+      },
+      "damage": {
+        "base": 7,
+        "upgraded": 10
+      },
+      "scalesWithStrength": true
+    },
+    "Swivel": {
+      "id": "Swivel",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Gain [BLOCK] Block. The next Attack you play costs 0.",
+      "characters": "watcher",
+      "cost": {
+        "base": 2
+      },
+      "block": {
+        "base": 8,
+        "upgraded": 11
+      },
+      "scalesWithDexterity": true
+    },
+    "Sword Boomerang": {
+      "id": "Sword Boomerang",
+      "type": "Attack",
+      "rarity": "Common",
+      "description": "Deal [DMG] damage to a random enemy 3 (4) times.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 3
+      },
+      "multiHit": {
+        "damageUsesMainField": true,
+        "multiHitCount": {
+          "base": 3,
+          "upgraded": 4
+        }
+      },
+      "scalesWithStrength": true
+    },
+    "Tactician": {
+      "id": "Tactician",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Unplayable. If this card is discarded from your hand, gain [G] Energy.",
+      "characters": "silent",
+      "unplayable": true,
+      "gainEnergy": {
+        "base": 1,
+        "upgraded": 2
+      }
+    },
+    "Talk to the Hand": {
+      "id": "Talk to the Hand",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Deal [DMG] damage. Whenever you attack this enemy, Gain [BLOCK] Block. Exhaust.",
+      "characters": "watcher",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 5,
+        "upgraded": 7
+      },
+      "block": {
+        "base": 2,
+        "upgraded": 3
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "scalesWithStrength": true
+    },
+    "Tantrum": {
+      "id": "Tantrum",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Deal [DMG] damage 3 (4) times. Enter Wrath. Shuffle this card into your draw pile.",
+      "characters": "watcher",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 3
+      },
+      "multiHit": {
+        "damageUsesMainField": true,
+        "multiHitCount": {
+          "base": 3,
+          "upgraded": 4
+        }
+      },
+      "change_stance": {
+        "base": "Wrath"
+      },
+      "scalesWithStrength": true
+    },
+    "Tempest": {
+      "id": "Tempest",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "[ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE]. Exhaust.",
+      "characters": "defect",
+      "descriptionUpgraded": "[ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE]. Exhaust.",
+      "xCost": true,
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "orbInteractions": {
+        "orbtype": "Lightning",
+        "amount": {
+          "base": 0,
+          "upgraded": 0,
+          "xNumber": true
+        },
+        "verb": "Channel"
+      }
+    },
+    "Terror": {
+      "id": "Terror",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Apply [VULN] Vulnerable. Exhaust.",
+      "characters": "silent",
+      "cost": {
+        "base": 1,
+        "upgraded": 0
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "appliesDebuffs": {
+        "vulnerable": {
+          "base": 99
+        }
+      },
+      "vulnerable": {
+        "base": 99
+      }
+    },
+    "The Bomb": {
+      "id": "The Bomb",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "At the end of 3 turns, Deal [DMG] damage to ALL enemies.",
+      "characters": "colorless",
+      "cost": {
+        "base": 2
+      },
+      "damage": {
+        "base": 40,
+        "upgraded": 50,
+        "conditioned": true,
+        "trigger": "at the end of 3 turns",
+        "target": "all enemies"
+      }
+    },
+    "Thinking Ahead": {
+      "id": "Thinking Ahead",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Draw 2 cards. Put a card from your hand on top of your draw pile. Exhaust.",
+      "characters": "colorless",
+      "descriptionUpgraded": "Draw 2 cards. Put a card from your hand on top of your draw pile.",
+      "cost": {
+        "base": 0
+      },
+      "draw": {
+        "base": 2
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": false
+      }
+    },
+    "Third Eye": {
+      "id": "Third Eye",
+      "type": "Skill",
+      "rarity": "Common",
+      "description": "Gain [BLOCK] Block. Scry [SCRY].",
+      "characters": "watcher",
+      "cost": {
+        "base": 1
+      },
+      "block": {
+        "base": 7,
+        "upgraded": 9
+      },
+      "scry": {
+        "base": 3,
+        "upgraded": 5
+      },
+      "scalesWithDexterity": true
+    },
+    "Through Violence": {
+      "id": "Through Violence",
+      "type": "Attack",
+      "rarity": "Special",
+      "description": "Retain. Deal [DMG] damage. Exhaust.",
+      "characters": "colorless",
+      "cost": {
+        "base": 0
+      },
+      "damage": {
+        "base": 20,
+        "upgraded": 30
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "retain": {
+        "base": true,
+        "upgraded": true
+      },
+      "scalesWithStrength": true
+    },
+    "Thunder Strike": {
+      "id": "Thunder Strike",
+      "type": "Attack",
+      "rarity": "Rare",
+      "description": "Deal [DMG] damage to a random enemy for each Lightning Channeled this combat.",
+      "characters": "defect",
+      "cost": {
+        "base": 3
+      },
+      "damage": {
+        "base": 7,
+        "upgraded": 9,
+        "conditioned": true,
+        "trigger": "for each Lightning Channeled this combat"
+      },
+      "scalesWithStrength": true
+    },
+    "Thunderclap": {
+      "id": "Thunderclap",
+      "type": "Attack",
+      "rarity": "Common",
+      "description": "Deal [DMG] damage and Apply [VULN] Vulnerable to ALL enemies.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 4,
+        "upgraded": 7,
+        "target": "all enemies"
+      },
+      "appliesDebuffs": {
+        "vulnerable": {
+          "base": 1,
+          "target": "all enemies"
+        }
+      },
+      "vulnerable": {
+        "base": 1
+      },
+      "scalesWithStrength": true
+    },
+    "Tools of the Trade": {
+      "id": "Tools of the Trade",
+      "type": "Power",
+      "rarity": "Rare",
+      "description": "At the start of your turn, draw 1 card and discard 1 card.",
+      "characters": "silent",
+      "cost": {
+        "base": 1,
+        "upgraded": 0
+      },
+      "draw": {
+        "base": 1
+      },
+      "discardEffect": {
+        "base": 1,
+        "random": false,
+        "fromHand": true
+      }
+    },
+    "Tranquility": {
+      "id": "Tranquility",
+      "type": "Skill",
+      "rarity": "Common",
+      "description": "Retain. Enter Calm. Exhaust.",
+      "characters": "watcher",
+      "cost": {
+        "base": 1,
+        "upgraded": 0
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "retain": {
+        "base": true,
+        "upgraded": true
+      },
+      "change_stance": {
+        "base": "Calm"
+      }
+    },
+    "Transmutation": {
+      "id": "Transmutation",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Add X random Colorless cards into your hand. They cost 0 this turn. Exhaust.",
+      "characters": "colorless",
+      "descriptionUpgraded": "Add X random Upgraded Colorless cards into your hand. They cost 0 this turn. Exhaust.",
+      "xCost": true,
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "canAddCards": true
+    },
+    "Trip": {
+      "id": "Trip",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Apply [VULN] Vulnerable.",
+      "characters": "colorless",
+      "descriptionUpgraded": "Apply [VULN] Vulnerable to ALL enemies.",
+      "cost": {
+        "base": 0
+      },
+      "appliesDebuffs": {
+        "vulnerable": {
+          "base": 2,
+          "target": {
+            "base": null,
+            "upgraded": "all enemies"
+          }
+        }
+      },
+      "vulnerable": {
+        "base": 2
+      }
+    },
+    "True Grit": {
+      "id": "True Grit",
+      "type": "Skill",
+      "rarity": "Common",
+      "description": "Gain [BLOCK] Block. Exhaust 1 card at random.",
+      "characters": "ironclad",
+      "descriptionUpgraded": "Gain [BLOCK] Block. Exhaust 1 card.",
+      "cost": {
+        "base": 1
+      },
+      "block": {
+        "base": 7,
+        "upgraded": 9
+      },
+      "scalesWithDexterity": true
+    },
+    "TURBO": {
+      "id": "TURBO",
+      "type": "Skill",
+      "rarity": "Common",
+      "description": "Gain [B] [B]. Add a Void into your discard pile.",
+      "characters": "defect",
+      "descriptionUpgraded": "Gain [B] [B] [B]. Add a Void into your discard pile.",
+      "cost": {
+        "base": 0
+      },
+      "gainEnergy": {
+        "base": 2,
+        "upgraded": 3
+      },
+      "canAddCards": true,
+      "cards_meant": [
+        "Void"
+      ]
+    },
+    "Twin Strike": {
+      "id": "Twin Strike",
+      "type": "Attack",
+      "rarity": "Common",
+      "description": "Deal [DMG] damage twice.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 5,
+        "upgraded": 7
+      },
+      "multiHit": {
+        "damageUsesMainField": true,
+        "multiHitCount": {
+          "base": 2
+        }
+      },
+      "scalesWithStrength": true
+    },
+    "Unload": {
+      "id": "Unload",
+      "type": "Attack",
+      "rarity": "Rare",
+      "description": "Deal [DMG] damage. Discard all non-Attack cards in your hand.",
+      "characters": "silent",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 14,
+        "upgraded": 18
+      },
+      "scalesWithStrength": true,
+      "discardEffect": {
+        "base": 0,
+        "hideNumber": true
+      }
+    },
+    "Uppercut": {
+      "id": "Uppercut",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Deal [DMG] damage. Apply 1 (2) Weak. Apply [VULN] Vulnerable.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 2
+      },
+      "damage": {
+        "base": 13
+      },
+      "appliesDebuffs": {
+        "vulnerable": {
+          "base": 1,
+          "upgraded": 2
+        },
+        "weak": {
+          "base": 1,
+          "upgraded": 2
+        }
+      },
+      "vulnerable": {
+        "base": 1,
+        "upgraded": 2
+      },
+      "scalesWithStrength": true
+    },
+    "Vault": {
+      "id": "Vault",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Take an extra turn after this one. End your turn. Exhaust.",
+      "characters": "watcher",
+      "cost": {
+        "base": 3,
+        "upgraded": 2
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      }
+    },
+    "Vigilance": {
+      "id": "Vigilance",
+      "type": "Skill",
+      "rarity": "Basic",
+      "description": "Gain [BLOCK] Block. Enter Calm.",
+      "characters": "watcher",
+      "cost": {
+        "base": 2
+      },
+      "block": {
+        "base": 8,
+        "upgraded": 12
+      },
+      "change_stance": {
+        "base": "Calm"
+      },
+      "scalesWithDexterity": true
+    },
+    "Violence": {
+      "id": "Violence",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Put 3 (4) random Attacks from your draw pile into your hand. Exhaust.",
+      "characters": "colorless",
+      "cost": {
+        "base": 0
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "canAddCards": true
+    },
+    "Void": {
+      "id": "Void",
+      "type": "Status",
+      "rarity": "Common",
+      "description": "Unplayable. Ethereal. Whenever this card is drawn, lose 1 Energy.",
+      "characters": "status",
+      "unplayable": true,
+      "gainEnergy": {
+        "base": -1
+      },
+      "ethereal": {
+        "base": true,
+        "upgraded": true
+      }
+    },
+    "Wallop": {
+      "id": "Wallop",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Deal [DMG] damage. Gain Block equal to unblocked damage dealt.",
+      "characters": "watcher",
+      "cost": {
+        "base": 2
+      },
+      "damage": {
+        "base": 9,
+        "upgraded": 12
+      },
+      "scalesWithStrength": true,
+      "block": {
+        "base": 0,
+        "hideNumber": true
+      }
+    },
+    "Warcry": {
+      "id": "Warcry",
+      "type": "Skill",
+      "rarity": "Common",
+      "description": "Draw 1 card. Put a card from your hand onto the top of your draw pile. Exhaust.",
+      "characters": "ironclad",
+      "descriptionUpgraded": "Draw 2 cards. Put a card from your hand onto the top of your draw pile. Exhaust.",
+      "cost": {
+        "base": 0
+      },
+      "draw": {
+        "base": 1,
+        "upgraded": 2
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      }
+    },
+    "Wave of the Hand": {
+      "id": "Wave of the Hand",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Whenever you gain Block this turn, apply 1 (2) Weak to ALL enemies.",
+      "characters": "watcher",
+      "cost": {
+        "base": 1
+      },
+      "appliesDebuffs": {
+        "weak": {
+          "base": 1,
+          "upgraded": 2,
+          "conditioned": true,
+          "trigger": "whenever you gain Block this turn",
+          "target": "all enemies"
+        }
+      }
+    },
+    "Weave": {
+      "id": "Weave",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Deal [DMG] damage. Whenever you Scry, return this from the discard pile to your Hand.",
+      "characters": "watcher",
+      "cost": {
+        "base": 0
+      },
+      "damage": {
+        "base": 4,
+        "upgraded": 6
+      },
+      "scalesWithStrength": true
+    },
+    "Well-Laid Plans": {
+      "id": "Well-Laid Plans",
+      "type": "Power",
+      "rarity": "Uncommon",
+      "description": "At the end of your turn, Retain up to 1 card.",
+      "characters": "silent",
+      "descriptionUpgraded": "At the end of your turn, Retain up to 2 cards.",
+      "cost": {
+        "base": 1
+      }
+    },
+    "Wheel Kick": {
+      "id": "Wheel Kick",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Deal [DMG] damage. Draw 2 cards.",
+      "characters": "watcher",
+      "cost": {
+        "base": 2
+      },
+      "damage": {
+        "base": 15,
+        "upgraded": 20
+      },
+      "draw": {
+        "base": 2
+      },
+      "scalesWithStrength": true
+    },
+    "Whirlwind": {
+      "id": "Whirlwind",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Deal [DMG] damage to ALL enemies X times.",
+      "characters": "ironclad",
+      "xCost": true,
+      "damage": {
+        "base": 5,
+        "upgraded": 8,
+        "target": "all enemies"
+      },
+      "multiHit": {
+        "damageUsesMainField": true,
+        "multiHitEnergyScaling": true
+      },
+      "scalesWithStrength": true
+    },
+    "White Noise": {
+      "id": "White Noise",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Add a random Power card into your hand. It costs 0 this turn. Exhaust.",
+      "characters": "defect",
+      "cost": {
+        "base": 1,
+        "upgraded": 0
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "canAddCards": true
+    },
+    "Wild Strike": {
+      "id": "Wild Strike",
+      "type": "Attack",
+      "rarity": "Common",
+      "description": "Deal [DMG] damage. Shuffle a Wound into your draw pile.",
+      "characters": "ironclad",
+      "cost": {
+        "base": 1
+      },
+      "damage": {
+        "base": 12,
+        "upgraded": 17
+      },
+      "canAddCards": true,
+      "scalesWithStrength": true,
+      "cards_meant": [
+        "Wound"
+      ]
+    },
+    "Windmill Strike": {
+      "id": "Windmill Strike",
+      "type": "Attack",
+      "rarity": "Uncommon",
+      "description": "Retain. Deal [DMG] damage. When Retained, increase its damage by 4 (5) this combat.",
+      "characters": "watcher",
+      "cost": {
+        "base": 2
+      },
+      "damage": {
+        "base": 7,
+        "upgraded": 10
+      },
+      "retain": {
+        "base": true,
+        "upgraded": true
+      },
+      "scalesWithStrength": true
+    },
+    "Wish": {
+      "id": "Wish",
+      "type": "Skill",
+      "rarity": "Rare",
+      "description": "Choose one: Gain 6 (8) Plated Armor, 3 (4) Strength, or 25 (30) Gold. Exhaust.",
+      "characters": "watcher",
+      "cost": {
+        "base": 3
+      },
+      "selfExhaustOnPlay": {
+        "base": true,
+        "upgraded": true
+      },
+      "cards_meant": ["Live Forever", "Become Almighty", "Fame and Fortune"],
+      "wish_buffs": {
+        "plated_armor": { "base": 6, "upgraded": 8 },
+        "strength_gain": { "base": 3, "upgraded": 4 },
+        "gain_gold": { "base": 25, "upgraded": 30 }
+      }
+    },
+    "Worship": {
+      "id": "Worship",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Gain [MANTRA] Mantra.",
+      "characters": "watcher",
+      "descriptionUpgraded": "Retain. Gain [MANTRA] Mantra.",
+      "cost": {
+        "base": 2
+      },
+      "mantra": {
+        "base": 5
+      },
+      "retain": {
+        "base": false,
+        "upgraded": true
+      }
+    },
+    "Wound": {
+      "id": "Wound",
+      "type": "Status",
+      "rarity": "Common",
+      "description": "Unplayable.",
+      "characters": "status",
+      "unplayable": true
+    },
+    "Wraith Form": {
+      "id": "Wraith Form",
+      "type": "Power",
+      "rarity": "Rare",
+      "description": "Gain [INTANGIBLE] Intangible. At the end of your turn, lose 1 Dexterity.",
+      "characters": "silent",
+      "cost": {
+        "base": 3
+      },
+      "Intangible": {
+        "base": 2,
+        "upgraded": 3
+      }
+    },
+    "Wreath of Flame": {
+      "id": "Wreath of Flame",
+      "type": "Skill",
+      "rarity": "Uncommon",
+      "description": "Your next Attack deals [WREATH_BONUS_DMG] additional damage.",
+      "characters": "watcher",
+      "cost": {
+        "base": 1
+      },
+      "wreath_bonus_dmg": {
+        "base": 5,
+        "upgraded": 8
+      }
+    },
+    "Writhe": {
+      "id": "Writhe",
+      "type": "Curse",
+      "rarity": "Curse",
+      "description": "Unplayable. Innate.",
+      "characters": "curse",
+      "unplayable": true,
+      "innate": {
+        "base": true,
+        "upgraded": true
+      }
+    },
+    "Zap": {
+      "id": "Zap",
+      "type": "Skill",
+      "rarity": "Basic",
+      "description": "[ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE].",
+      "characters": "defect",
+      "cost": {
+        "base": 1,
+        "upgraded": 0
+      },
+      "orbInteractions": {
+        "orbtype": "Lightning",
+        "amount": {
+          "base": 1
+        },
+        "verb": "Channel"
+      }
+    }
+  }
+}

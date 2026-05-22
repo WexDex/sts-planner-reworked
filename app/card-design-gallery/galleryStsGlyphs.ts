@@ -1235,8 +1235,9 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
     }
     const uses = resolveOrbCatalogKey(e, verb);
     const orbMeta = STS_ICON_GLYPH[uses] ?? STS_ICON_GLYPH.ANY_ORB;
-    const orbAmt =
-      galleryTierNumber(card, e.amount) ?? galleryTierNumber(card, e.times);
+    const orbAmtDisplay =
+      galleryTierDisplayText(card, e.amount) ??
+      (e.times != null ? galleryTierDisplayText(card, e.times) : undefined);
     const isChannel = verb === "channel";
     const isEvoke = /^evoke/i.test(verb);
 
@@ -1247,14 +1248,14 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
         plusSegment(),
         { Icon: orbMeta.Icon, iconClass: orbMeta.iconClass },
       );
-      if (orbAmt != null) {
+      if (orbAmtDisplay != null) {
         segs.push({
-          text: String(orbAmt),
+          text: orbAmtDisplay,
           textClass: `${orbMeta.iconClass} font-bold tabular-nums leading-none`,
         });
       }
       const label =
-        orbAmt != null ? `Channel ${orbAmt} (${uses})` : `Channel (${uses})`;
+        orbAmtDisplay != null ? `Channel ${orbAmtDisplay} (${uses})` : `Channel (${uses})`;
       push({
         id: `orb-${i}-channel`,
         label,
@@ -1272,14 +1273,14 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
         { Icon: ev.Icon, iconClass: ev.iconClass },
         { Icon: orbMeta.Icon, iconClass: orbMeta.iconClass },
       );
-      if (orbAmt != null) {
+      if (orbAmtDisplay != null) {
         segs.push({
-          text: String(orbAmt),
+          text: orbAmtDisplay,
           textClass: `${orbMeta.iconClass} font-bold tabular-nums leading-none`,
         });
       }
       const label =
-        orbAmt != null ? `Evoke ${orbAmt} (${uses})` : `Evoke (${uses})`;
+        orbAmtDisplay != null ? `Evoke ${orbAmtDisplay} (${uses})` : `Evoke (${uses})`;
       push({
         id: `orb-${i}-evoke`,
         label,
@@ -1291,8 +1292,8 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
 
     const labelVerb = verb || "Orb";
     const label =
-      orbAmt != null
-        ? `${labelVerb} ${orbAmt} (${uses})`
+      orbAmtDisplay != null
+        ? `${labelVerb} ${orbAmtDisplay} (${uses})`
         : `${labelVerb} (${uses})`;
     push(
       glyphFromStsKey(`orb-${i}-${labelVerb}`, uses, label) ??
@@ -1648,21 +1649,21 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
       const debuffAoe = appliesDebuffGlyphLeadsWithAoe(card, debuffs, raw);
 
       if (kind === "losestrength") {
-        const stacks = galleryTierNumber(card, raw);
+        const stackDisplay = galleryTierDisplayText(card, raw);
         const debuffRand = galleryTierOrEffectHasRandomFlag(raw);
         const m = STS_ICON_GLYPH.LOSE_STRENGTH;
         const pfx =
           `${debuffAoe ? "AoE · " : ""}${debuffRand ? "Random · " : ""}`;
         const label =
-          stacks != null ? `${pfx}Lose Strength ${stacks}` : `${pfx}Lose Strength`;
-        if (stacks != null) {
+          stackDisplay != null ? `${pfx}Lose Strength ${stackDisplay}` : `${pfx}Lose Strength`;
+        if (stackDisplay != null) {
           const segs: GalleryGlyphSegment[] = [];
           if (debuffAoe) segs.push(segmentAoe());
           if (debuffRand) segs.push(segmentRandom());
           segs.push(
             { Icon: m.Icon, iconClass: m.iconClass },
             {
-              text: String(stacks),
+              text: stackDisplay,
               textClass: `${m.iconClass} font-bold tabular-nums leading-none`,
             },
           );
@@ -1800,18 +1801,18 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
       const eff =
         kind === "vulnerable" || kind === "weak" ? kind : ("wound" as const);
       const d = getEffectDisplay(eff);
-      const stacks = galleryTierNumber(card, raw);
+      const stackDisplay = galleryTierDisplayText(card, raw);
       const debuffRand = galleryTierOrEffectHasRandomFlag(raw);
       const pfx = `${debuffAoe ? "AoE · " : ""}${debuffRand ? "Random · " : ""}`;
-      const label = stacks != null ? `${pfx}${kind} ${stacks}` : `${pfx}${kind}`;
-      if (stacks != null) {
+      const label = stackDisplay != null ? `${pfx}${kind} ${stackDisplay}` : `${pfx}${kind}`;
+      if (stackDisplay != null) {
         const segs: GalleryGlyphSegment[] = [];
         if (debuffAoe) segs.push(segmentAoe());
         if (debuffRand) segs.push(segmentRandom());
         segs.push(
           { Icon: d.icon, iconClass: d.color },
           {
-            text: String(stacks),
+            text: stackDisplay,
             textClass: `${d.color} font-bold tabular-nums leading-none`,
           },
         );
@@ -1850,6 +1851,37 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
           iconClass: d.color,
         });
       }
+    }
+  }
+
+  // wish_buffs: choose-one glyph (Wish card — Plated Armor / Strength / Gold options)
+  const wishBuffs = (c as any).wish_buffs as Record<string, unknown> | undefined;
+  if (wishBuffs && typeof wishBuffs === "object") {
+    const optionMeta = [
+      { key: "plated_armor",  Icon: ShieldCheck, iconClass: "text-lime-300",   label: "Plated Armor" },
+      { key: "strength_gain", Icon: ChevronsUp,  iconClass: "text-violet-300", label: "Strength"     },
+      { key: "gain_gold",     Icon: Coins,       iconClass: "text-amber-300",  label: "Gold"         },
+    ] as const;
+
+    const segments: GalleryGlyphSegment[] = [];
+    let first = true;
+    for (const { key, Icon, iconClass } of optionMeta) {
+      const raw = (wishBuffs as Record<string, unknown>)[key];
+      if (raw == null) continue;
+      const val = galleryTierNumber(card, raw);
+      if (!first) segments.push({ text: "OR", textClass: "text-slate-400 text-[0.75em] font-semibold mx-1 uppercase tracking-wide" });
+      segments.push({ Icon, iconClass });
+      if (val != null) segments.push({ text: String(val), textClass: `${iconClass} font-bold tabular-nums leading-none` });
+      first = false;
+    }
+
+    if (segments.length > 0) {
+      push({
+        id: "wish-buffs",
+        label: "Choose: Plated Armor / Strength / Gold",
+        clusterClass: clusterShellField("neutral"),
+        segments,
+      });
     }
   }
 
@@ -2043,13 +2075,13 @@ export function galleryGlyphsInsideCardOnly(
   const drawCond = galleryDrawIsConditional(card);
 
   return glyphs.filter((g) => {
-    // When a field has hideNumber:true the stat strip is suppressed, so keep the
-    // glyph chip — it's the only remaining way to show the icon for that field.
-    if (g.id === "draw-main"  && card.draw != undefined && !drawCond          && !fieldHasHideNumber(card.draw)) return false;
-    if (g.id === "block"      && card.block != undefined                       && !fieldHasHideNumber(c.block))   return false;
-    if (g.id === "damage"     && card.damage != undefined                      && !fieldHasHideNumber(c.damage))  return false;
-    if (g.id === "heal-main"  && c.heal != undefined                           && !fieldHasHideNumber(c.heal))    return false;
-    if (g.id === "focus-main" && c.focus != undefined                          && !fieldHasHideNumber(c.focus))   return false;
+    // When a field has hideNumber:true or xNumber:true the stat strip is suppressed,
+    // so keep the glyph chip — it's the only remaining way to show the icon.
+    if (g.id === "draw-main"  && card.draw != undefined && !drawCond          && !fieldHasHideNumber(card.draw) && !fieldHasXNumber(card.draw)) return false;
+    if (g.id === "block"      && card.block != undefined                       && !fieldHasHideNumber(c.block)   && !fieldHasXNumber(c.block))   return false;
+    if (g.id === "damage"     && card.damage != undefined                      && !fieldHasHideNumber(c.damage)  && !fieldHasXNumber(c.damage))  return false;
+    if (g.id === "heal-main"  && c.heal != undefined                           && !fieldHasHideNumber(c.heal)    && !fieldHasXNumber(c.heal))    return false;
+    if (g.id === "focus-main" && c.focus != undefined                          && !fieldHasHideNumber(c.focus)   && !fieldHasXNumber(c.focus))   return false;
     return true;
   });
 }
@@ -2058,6 +2090,19 @@ export function galleryGlyphsInsideCardOnly(
 function fieldHasHideNumber(val: unknown): boolean {
   if (!val || typeof val !== "object" || Array.isArray(val)) return false;
   return (val as Record<string, unknown>).hideNumber === true;
+}
+
+/** True when a field value carries `xNumber: true` (value scales with X / energy). */
+function fieldHasXNumber(val: unknown): boolean {
+  if (!val || typeof val !== "object" || Array.isArray(val)) return false;
+  return (val as Record<string, unknown>).xNumber === true;
+}
+
+/** "X" if xNumber:true, numeric string if value exists, else undefined. */
+function galleryTierDisplayText(card: Card, raw: unknown): string | undefined {
+  if (fieldHasXNumber(raw)) return "X";
+  const n = galleryTierNumber(card, raw);
+  return n !== undefined ? String(n) : undefined;
 }
 
 /** Append custom glyphs that match the given card's fields. */
@@ -2173,17 +2218,17 @@ export function inferGalleryCardEffects(card: Card): {
     return applyFieldLevelHideNumbers(card, applyBuiltinOverrides(appendCustomGlyphs(card, finalizeGlyphDisplayOrder(card, raw))));
   }
 
-  /** Suppress stat strip values when the card field carries `hideNumber: true`. */
+  /** Suppress stat strip values when the card field carries `hideNumber: true` or `xNumber: true`. */
   function fieldStatSuppression(base: GallerySuppressedStats): GallerySuppressedStats {
     const c = card as Record<string, unknown>;
     const out = { ...base };
-    if (fieldHasHideNumber(c.block)) out.block = true;
-    if (fieldHasHideNumber(c.damage)) out.damage = true;
-    if (fieldHasHideNumber(c.draw)) out.draw = true;
-    if (fieldHasHideNumber(energyGainNode(card))) out.energyGain = true;
-    if (fieldHasHideNumber(c.heal)) out.heal = true;
-    if (fieldHasHideNumber(c.focus)) out.focus = true;
-    if (fieldHasHideNumber(c.hpcost ?? c.hpCost)) out.hpcost = true;
+    if (fieldHasHideNumber(c.block)  || fieldHasXNumber(c.block))  out.block = true;
+    if (fieldHasHideNumber(c.damage) || fieldHasXNumber(c.damage)) out.damage = true;
+    if (fieldHasHideNumber(c.draw)   || fieldHasXNumber(c.draw))   out.draw = true;
+    if (fieldHasHideNumber(energyGainNode(card)) || fieldHasXNumber(energyGainNode(card))) out.energyGain = true;
+    if (fieldHasHideNumber(c.heal)   || fieldHasXNumber(c.heal))   out.heal = true;
+    if (fieldHasHideNumber(c.focus)  || fieldHasXNumber(c.focus))  out.focus = true;
+    if (fieldHasHideNumber(c.hpcost ?? c.hpCost) || fieldHasXNumber(c.hpcost ?? c.hpCost)) out.hpcost = true;
     return out;
   }
 

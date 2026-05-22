@@ -1,0 +1,422 @@
+{
+  "_meta": {
+    "note": "Companion notes for STS_CARDS_DB_CLAUDE.json. Documents all anomalies (data bugs, missing fields, dynamic effects) and field completions found during the review of cards from 'Infernal Blade' to 'Zap'. Keyed by card ID.",
+    "sourceDb": "app/data/db/STS_CARDS_DB.json",
+    "completedBy": "claude-sonnet-4-6",
+    "completedAt": "2026-05-22"
+  },
+  "anomalies": {
+    "Iron Wave": {
+      "severity": "bug",
+      "summary": "Missing scalesWithDexterity flag",
+      "detail": "Original entry was missing scalesWithDexterity:true. Iron Wave grants Block that scales with Dexterity in STS, consistent with all other block cards that bear that flag.",
+      "fix": "Added scalesWithDexterity:true."
+    },
+    "Limit Break": {
+      "severity": "bug",
+      "summary": "selfExhaustOnPlay upgraded tier incorrect",
+      "detail": "Original had selfExhaustOnPlay: { base: true, upgraded: true }, but Limit Break+'s descriptionUpgraded reads 'Double your Strength.' with no Exhaust clause. Limit Break+ is intentionally non-exhausting.",
+      "fix": "Corrected to selfExhaustOnPlay: { base: true, upgraded: false }."
+    },
+    "Rainbow": {
+      "severity": "incomplete",
+      "summary": "Missing Frost and Dark orb interactions",
+      "detail": "Original entry only had a single Lightning orbInteraction. Rainbow channels 1 Lightning + 1 Frost + 1 Dark. The Frost and Dark entries were absent.",
+      "fix": "Added FROST_ORB and DARK_ORB channel entries, each with amount: { base: 1 }."
+    },
+    "Secret Technique": {
+      "severity": "bug",
+      "summary": "selfExhaustOnPlay upgraded tier incorrect",
+      "detail": "Original had selfExhaustOnPlay: { base: true, upgraded: true }, but the descriptionUpgraded reads 'Put a Skill from your draw pile into your hand.' — no Exhaust. Secret Technique+ removes the Exhaust.",
+      "fix": "Corrected to selfExhaustOnPlay: { base: true, upgraded: false }."
+    },
+    "Secret Weapon": {
+      "severity": "bug",
+      "summary": "selfExhaustOnPlay upgraded tier incorrect",
+      "detail": "Original had selfExhaustOnPlay: { base: true, upgraded: true }, but the descriptionUpgraded reads 'Put an Attack from your draw pile into your hand.' — no Exhaust. Secret Weapon+ removes the Exhaust.",
+      "fix": "Corrected to selfExhaustOnPlay: { base: true, upgraded: false }."
+    },
+    "Thinking Ahead": {
+      "severity": "bug",
+      "summary": "selfExhaustOnPlay upgraded tier incorrect",
+      "detail": "Original had selfExhaustOnPlay: { base: true, upgraded: true }, but the descriptionUpgraded reads 'Draw 2 cards. Put a card from your hand on top of your draw pile.' — no Exhaust.",
+      "fix": "Corrected to selfExhaustOnPlay: { base: true, upgraded: false }."
+    },
+    "Terror": {
+      "severity": "sentinel-value",
+      "summary": "Vulnerable stacks set to 99",
+      "detail": "Both appliesDebuffs.vulnerable and top-level vulnerable are set to { base: 99 }. This is a sentinel value representing 'Permanently Vulnerable' — a state that cannot be cleansed by normal means. Not a real stack count.",
+      "fix": "Kept as-is. Added _anomaly annotation."
+    },
+    "Malaise": {
+      "severity": "dynamic-representable",
+      "summary": "X-cost debuff scaling represented with xNumber:true flag",
+      "detail": "Malaise applies X Strength loss and X Weak (X+1 when upgraded). The debuff amount is proportional to energy spent. Represented using the new xNumber:true flag on appliesDebuffs entries, which causes galleryStsGlyphs to render 'X' instead of a numeric value.",
+      "fix": "Added appliesDebuffs: { weak: { xNumber: true }, losestrength: { xNumber: true } }."
+    },
+    "Stack": {
+      "severity": "dynamic-representable",
+      "summary": "Block equals discard pile count — represented with hideNumber:true",
+      "detail": "Stack gains Block equal to the number of cards in the discard pile (+3 when upgraded). The block amount is purely dynamic at runtime. Represented as block: { base: 0, hideNumber: true } so the block icon appears in glyphs without a misleading number.",
+      "fix": "Added block: { base: 0, hideNumber: true }."
+    },
+    "Wallop": {
+      "severity": "dynamic-representable",
+      "summary": "Block equals unblocked damage dealt — represented with hideNumber:true",
+      "detail": "Wallop gains Block equal to the amount of unblocked damage it deals. The value is determined at combat resolution time. Represented as block: { base: 0, hideNumber: true }. Does not scale with Dexterity (block mirrors damage, which scales with Strength only).",
+      "fix": "Added block: { base: 0, hideNumber: true }. No scalesWithDexterity."
+    },
+    "Unload": {
+      "severity": "dynamic-representable",
+      "summary": "Discards all non-Attack cards — represented with hideNumber:true",
+      "detail": "Unload discards all non-Attack cards currently in hand. The count depends on runtime hand composition. Represented as discardEffect: { base: 0, hideNumber: true } so the discard icon appears in glyphs without a misleading number.",
+      "fix": "Added discardEffect: { base: 0, hideNumber: true }."
+    },
+    "Scrape": {
+      "severity": "dynamic-representable",
+      "summary": "Discards drawn non-zero-cost cards — represented with hideNumber+conditioned",
+      "detail": "Scrape draws 4 (5) cards then discards every drawn card that doesn't cost 0. The discard count is wholly dependent on card costs at draw time. Represented as discardEffect with hideNumber:true and conditioned:true to flag the conditional nature.",
+      "fix": "Added discardEffect: { base: 0, hideNumber: true, conditioned: true, trigger: \"cards that don't cost 0\" }."
+    },
+    "Wish": {
+      "severity": "choose-one",
+      "summary": "Three mutually exclusive options grouped in wish_buffs sub-object",
+      "detail": "Wish is a choose-one card: the player picks exactly one of (Plated Armor 6/8), (Strength 3/4), or (Gold 25/30). Options are now stored in a wish_buffs sub-object instead of separate top-level fields. galleryStsGlyphs renders a single cluster with all three options separated by OR. cards_meant lists the three choice cards.",
+      "fix": "Restructured to wish_buffs: { plated_armor, strength_gain, gain_gold }. Added cards_meant: [\"Live Forever\", \"Become Almighty\", \"Fame and Fortune\"]. Added wish-buffs glyph cluster in galleryStsGlyphs.ts."
+    },
+    "Strike_B": {
+      "severity": "naming-inconsistency",
+      "summary": "Uses 'character' (singular) instead of 'characters' (plural)",
+      "detail": "Strike_B, Strike_G, Strike_P, and Strike_R all use the field name 'character' (singular) rather than 'characters' (plural) used by every other card. This appears to be intentional variant naming for character-specific basic Strikes.",
+      "fix": "Kept as-is to avoid breaking the DB loader."
+    },
+    "Strike_G": {
+      "severity": "naming-inconsistency",
+      "summary": "Uses 'character' (singular) instead of 'characters' (plural)",
+      "detail": "See Strike_B note. Same pattern for the Silent (green) variant.",
+      "fix": "Kept as-is."
+    },
+    "Strike_P": {
+      "severity": "naming-inconsistency",
+      "summary": "Uses 'character' (singular) instead of 'characters' (plural)",
+      "detail": "See Strike_B note. Same pattern for the Watcher (purple) variant.",
+      "fix": "Kept as-is."
+    },
+    "Strike_R": {
+      "severity": "naming-inconsistency",
+      "summary": "Uses 'character' (singular) instead of 'characters' (plural)",
+      "detail": "See Strike_B note. Same pattern for the Ironclad (red) variant.",
+      "fix": "Kept as-is."
+    }
+  },
+  "completions": {
+    "Inflame": {
+      "summary": "Added missing strength_gain field",
+      "changes": ["Added strength_gain: { base: 2, upgraded: 3 }", "Tokenized description to use [STRENGTH_GAIN]"]
+    },
+    "Inner Peace": {
+      "summary": "Conditioned draw and change_stance based on current stance",
+      "changes": [
+        "Updated draw to { base: 3, upgraded: 4, conditioned: true, trigger: 'if you are in Calm' }",
+        "Added change_stance: { base: 'Calm', conditioned: true, trigger: 'if you are NOT in Calm' }"
+      ]
+    },
+    "J.A.X.": {
+      "summary": "Added HP cost and strength gain fields",
+      "changes": [
+        "Added hpcost: { base: 3 }",
+        "Added strength_gain: { base: 2, upgraded: 3 }",
+        "Tokenized description to use [TAKEDMG] and [STRENGTH_GAIN]"
+      ]
+    },
+    "Judgment": {
+      "summary": "Added judgment_threshold field for instant-kill threshold display",
+      "changes": [
+        "Added judgment_threshold: { base: 30, upgraded: 40 }",
+        "Tokenized description to use [JUDGMENT_THRESHOLD]"
+      ]
+    },
+    "Juggernaut": {
+      "summary": "Marked damage as conditioned passive; added scalesWithStrength",
+      "changes": [
+        "Updated damage to { base: 5, upgraded: 7, conditioned: true, trigger: 'whenever you gain Block' }",
+        "Added scalesWithStrength: true"
+      ]
+    },
+    "Like Water": {
+      "summary": "Marked block as conditioned passive (end of turn, if in Calm)",
+      "changes": [
+        "Updated block to { base: 5, upgraded: 7, conditioned: true, trigger: 'at the end of your turn, if you are in Calm' }"
+      ]
+    },
+    "Live Forever": {
+      "summary": "Added plated_armor field",
+      "changes": [
+        "Added plated_armor: { base: 6, upgraded: 8 }",
+        "Tokenized description to use [PLATED_ARMOR]"
+      ]
+    },
+    "Mental Fortress": {
+      "summary": "Marked block as conditioned passive (whenever stance changes)",
+      "changes": [
+        "Updated block to { base: 4, upgraded: 6, conditioned: true, trigger: 'whenever you change Stances' }"
+      ]
+    },
+    "Metallicize": {
+      "summary": "Marked block as conditioned passive (end of turn)",
+      "changes": [
+        "Updated block to { base: 3, upgraded: 4, conditioned: true, trigger: 'at the end of your turn' }"
+      ]
+    },
+    "Multi-Cast": {
+      "summary": "Populated orbInteractions with ANY_ORB evoke entry and hideNumber",
+      "changes": [
+        "Added orbInteractions: [{ verb: 'evoke', orbIcon: 'ANY_ORB', presentation: 'Evoke next Orb X times', amount: { base: 0, upgraded: 0, hideNumber: true } }]"
+      ]
+    },
+    "Nirvana": {
+      "summary": "Marked block as conditioned passive (whenever you Scry)",
+      "changes": [
+        "Updated block to { base: 3, upgraded: 4, conditioned: true, trigger: 'whenever you Scry' }"
+      ]
+    },
+    "Offering": {
+      "summary": "Added hpcost and gainEnergy fields",
+      "changes": [
+        "Added hpcost: { base: 6 }",
+        "Added gainEnergy: { base: 2 }",
+        "Tokenized description to use [TAKEDMG], [R], and [DRAW]"
+      ]
+    },
+    "Omega": {
+      "summary": "Marked damage as conditioned passive with AoE target",
+      "changes": [
+        "Updated damage to { base: 50, upgraded: 60, conditioned: true, trigger: 'at the end of your turn', target: 'all enemies' }"
+      ]
+    },
+    "Outmaneuver": {
+      "summary": "Added conditioned gainEnergy for next turn",
+      "changes": [
+        "Added gainEnergy: { base: 2, upgraded: 3, conditioned: true, trigger: 'next turn' }"
+      ]
+    },
+    "Panache": {
+      "summary": "Marked damage as conditioned passive with AoE target",
+      "changes": [
+        "Updated damage to { base: 10, upgraded: 14, conditioned: true, trigger: 'every time you play 5 cards in a single turn', target: 'all enemies' }"
+      ]
+    },
+    "Perfected Strike": {
+      "summary": "Added perfected_strike_bonus_dmg field for per-Strike bonus display",
+      "changes": [
+        "Added perfected_strike_bonus_dmg: { base: 2, upgraded: 3 }",
+        "Tokenized description to use [PERFECTED_STRIKE_BONUS_DMG]"
+      ]
+    },
+    "Piercing Wail": {
+      "summary": "Added appliesDebuffs.losestrength with AoE target",
+      "changes": [
+        "Added appliesDebuffs.losestrength: { base: 6, upgraded: 8, target: 'all enemies' }",
+        "Tokenized description to use [APPLIESDEBUFFS.LOSESTRENGTH]"
+      ]
+    },
+    "Pray": {
+      "summary": "Added mantra field",
+      "changes": [
+        "Added mantra: { base: 3, upgraded: 4 }",
+        "Tokenized description to use [MANTRA]"
+      ]
+    },
+    "Predator": {
+      "summary": "Added conditioned draw for next turn",
+      "changes": [
+        "Added draw: { base: 2, conditioned: true, trigger: 'next turn' }"
+      ]
+    },
+    "Pressure Points": {
+      "summary": "Added mark field for Mark debuff stacks display",
+      "changes": [
+        "Added mark: { base: 8, upgraded: 11 }",
+        "Tokenized description to use [MARK]"
+      ]
+    },
+    "Rage": {
+      "summary": "Marked block as conditioned passive (whenever you play an Attack)",
+      "changes": [
+        "Updated block to { base: 3, upgraded: 5, conditioned: true, trigger: 'whenever you play an Attack this turn' }"
+      ]
+    },
+    "Rainbow": {
+      "summary": "Completed orbInteractions with all three orb types",
+      "changes": [
+        "Added FROST_ORB channel entry: { verb: 'channel', orbIcon: 'FROST_ORB', presentation: 'FROST_ORB 1', amount: { base: 1 } }",
+        "Added DARK_ORB channel entry: { verb: 'channel', orbIcon: 'DARK_ORB', presentation: 'DARK_ORB 1', amount: { base: 1 } }"
+      ]
+    },
+    "Rampage": {
+      "summary": "Added rampage_bonus_dmg field for per-play damage increase display",
+      "changes": [
+        "Added rampage_bonus_dmg: { base: 5, upgraded: 8 }",
+        "Tokenized description to use [RAMPAGE_BONUS_DMG]"
+      ]
+    },
+    "Reprogram": {
+      "summary": "Added all three stat fields (focus_loss, strength_gain, dexterity_gain)",
+      "changes": [
+        "Added focus_loss: { base: 1, upgraded: 2 }",
+        "Added strength_gain: { base: 1, upgraded: 2 }",
+        "Added dexterity_gain: { base: 1, upgraded: 2 }",
+        "Tokenized description to use [FOCUS_LOSS], [STRENGTH_GAIN], [DEXTERITY_GAIN]"
+      ]
+    },
+    "Rupture": {
+      "summary": "Added conditioned strength_gain field",
+      "changes": [
+        "Added strength_gain: { base: 1, upgraded: 2, conditioned: true, trigger: 'whenever you lose HP from a card' }",
+        "Tokenized description to use [STRENGTH_GAIN]"
+      ]
+    },
+    "Sadistic Nature": {
+      "summary": "Added conditioned damage field",
+      "changes": [
+        "Added damage: { base: 5, upgraded: 7, conditioned: true, trigger: 'whenever you apply a debuff to an enemy' }",
+        "Tokenized description to use [DMG]"
+      ]
+    },
+    "Sash Whip": {
+      "summary": "Marked appliesDebuffs.weak as conditioned",
+      "changes": [
+        "Added conditioned: true and trigger: 'if the last card played this combat was an Attack' to appliesDebuffs.weak"
+      ]
+    },
+    "Self Repair": {
+      "summary": "Added heal field",
+      "changes": [
+        "Added heal: { base: 7, upgraded: 10 }",
+        "Tokenized description to use [HEAL]"
+      ]
+    },
+    "Sentinel": {
+      "summary": "Added conditioned gainEnergy (if exhausted)",
+      "changes": [
+        "Added gainEnergy: { base: 2, upgraded: 3, conditioned: true, trigger: 'if this card is Exhausted' }"
+      ]
+    },
+    "Shockwave": {
+      "summary": "Added target: 'all enemies' to both debuff entries",
+      "changes": [
+        "Added target: 'all enemies' to appliesDebuffs.weak",
+        "Added target: 'all enemies' to appliesDebuffs.vulnerable"
+      ]
+    },
+    "Simmering Fury": {
+      "summary": "Marked draw as conditioned; added conditioned change_stance",
+      "changes": [
+        "Updated draw to { base: 2, upgraded: 3, conditioned: true, trigger: 'at the start of your next turn' }",
+        "Added change_stance: { base: 'Wrath', conditioned: true, trigger: 'at the start of your next turn' }"
+      ]
+    },
+    "Sneaky Strike": {
+      "summary": "Added conditioned gainEnergy (if discarded a card this turn)",
+      "changes": [
+        "Added gainEnergy: { base: 2, conditioned: true, trigger: 'if you have discarded a card this turn' }"
+      ]
+    },
+    "Spot Weakness": {
+      "summary": "Added conditioned strength_gain (if enemy intends to attack)",
+      "changes": [
+        "Added strength_gain: { base: 3, upgraded: 4, conditioned: true, trigger: 'if the enemy intends to attack' }",
+        "Tokenized description to use [STRENGTH_GAIN]"
+      ]
+    },
+    "Static Discharge": {
+      "summary": "Added conditioned orbInteractions (whenever unblocked damage received)",
+      "changes": [
+        "Added orbInteractions: [{ verb: 'channel', orbIcon: 'LIGHTNING_ORB', amount: { base: 1, upgraded: 2 }, conditioned: true, trigger: 'whenever you receive unblocked attack damage' }]"
+      ]
+    },
+    "Tempest": {
+      "summary": "Added orbInteractions with X-scaling Lightning channel",
+      "changes": [
+        "Added orbInteractions: [{ verb: 'channel', orbIcon: 'LIGHTNING_ORB', presentation: 'LIGHTNING_ORB X', amount: { base: 0, upgraded: 0, hideNumber: true } }]"
+      ]
+    },
+    "The Bomb": {
+      "summary": "Marked damage as conditioned with delay trigger and AoE target",
+      "changes": [
+        "Updated damage to { base: 40, upgraded: 50, conditioned: true, trigger: 'at the end of 3 turns', target: 'all enemies' }"
+      ]
+    },
+    "Third Eye": {
+      "summary": "Added scry field",
+      "changes": [
+        "Added scry: { base: 3, upgraded: 5 }",
+        "Tokenized description to use [SCRY]"
+      ]
+    },
+    "Thunder Strike": {
+      "summary": "Marked damage as conditioned (per Lightning channeled this combat)",
+      "changes": [
+        "Updated damage to { base: 7, upgraded: 9, conditioned: true, trigger: 'for each Lightning Channeled this combat' }"
+      ]
+    },
+    "Thunderclap": {
+      "summary": "Added AoE target to damage, and vulnerable debuff fields",
+      "changes": [
+        "Added target: 'all enemies' to damage field",
+        "Added appliesDebuffs.vulnerable: { base: 1, target: 'all enemies' }",
+        "Added top-level vulnerable: { base: 1 } (for [VULN] token resolution)",
+        "Tokenized description to use [DMG] and [VULN]"
+      ]
+    },
+    "Trip": {
+      "summary": "Added appliesDebuffs.vulnerable with tiered target (single → all on upgrade)",
+      "changes": [
+        "Added appliesDebuffs.vulnerable: { base: 2, target: { base: null, upgraded: 'all enemies' } }",
+        "Added top-level vulnerable: { base: 2 } (for [VULN] token resolution)"
+      ]
+    },
+    "Wave of the Hand": {
+      "summary": "Marked appliesDebuffs.weak as conditioned with AoE target",
+      "changes": [
+        "Added conditioned: true, trigger: 'whenever you gain Block this turn', and target: 'all enemies' to appliesDebuffs.weak"
+      ]
+    },
+    "Wish": {
+      "summary": "Added all three choose-one option fields",
+      "changes": [
+        "Added plated_armor: { base: 6, upgraded: 8 }",
+        "Added strength_gain: { base: 3, upgraded: 4 }",
+        "Added gain_gold: { base: 25, upgraded: 30 }"
+      ]
+    },
+    "Worship": {
+      "summary": "Added mantra field and tiered retain",
+      "changes": [
+        "Added mantra: { base: 5 }",
+        "Added retain: { base: false, upgraded: true } (Retain only on upgraded version)",
+        "Tokenized description to use [MANTRA]"
+      ]
+    },
+    "Wraith Form": {
+      "summary": "Added Intangible field (capital I — matches token fieldKey)",
+      "changes": [
+        "Added Intangible: { base: 2, upgraded: 3 } (capital I matches [INTANGIBLE] token's fieldKey)",
+        "Tokenized description to use [INTANGIBLE]"
+      ]
+    },
+    "Wreath of Flame": {
+      "summary": "Added wreath_bonus_dmg field",
+      "changes": [
+        "Added wreath_bonus_dmg: { base: 5, upgraded: 8 }",
+        "Tokenized description to use [WREATH_BONUS_DMG]"
+      ]
+    },
+    "Zap": {
+      "summary": "Added orbInteractions for Lightning channel",
+      "changes": [
+        "Added orbInteractions: [{ verb: 'channel', orbIcon: 'LIGHTNING_ORB', presentation: 'LIGHTNING_ORB 1', amount: { base: 1 } }]"
+      ]
+    }
+  }
+}

@@ -306,5 +306,47 @@
     "label": "Strength_scale_multiplier",
     "resolverType": "field",
     "fieldKey": "strength_scale_multiplier"
+  },
+  {
+    "token": "[PLATED_ARMOR]",
+    "label": "Plated Armor",
+    "resolverType": "field",
+    "fieldKey": "plated_armor"
+  },
+  {
+    "token": "[MARK]",
+    "label": "Mark stacks",
+    "resolverType": "field",
+    "fieldKey": "mark"
+  },
+  {
+    "token": "[JUDGMENT_THRESHOLD]",
+    "label": "Judgment threshold",
+    "resolverType": "field",
+    "fieldKey": "judgment_threshold"
+  },
+  {
+    "token": "[RAMPAGE_BONUS_DMG]",
+    "label": "Rampage bonus damage",
+    "resolverType": "field",
+    "fieldKey": "rampage_bonus_dmg"
+  },
+  {
+    "token": "[PERFECTED_STRIKE_BONUS_DMG]",
+    "label": "Perfected Strike bonus",
+    "resolverType": "field",
+    "fieldKey": "perfected_strike_bonus_dmg"
+  },
+  {
+    "token": "[WREATH_BONUS_DMG]",
+    "label": "Wreath bonus damage",
+    "resolverType": "field",
+    "fieldKey": "wreath_bonus_dmg"
+  },
+  {
+    "token": "[SCRY]",
+    "label": "Scry count",
+    "resolverType": "field",
+    "fieldKey": "scry"
   }
 ]
