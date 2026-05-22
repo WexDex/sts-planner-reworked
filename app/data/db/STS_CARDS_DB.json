@@ -3739,8 +3739,7 @@
         "upgraded": 7,
         "conditioned": true,
         "trigger": "whenever you gain Block"
-      },
-      "scalesWithStrength": true
+      }
     },
     "Just Lucky": {
       "id": "Just Lucky",
@@ -3884,6 +3883,11 @@
       "innate": {
         "base": false,
         "upgraded": true
+      },
+      "draw" : {
+        "base": 1,
+        "conditioned": true,
+        "trigger": "at the start of your turn"
       }
     },
     "Madness": {
@@ -3899,7 +3903,8 @@
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "costManipulation": true
     },
     "Magnetism": {
       "id": "Magnetism",
@@ -4100,6 +4105,11 @@
       "innate": {
         "base": true,
         "upgraded": true
+      },
+      "damage": {
+        "hideNumber": true,
+        "base": 0,
+        "upgraded": 0
       }
     },
     "Miracle": {
@@ -5216,6 +5226,13 @@
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
+      },
+      "draw_until": {
+        "base": 10
+      },
+      "draw": {
+        "base": 0,
+        "hideNumber": true
       }
     },
     "Searing Blow": {
@@ -5458,7 +5475,9 @@
       },
       "damage": {
         "base": 30,
-        "upgraded": 40
+        "upgraded": 40,
+        "conditioned": true,
+        "trigger": "if this is the only Attack in your hand"
       },
       "scalesWithStrength": true
     },
@@ -5717,7 +5736,8 @@
         "base": 15,
         "upgraded": 20
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "costManipulation": true
     },
     "Strike_B": {
       "id": "Strike_B",
@@ -5798,7 +5818,7 @@
       "id": "Sucker Punch",
       "type": "Attack",
       "rarity": "Common",
-      "description": "Deal [DMG] damage. Apply 1 (2) Weak.",
+      "description": "Deal [DMG] damage. Apply [WEAK] Weak.",
       "characters": "silent",
       "cost": {
         "base": 1
@@ -6240,7 +6260,8 @@
         "base": 7,
         "upgraded": 9
       },
-      "scalesWithDexterity": true
+      "scalesWithDexterity": true,
+      "canExhaustCards": true
     },
     "TURBO": {
       "id": "TURBO",

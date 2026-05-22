@@ -25,7 +25,8 @@
     "fieldLink": {
       "mode": "boolean",
       "fieldName": "is_claw"
-    }
+    },
+    "tooltip": "Claw is Law"
   }
 ]
 
