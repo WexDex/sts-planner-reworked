@@ -1008,6 +1008,19 @@ function typeChipCls(type?: string): string {
   }
 }
 
+function charPillCls(characters?: string): string {
+  switch (characters?.toLowerCase()) {
+    case "ironclad":  return "border-rose-900/50 text-rose-400";
+    case "silent":    return "border-teal-900/50 text-teal-400";
+    case "defect":    return "border-blue-900/50 text-blue-400";
+    case "watcher":   return "border-purple-900/50 text-purple-400";
+    case "colorless": return "border-slate-700/50 text-slate-400";
+    case "status":    return "border-amber-900/50 text-amber-400";
+    case "curse":     return "border-indigo-900/50 text-indigo-400";
+    default:          return "border-slate-800/50 text-slate-500";
+  }
+}
+
 function rarityChipCls(rarity?: string): string {
   switch (rarity?.toLowerCase()) {
     case "rare": return "border-amber-500/45 bg-amber-950/40 text-amber-300";
@@ -1184,6 +1197,54 @@ function CardTargetEditor({
   );
 }
 
+// ─── CardQuickAdd ─────────────────────────────────────────────────────────────
+
+function CardQuickAdd({ current, onAdd }: { current: string[]; onAdd: (id: string) => void }) {
+  const [query, setQuery] = useState("");
+
+  const suggestions = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return allCards
+      .filter((c) => !current.includes(c.id) && (!q || c.id.toLowerCase().includes(q)))
+      .slice(0, 12)
+      .map((c) => {
+        const cardType = c.data.type as string | undefined;
+        const cardChar = c.data.characters as string | undefined;
+        const meta = [
+          cardType ? cardType.slice(0, 3).toUpperCase() : null,
+          cardChar ? cardChar.slice(0, 3).toUpperCase() : null,
+        ].filter(Boolean).join(" · ");
+        return { label: c.id, meta: meta || undefined };
+      });
+  }, [query, current]);
+
+  function handleChange(val: string) {
+    setQuery(val);
+    // Auto-commit when a suggestion was clicked (exact match found)
+    const found = allCards.find(c => c.id === val);
+    if (found) { onAdd(found.id); setTimeout(() => setQuery(""), 0); }
+  }
+
+  function commitEnter() {
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    const found = allCards.find(c => c.id.toLowerCase() === trimmed.toLowerCase());
+    if (found) { onAdd(found.id); setQuery(""); }
+  }
+
+  return (
+    <FieldSuggestInput
+      value={query}
+      onChange={handleChange}
+      suggestions={suggestions}
+      placeholder="Quick-add by name…"
+      wrapperClassName="w-full"
+      className="w-full rounded-lg border border-fuchsia-800/40 bg-slate-950/70 px-2.5 py-1.5 text-[12px] font-mono text-slate-200 outline-none focus:border-fuchsia-500/50 placeholder:text-slate-600"
+      onEnter={commitEnter}
+    />
+  );
+}
+
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function ActionRow({
@@ -1192,12 +1253,14 @@ function ActionRow({
   onChange,
   onDelete,
   buffNameSuggestions,
+  cardsMeant,
 }: {
   action: CustomAction;
   index: number;
   onChange: (idx: number, updated: CustomAction) => void;
   onDelete: (idx: number) => void;
   buffNameSuggestions: string[];
+  cardsMeant?: string[];
 }) {
   const set = (patch: Partial<CustomAction>) => onChange(index, { ...action, ...patch });
   const rowTheme = ACTION_TYPE_ROW[action.actionType];
@@ -1424,30 +1487,78 @@ function ActionRow({
                 className="inline-flex items-center gap-1 rounded-lg border border-fuchsia-700/50 bg-fuchsia-950/40 px-2.5 py-1 text-[11px] font-semibold text-fuchsia-300 transition hover:bg-fuchsia-900/50"
               >
                 <Search className="h-3 w-3" strokeWidth={2} />
-                Browse &amp; add
+                Browse
               </button>
             </div>
+            {/* cards_meant quick-add chips */}
+            {(cardsMeant ?? []).length > 0 && (
+              <div className="mb-1.5 flex flex-wrap items-center gap-1">
+                <span className="text-[9px] text-slate-600 italic mr-0.5">from cards_meant:</span>
+                {(cardsMeant ?? []).map((id) => {
+                  const already = (action.cardNames ?? []).includes(id);
+                  const entry = allCardsFlatById.get(id);
+                  const cardType = entry?.type as string | undefined;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      disabled={already}
+                      onClick={() => set({ cardNames: [...new Set([...(action.cardNames ?? []), id])] })}
+                      className={`inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[10px] font-medium transition ${already ? "border-slate-700/40 bg-slate-800/30 text-slate-600 cursor-default" : "border-fuchsia-700/50 bg-fuchsia-950/40 text-fuchsia-300 hover:bg-fuchsia-900/50"}`}
+                    >
+                      {already && <span className="text-[8px] text-slate-600">✓</span>}
+                      <span className="font-mono">{id}</span>
+                      {cardType && (
+                        <span className={`rounded border px-0.5 py-px text-[8px] font-bold ${typeChipCls(cardType)}`}>
+                          {cardType.slice(0, 3).toUpperCase()}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            {/* Inline quick-add search */}
+            <CardQuickAdd
+              current={action.cardNames ?? []}
+              onAdd={(id) => set({ cardNames: [...new Set([...(action.cardNames ?? []), id])] })}
+            />
             {(action.cardNames ?? []).length === 0 ? (
-              <p className="rounded-lg border border-dashed border-slate-700/60 py-3 text-center text-[10px] text-slate-600">
-                No cards selected — click Browse to add
+              <p className="mt-1.5 rounded-lg border border-dashed border-slate-700/60 py-3 text-center text-[10px] text-slate-600">
+                No cards selected — search above or click Browse
               </p>
             ) : (
-              <div className="flex flex-wrap gap-1.5">
-                {(action.cardNames ?? []).map((name, ci) => (
-                  <span
-                    key={`${name}-${ci}`}
-                    className="inline-flex items-center gap-1 rounded-lg border border-fuchsia-700/40 bg-fuchsia-950/35 py-0.5 pl-2 pr-1 text-[11px] font-medium text-fuchsia-200"
-                  >
-                    {name}
-                    <button
-                      type="button"
-                      onClick={() => set({ cardNames: (action.cardNames ?? []).filter((_, i) => i !== ci) })}
-                      className="ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-md text-fuchsia-400 hover:bg-fuchsia-800/50 hover:text-fuchsia-100"
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {(action.cardNames ?? []).map((name, ci) => {
+                  const entry = allCardsFlatById.get(name);
+                  const cardType = entry?.type as string | undefined;
+                  const cardChar = entry?.characters as string | undefined;
+                  return (
+                    <span
+                      key={`${name}-${ci}`}
+                      className="inline-flex items-center gap-1 rounded-lg border border-fuchsia-700/40 bg-fuchsia-950/35 py-0.5 pl-2 pr-1"
                     >
-                      <X className="h-2.5 w-2.5" strokeWidth={2.5} />
-                    </button>
-                  </span>
-                ))}
+                      <span className="font-mono text-[11px] font-medium text-fuchsia-200">{name}</span>
+                      {cardType && (
+                        <span className={`rounded border px-1 py-px text-[9px] font-bold ${typeChipCls(cardType)}`}>
+                          {cardType.slice(0, 3).toUpperCase()}
+                        </span>
+                      )}
+                      {cardChar && (
+                        <span className={`rounded border px-1 py-px text-[9px] font-bold ${charPillCls(cardChar)}`}>
+                          {cardChar.slice(0, 3).toUpperCase()}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => set({ cardNames: (action.cardNames ?? []).filter((_, i) => i !== ci) })}
+                        className="ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-md text-fuchsia-400 hover:bg-fuchsia-800/50 hover:text-fuchsia-100"
+                      >
+                        <X className="h-2.5 w-2.5" strokeWidth={2.5} />
+                      </button>
+                    </span>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1935,6 +2046,12 @@ export default function CardActionsEditorClient() {
   }, [data]);
 
   const currentActions: CustomAction[] = selectedCard ? (data[selectedCard] ?? []) : [];
+  const selectedCardsMeant: string[] = useMemo(() => {
+    if (!selectedCard) return [];
+    const entry = allCardsFlatById.get(selectedCard);
+    const cm = entry?.cards_meant;
+    return Array.isArray(cm) ? (cm as string[]) : [];
+  }, [selectedCard]);
   const mergedActions: QAMAction[] = [
     ...(selectedCard ? (data[selectedCard] ?? []) : []),
     ...(data["__global__"] ?? []),
@@ -2333,6 +2450,7 @@ export default function CardActionsEditorClient() {
                           onChange={updateAction}
                           onDelete={deleteAction}
                           buffNameSuggestions={buffNameSuggestions}
+                          cardsMeant={selectedCardsMeant}
                         />
                       ))}
                     </div>

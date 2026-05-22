@@ -270,5 +270,41 @@
     "label": "Draw_until",
     "resolverType": "field",
     "fieldKey": "draw_until"
+  },
+  {
+    "token": "[GAIN_GOLD]",
+    "label": "Gain_gold",
+    "resolverType": "field",
+    "fieldKey": "gain_gold"
+  },
+  {
+    "token": "[DEXTERITY_GAIN]",
+    "label": "Dexterity_gain",
+    "resolverType": "field",
+    "fieldKey": "dexterity_gain"
+  },
+  {
+    "token": "[MAX_HP_GAIN]",
+    "label": "Max_hp_gain",
+    "resolverType": "field",
+    "fieldKey": "max_hp_gain"
+  },
+  {
+    "token": "[GENETIC_ALGO_GAIN]",
+    "label": "Genetic_algo_gain",
+    "resolverType": "field",
+    "fieldKey": "genetic_algo_gain"
+  },
+  {
+    "token": "[BONUS_BLOCK]",
+    "label": "Bonus Block",
+    "resolverType": "field",
+    "fieldKey": "bonusBlock"
+  },
+  {
+    "token": "[STRENGTH_SCALE_MULTIPLIER]",
+    "label": "Strength_scale_multiplier",
+    "resolverType": "field",
+    "fieldKey": "strength_scale_multiplier"
   }
 ]

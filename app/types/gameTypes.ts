@@ -44,6 +44,8 @@ export interface Card {
   damage?: ValueNode;
   /** True when this card's damage scales with player Strength. */
   scalesWithStrength?: boolean;
+  /** Multiplier applied to each point of Strength when scaling damage (default 1). Tiered ValueNode supported. */
+  strength_scale_multiplier?: number | { base: number; upgraded?: number };
   /** True when this card's block scales with player Dexterity. */
   scalesWithDexterity?: boolean;
   /** Number of hits for multi-hit cards (resolved from DB multiHitCount at load time). Default 1. */

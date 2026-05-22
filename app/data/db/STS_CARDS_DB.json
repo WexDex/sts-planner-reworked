@@ -273,7 +273,10 @@
         "base": false,
         "upgraded": true
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "cards_meant": [
+        "Beta"
+      ]
     },
     "Amplify": {
       "id": "Amplify",
@@ -301,7 +304,10 @@
         "upgraded": 8
       },
       "canAddCards": true,
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "cards_meant": [
+        "Anger"
+      ]
     },
     "Apotheosis": {
       "id": "Apotheosis",
@@ -561,7 +567,10 @@
         "upgraded": true,
         "base": false
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "cards_meant": [
+        "Smite"
+      ]
     },
     "Battle Trance": {
       "id": "Battle Trance",
@@ -650,7 +659,10 @@
         "base": true,
         "upgraded": true
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "cards_meant": [
+        "Omega"
+      ]
     },
     "Biased Cognition": {
       "id": "Biased Cognition",
@@ -699,7 +711,10 @@
       "shiv_add": {
         "base": 3,
         "upgraded": 4
-      }
+      },
+      "cards_meant": [
+        "Shiv"
+      ]
     },
     "Blasphemy": {
       "id": "Blasphemy",
@@ -1104,7 +1119,10 @@
         "upgraded": 10
       },
       "canAddCards": true,
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "cards_meant": [
+        "Smite"
+      ]
     },
     "Catalyst": {
       "id": "Catalyst",
@@ -1295,7 +1313,10 @@
       "shiv_add": {
         "base": 1,
         "upgraded": 2
-      }
+      },
+      "cards_meant": [
+        "Shiv"
+      ]
     },
     "Clothesline": {
       "id": "Clothesline",
@@ -1367,7 +1388,10 @@
       "canAddCards": true,
       "miracle_to_add": {
         "base": 1
-      }
+      },
+      "cards_meant": [
+        "Miracle"
+      ]
     },
     "Combust": {
       "id": "Combust",
@@ -1863,7 +1887,10 @@
         "upgraded": 7
       },
       "canAddCards": true,
-      "scalesWithDexterity": true
+      "scalesWithDexterity": true,
+      "cards_meant": [
+        "Safety"
+      ]
     },
     "Deep Breath": {
       "id": "Deep Breath",
@@ -1997,7 +2024,10 @@
       "miracle_to_add": {
         "base": 2,
         "upgraded": 3
-      }
+      },
+      "cards_meant": [
+        "Miracle"
+      ]
     },
     "Deva Form": {
       "id": "Deva Form",
@@ -2390,7 +2420,10 @@
         "upgraded": true
       },
       "canAddCards": true,
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "cards_meant": [
+        "Endless Agony"
+      ]
     },
     "Enlightenment": {
       "id": "Enlightenment",
@@ -2522,7 +2555,10 @@
         "upgraded": 10
       },
       "canAddCards": true,
-      "scalesWithDexterity": true
+      "scalesWithDexterity": true,
+      "cards_meant": [
+        "Insight"
+      ]
     },
     "Eviscerate": {
       "id": "Eviscerate",
@@ -2621,25 +2657,37 @@
       "id": "Fame and Fortune",
       "type": "Skill",
       "rarity": "Special",
-      "description": "Gain 25 (30) Gold.",
+      "description": "Gain [GAIN_GOLD] Gold.",
       "characters": "colorless",
-      "unplayable": true
+      "unplayable": true,
+      "gain_gold": {
+        "base": 25,
+        "upgraded": 30
+      }
     },
     "Fasting": {
       "id": "Fasting",
       "type": "Power",
       "rarity": "Uncommon",
-      "description": "Gain 3 (4) Strength. Gain 3 (4) Dexterity. Gain 1 less [W] at the start of each turn.",
+      "description": "Gain  [STRENGTH_GAIN] Strength. Gain [DEXTERITY_GAIN] Dexterity. Gain 1 less Energy at the start of each turn.",
       "characters": "watcher",
       "cost": {
         "base": 2
+      },
+      "strength_gain": {
+        "base": 3,
+        "upgraded": 4
+      },
+      "dexterity_gain": {
+        "base": 3,
+        "upgraded": 4
       }
     },
     "Fear No Evil": {
       "id": "Fear No Evil",
       "type": "Attack",
       "rarity": "Uncommon",
-      "description": "Deal [DMG] damage. If the enemy intends to Attack, enter Calm.",
+      "description": "Deal [DMG] damage. If the enemy intends to Attack, enter [CHANGE_STANCE].",
       "characters": "watcher",
       "cost": {
         "base": 1
@@ -2648,13 +2696,18 @@
         "base": 8,
         "upgraded": 11
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "change_stance": {
+        "base": "Calm",
+        "conditioned": true,
+        "trigger": "Enemy intends to attack"
+      }
     },
     "Feed": {
       "id": "Feed",
       "type": "Attack",
       "rarity": "Rare",
-      "description": "Deal [DMG] damage. If Fatal, raise your Max HP by 3 (4). Exhaust.",
+      "description": "Deal [DMG] damage. If Fatal, raise your Max HP by [MAX_HP_GAIN]. Exhaust.",
       "characters": "ironclad",
       "cost": {
         "base": 1
@@ -2667,7 +2720,11 @@
         "base": true,
         "upgraded": true
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "max_hp_gain": {
+        "base": 3,
+        "upgraded": 4
+      }
     },
     "Feel No Pain": {
       "id": "Feel No Pain",
@@ -2680,7 +2737,9 @@
       },
       "block": {
         "base": 3,
-        "upgraded": 4
+        "upgraded": 4,
+        "conditioned": true,
+        "trigger": "when you exhaust a card"
       },
       "scalesWithDexterity": false
     },
@@ -2701,13 +2760,21 @@
         "base": true,
         "upgraded": true
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "canExhaustCards": true,
+      "multiHit": {
+        "multiHitCount": {
+          "base": 0,
+          "upgraded": 0,
+          "hideNumber": true
+        }
+      }
     },
     "Finesse": {
       "id": "Finesse",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Gain [BLOCK] Block. Draw 1 card.",
+      "description": "Gain [BLOCK] Block. Draw [DRAW] card.",
       "characters": "colorless",
       "cost": {
         "base": 0
@@ -2734,7 +2801,14 @@
         "base": 6,
         "upgraded": 8
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "multiHit": {
+        "multiHitCount": {
+          "base": 0,
+          "upgraded": 0,
+          "hideNumber": true
+        }
+      }
     },
     "Fire Breathing": {
       "id": "Fire Breathing",
@@ -2747,25 +2821,39 @@
       },
       "damage": {
         "base": 6,
-        "upgraded": 10
-      }
+        "upgraded": 10,
+        "conditioned": true,
+        "target": "all enemies",
+        "trigger": "Whenever you draw a Curse or Status."
+      },
+      "scalesWithStrength": false
     },
     "Fission": {
       "id": "Fission",
       "type": "Skill",
       "rarity": "Rare",
-      "description": "Remove all your Orbs. Gain [B] and draw 1 card for each Orb removed. Exhaust.",
+      "description": "[ORBINTERACTIONS.VERB] all your Orbs. Gain [G] energy and draw [DRAW] card for each Orb removed. Exhaust.",
       "characters": "defect",
-      "descriptionUpgraded": "Evoke all your Orbs. Gain [B] and draw 1 card for each Orb Evoked. Exhaust.",
       "cost": {
         "base": 0
       },
       "draw": {
-        "base": 1
+        "base": 1,
+        "hideNumber": true
       },
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
+      },
+      "gainEnergy": {
+        "base": 1,
+        "hideNumber": true
+      },
+      "orbInteractions": {
+        "verb": {
+          "base": "Remove",
+          "upgraded": "Evoke"
+        }
       }
     },
     "Flame Barrier": {
@@ -2779,19 +2867,22 @@
       },
       "damage": {
         "base": 4,
-        "upgraded": 6
+        "upgraded": 6,
+        "conditioned": true,
+        "trigger": "Whenever you are attacked"
       },
       "block": {
         "base": 12,
         "upgraded": 16
       },
-      "scalesWithDexterity": true
+      "scalesWithDexterity": true,
+      "scalesWithStrength": false
     },
     "Flash of Steel": {
       "id": "Flash of Steel",
       "type": "Attack",
       "rarity": "Uncommon",
-      "description": "Deal [DMG] damage. Draw 1 card.",
+      "description": "Deal [DMG] damage. Draw [DRAW] card.",
       "characters": "colorless",
       "cost": {
         "base": 0
@@ -2818,16 +2909,27 @@
         "base": 4,
         "upgraded": 6
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "multiHit": {
+        "multiHitCount": {
+          "base": 0,
+          "upgraded": 0,
+          "hideNumber": true
+        }
+      }
     },
     "Flex": {
       "id": "Flex",
       "type": "Skill",
       "rarity": "Common",
-      "description": "Gain 2 (4) Strength. At the end of this turn, lose 2 (4) Strength.",
+      "description": "Gain [STRENGTH_GAIN] Strength. At the end of this turn, lose [STRENGTH_GAIN] Strength.",
       "characters": "ironclad",
       "cost": {
         "base": 0
+      },
+      "strength_gain": {
+        "base": 2,
+        "upgraded": 4
       }
     },
     "Flurry of Blows": {
@@ -2849,7 +2951,7 @@
       "id": "Flying Knee",
       "type": "Attack",
       "rarity": "Common",
-      "description": "Deal [DMG] damage. Next turn, gain [G].",
+      "description": "Deal [DMG] damage. Next turn, gain [G] Energy.",
       "characters": "silent",
       "cost": {
         "base": 1
@@ -2858,7 +2960,12 @@
         "base": 8,
         "upgraded": 11
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "gainEnergy": {
+        "base": 1,
+        "conditioned": true,
+        "trigger": "next turn"
+      }
     },
     "Flying Sleeves": {
       "id": "Flying Sleeves",
@@ -2889,7 +2996,7 @@
       "id": "Follow-Up",
       "type": "Attack",
       "rarity": "Common",
-      "description": "Deal [DMG] damage. If the last card played this combat was an Attack, gain [W].",
+      "description": "Deal [DMG] damage. If the last card played this combat was an Attack, gain [G] Energy.",
       "characters": "watcher",
       "cost": {
         "base": 1
@@ -2898,16 +3005,25 @@
         "base": 7,
         "upgraded": 11
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "gainEnergy": {
+        "base": 1,
+        "conditioned": true,
+        "trigger": "last card played was an Attack"
+      }
     },
     "Footwork": {
       "id": "Footwork",
       "type": "Power",
       "rarity": "Uncommon",
-      "description": "Gain 2 (3) Dexterity.",
+      "description": "Gain [DEXTERITY_GAIN] Dexterity.",
       "characters": "silent",
       "cost": {
         "base": 1
+      },
+      "dexterity_gain": {
+        "base": 2,
+        "upgraded": 3
       }
     },
     "Force Field": {
@@ -2986,28 +3102,26 @@
       "id": "Fusion",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Channel 1 Plasma.",
+      "description": "[ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE].",
       "characters": "defect",
       "cost": {
         "base": 2,
         "upgraded": 1
       },
-      "orbInteractions": [
-        {
-          "verb": "channel",
-          "orbIcon": "PLASMA_ORB",
-          "presentation": "PLASMA_ORB 1",
-          "amount": {
-            "base": 1
-          }
-        }
-      ]
+      "orbInteractions": {
+        "amount": {
+          "base": 1,
+          "upgraded": 1
+        },
+        "orbtype": "Plasma",
+        "verb": "Channel"
+      }
     },
     "Genetic Algorithm": {
       "id": "Genetic Algorithm",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Gain [BLOCK] Block. Permanently increase this card's Block by 2 (3). Exhaust.",
+      "description": "Gain [BLOCK] Block. Permanently increase this card's Block by [GENETIC_ALGO_GAIN]. Exhaust.",
       "characters": "defect",
       "cost": {
         "base": 1
@@ -3019,7 +3133,11 @@
         "base": true,
         "upgraded": true
       },
-      "scalesWithDexterity": true
+      "scalesWithDexterity": true,
+      "genetic_algo_gain": {
+        "base": 2,
+        "upgraded": 3
+      }
     },
     "Ghostly Armor": {
       "id": "Ghostly Armor",
@@ -3044,7 +3162,7 @@
       "id": "Glacier",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Gain [BLOCK] Block. Channel 2 Frost.",
+      "description": "Gain [BLOCK] Block. [ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE].",
       "characters": "defect",
       "cost": {
         "base": 2
@@ -3053,23 +3171,21 @@
         "base": 7,
         "upgraded": 10
       },
-      "orbInteractions": [
-        {
-          "verb": "channel",
-          "orbIcon": "FROST_ORB",
-          "presentation": "FROST_ORB 2",
-          "amount": {
-            "base": 2
-          }
-        }
-      ],
-      "scalesWithDexterity": true
+      "scalesWithDexterity": true,
+      "orbInteractions": {
+        "amount": {
+          "base": 2,
+          "upgraded": 2
+        },
+        "orbtype": "Frost",
+        "verb": "Channel"
+      }
     },
     "Glass Knife": {
       "id": "Glass Knife",
       "type": "Attack",
       "rarity": "Rare",
-      "description": "Deal [DMG] damage twice. Decrease the damage of this card by 2 this combat.",
+      "description": "Deal [DMG] damage twice ([HITS]). Decrease the damage of this card by 2 this combat.",
       "characters": "silent",
       "cost": {
         "base": 1
@@ -3090,7 +3206,7 @@
       "id": "Go for the Eyes",
       "type": "Attack",
       "rarity": "Common",
-      "description": "Deal [DMG] damage. If the enemy intends to attack, apply 1 (2) Weak.",
+      "description": "Deal [DMG] damage. If the enemy intends to attack, apply [WEAK] Weak.",
       "characters": "defect",
       "cost": {
         "base": 0
@@ -3102,7 +3218,9 @@
       "appliesDebuffs": {
         "weak": {
           "base": 1,
-          "upgraded": 2
+          "upgraded": 2,
+          "conditioned": true,
+          "trigger": "enemy intends to attack"
         }
       },
       "scalesWithStrength": true
@@ -3135,7 +3253,8 @@
         "base": 50,
         "upgraded": 60,
         "conditioned": true,
-        "trigger": "there are no cards in your draw pile"
+        "trigger": "there are no cards in your draw pile",
+        "target": "all enemies"
       },
       "scalesWithStrength": true
     },
@@ -3143,7 +3262,7 @@
       "id": "Halt",
       "type": "Skill",
       "rarity": "Common",
-      "description": "Gain [BLOCK] Block. If you are in Wrath, gain 9 (14) additional Block.",
+      "description": "Gain [BLOCK] Block. If you are in Wrath, gain [BONUS_BLOCK] additional Block.",
       "characters": "watcher",
       "cost": {
         "base": 0
@@ -3164,7 +3283,7 @@
       "id": "Hand of Greed",
       "type": "Attack",
       "rarity": "Rare",
-      "description": "Deal [DMG] damage. If Fatal, gain 20 (25) Gold.",
+      "description": "Deal [DMG] damage. If Fatal, gain [GAIN_GOLD] Gold.",
       "characters": "colorless",
       "cost": {
         "base": 2
@@ -3173,7 +3292,11 @@
         "base": 20,
         "upgraded": 25
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "gain_gold": {
+        "base": 20,
+        "upgraded": 25
+      }
     },
     "Havoc": {
       "id": "Havoc",
@@ -3184,7 +3307,8 @@
       "cost": {
         "base": 1,
         "upgraded": 0
-      }
+      },
+      "canExhaustCards": true
     },
     "Headbutt": {
       "id": "Headbutt",
@@ -3205,9 +3329,8 @@
       "id": "Heatsinks",
       "type": "Power",
       "rarity": "Uncommon",
-      "description": "Whenever you play a Power card, draw 1 card.",
+      "description": "Whenever you play a Power card, draw [DRAW] card(s).",
       "characters": "defect",
-      "descriptionUpgraded": "Whenever you play a Power card, draw 2 cards.",
       "cost": {
         "base": 1
       },
@@ -3222,7 +3345,7 @@
       "id": "Heavy Blade",
       "type": "Attack",
       "rarity": "Common",
-      "description": "Deal [DMG] damage. Strength affects this card 3 (5) times.",
+      "description": "Deal [DMG] damage. Strength affects this card [STRENGTH_SCALE_MULTIPLIER] times.",
       "characters": "ironclad",
       "cost": {
         "base": 2
@@ -3230,13 +3353,17 @@
       "damage": {
         "base": 14
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "strength_scale_multiplier": {
+        "base": 3,
+        "upgraded": 5
+      }
     },
     "Heel Hook": {
       "id": "Heel Hook",
       "type": "Attack",
       "rarity": "Uncommon",
-      "description": "Deal [DMG] damage. If the enemy has Weak, gain [G] and draw 1 card.",
+      "description": "Deal [DMG] damage. If the enemy has Weak, gain [G] Energy and draw [DRAW] card.",
       "characters": "silent",
       "cost": {
         "base": 1
@@ -3250,7 +3377,12 @@
         "conditioned": true,
         "trigger": "the enemy has Weak"
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "gainEnergy": {
+        "base": 1,
+        "conditioned": true,
+        "trigger": "the enemy has Weak"
+      }
     },
     "Hello World": {
       "id": "Hello World",
@@ -3272,7 +3404,7 @@
       "id": "Hemokinesis",
       "type": "Attack",
       "rarity": "Uncommon",
-      "description": "Lose 2 HP. Deal [DMG] damage.",
+      "description": "Lose [TAKEDMG] HP. Deal [DMG] damage.",
       "characters": "ironclad",
       "cost": {
         "base": 1
@@ -3281,7 +3413,10 @@
         "base": 15,
         "upgraded": 20
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "hpcost": {
+        "base": 2
+      }
     },
     "Hologram": {
       "id": "Hologram",
@@ -3299,7 +3434,7 @@
       },
       "selfExhaustOnPlay": {
         "base": true,
-        "upgraded": true
+        "upgraded": false
       },
       "canAddCards": true,
       "scalesWithDexterity": true
@@ -3308,16 +3443,18 @@
       "id": "Hyperbeam",
       "type": "Attack",
       "rarity": "Rare",
-      "description": "Deal [DMG] damage to ALL enemies. Lose 3 Focus.",
+      "description": "Deal [DMG] damage to ALL enemies. Lose [FOCUS_LOSS] Focus.",
       "characters": "defect",
       "cost": {
         "base": 2
       },
       "damage": {
         "base": 26,
-        "upgraded": 34
+        "upgraded": 34,
+        "target": "all enemies"
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "focus_loss": 3
     },
     "Immolate": {
       "id": "Immolate",
@@ -3330,23 +3467,29 @@
       },
       "damage": {
         "base": 21,
-        "upgraded": 28
+        "upgraded": 28,
+        "target": "all enemies"
       },
       "canAddCards": true,
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "cards_meant": [
+        "Burn"
+      ]
     },
     "Impatience": {
       "id": "Impatience",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "If you have no Attacks in your hand, draw 2 (3) cards.",
+      "description": "If you have no Attacks in your hand, draw [DRAW] cards.",
       "characters": "colorless",
       "cost": {
         "base": 0
       },
       "draw": {
         "base": 2,
-        "upgraded": 3
+        "upgraded": 3,
+        "conditioned": true,
+        "trigger": "no Attacks in hand"
       }
     },
     "Impervious": {
@@ -3372,7 +3515,7 @@
       "id": "Indignation",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "If you are in Wrath, Apply [VULN] Vulnerable to ALL enemies, otherwise enter Wrath.",
+      "description": "If you are in Wrath, Apply [VULN] Vulnerable to ALL enemies, otherwise enter [CHANGE_STANCE].",
       "characters": "watcher",
       "cost": {
         "base": 1
@@ -3380,12 +3523,19 @@
       "appliesDebuffs": {
         "vulnerable": {
           "base": 3,
-          "upgraded": 5
+          "upgraded": 5,
+          "conditioned": true,
+          "trigger": "you are in Wrath"
         }
       },
       "vulnerable": {
         "base": 3,
         "upgraded": 5
+      },
+      "change_stance": {
+        "base": "Wrath",
+        "conditioned": true,
+        "trigger": "you are not in Wrath"
       }
     },
     "Infernal Blade": {
@@ -3418,7 +3568,10 @@
       "innate": {
         "base": false,
         "upgraded": true
-      }
+      },
+      "cards_meant": [
+        "Shiv"
+      ]
     },
     "Inflame": {
       "id": "Inflame",
@@ -4092,7 +4245,10 @@
         "base": 2,
         "upgraded": 3
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "cards_meant": [
+        "Burn"
+      ]
     },
     "Pain": {
       "id": "Pain",
@@ -4274,7 +4430,10 @@
         "upgraded": 20
       },
       "canAddCards": true,
-      "scalesWithDexterity": true
+      "scalesWithDexterity": true,
+      "cards_meant": [
+        "Wound"
+      ]
     },
     "Pray": {
       "id": "Pray",
@@ -4285,7 +4444,10 @@
       "cost": {
         "base": 1
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "cards_meant": [
+        "Insight"
+      ]
     },
     "Predator": {
       "id": "Predator",
@@ -4350,7 +4512,10 @@
         "base": true,
         "upgraded": true
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "cards_meant": [
+        "Pride"
+      ]
     },
     "Prostrate": {
       "id": "Prostrate",
@@ -4532,7 +4697,10 @@
         "upgraded": 15
       },
       "canAddCards": true,
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "cards_meant": [
+        "Through Violence"
+      ]
     },
     "Reaper": {
       "id": "Reaper",
@@ -4600,7 +4768,10 @@
         "upgraded": 10
       },
       "canAddCards": true,
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "cards_meant": [
+        "Dazed"
+      ]
     },
     "Recursion": {
       "id": "Recursion",
@@ -5335,7 +5506,10 @@
       "cost": {
         "base": 1
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "cards_meant": [
+        "Shiv"
+      ]
     },
     "Streamline": {
       "id": "Streamline",
@@ -5422,7 +5596,10 @@
         "base": 2,
         "upgraded": 1
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "cards_meant": [
+        "Insight"
+      ]
     },
     "Sucker Punch": {
       "id": "Sucker Punch",
@@ -5827,7 +6004,10 @@
       "cost": {
         "base": 0
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "cards_meant": [
+        "Void"
+      ]
     },
     "Twin Strike": {
       "id": "Twin Strike",
@@ -6094,7 +6274,10 @@
         "upgraded": 17
       },
       "canAddCards": true,
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "cards_meant": [
+        "Wound"
+      ]
     },
     "Windmill Strike": {
       "id": "Windmill Strike",
@@ -6193,17 +6376,7 @@
       "cost": {
         "base": 1,
         "upgraded": 0
-      },
-      "orbInteractions": [
-        {
-          "verb": "channel",
-          "orbIcon": "LIGHTNING_ORB",
-          "presentation": "LIGHTNING_ORB 1",
-          "amount": {
-            "base": 1
-          }
-        }
-      ]
+      }
     }
   }
 }

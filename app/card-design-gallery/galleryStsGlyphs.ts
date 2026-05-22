@@ -406,6 +406,18 @@ export function galleryTierNumber(card: Card, node: unknown): number | undefined
   return undefined;
 }
 
+/** String tier from a plain string or `{ base: string, upgraded?: string }` (uses `card.isUpgraded`). */
+export function galleryTierString(card: Card, node: unknown): string | undefined {
+  if (node === undefined || node === null) return undefined;
+  if (typeof node === "string") return node;
+  if (typeof node === "object" && !Array.isArray(node)) {
+    const o = node as { base?: string; upgraded?: string };
+    if (card.isUpgraded === true && typeof o.upgraded === "string") return o.upgraded;
+    if (typeof o.base === "string") return o.base;
+  }
+  return undefined;
+}
+
 function galleryNumericField(
   card: Card,
   field: "damage" | "draw" | "energyGain" | "block",
@@ -1217,7 +1229,7 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
   const orbList = orbInteractionEntries(c);
   orbList.forEach((entry, i) => {
     const e = entry;
-    let verb = String(e.verb ?? "").toLowerCase();
+    let verb = (galleryTierString(card, e.verb) ?? "").toLowerCase();
     if (!verb && (e.orbtype != null || e.orbType != null || e.amount != null)) {
       verb = "channel";
     }

@@ -9,19 +9,35 @@ import React, {
   useState,
 } from "react";
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft,
+  Bookmark,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
+  Coins,
   Copy,
   Download,
+  Droplets,
+  FileText,
+  Flame,
+  Ghost,
+  Layers,
+  Library,
   Link2,
+  Orbit,
   Pencil,
   Plus,
   Redo2,
   RotateCcw,
+  Shield,
+  SlidersHorizontal,
+  Skull,
+  Star,
+  Swords,
+  Trash2,
   TriangleAlert,
   Undo2,
   Users,
@@ -31,9 +47,72 @@ import type { PlaceholderRuleConfig } from "@/app/utils/descriptionPlaceholders"
 import { buildResolver } from "@/app/utils/descriptionPlaceholders";
 import rulesData from "@/app/data/description_placeholder_rules.json";
 import rulesBackup from "@/app/data/description_placeholder_rules.backup.json";
+import customGlyphsData from "@/app/data/custom_glyphs.json";
 import type { Card } from "@/app/types/gameTypes";
 import FieldSuggestInput from "@/app/components/UI/FieldSuggestInput";
 import { ALL_CARDS, CARD_BY_ID, charPillCls } from "@/app/utils/cardChipHelpers";
+
+// ─── Session-token tracking ─────────────────────────────────────────────────
+const ORIGINAL_TOKEN_SET = new Set(
+  (rulesData as PlaceholderRuleConfig[]).map((r) => r.token),
+);
+
+// ─── Field → glyph icon mapping ─────────────────────────────────────────────
+
+type FieldGlyphEntry =
+  | { kind: "lucide"; Icon: LucideIcon; cls: string; title: string }
+  | { kind: "svg";    svgData: string;  cls: string; title: string };
+
+function lg(Icon: LucideIcon, cls: string, title: string): FieldGlyphEntry {
+  return { kind: "lucide", Icon, cls, title };
+}
+
+const FIELD_GLYPH_MAP: Record<string, FieldGlyphEntry> = {
+  damage:            lg(Swords,   "text-rose-300",       "Damage"),
+  bonusDamage:       lg(Swords,   "text-rose-300/70",    "Bonus Damage"),
+  block:             lg(Shield,   "text-emerald-300",    "Block"),
+  bonusBlock:        lg(Shield,   "text-emerald-300/70", "Bonus Block"),
+  draw:              lg(FileText, "text-cyan-300",       "Draw"),
+  gainEnergy:        lg(Orbit,    "text-yellow-300",     "Energy Gain"),
+  hpcost:            lg(Droplets, "text-rose-400",       "HP Cost"),
+  orbInteractions:   lg(Layers,   "text-slate-300",      "Orb Interactions"),
+  multiHit:          lg(Swords,   "text-rose-300",       "Multi-hit"),
+  selfExhaustOnPlay: lg(Flame,    "text-orange-400",     "Exhaust self on play"),
+  innate:            lg(Star,     "text-amber-200",      "Innate"),
+  ethereal:          lg(Ghost,    "text-slate-400",      "Ethereal"),
+  retain:            lg(Bookmark, "text-lime-200",       "Retain"),
+  canAddCards:       lg(Library,  "text-teal-300",       "Can add cards"),
+  costManipulation:  lg(Coins,    "text-amber-300",      "Cost manipulation"),
+  discardEffect:     lg(Trash2,   "text-orange-300",     "Discard effect"),
+  appliesDebuffs:    lg(Skull,    "text-orange-400",     "Applies debuffs"),
+  vulnerable:        lg(Skull,    "text-orange-400",     "Vulnerable"),
+};
+
+// Build a map from fieldName → glyph entry for custom glyphs that have a fieldLink
+type _CustomGlyph = {
+  key: string;
+  shortLabel: string;
+  iconClass: string;
+  source: { type: string; svgData?: string; cachedSvg?: string };
+  fieldLink?: { fieldName: string };
+};
+const CUSTOM_FIELD_GLYPH_MAP: Record<string, FieldGlyphEntry> = {};
+for (const entry of customGlyphsData as _CustomGlyph[]) {
+  if (!entry.fieldLink?.fieldName) continue;
+  const svgData = entry.source.svgData ?? entry.source.cachedSvg;
+  if (!svgData) continue;
+  CUSTOM_FIELD_GLYPH_MAP[entry.fieldLink.fieldName] = {
+    kind: "svg",
+    svgData,
+    cls: entry.iconClass,
+    title: entry.shortLabel,
+  };
+}
+
+function getFieldGlyph(key: string): FieldGlyphEntry | null {
+  // Custom glyphs take precedence over built-in ones
+  return CUSTOM_FIELD_GLYPH_MAP[key] ?? FIELD_GLYPH_MAP[key] ?? null;
+}
 
 type BuiltRule = {
   token: string;
@@ -186,6 +265,11 @@ const BONUS_FIELDS: { key: string; label: string }[] = [
   { key: "bonusBlock", label: "Bonus Block" },
 ];
 
+// Card-list array fields — always rendered as CardsMeantArrayEditor chip lists
+const CARD_LIST_FIELDS: { key: string; label: string }[] = [
+  { key: "cards_meant", label: "Cards Meant" },
+];
+
 // Fields shown in Identity / Cost sections — excluded from the main Fields section
 const COMBAT_EXCLUDED = new Set([
   "id",
@@ -318,6 +402,44 @@ function collectKeysAtPath(bundle: Bundle, path: string): string[] {
   return [...keys].sort();
 }
 
+// Infer a short type label from a value
+function typeLabel(v: unknown): string {
+  if (typeof v === "boolean") return "boolean";
+  if (typeof v === "number") return "number";
+  if (typeof v === "string") return "string";
+  if (Array.isArray(v)) return "arr";
+  if (typeof v === "object" && v !== null) {
+    const o = v as Record<string, unknown>;
+    if ("base" in o && typeof o.base === "number") return "val";
+    return "obj";
+  }
+  return "?";
+}
+
+// Like collectKeysAtPath but also returns a type label for each key
+function collectKeysWithTypesAtPath(
+  bundle: Bundle,
+  path: string,
+): Array<{ label: string; meta: string }> {
+  const keyTypes = new Map<string, string>();
+  const parts = path.split(".");
+  for (const card of Object.values(bundle)) {
+    let node: unknown = card;
+    for (const part of parts) {
+      if (typeof node !== "object" || node === null) { node = undefined; break; }
+      node = (node as Record<string, unknown>)[part];
+    }
+    if (typeof node === "object" && node !== null && !Array.isArray(node)) {
+      for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
+        if (!keyTypes.has(k)) keyTypes.set(k, typeLabel(v));
+      }
+    }
+  }
+  return [...keyTypes.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([label, meta]) => ({ label, meta }));
+}
+
 // Collect unique leaf values at a dot-path across all cards in the bundle, formatted as "value (type)"
 function collectValuesAtPath(bundle: Bundle, path: string): string[] {
   const parts = path.split(".");
@@ -335,7 +457,31 @@ function collectValuesAtPath(bundle: Bundle, path: string): string[] {
   return [...seen].sort();
 }
 
-function TypeBadge({ type }: { type: PropType }) {
+function FieldGlyphIcon({
+  g,
+  size = "md",
+}: {
+  g: FieldGlyphEntry;
+  size?: "sm" | "md";
+}) {
+  const sz = size === "sm" ? "h-2.5 w-2.5" : "h-3 w-3";
+  if (g.kind === "lucide") {
+    return (
+      <span title={g.title} className="shrink-0 leading-none">
+        <g.Icon className={`${sz} ${g.cls}`} strokeWidth={2} />
+      </span>
+    );
+  }
+  return (
+    <span
+      title={g.title}
+      className={`${sz} shrink-0 inline-flex [&>svg]:h-full [&>svg]:w-full [&>svg]:stroke-current ${g.cls}`}
+      dangerouslySetInnerHTML={{ __html: g.svgData }}
+    />
+  );
+}
+
+function TypeBadge({ type, customLabel }: { type: PropType; customLabel?: string }) {
   const cls =
     type === "boolean"
       ? "border-violet-700/50 text-violet-400"
@@ -345,8 +491,10 @@ function TypeBadge({ type }: { type: PropType }) {
           ? "border-amber-700/50 text-amber-400"
           : type === "val"
             ? "border-emerald-700/50 text-emerald-400"
-            : "border-slate-700/50 text-slate-500";
-  const label =
+            : type === "arr"
+              ? "border-rose-700/50 text-rose-400"
+              : "border-slate-700/50 text-slate-500";
+  const label = customLabel ?? (
     type === "boolean"
       ? "B"
       : type === "number"
@@ -355,7 +503,10 @@ function TypeBadge({ type }: { type: PropType }) {
           ? "O"
           : type === "val"
             ? "V"
-            : "S";
+            : type === "arr"
+              ? "C"
+              : "S"
+  );
   return (
     <span
       className={`rounded border px-1 py-px font-mono text-[8px] font-bold ${cls}`}
@@ -569,7 +720,7 @@ function ExtraProps({
   );
 
   const addKeySuggestions = useMemo(
-    () => (parentPath ? collectKeysAtPath(bundle, parentPath) : []),
+    () => (parentPath ? collectKeysWithTypesAtPath(bundle, parentPath) : []),
     [bundle, parentPath],
   );
 
@@ -986,6 +1137,7 @@ function ValueNodeRow({
       ? (value as Record<string, unknown>)
       : {};
   const usingCards = fieldKey ? (fieldUsage[fieldKey] ?? []) : [];
+  const fieldGlyph = fieldKey ? getFieldGlyph(fieldKey) : null;
 
   function emitBase(rawB: string) {
     if (rawB === "") {
@@ -1016,10 +1168,11 @@ function ValueNodeRow({
   return (
     <div>
       <div className="flex items-center gap-3">
-        <span className="w-32 shrink-0 text-[11px] font-medium text-slate-400">
+        <span className="w-42 shrink-0 inline-flex items-center gap-1 text-[11px] font-medium text-slate-400">
           {label}
+          {fieldGlyph && <FieldGlyphIcon g={fieldGlyph} />}
           {fieldKey && (
-            <span className="ml-1 font-mono text-[9px] text-slate-600">
+            <span className="font-mono text-[9px] text-slate-600">
               ({fieldKey})
             </span>
           )}
@@ -1230,8 +1383,9 @@ function CardsMeantArrayEditor({
     <div className="py-1.5">
       {/* Row header */}
       <div className="mb-1.5 flex items-center gap-2">
+        <TypeBadge type="arr" customLabel="CARDS" />
         <span className="font-mono text-[10px] font-semibold text-slate-300 truncate">{label}</span>
-        <span className="text-[9px] text-slate-600">[arr · {value.length}]</span>
+        <span className="text-[9px] text-slate-600">[{value.length}]</span>
         {onRemove && (
           <button
             type="button"
@@ -1360,12 +1514,13 @@ function RecursiveField({
   }
 
   const addKeySuggestions = useMemo(
-    () => (t === "obj" ? collectKeysAtPath(bundle, fieldPath) : []),
+    () => (t === "obj" ? collectKeysWithTypesAtPath(bundle, fieldPath) : []),
     [bundle, fieldPath, t],
   );
 
   const topLevelKey = fieldPath.split(".")[0];
   const usingCards = fieldUsage[topLevelKey] ?? [];
+  const topLevelGlyph = !fieldPath.includes(".") ? getFieldGlyph(fieldPath) : null;
 
   if (t === "obj") {
     const obj = value as Record<string, unknown>;
@@ -1395,9 +1550,10 @@ function RecursiveField({
         <div className="flex items-center gap-2 py-1">
           <TypeBadge type="obj" />
           <span
-            className={`font-mono text-[11px] font-semibold ${absent ? "text-slate-600" : "text-slate-300"}`}
+            className={`inline-flex items-center gap-1 font-mono text-[11px] font-semibold ${absent ? "text-slate-600" : "text-slate-300"}`}
           >
             {label}
+            {topLevelGlyph && <FieldGlyphIcon g={topLevelGlyph} />}
           </span>
           <span className="text-[9px] text-slate-600">[{entries.length}]</span>
           <div className="ml-auto flex items-center gap-1.5">
@@ -1487,9 +1643,10 @@ function RecursiveField({
     <div className="flex items-center gap-2 py-0.5">
       <TypeBadge type={t} />
       <span
-        className={`w-40 shrink-0 truncate font-mono text-[10px] ${absent ? "text-slate-600" : "text-slate-400"}`}
+        className={`w-40 shrink-0 inline-flex items-center gap-1 truncate font-mono text-[10px] ${absent ? "text-slate-600" : "text-slate-400"}`}
       >
-        {label}
+        <span className="truncate">{label}</span>
+        {topLevelGlyph && <FieldGlyphIcon g={topLevelGlyph} size="sm" />}
       </span>
       <PropValueInput type={t} value={displayValue} onChange={onChange} fieldPath={fieldPath} />
       {onRef && (
@@ -1535,6 +1692,12 @@ export default function CardFieldEditorClient({
   );
   const [fieldSortDir, setFieldSortDir] = useState<"asc" | "desc">("desc");
   const [fieldSearch, setFieldSearch] = useState("");
+
+  // Field filter (card list sidebar)
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterFields, setFilterFields] = useState<Set<string>>(new Set());
+  const [filterConjunction, setFilterConjunction] = useState<"AND" | "OR">("AND");
+  const [filterFieldSearch, setFilterFieldSearch] = useState("");
 
   const [placeholderRules, setPlaceholderRules] = useState<
     PlaceholderRuleConfig[]
@@ -1643,14 +1806,22 @@ export default function CardFieldEditorClient({
           (c.characters as string)?.toLowerCase() !== charFilter
         )
           return false;
-        if (!q) return true;
-        return (
-          id.toLowerCase().includes(q) ||
-          ((c.type as string) ?? "").toLowerCase().includes(q)
-        );
+        if (q && !id.toLowerCase().includes(q) && !((c.type as string) ?? "").toLowerCase().includes(q))
+          return false;
+        if (filterFields.size > 0) {
+          const cardKeys = new Set(Object.keys(c));
+          if (filterConjunction === "AND") {
+            for (const f of filterFields) { if (!cardKeys.has(f)) return false; }
+          } else {
+            let any = false;
+            for (const f of filterFields) { if (cardKeys.has(f)) { any = true; break; } }
+            if (!any) return false;
+          }
+        }
+        return true;
       })
       .sort((a, b) => a.localeCompare(b));
-  }, [bundle, search, charFilter, initialBundle]);
+  }, [bundle, search, charFilter, initialBundle, filterFields, filterConjunction]);
 
   const selectedIdx = selectedId ? cardIds.indexOf(selectedId) : -1;
 
@@ -1777,6 +1948,7 @@ export default function CardFieldEditorClient({
     const priority = [
       ...VALUE_NODE_FIELDS.map((f) => f.key),
       ...BONUS_FIELDS.map((f) => f.key),
+      ...CARD_LIST_FIELDS.map((f) => f.key),
     ];
     const allKeys = new Set<string>();
     for (const c of Object.values(initialBundle)) {
@@ -1787,6 +1959,19 @@ export default function CardFieldEditorClient({
     const rest = [...allKeys].filter((k) => !priority.includes(k)).sort();
     return [...priority.filter((k) => allKeys.has(k)), ...rest];
   }, [initialBundle]);
+
+  const masterFieldsWithMeta = useMemo(() => {
+    // Build a type map from the first value found in initialBundle for each key
+    const typeMap = new Map<string, string>();
+    for (const c of Object.values(initialBundle)) {
+      for (const [k, v] of Object.entries(c)) {
+        if (!typeMap.has(k)) typeMap.set(k, typeLabel(v));
+      }
+    }
+    // Hardcode known types for special fields that may not appear in any bundle card yet
+    for (const { key } of CARD_LIST_FIELDS) typeMap.set(key, "arr");
+    return masterFields.map((k) => ({ label: k, meta: typeMap.get(k) ?? "?" }));
+  }, [masterFields, initialBundle]);
 
   // ── Field usage (which cards have each field set) ─────────────────────────────
 
@@ -1902,6 +2087,13 @@ export default function CardFieldEditorClient({
     return map;
   }, [placeholderRules, bundle]);
 
+  // ── Session-new tokens ───────────────────────────────────────────────────────
+
+  const newSessionTokenCount = useMemo(
+    () => placeholderRules.filter((r) => !ORIGINAL_TOKEN_SET.has(r.token)).length,
+    [placeholderRules],
+  );
+
   // ── Sort button helper ────────────────────────────────────────────────────────
 
   const sortBtnCls = (active: boolean) =>
@@ -1999,14 +2191,90 @@ export default function CardFieldEditorClient({
         <div className="flex flex-1 overflow-hidden">
           {/* ── Left: card list ── */}
           <div className="flex w-60 shrink-0 flex-col overflow-hidden border-r border-slate-800/80">
-            <div className="shrink-0 border-b border-slate-800/60 p-3">
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search cards…"
-                className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-100 outline-none focus:border-cyan-500/50"
-              />
+            <div className="shrink-0 border-b border-slate-800/60 p-3 space-y-2">
+              <div className="flex gap-1.5">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search cards…"
+                  className="flex-1 min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-100 outline-none focus:border-cyan-500/50"
+                />
+                <button
+                  type="button"
+                  title="Filter by fields"
+                  onClick={() => setFilterOpen((p) => !p)}
+                  className={`relative flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-xl border transition ${filterOpen || filterFields.size > 0 ? "border-amber-500/60 bg-amber-950/50 text-amber-300" : "border-slate-700 bg-slate-900 text-slate-500 hover:text-slate-300"}`}
+                >
+                  <SlidersHorizontal className="h-3.5 w-3.5" strokeWidth={2} />
+                  {filterFields.size > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 rounded-full bg-amber-500 min-w-[14px] h-3.5 px-0.5 text-[8px] font-bold text-black flex items-center justify-center">
+                      {filterFields.size}
+                    </span>
+                  )}
+                </button>
+              </div>
+              {filterOpen && (
+                <div className="rounded-xl border border-amber-700/40 bg-amber-950/20 p-2 space-y-2">
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="text"
+                      value={filterFieldSearch}
+                      onChange={(e) => setFilterFieldSearch(e.target.value)}
+                      placeholder="field name…"
+                      className="flex-1 min-w-0 rounded-lg border border-slate-700/60 bg-slate-900/70 px-2 py-1 text-[10px] text-slate-300 outline-none focus:border-amber-500/40 placeholder:text-slate-600"
+                    />
+                    <div className="flex rounded-lg border border-slate-700/60 overflow-hidden shrink-0">
+                      {(["AND", "OR"] as const).map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setFilterConjunction(c)}
+                          className={`px-2 py-1 text-[9px] font-bold transition ${filterConjunction === c ? "bg-amber-700/60 text-amber-200" : "bg-slate-900/60 text-slate-500 hover:text-slate-300"}`}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                    {filterFields.size > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setFilterFields(new Set())}
+                        className="shrink-0 rounded-lg border border-slate-700/50 px-1.5 py-1 text-[9px] text-slate-500 hover:text-slate-300 transition"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-40 overflow-y-auto [scrollbar-width:thin] space-y-0.5">
+                    {masterFields
+                      .filter((f) => !filterFieldSearch || f.toLowerCase().includes(filterFieldSearch.toLowerCase()))
+                      .map((f) => {
+                        const active = filterFields.has(f);
+                        return (
+                          <button
+                            key={f}
+                            type="button"
+                            onClick={() => {
+                              setFilterFields((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(f)) next.delete(f); else next.add(f);
+                                return next;
+                              });
+                            }}
+                            className={`flex w-full items-center gap-1.5 rounded-md px-2 py-0.5 text-left transition ${active ? "bg-amber-900/40 text-amber-200" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"}`}
+                          >
+                            <span className={`h-2 w-2 shrink-0 rounded-sm border ${active ? "border-amber-400 bg-amber-400" : "border-slate-600"}`} />
+                            <span className="flex-1 truncate font-mono text-[10px]">{f}</span>
+                            {fieldUsage[f] && (
+                              <span className="shrink-0 text-[9px] text-slate-600">{fieldUsage[f].length}</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="shrink-0 flex flex-wrap gap-1 border-b border-slate-800/60 px-2 py-2">
               {CHAR_FILTERS.map((f) => (
@@ -2318,9 +2586,13 @@ export default function CardFieldEditorClient({
                               key
                                 .toLowerCase()
                                 .includes(fieldSearch.toLowerCase());
+                            const isFiltered = filterFields.has(key);
                             const rowWrap = matchesSearch
                               ? ""
                               : "opacity-25 pointer-events-none select-none";
+                            const filterHighlight = isFiltered
+                              ? "ring-1 ring-amber-400/50 border-amber-600/40 bg-amber-950/20"
+                              : "";
 
                             const vnf = VALUE_NODE_FIELDS.find(
                               (f) => f.key === key,
@@ -2329,7 +2601,7 @@ export default function CardFieldEditorClient({
                               return (
                                 <div
                                   key={key}
-                                  className={`border-b pb-2 last:border-0 last:pb-0 border border-slate-800/50 rounded-lg bg-slate-900/50 p-3 hover:bg-slate-800/70 transition ${rowWrap}`}
+                                  className={`border-b pb-2 last:border-0 last:pb-0 border border-slate-800/50 rounded-lg bg-slate-900/50 p-3 hover:bg-slate-800/70 transition ${rowWrap} ${filterHighlight}`}
                                 >
                                   <ValueNodeRow
                                     label={vnf.label}
@@ -2353,7 +2625,7 @@ export default function CardFieldEditorClient({
                               return (
                                 <div
                                   key={key}
-                                  className={`border-b pb-2 last:border-0 last:pb-0 border border-slate-800/50 rounded-lg bg-slate-900/50 p-3 hover:bg-slate-800/70 transition ${rowWrap}`}
+                                  className={`border-b pb-2 last:border-0 last:pb-0 border border-slate-800/50 rounded-lg bg-slate-900/50 p-3 hover:bg-slate-800/70 transition ${rowWrap} ${filterHighlight}`}
                                 >
                                   <ValueNodeRow
                                     label={bf.label}
@@ -2371,6 +2643,23 @@ export default function CardFieldEditorClient({
                                   />
                                 </div>
                               );
+                            const clf = CARD_LIST_FIELDS.find((f) => f.key === key);
+                            if (clf) {
+                              const listVal = Array.isArray(card[key]) ? (card[key] as string[]) : [];
+                              return (
+                                <div
+                                  key={key}
+                                  className={`border-b pb-2 last:border-0 last:pb-0 border border-slate-800/50 rounded-lg bg-slate-900/50 p-3 hover:bg-slate-800/70 transition ${rowWrap} ${filterHighlight}`}
+                                >
+                                  <CardsMeantArrayEditor
+                                    label={clf.label}
+                                    value={listVal}
+                                    onChange={(v) => updateCard({ [key]: v.length > 0 ? v : undefined })}
+                                    onRemove={key in card ? () => updateCard({ [key]: undefined }) : undefined}
+                                  />
+                                </div>
+                              );
+                            }
                             const exists = key in card;
                             const effectiveValue = exists
                               ? card[key]
@@ -2378,7 +2667,7 @@ export default function CardFieldEditorClient({
                             return (
                               <div
                                 key={key}
-                                className={`border-b pb-2 last:border-0 last:pb-0 border border-slate-800/50 rounded-lg bg-slate-900/50 p-3 hover:bg-slate-800/70 transition ${rowWrap}`}
+                                className={`border-b pb-2 last:border-0 last:pb-0 border border-slate-800/50 rounded-lg bg-slate-900/50 p-3 hover:bg-slate-800/70 transition ${rowWrap} ${filterHighlight}`}
                               >
                                 <RecursiveField
                                   label={key}
@@ -2403,7 +2692,7 @@ export default function CardFieldEditorClient({
                           <FieldSuggestInput
                             value={newFieldKey}
                             onChange={setNewFieldKey}
-                            suggestions={masterFields}
+                            suggestions={masterFieldsWithMeta}
                             placeholder="new field key…"
                             wrapperClassName="flex-1 min-w-0"
                             className="w-full rounded-lg border border-slate-700 bg-slate-900/70 px-2.5 py-1.5 text-[12px] font-mono text-slate-200 outline-none focus:border-cyan-500/50"
@@ -2541,6 +2830,14 @@ export default function CardFieldEditorClient({
                       >
                         <Plus className="h-2.5 w-2.5" strokeWidth={2.5} />
                       </button>
+                      {newSessionTokenCount > 0 && (
+                        <span
+                          title={`${newSessionTokenCount} new token${newSessionTokenCount > 1 ? "s" : ""} added this session (not yet saved)`}
+                          className="rounded border border-amber-500/50 bg-amber-950/40 px-1.5 py-px text-[9px] font-bold text-amber-300"
+                        >
+                          +{newSessionTokenCount}
+                        </span>
+                      )}
                       <button
                         type="button"
                         onClick={downloadRules}
@@ -2558,6 +2855,7 @@ export default function CardFieldEditorClient({
                     >
                       {placeholderRules.map((r) => {
                         const isCustom = r.resolverType === "custom";
+                        const isNew = !ORIGINAL_TOKEN_SET.has(r.token);
                         const isHighlighted = highlightedToken === r.token;
                         const usingCards = tokenDescCards[r.token] ?? [];
                         const liveValue =
@@ -2581,7 +2879,9 @@ export default function CardFieldEditorClient({
                                 ? "border-amber-400/50 bg-amber-950/30 ring-1 ring-amber-400/40"
                                 : isCustom
                                   ? "border-slate-800/40 bg-slate-900/20 opacity-60"
-                                  : "border-slate-800/50 bg-slate-900/30"
+                                  : isNew
+                                    ? "border-amber-800/50 bg-amber-950/15"
+                                    : "border-slate-800/50 bg-slate-900/30"
                             }`}
                           >
                             {/* Row 1: token + copy + resolver badge + actions */}
@@ -2610,6 +2910,11 @@ export default function CardFieldEditorClient({
                               >
                                 {r.resolverType}
                               </span>
+                              {isNew && (
+                                <span className="rounded border border-amber-500/50 bg-amber-950/40 px-1 py-px text-[8px] font-bold text-amber-300">
+                                  NEW
+                                </span>
+                              )}
                               <div className="flex-1" />
                               <UsageTooltip cards={usingCards} />
                               {!isCustom && (

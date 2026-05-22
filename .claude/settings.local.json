@@ -33,7 +33,12 @@
       "Bash(grep -E \"\\\\.\\(tsx?|json\\)$\")",
       "Bash(xargs grep -l \"hitCount\\\\|multiHit\")",
       "Bash(xargs grep -l \"Modal\\\\|modal\")",
-      "Bash(npx next *)"
+      "Bash(npx next *)",
+      "Bash(Select-String -Path \"e:\\\\Projects\\\\sts-planner-reworked\\\\app\\\\editors\\\\card-fields\\\\CardFieldEditorClient.tsx\" -Pattern \"const \\\\[search,\" -Context 0,5)",
+      "Bash(xargs grep -l \"action\")",
+      "PowerShell(\\(Get-Content \"e:\\\\Projects\\\\sts-planner-reworked\\\\app\\\\card-workbench\\\\field-schema-editors.tsx\" | Measure-Object -Line\\).Lines)",
+      "Bash(grep -v \"^\\\\s*//\")",
+      "Bash(xargs grep -l \"showCards\\\\|displayCards\\\\|cardDisplay\")"
     ]
   }
 }

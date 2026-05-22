@@ -420,16 +420,19 @@ function STSCard({
   // Live-modified damage base (STR + Stance applied when player context is available).
   const liveDamageBase = useMemo(() => {
     if (livePlayer == null || typeof damageFormulaBase !== "number") return damageFormulaBase;
-    const str = (card.scalesWithStrength ?? false)
+    const scalesWithStr = card.scalesWithStrength ?? false;
+    const str = scalesWithStr
       ? (livePlayer.buffsDebuffs?.find((b) => b.name === "Strength")?.stacks ?? 0)
       : 0;
-    const withStr = Math.floor(damageFormulaBase + str);
-    const scalesWithStr = card.scalesWithStrength ?? false;
+    const strMult = scalesWithStr
+      ? (galleryTierNumber(card, card.strength_scale_multiplier) ?? 1)
+      : 1;
+    const withStr = Math.floor(damageFormulaBase + str * strMult);
     const stanceMult = scalesWithStr
       ? (liveStance === "wrath" ? 2 : liveStance === "divinity" ? 3 : 1)
       : 1;
     return Math.floor(withStr * stanceMult);
-  }, [livePlayer, liveStance, damageFormulaBase, card.scalesWithStrength]);
+  }, [livePlayer, liveStance, damageFormulaBase, card.scalesWithStrength, card.strength_scale_multiplier, card.isUpgraded]);
   const damageModified = typeof liveDamageBase === "number" && liveDamageBase !== damageFormulaBase;
 
   const attackDamageBreakdown =

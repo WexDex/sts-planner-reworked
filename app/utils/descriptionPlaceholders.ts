@@ -69,6 +69,12 @@ function resolvePlaceholderValue(card: Card, fieldKey: string): string {
 
   if (typeof value === "object") {
     if (!Array.isArray(value) && ("base" in (value as Record<string, unknown>) || "upgraded" in (value as Record<string, unknown>))) {
+      const o = value as Record<string, unknown>;
+      // String-tiered ValueNode (e.g. verb: { base: "Remove", upgraded: "Evoke" })
+      if (typeof o.base === "string" || typeof o.upgraded === "string") {
+        if (card.isUpgraded && typeof o.upgraded === "string") return o.upgraded;
+        return typeof o.base === "string" ? o.base : "";
+      }
       return String(tieredNumeric(card, value));
     }
     try {
