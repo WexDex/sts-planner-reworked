@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import FieldSuggestInput from "@/app/components/UI/FieldSuggestInput";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import {
@@ -1190,11 +1191,13 @@ function ActionRow({
   index,
   onChange,
   onDelete,
+  buffNameSuggestions,
 }: {
   action: CustomAction;
   index: number;
   onChange: (idx: number, updated: CustomAction) => void;
   onDelete: (idx: number) => void;
+  buffNameSuggestions: string[];
 }) {
   const set = (patch: Partial<CustomAction>) => onChange(index, { ...action, ...patch });
   const rowTheme = ACTION_TYPE_ROW[action.actionType];
@@ -1366,11 +1369,12 @@ function ActionRow({
           <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
             Buff / debuff name
           </label>
-          <input
-            type="text"
+          <FieldSuggestInput
             value={action.buffName ?? ""}
+            onChange={(v) => set({ buffName: v })}
+            suggestions={buffNameSuggestions}
             placeholder="e.g. Accuracy"
-            onChange={(e) => set({ buffName: e.target.value })}
+            wrapperClassName="w-full"
             className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-100 outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/30"
           />
           <p className="mt-0.5 text-[9px] text-slate-600">Exact internal STS buff/debuff name. Ex: Strength · Dexterity · Poison · Vulnerable · Accuracy</p>
@@ -1587,9 +1591,14 @@ function ActionRow({
           {(action.actionType === "give_enemy_buff" || action.actionType === "give_enemy_debuff" || action.actionType === "remove_enemy_buff") && (
             <div>
               <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">Buff / debuff name</label>
-              <input type="text" value={action.buffName ?? ""} placeholder="e.g. Strength"
-                onChange={(e) => set({ buffName: e.target.value })}
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-100 outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/30" />
+              <FieldSuggestInput
+                value={action.buffName ?? ""}
+                onChange={(v) => set({ buffName: v })}
+                suggestions={buffNameSuggestions}
+                placeholder="e.g. Strength"
+                wrapperClassName="w-full"
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-100 outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/30"
+              />
             </div>
           )}
           {/* All-enemies toggle */}
@@ -1907,6 +1916,23 @@ export default function CardActionsEditorClient() {
       );
     });
   }, [search, charFilter]);
+
+  const buffNameSuggestions = useMemo(() => {
+    const names = new Set<string>();
+    for (const actions of Object.values(data)) {
+      for (const act of actions) {
+        if (act.buffName) names.add(act.buffName);
+      }
+    }
+    const known = [
+      "Poison", "Vulnerable", "Weak", "Frail", "Strength", "Dexterity",
+      "Artifact", "Thorns", "Metallicize", "Barricade", "Brutality", "Corruption",
+      "Buffer", "Energized", "Intangible", "LoseStrength", "LoseBlock",
+      "Focus", "Mantra", "Accuracy", "Shiv", "ToolsOfTheTrade", "NoxiousFumes",
+    ];
+    for (const n of known) names.add(n);
+    return [...names].sort();
+  }, [data]);
 
   const currentActions: CustomAction[] = selectedCard ? (data[selectedCard] ?? []) : [];
   const mergedActions: QAMAction[] = [
@@ -2306,6 +2332,7 @@ export default function CardActionsEditorClient() {
                           index={i}
                           onChange={updateAction}
                           onDelete={deleteAction}
+                          buffNameSuggestions={buffNameSuggestions}
                         />
                       ))}
                     </div>
