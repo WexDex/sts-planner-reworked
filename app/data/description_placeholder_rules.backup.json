@@ -264,5 +264,11 @@
     "label": "Miracle_to_add",
     "resolverType": "field",
     "fieldKey": "miracle_to_add"
+  },
+  {
+    "token": "[DRAW_UNTIL]",
+    "label": "Draw_until",
+    "resolverType": "field",
+    "fieldKey": "draw_until"
   }
 ]

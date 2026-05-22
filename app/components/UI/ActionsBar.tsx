@@ -9,6 +9,7 @@ import {
   DollarSign,
   Hand,
   Library,
+  Pencil,
   Play,
   Redo2,
   RefreshCw,
@@ -23,6 +24,7 @@ import { useGameManager } from "@/app/context/GameContext";
 import { hasValidPlannerTurnSelection } from "@/app/utils/gameHelpers";
 import CardDBModal from "@/app/components/CardDBModal";
 import QuickActionsSection from "@/app/components/UI/QuickActionsSection";
+import EditFieldModal from "@/app/components/UI/EditFieldModal";
 
 const SECT = "rounded-xl border border-slate-800/90 bg-slate-950/50 p-3 ring-1 ring-slate-500/5";
 const SECT_LBL = "mb-2.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500";
@@ -46,6 +48,7 @@ export default function ActionsBar() {
     setSelectedCustomCost,
     transformSelectedType,
     toggleChangedSelected,
+    editSelectedCardFields,
     transformSelectedFromDatabase,
   } = useGameManager();
 
@@ -60,6 +63,11 @@ export default function ActionsBar() {
       : "Select a planner turn in Turns first";
 
   const [transformDbOpen, setTransformDbOpen] = useState(false);
+  const [editFieldsOpen, setEditFieldsOpen] = useState(false);
+
+  const firstSelectedCard = gameState
+    ? [...gameState.draw, ...gameState.discard, ...gameState.exhaust, ...gameState.hand, ...gameState.playedCards].find((c) => c.isSelected) ?? null
+    : null;
 
   const selectedCount = gameState
     ? gameState.draw.filter((c) => c.isSelected).length +
@@ -258,6 +266,16 @@ export default function ActionsBar() {
               <Copy className="h-3.5 w-3.5 shrink-0 text-cyan-300" strokeWidth={2} />
               Copy
             </button>
+            <button
+              type="button"
+              disabled={actionsLocked || !firstSelectedCard}
+              title={actionsLocked ? actionsLockedHint : "Edit fields of selected card directly"}
+              onClick={() => setEditFieldsOpen(true)}
+              className={`${pill} border-violet-500/40 bg-violet-950/45 text-violet-100 ring-1 ring-inset ring-violet-500/15 hover:bg-violet-900/50`}
+            >
+              <Pencil className="h-3.5 w-3.5 shrink-0 text-violet-300" strokeWidth={2} />
+              Edit Fields
+            </button>
           </div>
         </section>
 
@@ -353,6 +371,16 @@ export default function ActionsBar() {
           transformSelectedFromDatabase(cardId, isUpgraded);
         }}
       />
+      {editFieldsOpen && firstSelectedCard && (
+        <EditFieldModal
+          card={firstSelectedCard}
+          onClose={() => setEditFieldsOpen(false)}
+          onSave={(updates) => {
+            editSelectedCardFields(updates);
+            setEditFieldsOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }

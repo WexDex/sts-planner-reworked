@@ -33,6 +33,7 @@ import rulesData from "@/app/data/description_placeholder_rules.json";
 import rulesBackup from "@/app/data/description_placeholder_rules.backup.json";
 import type { Card } from "@/app/types/gameTypes";
 import FieldSuggestInput from "@/app/components/UI/FieldSuggestInput";
+import { ALL_CARDS, CARD_BY_ID, charPillCls } from "@/app/utils/cardChipHelpers";
 
 type BuiltRule = {
   token: string;
@@ -279,7 +280,7 @@ function typeChipCls(type?: string): string {
 
 // ─── Prop-type helpers ─────────────────────────────────────────────────────────
 
-type PropType = "boolean" | "number" | "string" | "obj" | "val";
+type PropType = "boolean" | "number" | "string" | "obj" | "val" | "arr";
 
 function detectType(v: unknown): PropType {
   if (typeof v === "boolean") return "boolean";
@@ -289,6 +290,7 @@ function detectType(v: unknown): PropType {
 }
 
 function coerceToType(v: unknown, t: PropType): unknown {
+  if (t === "arr") return Array.isArray(v) ? v : [];
   if (t === "boolean") return !!v;
   if (t === "number") return isNaN(Number(v)) ? 0 : Number(v);
   if (t === "val") return { base: 0, upgraded: 0 };
@@ -314,6 +316,23 @@ function collectKeysAtPath(bundle: Bundle, path: string): string[] {
     }
   }
   return [...keys].sort();
+}
+
+// Collect unique leaf values at a dot-path across all cards in the bundle, formatted as "value (type)"
+function collectValuesAtPath(bundle: Bundle, path: string): string[] {
+  const parts = path.split(".");
+  const seen = new Set<string>();
+  for (const card of Object.values(bundle)) {
+    let node: unknown = card;
+    for (const part of parts) {
+      if (typeof node !== "object" || node === null) { node = undefined; break; }
+      node = (node as Record<string, unknown>)[part];
+    }
+    if (node === undefined || node === null) continue;
+    const t = typeof node;
+    if (t === "number" || t === "string" || t === "boolean") seen.add(`${node} (${t})`);
+  }
+  return [...seen].sort();
 }
 
 function TypeBadge({ type }: { type: PropType }) {
@@ -380,6 +399,12 @@ function TypeSelector({
       cls: "border-emerald-500/60 bg-emerald-950/40 text-emerald-300",
       title: "ValueNode — { base: 0, upgraded: 0 }",
     },
+    {
+      id: "arr",
+      label: "arr",
+      cls: "border-rose-500/60 bg-rose-950/40 text-rose-300",
+      title: "String array — e.g. cards_meant",
+    },
   ];
   return (
     <div className="flex gap-1">
@@ -404,13 +429,16 @@ function PropValueInput({
   onChange,
   placeholder,
   onEnter,
+  fieldPath,
 }: {
   type: PropType;
   value: unknown;
   onChange: (v: unknown) => void;
   placeholder?: string;
   onEnter?: () => void;
+  fieldPath?: string;
 }) {
+  const { bundle } = useContext(EditorCtx);
   const base =
     "rounded-md border bg-slate-900/60 px-2 py-0.5 text-[11px] font-mono text-slate-200 outline-none focus:border-cyan-500/40";
   if (type === "boolean") {
@@ -446,22 +474,32 @@ function PropValueInput({
       </span>
     );
   }
+
+  const suggestions = fieldPath ? collectValuesAtPath(bundle, fieldPath) : [];
+
+  if (type === "number") {
+    return (
+      <FieldSuggestInput
+        value={String(value ?? "")}
+        onChange={(raw) => onChange(raw === "" ? 0 : Number(raw.replace(/ \(\w+\)$/, "")))}
+        suggestions={suggestions}
+        placeholder={placeholder}
+        wrapperClassName="w-24 shrink-0"
+        className={`${base} w-full border-slate-700/60`}
+        onEnter={onEnter}
+      />
+    );
+  }
+
   return (
-    <input
-      type={type === "number" ? "number" : "text"}
+    <FieldSuggestInput
       value={String(value ?? "")}
+      onChange={(raw) => onChange(raw.replace(/ \(\w+\)$/, ""))}
+      suggestions={suggestions}
       placeholder={placeholder}
-      onChange={(e) =>
-        onChange(
-          type === "number"
-            ? e.target.value === ""
-              ? 0
-              : Number(e.target.value)
-            : e.target.value,
-        )
-      }
-      onKeyDown={(e) => e.key === "Enter" && onEnter?.()}
-      className={`${base} ${type === "number" ? "w-24" : "flex-1"} border-slate-700/60`}
+      wrapperClassName="flex-1 min-w-0"
+      className={`${base} w-full border-slate-700/60`}
+      onEnter={onEnter}
     />
   );
 }
@@ -575,7 +613,9 @@ function ExtraProps({
           ? { base: 0, upgraded: 0 }
           : addType === "obj"
             ? {}
-            : addVal;
+            : addType === "arr"
+              ? []
+              : addVal;
     onChangeRaw({ ...obj, [addKey.trim()]: initial });
     setAdding(false);
   }
@@ -750,15 +790,17 @@ function ExtraProps({
                       ? 0
                       : t === "obj" || t === "val"
                         ? {}
-                        : "",
+                        : t === "arr"
+                          ? []
+                          : "",
                 );
               }}
             />
-            {(addType === "obj" || addType === "val") && okBtn(confirmAdd)}
-            {(addType === "obj" || addType === "val") &&
+            {(addType === "obj" || addType === "val" || addType === "arr") && okBtn(confirmAdd)}
+            {(addType === "obj" || addType === "val" || addType === "arr") &&
               cancelBtn(() => setAdding(false))}
           </div>
-          {addType !== "obj" && addType !== "val" && (
+          {addType !== "obj" && addType !== "val" && addType !== "arr" && (
             <div className="flex items-center gap-1.5">
               <PropValueInput
                 type={addType}
@@ -853,7 +895,7 @@ function UsageTooltip({ cards }: { cards: string[] }) {
         <span className="font-mono text-[8px]">{cards.length}</span>
       </button>
       {show && (
-        <div className="absolute right-0 top-7 z-50 max-h-52 w-52 overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 shadow-xl [scrollbar-width:thin]">
+        <div className="absolute right-0 top-7 z-50 max-h-52 w-68 overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 shadow-xl [scrollbar-width:thin]">
           <p className="sticky top-0 border-b border-slate-800 bg-slate-900 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-500">
             {cards.length} card{cards.length !== 1 ? "s" : ""}
           </p>
@@ -886,6 +928,36 @@ function UsageTooltip({ cards }: { cards: string[] }) {
         </div>
       )}
     </div>
+  );
+}
+
+// Number input for ValueNodeRow base/upgraded that shows bundle-wide value suggestions
+function ValueNodeInput({
+  value,
+  onCommit,
+  fieldPath,
+  className,
+  placeholder,
+  title,
+}: {
+  value: string | number;
+  onCommit: (raw: string) => void;
+  fieldPath?: string;
+  className?: string;
+  placeholder?: string;
+  title?: string;
+}) {
+  const { bundle } = useContext(EditorCtx);
+  const suggestions = fieldPath ? collectValuesAtPath(bundle, fieldPath) : [];
+  return (
+    <FieldSuggestInput
+      value={String(value)}
+      onChange={(raw) => onCommit(raw.replace(/ \(\w+\)$/, ""))}
+      suggestions={suggestions}
+      placeholder={placeholder}
+      wrapperClassName="w-20 shrink-0"
+      className={className ?? ""}
+    />
   );
 }
 
@@ -953,23 +1025,23 @@ function ValueNodeRow({
           )}
         </span>
         <div className="flex items-center gap-1.5">
-          <input
-            type="number"
-            placeholder="Base"
+          <ValueNodeInput
             value={b}
-            onChange={(e) => emitBase(e.target.value)}
+            onCommit={emitBase}
+            fieldPath={fieldKey ? `${fieldKey}.base` : undefined}
             className={inputCls(error)}
+            placeholder="Base"
             title={error}
           />
           <span className="text-[10px] text-slate-600">Base</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <input
-            type="number"
-            placeholder="+"
+          <ValueNodeInput
             value={u}
-            onChange={(e) => emitUpgraded(e.target.value)}
+            onCommit={emitUpgraded}
+            fieldPath={fieldKey ? `${fieldKey}.upgraded` : undefined}
             className={inputCls()}
+            placeholder="+"
           />
           <span className="text-[10px] text-slate-600">Upgraded</span>
         </div>
@@ -1112,6 +1184,145 @@ function BoolCard({
   );
 }
 
+// ─── CardsMeantArrayEditor ────────────────────────────────────────────────────
+
+function CardsMeantArrayEditor({
+  label,
+  value,
+  onChange,
+  onRemove,
+}: {
+  label: string;
+  value: string[];
+  onChange: (v: string[]) => void;
+  onRemove?: () => void;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [query, setQuery] = useState("");
+
+  const suggestions = useMemo(() => {
+    const q = query.toLowerCase();
+    return ALL_CARDS
+      .filter((c) => !q || c.id.toLowerCase().includes(q))
+      .slice(0, 14)
+      .map((c) => ({
+        id: c.id,
+        type: c.type,
+        characters: c.characters,
+      }));
+  }, [query]);
+
+  function addCard(id: string) {
+    const trimmed = id.trim();
+    if (!trimmed || value.includes(trimmed)) return;
+    onChange([...value, trimmed]);
+    setQuery("");
+    setAdding(false);
+  }
+
+  function removeCard(id: string) {
+    onChange(value.filter((v) => v !== id));
+  }
+
+  const metaCls = "inline-flex items-center gap-1 rounded border px-1 py-px text-[9px] font-bold";
+
+  return (
+    <div className="py-1.5">
+      {/* Row header */}
+      <div className="mb-1.5 flex items-center gap-2">
+        <span className="font-mono text-[10px] font-semibold text-slate-300 truncate">{label}</span>
+        <span className="text-[9px] text-slate-600">[arr · {value.length}]</span>
+        {onRemove && (
+          <button
+            type="button"
+            onClick={onRemove}
+            title="Remove field"
+            className="ml-auto inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border border-rose-700/40 bg-rose-950/30 text-rose-400 transition hover:bg-rose-900/50"
+          >
+            <X className="h-3 w-3" strokeWidth={2.5} />
+          </button>
+        )}
+      </div>
+
+      {/* Chip row */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {value.map((id) => {
+          const entry = CARD_BY_ID.get(id);
+          return (
+            <span
+              key={id}
+              className="inline-flex items-center gap-1 rounded-lg border border-slate-600/70 bg-slate-800/60 px-2 py-1 text-[11px]"
+            >
+              <span className="font-mono text-slate-200">{id}</span>
+              {entry?.type && (
+                <span className={`${metaCls} ${typeChipCls(entry.type)}`}>{entry.type.slice(0, 3).toUpperCase()}</span>
+              )}
+              {entry?.characters && (
+                <span className={`${metaCls} ${charPillCls(entry.characters)}`}>{entry.characters.slice(0, 3).toUpperCase()}</span>
+              )}
+              <button
+                type="button"
+                onClick={() => removeCard(id)}
+                className="ml-0.5 inline-flex h-3.5 w-3.5 items-center justify-center rounded text-slate-500 hover:text-rose-400 transition"
+              >
+                <X className="h-2.5 w-2.5" strokeWidth={2.5} />
+              </button>
+            </span>
+          );
+        })}
+
+        {/* Add chip / search input */}
+        {adding ? (
+          <div className="relative">
+            <FieldSuggestInput
+              autoFocus
+              value={query}
+              onChange={setQuery}
+              suggestions={suggestions.map((s) => s.id)}
+              placeholder="card ID…"
+              wrapperClassName="w-40"
+              className="w-full rounded-lg border border-cyan-500/50 bg-slate-900/80 px-2 py-1 text-[11px] font-mono text-slate-200 outline-none"
+              onEnter={() => addCard(query)}
+            />
+            {/* Rich dropdown overlay with type/char chips */}
+            {suggestions.length > 0 && query.trim() && (
+              <div className="absolute left-0 top-full z-50 mt-0.5 w-56 max-h-44 overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 shadow-xl [scrollbar-width:thin]">
+                {suggestions.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onMouseDown={() => addCard(s.id)}
+                    className="flex w-full items-center gap-1.5 px-2.5 py-1.5 text-left text-[11px] hover:bg-slate-800/80"
+                  >
+                    <span className="flex-1 truncate font-mono text-slate-200">{s.id}</span>
+                    {s.type && (
+                      <span className={`${metaCls} ${typeChipCls(s.type)}`}>{s.type.slice(0, 3).toUpperCase()}</span>
+                    )}
+                    {s.characters && (
+                      <span className={`${metaCls} ${charPillCls(s.characters)}`}>{s.characters.slice(0, 3).toUpperCase()}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => { setAdding(true); setQuery(""); }}
+            className="inline-flex items-center gap-1 rounded-lg border border-dashed border-slate-600/60 px-2 py-1 text-[11px] text-slate-500 hover:border-cyan-500/50 hover:text-cyan-400 transition"
+          >
+            <Plus className="h-3 w-3" strokeWidth={2.5} />
+            Add
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── RecursiveField ───────────────────────────────────────────────────────────
+
 function RecursiveField({
   label,
   fieldPath,
@@ -1136,6 +1347,18 @@ function RecursiveField({
 
   const t = detectType(value);
 
+  // string[] arrays get a dedicated card-ID array editor
+  if (Array.isArray(value) && value.every((v) => typeof v === "string")) {
+    return (
+      <CardsMeantArrayEditor
+        label={label}
+        value={value as string[]}
+        onChange={(v) => onChange(v)}
+        onRemove={onRemove}
+      />
+    );
+  }
+
   const addKeySuggestions = useMemo(
     () => (t === "obj" ? collectKeysAtPath(bundle, fieldPath) : []),
     [bundle, fieldPath, t],
@@ -1159,7 +1382,9 @@ function RecursiveField({
               ? { base: 0, upgraded: 0 }
               : addType === "obj"
                 ? {}
-                : "";
+                : addType === "arr"
+                  ? []
+                  : "";
       onChange({ ...obj, [addKey.trim()]: initial });
       setAddKey("");
       setAdding(false);
@@ -1266,7 +1491,7 @@ function RecursiveField({
       >
         {label}
       </span>
-      <PropValueInput type={t} value={displayValue} onChange={onChange} />
+      <PropValueInput type={t} value={displayValue} onChange={onChange} fieldPath={fieldPath} />
       {onRef && (
         <button
           type="button"
@@ -1653,7 +1878,9 @@ export default function CardFieldEditorClient({
             ? { base: 0, upgraded: 0 }
             : newFieldType === "obj"
               ? {}
-              : "";
+              : newFieldType === "arr"
+                ? []
+                : "";
     updateCard({ [newFieldKey.trim()]: iv });
     setNewFieldKey("");
   }

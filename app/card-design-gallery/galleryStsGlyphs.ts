@@ -524,7 +524,9 @@ export function damageMultihitInlineHitLabel(card: Card): string | null {
     return "X";
   }
   if (!("multiHitCount" in m)) return null;
-  const n = galleryTierNumber(card, m.multiHitCount);
+  const mhc = m.multiHitCount;
+  if (typeof mhc === "object" && mhc !== null && !Array.isArray(mhc) && (mhc as Record<string, unknown>).hideNumber === true) return "?";
+  const n = galleryTierNumber(card, mhc);
   return n != null ? String(n) : null;
 }
 
@@ -551,7 +553,9 @@ export function blockMultihitInlineHitLabel(card: Card): string | null {
     return "X";
   }
   if (!("multiHitCount" in m)) return null;
-  const n = galleryTierNumber(card, m.multiHitCount);
+  const mhc = m.multiHitCount;
+  if (typeof mhc === "object" && mhc !== null && !Array.isArray(mhc) && (mhc as Record<string, unknown>).hideNumber === true) return "?";
+  const n = galleryTierNumber(card, mhc);
   return n != null ? String(n) : null;
 }
 
@@ -571,7 +575,9 @@ export function debuffPoisonMultihitHitLabel(card: Card): string | null {
     return "X";
   }
   if (!("multiHitCount" in m)) return null;
-  const n = galleryTierNumber(card, m.multiHitCount);
+  const mhc = m.multiHitCount;
+  if (typeof mhc === "object" && mhc !== null && !Array.isArray(mhc) && (mhc as Record<string, unknown>).hideNumber === true) return "?";
+  const n = galleryTierNumber(card, mhc);
   return n != null ? String(n) : null;
 }
 

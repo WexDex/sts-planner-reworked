@@ -502,7 +502,14 @@
         "base": 4,
         "upgraded": 6
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "multiHit": {
+        "multiHitCount": {
+          "base": 0,
+          "upgraded": 0,
+          "hideNumber": true
+        }
+      }
     },
     "Barricade": {
       "id": "Barricade",
@@ -1029,7 +1036,7 @@
         "base": 0,
         "upgraded": 0,
         "conditioned": true,
-        "triogger": "number of cards discarded"
+        "trigger": "number of cards discarded"
       }
     },
     "Caltrops": {
@@ -1450,7 +1457,10 @@
         "base": true,
         "upgraded": true
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "cards_meant": [
+        "Expunger"
+      ]
     },
     "Consecrate": {
       "id": "Consecrate",
@@ -2225,7 +2235,7 @@
       "id": "Dropkick",
       "type": "Attack",
       "rarity": "Uncommon",
-      "description": "Deal [DMG] damage. If the enemy has Vulnerable, gain [R] and draw 1 card.",
+      "description": "Deal [DMG] damage. If the enemy has Vulnerable, gain [G] and draw 1 card.",
       "characters": "ironclad",
       "cost": {
         "base": 1
@@ -2239,7 +2249,12 @@
         "conditioned": true,
         "trigger": "the enemy has Vulnerable"
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "gainEnergy": {
+        "base": 1,
+        "conditioned": true,
+        "trigger": "the enemy has Vulnerable"
+      }
     },
     "Dual Wield": {
       "id": "Dual Wield",
@@ -2256,19 +2271,15 @@
     "Dualcast": {
       "id": "Dualcast",
       "type": "Skill",
-      "rarity": "Basic",
-      "description": "Evoke your next Orb twice.",
+      "rarity": "Starter",
+      "description": "[ORBINTERACTIONS.VERB] your next Orb [ORBINTERACTIONS.AMOUNT] Time(s).",
       "characters": "defect",
       "cost": {
         "base": 1,
         "upgraded": 0
       },
-      "selfExhaustOnPlay": {
-        "base": false,
-        "upgraded": false
-      },
       "orbInteractions": {
-        "verb": "evoke",
+        "verb": "Evoke",
         "amount": {
           "base": 2
         }
@@ -2287,16 +2298,25 @@
       "ethereal": {
         "base": true,
         "upgraded": false
-      }
+      },
+      "canDoublePlayCards": true
     },
     "Electrodynamics": {
       "id": "Electrodynamics",
       "type": "Power",
       "rarity": "Rare",
-      "description": "Lightning now hits ALL enemies. Channel 2 (3) Lightning.",
+      "description": "Lightning now hits ALL enemies. [ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE].",
       "characters": "defect",
       "cost": {
         "base": 2
+      },
+      "orbInteractions": {
+        "amount": {
+          "base": 2,
+          "upgraded": 3
+        },
+        "orbtype": "Lightning",
+        "verb": "Channel"
       }
     },
     "Empty Body": {
@@ -2312,7 +2332,10 @@
         "base": 7,
         "upgraded": 10
       },
-      "scalesWithDexterity": true
+      "scalesWithDexterity": true,
+      "change_stance": {
+        "base": "Neutral"
+      }
     },
     "Empty Fist": {
       "id": "Empty Fist",
@@ -2327,13 +2350,16 @@
         "base": 9,
         "upgraded": 14
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "change_stance": {
+        "base": "Neutral"
+      }
     },
     "Empty Mind": {
       "id": "Empty Mind",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Draw 2 (3) cards. Exit your Stance.",
+      "description": "Draw [DRAW] cards. Exit your Stance.",
       "characters": "watcher",
       "cost": {
         "base": 1
@@ -2341,6 +2367,9 @@
       "draw": {
         "base": 2,
         "upgraded": 3
+      },
+      "change_stance": {
+        "base": "Neutral"
       }
     },
     "Endless Agony": {
@@ -2372,7 +2401,8 @@
       "descriptionUpgraded": "Reduce the cost of all cards in your hand to 1 this combat.",
       "cost": {
         "base": 0
-      }
+      },
+      "costManipulation": true
     },
     "Entrench": {
       "id": "Entrench",
@@ -2383,17 +2413,30 @@
       "cost": {
         "base": 2,
         "upgraded": 1
+      },
+      "block": {
+        "base": 0,
+        "upgraded": 0,
+        "hideNumber": true
       }
     },
     "Envenom": {
       "id": "Envenom",
       "type": "Power",
       "rarity": "Rare",
-      "description": "Whenever an Attack deals unblocked damage, apply 1 Poison.",
+      "description": "Whenever an Attack deals unblocked damage, apply [PSN] Poison.",
       "characters": "silent",
       "cost": {
         "base": 2,
         "upgraded": 1
+      },
+      "appliesDebuffs": {
+        "poison": {
+          "base": 1,
+          "upgraded": 1,
+          "conditioned": true,
+          "trigger": "Whenever you Attack"
+        }
       }
     },
     "Equilibrium": {
@@ -2415,7 +2458,7 @@
       "id": "Eruption",
       "type": "Attack",
       "rarity": "Basic",
-      "description": "Deal [DMG] damage. Enter Wrath.",
+      "description": "Deal [DMG] damage. Enter [CHANGE_STANCE].",
       "characters": "watcher",
       "cost": {
         "base": 2,
@@ -2424,20 +2467,25 @@
       "damage": {
         "base": 9
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "change_stance": {
+        "base": "Wrath"
+      }
     },
     "Escape Plan": {
       "id": "Escape Plan",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Draw 1 card. If you draw a Skill, Gain [BLOCK] Block.",
+      "description": "Draw [DRAW] card. If you draw a Skill, Gain [BLOCK] Block.",
       "characters": "silent",
       "cost": {
         "base": 0
       },
       "block": {
         "base": 3,
-        "upgraded": 5
+        "upgraded": 5,
+        "conditioned": true,
+        "trigger": "the drawn card is a skill"
       },
       "draw": {
         "base": 1
@@ -2457,7 +2505,8 @@
       "innate": {
         "base": false,
         "upgraded": true
-      }
+      },
+      "costManipulation": true
     },
     "Evaluate": {
       "id": "Evaluate",
@@ -2479,7 +2528,7 @@
       "id": "Eviscerate",
       "type": "Attack",
       "rarity": "Uncommon",
-      "description": "Costs 1 less [G] for each card discarded this turn. Deal [DMG] damage 3 times.",
+      "description": "Costs 1 less [G] for each card discarded this turn. Deal [DMG] damage [HITS] times.",
       "characters": "silent",
       "cost": {
         "base": 3
@@ -2500,9 +2549,8 @@
       "id": "Evolve",
       "type": "Power",
       "rarity": "Uncommon",
-      "description": "Whenever you draw a Status card, draw 1 card.",
+      "description": "Whenever you draw a Status card, draw [DRAW] card(s).",
       "characters": "ironclad",
-      "descriptionUpgraded": "Whenever you draw a Status card, draw 2 cards.",
       "cost": {
         "base": 1
       },
@@ -2533,10 +2581,18 @@
       "id": "Expertise",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Draw cards until you have 6 (7) in your hand.",
+      "description": "Draw cards until you have [DRAW_UNTIL] in your hand.",
       "characters": "silent",
       "cost": {
         "base": 1
+      },
+      "draw_until": {
+        "base": 6,
+        "upgraded": 7
+      },
+      "draw": {
+        "base": 0,
+        "hideNumber": true
       }
     },
     "Expunger": {
@@ -2552,7 +2608,14 @@
         "base": 9,
         "upgraded": 15
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "multiHit": {
+        "multiHitCount": {
+          "base": 0,
+          "upgraded": 0,
+          "hideNumber": true
+        }
+      }
     },
     "Fame and Fortune": {
       "id": "Fame and Fortune",

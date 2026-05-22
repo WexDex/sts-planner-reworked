@@ -30,7 +30,10 @@
       "Bash(node -e \"const l = require\\('d:/new Projects/NextJS/sts-planner-reworked/node_modules/lucide-react'\\); console.log\\(Object.keys\\(l\\).filter\\(k => k.includes\\('Layout'\\) || k.includes\\('Grid'\\) || k.includes\\('Shuffle'\\)\\).join\\(', '\\)\\)\")",
       "PowerShell(\\(Get-Content \"d:\\\\new Projects\\\\NextJS\\\\sts-planner-reworked\\\\app\\\\decision-timeline\\\\dtl-node-compare-modal.tsx\"\\) -replace 'min-w-\\\\[6rem\\\\]', 'min-w-24' | Set-Content \"d:\\\\new Projects\\\\NextJS\\\\sts-planner-reworked\\\\app\\\\decision-timeline\\\\dtl-node-compare-modal.tsx\" -Encoding utf8)",
       "Bash(Select-Object Name)",
-      "Bash(grep -E \"\\\\.\\(tsx?|json\\)$\")"
+      "Bash(grep -E \"\\\\.\\(tsx?|json\\)$\")",
+      "Bash(xargs grep -l \"hitCount\\\\|multiHit\")",
+      "Bash(xargs grep -l \"Modal\\\\|modal\")",
+      "Bash(npx next *)"
     ]
   }
 }

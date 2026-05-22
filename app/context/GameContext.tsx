@@ -169,6 +169,8 @@ interface GameContextType {
   setSelectedCustomCost: () => void;
   transformSelectedType: () => void;
   toggleChangedSelected: () => void;
+  toggleAlteredSelected: () => void;
+  editSelectedCardFields: (updates: Record<string, unknown>) => void;
   /** Replace selected card(s) with a card from the database; sets isChanged. */
   transformSelectedFromDatabase: (cardId: string, isUpgraded?: boolean) => void;
   addCardFromDB: (cardId: string | string[], location: string, isUpgraded?: boolean) => void;
@@ -1937,6 +1939,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     modifySelectedCards((card) => ({ ...card, isChanged: !card.isChanged }), 'Toggled changed flag');
   };
 
+  const toggleAlteredSelected = () => {
+    modifySelectedCards((card) => ({ ...card, isAltered: !card.isAltered }), 'Toggled altered flag');
+  };
+
+  const editSelectedCardFields = (updates: Record<string, unknown>) => {
+    modifySelectedCards((card) => ({ ...card, ...updates, isAltered: true }), 'Edited card fields');
+  };
+
   const playSelectedCards = useCallback(() => {
     if (isCurrentTurnLocked()) { toast('This turn is locked. Unlock it to make changes.', 'warning'); return; }
     const enemyIndicesSnapshot = combatTargetEnemyIndices;
@@ -3468,6 +3478,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setSelectedCustomCost,
     transformSelectedType,
     toggleChangedSelected,
+    toggleAlteredSelected,
+    editSelectedCardFields,
     transformSelectedFromDatabase,
     addCardFromDB,
     modifyPlayerHp,

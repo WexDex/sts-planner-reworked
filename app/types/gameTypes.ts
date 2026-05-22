@@ -36,6 +36,7 @@ export interface Card {
   type?: string;
   isUpgraded?: boolean;
   isChanged?: boolean;
+  isAltered?: boolean;
   isSelected?: boolean;
   /** When set (e.g. true), cost orb shows X and ignores numeric `cost`. */
   xCost?: boolean;
@@ -77,6 +78,8 @@ export interface Card {
   /** Adds generated/specific cards into hand (Blade Dance, powers that add each turn, etc.). */
   canAddCards?: boolean | { base?: boolean; upgraded?: boolean };
   canAddPotions?: boolean | { base?: boolean; upgraded?: boolean };
+  /** Card IDs that this card is meant to interact with or creates (e.g. Conjure Blade → ["Expunger"]). */
+  cards_meant?: string[];
   [key: string]: any;
 }
 

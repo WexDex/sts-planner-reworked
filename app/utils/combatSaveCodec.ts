@@ -18,7 +18,7 @@ import { migrateLegacyIntangibleFields } from '@/app/utils/intangibleBuff';
 export const PLANNER_PERSIST_SCHEMA_VERSION = 2 as const;
 
 /** Never persisted — transient UI / editor flags restored at runtime. */
-const TRANSIENT_CARD_UI_KEYS = ['isSelected', 'isChanged'] as const;
+const TRANSIENT_CARD_UI_KEYS = ['isSelected', 'isChanged', 'isAltered'] as const;
 
 type DecisionTimelinePositionMap = Record<string, { x: number; y: number }>;
 
@@ -87,6 +87,7 @@ function normalizeCardRuntimeFlags(card: Card): Card {
   return {
     ...card,
     isChanged: card.isChanged ?? false,
+    isAltered: card.isAltered ?? false,
     isSelected: card.isSelected ?? false,
   };
 }

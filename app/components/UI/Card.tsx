@@ -577,6 +577,13 @@ function STSCard({
                 CHANGED
               </span>
             )}
+            {card.isAltered && (
+              <span
+                className={`${sz.changedPill} inline-block rounded-full bg-violet-400/25 text-violet-200`}
+              >
+                ALTERED?
+              </span>
+            )}
           </div>
         </div>
 
