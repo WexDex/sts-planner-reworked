@@ -1,8 +1,11 @@
 "use client";
 
-import { GalleryCardPreview } from "@/app/card-design-gallery/GalleryCardPreview";
 import { galleryRowFromStsCardId } from "@/app/card-design-gallery/stsToGalleryRow";
+import { inferGalleryCardEffects } from "@/app/card-design-gallery/galleryStsGlyphs";
+import { getGalleryCharacterChromeStyle } from "@/app/card-design-gallery/galleryCharacterCardStyles";
 import { DEFAULT_CARD_VISUAL_VARIANT } from "@/app/components/UI/cardVisualVariants";
+import STSCard from "@/app/components/UI/Card";
+import { LOCATION } from "@/app/types/types";
 import { usePathname } from "next/navigation";
 import {
   createContext,
@@ -165,15 +168,24 @@ function TutorialGlossaryPreviewRail() {
         Examples
       </p>
       <div className="pointer-events-auto flex flex-col gap-4 overflow-y-auto overscroll-contain pr-1">
-        {rows.map((row) => (
-          <div key={row.id}>
-            <GalleryCardPreview
-              row={row}
-              variant={DEFAULT_CARD_VISUAL_VARIANT}
-              displaySize="preview"
-            />
-          </div>
-        ))}
+        {rows.map((row) => {
+          const { glyphs, suppressStats } = inferGalleryCardEffects(row.card);
+          const chromeStyle = getGalleryCharacterChromeStyle(row.card);
+          return (
+            <div key={row.id}>
+              <STSCard
+                card={row.card}
+                size="preview"
+                index={0}
+                location={LOCATION.HAND}
+                variant={DEFAULT_CARD_VISUAL_VARIANT}
+                galleryEffectGlyphs={glyphs}
+                gallerySuppressStats={suppressStats}
+                galleryChromeStyle={chromeStyle}
+              />
+            </div>
+          );
+        })}
       </div>
     </aside>
   );
