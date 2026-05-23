@@ -4235,7 +4235,7 @@
       "id": "Noxious Fumes",
       "type": "Power",
       "rarity": "Uncommon",
-      "description": "At the start of your turn, apply 2 (3) Poison to ALL enemies.",
+      "description": "At the start of your turn, apply [PSN] Poison to ALL enemies.",
       "characters": "silent",
       "cost": {
         "base": 1
@@ -4243,7 +4243,8 @@
       "appliesDebuffs": {
         "poison": {
           "base": 2,
-          "upgraded": 3
+          "upgraded": 3,
+          "target": "all enemies"
         }
       }
     },

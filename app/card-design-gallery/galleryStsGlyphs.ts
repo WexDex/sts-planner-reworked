@@ -218,11 +218,11 @@ function damageTargetIsAllEnemies(card: Card): boolean {
 }
 
 function damageRowIsAoE(card: Card): boolean {
-  return (
-    card.type === "Attack" &&
-    card.damage != undefined &&
-    (damageTargetIsAllEnemies(card) || /\ball enemies\b/i.test(fullDesc(card)))
-  );
+  if (card.damage == null) return false;
+  // Explicit `target: "all enemies"` on the damage field works for any card type (Skills, Powers, …)
+  if (damageTargetIsAllEnemies(card)) return true;
+  // Description-based fallback is gated to Attack type to avoid false positives
+  return card.type === "Attack" && /\ball enemies\b/i.test(fullDesc(card));
 }
 
 /** String or tiered `{ base, upgraded? }` → current tier is "all enemies". */

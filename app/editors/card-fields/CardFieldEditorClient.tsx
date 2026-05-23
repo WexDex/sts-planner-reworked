@@ -1723,7 +1723,7 @@ export default function CardFieldEditorClient({
   });
   const [newFieldKey, setNewFieldKey] = useState("");
   const [newFieldType, setNewFieldType] = useState<PropType>("string");
-  const [previewSize, setPreviewSize] = useState<GalleryCardSize>("medium");
+  const [previewSize, setPreviewSize] = useState<GalleryCardSize>("preview");
   const [previewUpgraded, setPreviewUpgraded] = useState(false);
 
   // Field sorting + search
