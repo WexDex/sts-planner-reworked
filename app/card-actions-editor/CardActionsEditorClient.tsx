@@ -2,14 +2,31 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft,
+  ArrowRightLeft,
+  BookOpen,
   Check,
+  CircleOff,
   Download,
+  Eye,
+  Flame,
+  Heart,
+  HeartCrack,
+  LayoutGrid,
+  Orbit,
+  PackagePlus,
   Plus,
   ChevronDown,
+  RefreshCw,
   RotateCcw,
   Search,
+  Shield,
+  Shuffle,
+  Skull,
+  Sparkles,
+  Swords,
   Trash2,
   X,
   Zap,
@@ -64,117 +81,29 @@ type CustomAction = {
 
 type CustomActionsMap = Record<string, CustomAction[]>;
 
-const ACTION_TYPES: { value: ActionType; label: string; description: string; color: string; activeClass: string }[] = [
-  {
-    value: "give_buff", label: "Give Buff", description: "Apply a named buff",
-    color: "emerald",
-    activeClass: "border-emerald-500/70 bg-emerald-950/60 text-emerald-200 ring-1 ring-emerald-500/30",
-  },
-  {
-    value: "give_debuff", label: "Give Debuff", description: "Apply a named debuff",
-    color: "orange",
-    activeClass: "border-orange-500/70 bg-orange-950/60 text-orange-200 ring-1 ring-orange-500/30",
-  },
-  {
-    value: "remove_buff", label: "Remove Buff", description: "Remove buff/debuff",
-    color: "rose",
-    activeClass: "border-rose-500/70 bg-rose-950/60 text-rose-200 ring-1 ring-rose-500/30",
-  },
-  {
-    value: "modify_hp", label: "Modify HP", description: "Change player HP",
-    color: "red",
-    activeClass: "border-red-500/70 bg-red-950/60 text-red-200 ring-1 ring-red-500/30",
-  },
-  {
-    value: "modify_block", label: "Modify Block", description: "Add/remove block",
-    color: "sky",
-    activeClass: "border-sky-500/70 bg-sky-950/60 text-sky-200 ring-1 ring-sky-500/30",
-  },
-  {
-    value: "modify_energy", label: "Modify Energy", description: "Add/remove energy",
-    color: "amber",
-    activeClass: "border-amber-500/70 bg-amber-950/60 text-amber-200 ring-1 ring-amber-500/30",
-  },
-  {
-    value: "draw_cards", label: "Draw Cards", description: "Draw N cards",
-    color: "violet",
-    activeClass: "border-violet-500/70 bg-violet-950/60 text-violet-200 ring-1 ring-violet-500/30",
-  },
-  {
-    value: "move_to_pile", label: "Move to Pile", description: "Move card to a pile",
-    color: "slate",
-    activeClass: "border-slate-400/60 bg-slate-700/60 text-slate-200 ring-1 ring-slate-400/25",
-  },
-  {
-    value: "add_card", label: "Add Card", description: "Add a DB card to a pile",
-    color: "fuchsia",
-    activeClass: "border-fuchsia-500/70 bg-fuchsia-950/60 text-fuchsia-200 ring-1 ring-fuchsia-500/30",
-  },
-  {
-    value: "channel_orb", label: "Channel Orb", description: "Channel orb type N times",
-    color: "blue",
-    activeClass: "border-blue-500/70 bg-blue-950/60 text-blue-200 ring-1 ring-blue-500/30",
-  },
-  {
-    value: "evoke_orbs", label: "Evoke Orbs", description: "Evoke N orbs",
-    color: "cyan",
-    activeClass: "border-cyan-500/70 bg-cyan-950/60 text-cyan-200 ring-1 ring-cyan-500/30",
-  },
-  {
-    value: "set_stance", label: "Set Stance", description: "Change Watcher stance",
-    color: "purple",
-    activeClass: "border-purple-500/70 bg-purple-950/60 text-purple-200 ring-1 ring-purple-500/30",
-  },
-  {
-    value: "give_enemy_buff", label: "Enemy Buff", description: "Give buff to enemy",
-    color: "teal",
-    activeClass: "border-teal-500/70 bg-teal-950/60 text-teal-200 ring-1 ring-teal-500/30",
-  },
-  {
-    value: "give_enemy_debuff", label: "Enemy Debuff", description: "Debuff an enemy",
-    color: "yellow",
-    activeClass: "border-yellow-500/70 bg-yellow-950/60 text-yellow-200 ring-1 ring-yellow-500/30",
-  },
-  {
-    value: "modify_enemy_hp", label: "Enemy HP", description: "Damage or heal enemy",
-    color: "pink",
-    activeClass: "border-pink-500/70 bg-pink-950/60 text-pink-200 ring-1 ring-pink-500/30",
-  },
-  {
-    value: "modify_enemy_block", label: "Enemy Block", description: "Add/remove enemy block",
-    color: "indigo",
-    activeClass: "border-indigo-500/70 bg-indigo-950/60 text-indigo-200 ring-1 ring-indigo-500/30",
-  },
-  {
-    value: "remove_enemy_buff", label: "Remove Enemy Buff", description: "Remove enemy buff/debuff",
-    color: "lime",
-    activeClass: "border-lime-500/70 bg-lime-950/60 text-lime-200 ring-1 ring-lime-500/30",
-  },
-  {
-    value: "trigger_orb_passive", label: "Orb Passive", description: "Trigger all orb passives",
-    color: "sky",
-    activeClass: "border-sky-400/70 bg-sky-950/60 text-sky-200 ring-1 ring-sky-400/30",
-  },
-  {
-    value: "discard_hand", label: "Discard Hand", description: "Discard all cards in hand",
-    color: "orange",
-    activeClass: "border-orange-400/70 bg-orange-950/60 text-orange-200 ring-1 ring-orange-400/30",
-  },
-  {
-    value: "reshuffle_discard", label: "Reshuffle Discard", description: "Shuffle discard into draw",
-    color: "slate",
-    activeClass: "border-slate-300/70 bg-slate-700/60 text-slate-100 ring-1 ring-slate-300/30",
-  },
-  {
-    value: "set_orb_slots", label: "Set Orb Slots", description: "Set orb slot count exactly",
-    color: "violet",
-    activeClass: "border-violet-400/70 bg-violet-950/60 text-violet-200 ring-1 ring-violet-400/30",
-  },
-  {
-    value: "adjust_orb_slots", label: "Adjust Orb Slots", description: "+/− orb slot count",
-    color: "violet",
-    activeClass: "border-violet-300/60 bg-violet-900/40 text-violet-300 ring-1 ring-violet-300/25",
-  },
+const ACTION_TYPES: { value: ActionType; label: string; description: string; color: string; activeClass: string; icon: LucideIcon }[] = [
+  { value: "give_buff",         label: "Give Buff",          description: "Apply a named buff",           icon: Sparkles,       color: "emerald", activeClass: "border-emerald-500/70 bg-emerald-950/60 text-emerald-200 ring-1 ring-emerald-500/30" },
+  { value: "give_debuff",       label: "Give Debuff",        description: "Apply a named debuff",         icon: Skull,          color: "orange",  activeClass: "border-orange-500/70 bg-orange-950/60 text-orange-200 ring-1 ring-orange-500/30" },
+  { value: "remove_buff",       label: "Remove Buff",        description: "Remove buff/debuff",           icon: CircleOff,      color: "rose",    activeClass: "border-rose-500/70 bg-rose-950/60 text-rose-200 ring-1 ring-rose-500/30" },
+  { value: "modify_hp",         label: "Modify HP",          description: "Change player HP",             icon: Heart,          color: "red",     activeClass: "border-red-500/70 bg-red-950/60 text-red-200 ring-1 ring-red-500/30" },
+  { value: "modify_block",      label: "Modify Block",       description: "Add/remove block",             icon: Shield,         color: "sky",     activeClass: "border-sky-500/70 bg-sky-950/60 text-sky-200 ring-1 ring-sky-500/30" },
+  { value: "modify_energy",     label: "Modify Energy",      description: "Add/remove energy",            icon: Zap,            color: "amber",   activeClass: "border-amber-500/70 bg-amber-950/60 text-amber-200 ring-1 ring-amber-500/30" },
+  { value: "draw_cards",        label: "Draw Cards",         description: "Draw N cards",                 icon: BookOpen,       color: "violet",  activeClass: "border-violet-500/70 bg-violet-950/60 text-violet-200 ring-1 ring-violet-500/30" },
+  { value: "move_to_pile",      label: "Move to Pile",       description: "Move card to a pile",          icon: ArrowRightLeft, color: "slate",   activeClass: "border-slate-400/60 bg-slate-700/60 text-slate-200 ring-1 ring-slate-400/25" },
+  { value: "add_card",          label: "Add Card",           description: "Add a DB card to a pile",      icon: PackagePlus,    color: "fuchsia", activeClass: "border-fuchsia-500/70 bg-fuchsia-950/60 text-fuchsia-200 ring-1 ring-fuchsia-500/30" },
+  { value: "channel_orb",       label: "Channel Orb",        description: "Channel orb type N times",     icon: Orbit,          color: "blue",    activeClass: "border-blue-500/70 bg-blue-950/60 text-blue-200 ring-1 ring-blue-500/30" },
+  { value: "evoke_orbs",        label: "Evoke Orbs",         description: "Evoke N orbs",                 icon: Flame,          color: "cyan",    activeClass: "border-cyan-500/70 bg-cyan-950/60 text-cyan-200 ring-1 ring-cyan-500/30" },
+  { value: "set_stance",        label: "Set Stance",         description: "Change Watcher stance",        icon: Eye,            color: "purple",  activeClass: "border-purple-500/70 bg-purple-950/60 text-purple-200 ring-1 ring-purple-500/30" },
+  { value: "give_enemy_buff",   label: "Enemy Buff",         description: "Give buff to enemy",           icon: Sparkles,       color: "teal",    activeClass: "border-teal-500/70 bg-teal-950/60 text-teal-200 ring-1 ring-teal-500/30" },
+  { value: "give_enemy_debuff", label: "Enemy Debuff",       description: "Debuff an enemy",              icon: Skull,          color: "yellow",  activeClass: "border-yellow-500/70 bg-yellow-950/60 text-yellow-200 ring-1 ring-yellow-500/30" },
+  { value: "modify_enemy_hp",   label: "Enemy HP",           description: "Damage or heal enemy",         icon: Swords,         color: "pink",    activeClass: "border-pink-500/70 bg-pink-950/60 text-pink-200 ring-1 ring-pink-500/30" },
+  { value: "modify_enemy_block",label: "Enemy Block",        description: "Add/remove enemy block",       icon: Shield,         color: "indigo",  activeClass: "border-indigo-500/70 bg-indigo-950/60 text-indigo-200 ring-1 ring-indigo-500/30" },
+  { value: "remove_enemy_buff", label: "Remove Enemy Buff",  description: "Remove enemy buff/debuff",     icon: CircleOff,      color: "lime",    activeClass: "border-lime-500/70 bg-lime-950/60 text-lime-200 ring-1 ring-lime-500/30" },
+  { value: "trigger_orb_passive",label:"Orb Passive",        description: "Trigger all orb passives",     icon: RefreshCw,      color: "sky",     activeClass: "border-sky-400/70 bg-sky-950/60 text-sky-200 ring-1 ring-sky-400/30" },
+  { value: "discard_hand",      label: "Discard Hand",       description: "Discard all cards in hand",    icon: Trash2,         color: "orange",  activeClass: "border-orange-400/70 bg-orange-950/60 text-orange-200 ring-1 ring-orange-400/30" },
+  { value: "reshuffle_discard", label: "Reshuffle Discard",  description: "Shuffle discard into draw",    icon: Shuffle,        color: "slate",   activeClass: "border-slate-300/70 bg-slate-700/60 text-slate-100 ring-1 ring-slate-300/30" },
+  { value: "set_orb_slots",     label: "Set Orb Slots",      description: "Set orb slot count exactly",   icon: LayoutGrid,     color: "violet",  activeClass: "border-violet-400/70 bg-violet-950/60 text-violet-200 ring-1 ring-violet-400/30" },
+  { value: "adjust_orb_slots",  label: "Adjust Orb Slots",   description: "+/− orb slot count",           icon: LayoutGrid,     color: "violet",  activeClass: "border-violet-300/60 bg-violet-900/40 text-violet-300 ring-1 ring-violet-300/25" },
 ];
 
 const PILE_OPTIONS: { value: string; label: string; activeClass: string }[] = [
@@ -413,7 +342,10 @@ function ActionRow({
                     : "border-slate-700/50 bg-slate-900/50 text-slate-400 hover:border-slate-600 hover:bg-slate-800/50 hover:text-slate-300"
                 }`}
               >
-                <span className="text-[11px] font-semibold leading-none">{at.label}</span>
+                <span className="flex items-center gap-1.5">
+                  <at.icon className="h-3 w-3 shrink-0" />
+                  <span className="text-[11px] font-semibold leading-none">{at.label}</span>
+                </span>
                 <span className="text-[9px] leading-snug opacity-70">{at.description}</span>
               </button>
             );

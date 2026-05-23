@@ -4,14 +4,31 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import FieldSuggestInput from "@/app/components/UI/FieldSuggestInput";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft,
+  ArrowRightLeft,
+  BookOpen,
   Check,
-  Download,
-  Plus,
   ChevronDown,
+  CircleOff,
+  Copy,
+  Download,
+  Eye,
+  Flame,
+  Heart,
+  LayoutGrid,
+  Orbit,
+  PackagePlus,
+  Plus,
+  RefreshCw,
   RotateCcw,
   Search,
+  Shield,
+  Shuffle,
+  Skull,
+  Sparkles,
+  Swords,
   Trash2,
   X,
   Zap,
@@ -753,173 +770,173 @@ type CustomAction = {
 
 type CustomActionsMap = Record<string, CustomAction[]>;
 
-const ACTION_TYPES: { value: ActionType; label: string; description: string; color: string; activeClass: string; inactiveClass: string }[] = [
+const ACTION_TYPES: { value: ActionType; label: string; description: string; color: string; activeClass: string; inactiveClass: string; icon: LucideIcon }[] = [
   {
     value: "give_buff", label: "Give Buff", description: "Apply a named buff to the player (e.g. Strength, Dexterity, Metallicize). Specify the buff name and stack count.",
-    color: "emerald",
+    color: "emerald", icon: Sparkles,
     activeClass: "border-emerald-500/70 bg-emerald-950/60 text-emerald-200 ring-1 ring-emerald-500/30",
     inactiveClass: "border-emerald-500/40 bg-emerald-900/30 text-emerald-400/80 ring-1 ring-emerald-500/20",
   },
   {
     value: "give_debuff", label: "Give Debuff", description: "Apply a named debuff to the player (e.g. Weak, Frail, Vulnerable). Specify name and stack count.",
-    color: "orange",
+    color: "orange", icon: Skull,
     activeClass: "border-orange-500/70 bg-orange-950/60 text-orange-200 ring-1 ring-orange-500/30",
     inactiveClass: "border-orange-500/40 bg-orange-900/30 text-orange-400/80 ring-1 ring-orange-500/20",
   },
   {
     value: "remove_buff", label: "Remove Buff", description: "Remove a specific buff or debuff from the player by exact name (e.g. 'Strength', 'Poison').",
-    color: "rose",
+    color: "rose", icon: CircleOff,
     activeClass: "border-rose-500/70 bg-rose-950/60 text-rose-200 ring-1 ring-rose-500/30",
     inactiveClass: "border-rose-500/40 bg-rose-900/30 text-rose-400/80 ring-1 ring-rose-500/20",
   },
   {
     value: "modify_hp", label: "Modify HP", description: "Change player HP. Positive = heal. Negative = take damage (bypasses block). Ex: −5 to simulate taking 5 damage.",
-    color: "red",
+    color: "red", icon: Heart,
     activeClass: "border-red-500/70 bg-red-950/60 text-red-200 ring-1 ring-red-500/30",
     inactiveClass: "border-red-500/40 bg-red-900/30 text-red-400/80 ring-1 ring-red-500/20",
   },
   {
     value: "modify_block", label: "Modify Block", description: "Add or remove block from the player. Positive = gain block. Negative = strip block. Ex: +5 to simulate Defend being played.",
-    color: "sky",
+    color: "sky", icon: Shield,
     activeClass: "border-sky-500/70 bg-sky-950/60 text-sky-200 ring-1 ring-sky-500/30",
     inactiveClass: "border-sky-500/40 bg-sky-900/30 text-sky-400/80 ring-1 ring-sky-500/20",
   },
   {
     value: "modify_energy", label: "Modify Energy", description: "Add or remove energy this turn. Positive = gain energy. Negative = lose energy. Ex: +1 to simulate Pocketwatch or Offering effect.",
-    color: "amber",
+    color: "amber", icon: Zap,
     activeClass: "border-amber-500/70 bg-amber-950/60 text-amber-200 ring-1 ring-amber-500/30",
     inactiveClass: "border-amber-500/40 bg-amber-900/30 text-amber-400/80 ring-1 ring-amber-500/20",
   },
   {
     value: "draw_cards", label: "Draw Cards", description: "Draw N cards from the draw pile into hand. Ex: 2 to simulate Acrobatics or Adrenaline.",
-    color: "violet",
+    color: "violet", icon: BookOpen,
     activeClass: "border-violet-500/70 bg-violet-950/60 text-violet-200 ring-1 ring-violet-500/30",
     inactiveClass: "border-violet-500/40 bg-violet-900/30 text-violet-400/80 ring-1 ring-violet-500/20",
   },
   {
     value: "move_to_pile", label: "Move to Pile", description: "Move THIS card (the one this action is attached to) to another pile. E.g. self-exhaust it, return it to draw, or discard it.",
-    color: "slate",
+    color: "slate", icon: ArrowRightLeft,
     activeClass: "border-slate-400/60 bg-slate-700/60 text-slate-200 ring-1 ring-slate-400/25",
     inactiveClass: "border-slate-400/40 bg-slate-900/30 text-slate-400/80 ring-1 ring-slate-400/20",
   },
   {
     value: "add_card", label: "Add Card", description: "Fetch a card from the STS database and add it to a pile. Pre-select cards or let the player pick at runtime. Ex: White Noise → add a random Power to hand.",
-    color: "fuchsia",
+    color: "fuchsia", icon: PackagePlus,
     activeClass: "border-fuchsia-500/70 bg-fuchsia-950/60 text-fuchsia-200 ring-1 ring-fuchsia-500/30",
     inactiveClass: "border-fuchsia-500/40 bg-fuchsia-900/30 text-fuchsia-400/80 ring-1 ring-fuchsia-500/20",
   },
   {
     value: "channel_orb", label: "Channel Orb", description: "Channel an orb of the chosen type N times into the Defect's orb queue. Ex: channel 2× Lightning to simulate Ball Lightning.",
-    color: "blue",
+    color: "blue", icon: Orbit,
     activeClass: "border-blue-500/70 bg-blue-950/60 text-blue-200 ring-1 ring-blue-500/30",
     inactiveClass: "border-blue-500/40 bg-blue-900/30 text-blue-400/80 ring-1 ring-blue-500/20",
   },
   {
     value: "evoke_orbs", label: "Evoke Orbs", description: "Trigger (evoke) the next N orbs in the orb queue. Lightning deals damage, Frost gives block, Dark deals massive damage, Plasma restores energy.",
-    color: "cyan",
+    color: "cyan", icon: Flame,
     activeClass: "border-cyan-500/70 bg-cyan-950/60 text-cyan-200 ring-1 ring-cyan-500/30",
     inactiveClass: "border-cyan-500/40 bg-cyan-900/30 text-cyan-400/80 ring-1 ring-cyan-500/20",
   },
   {
     value: "set_stance", label: "Set Stance", description: "Switch the Watcher to the chosen stance (Wrath doubles damage dealt/received, Calm gives energy on exit, Divinity = 3× damage). Neutral exits any stance.",
-    color: "purple",
+    color: "purple", icon: Eye,
     activeClass: "border-purple-500/70 bg-purple-950/60 text-purple-200 ring-1 ring-purple-500/30",
     inactiveClass: "border-purple-500/40 bg-purple-900/30 text-purple-400/80 ring-1 ring-purple-500/20",
   },
   {
     value: "give_enemy_buff", label: "Enemy Buff", description: "Apply a named buff to one or all enemies (e.g. Strength, Ritual, Spore Cloud). Choose Single or All enemies and specify stacks.",
-    color: "teal",
+    color: "teal", icon: Sparkles,
     activeClass: "border-teal-500/70 bg-teal-950/60 text-teal-200 ring-1 ring-teal-500/30",
     inactiveClass: "border-teal-500/40 bg-teal-900/30 text-teal-400/80 ring-1 ring-teal-500/20",
   },
   {
     value: "give_enemy_debuff", label: "Enemy Debuff", description: "Apply a named debuff to one or all enemies (e.g. Vulnerable, Weak, Poison, Constricted). Choose Single or All enemies.",
-    color: "yellow",
+    color: "yellow", icon: Skull,
     activeClass: "border-yellow-500/70 bg-yellow-950/60 text-yellow-200 ring-1 ring-yellow-500/30",
     inactiveClass: "border-yellow-500/40 bg-yellow-900/30 text-yellow-400/80 ring-1 ring-yellow-500/20",
   },
   {
     value: "modify_enemy_hp", label: "Enemy HP", description: "Change an enemy's HP directly. Negative = deal damage (bypasses block). Positive = heal the enemy. Targets single enemy by index or all enemies.",
-    color: "pink",
+    color: "pink", icon: Swords,
     activeClass: "border-pink-500/70 bg-pink-950/60 text-pink-200 ring-1 ring-pink-500/30",
     inactiveClass: "border-pink-500/40 bg-pink-900/30 text-pink-400/80 ring-1 ring-pink-500/20",
   },
   {
     value: "modify_enemy_block", label: "Enemy Block", description: "Add or remove block from an enemy. Positive = give the enemy block. Negative = strip block. Targets single or all enemies.",
-    color: "indigo",
+    color: "indigo", icon: Shield,
     activeClass: "border-indigo-500/70 bg-indigo-950/60 text-indigo-200 ring-1 ring-indigo-500/30",
     inactiveClass: "border-indigo-500/40 bg-indigo-900/30 text-indigo-400/80 ring-1 ring-indigo-500/20",
   },
   {
     value: "remove_enemy_buff", label: "Remove Enemy Buff", description: "Remove a specific buff or debuff from an enemy by exact name. Ex: remove 'Strength' from boss, remove 'Ritual'. Targets single or all.",
-    color: "lime",
+    color: "lime", icon: CircleOff,
     activeClass: "border-lime-500/70 bg-lime-950/60 text-lime-200 ring-1 ring-lime-500/30",
     inactiveClass: "border-lime-500/40 bg-lime-900/30 text-lime-400/80 ring-1 ring-lime-500/20",
   },
   {
     value: "trigger_orb_passive", label: "Orb Passive", description: "Trigger the passive effect of all currently channeled orbs once (Lightning deal 3 dmg, Frost gain 2 block, etc.). No input needed.",
-    color: "sky",
+    color: "sky", icon: RefreshCw,
     activeClass: "border-sky-400/70 bg-sky-950/60 text-sky-200 ring-1 ring-sky-400/30",
     inactiveClass: "border-sky-400/40 bg-sky-900/30 text-sky-400/80 ring-1 ring-sky-400/20",
   },
   {
     value: "discard_hand", label: "Discard Hand", description: "Discard every card currently in hand to the discard pile. Fires immediately — no input. Ex: simulate Calculated Gamble or end-of-turn discard.",
-    color: "orange",
+    color: "orange", icon: Trash2,
     activeClass: "border-orange-400/70 bg-orange-950/60 text-orange-200 ring-1 ring-orange-400/30",
     inactiveClass: "border-orange-400/40 bg-orange-900/30 text-orange-400/80 ring-1 ring-orange-400/20",
   },
   {
     value: "reshuffle_discard", label: "Reshuffle Discard", description: "Shuffle the entire discard pile back into the draw pile. Fires immediately. Ex: simulate Sundial, Apotheosis trigger, or end-of-turn reshuffle.",
-    color: "slate",
+    color: "slate", icon: Shuffle,
     activeClass: "border-slate-300/70 bg-slate-700/60 text-slate-100 ring-1 ring-slate-300/30",
     inactiveClass: "border-slate-300/40 bg-slate-900/30 text-slate-400/80 ring-1 ring-slate-300/20",
   },
   {
     value: "set_orb_slots", label: "Set Orb Slots", description: "Set the Defect's orb channel size to an exact number. Ex: 5 to simulate Inserter relic or Capacitor card. Default is 3.",
-    color: "violet",
+    color: "violet", icon: LayoutGrid,
     activeClass: "border-violet-400/70 bg-violet-950/60 text-violet-200 ring-1 ring-violet-400/30",
     inactiveClass: "border-violet-400/40 bg-violet-900/30 text-violet-400/80 ring-1 ring-violet-400/20",
   },
   {
     value: "adjust_orb_slots", label: "Adjust Orb Slots", description: "Add or remove orb channel slots relative to the current count. Positive = more slots. Negative = fewer. Ex: +2 to simulate Capacitor.",
-    color: "violet",
+    color: "violet", icon: LayoutGrid,
     activeClass: "border-violet-300/60 bg-violet-900/40 text-violet-300 ring-1 ring-violet-300/25",
     inactiveClass: "border-violet-300/40 bg-violet-900/30 text-violet-400/80 ring-1 ring-violet-300/20",
   },
   // ── Card-affecting actions (support the Target selector) ──
   {
     value: "upgrade_card", label: "Upgrade Card", description: "Upgrade target card(s) to their + version. Self by default — or use a filter to upgrade all matching cards (e.g. all Attacks in hand). Ex: Armaments upgrades one card.",
-    color: "emerald",
+    color: "emerald", icon: Sparkles,
     activeClass: "border-emerald-400/70 bg-emerald-950/55 text-emerald-200 ring-1 ring-emerald-400/30",
     inactiveClass: "border-emerald-400/40 bg-emerald-900/25 text-emerald-400/80 ring-1 ring-emerald-400/20",
   },
   {
     value: "downgrade_card", label: "Downgrade Card", description: "Revert target card(s) to their base (un-upgraded) version. Self by default.",
-    color: "slate",
+    color: "slate", icon: RotateCcw,
     activeClass: "border-slate-300/70 bg-slate-800/60 text-slate-200 ring-1 ring-slate-300/30",
     inactiveClass: "border-slate-300/40 bg-slate-900/30 text-slate-400/80 ring-1 ring-slate-300/20",
   },
   {
     value: "mark_as_played", label: "Mark as Played", description: "Move target card(s) to the Played Cards pile (for Powers or tracking play state). Self by default. Ex: move all hand cards except curses to played.",
-    color: "teal",
+    color: "teal", icon: Check,
     activeClass: "border-teal-400/70 bg-teal-950/55 text-teal-200 ring-1 ring-teal-400/30",
     inactiveClass: "border-teal-400/40 bg-teal-900/25 text-teal-400/80 ring-1 ring-teal-400/20",
   },
   {
     value: "exhaust_card", label: "Exhaust Card", description: "Move target card(s) to the Exhaust pile — gone for this combat. Self by default. Ex: exhaust all Status cards in hand/draw/discard.",
-    color: "orange",
+    color: "orange", icon: Flame,
     activeClass: "border-orange-400/70 bg-orange-950/55 text-orange-200 ring-1 ring-orange-400/30",
     inactiveClass: "border-orange-400/40 bg-orange-900/25 text-orange-400/80 ring-1 ring-orange-400/20",
   },
   {
     value: "duplicate_card", label: "Duplicate Card", description: "Copy target card(s) into a destination pile. Self by default. Requires a Destination Pile field. Ex: Dual Wield duplicates the target card into hand.",
-    color: "fuchsia",
+    color: "fuchsia", icon: Copy,
     activeClass: "border-fuchsia-400/70 bg-fuchsia-950/55 text-fuchsia-200 ring-1 ring-fuchsia-400/30",
     inactiveClass: "border-fuchsia-400/40 bg-fuchsia-900/25 text-fuchsia-400/80 ring-1 ring-fuchsia-400/20",
   },
   {
     value: "remove_card", label: "Remove Card", description: "Permanently remove target card(s) from the game — no pile destination, gone entirely. Self by default.",
-    color: "rose",
+    color: "rose", icon: X,
     activeClass: "border-rose-400/70 bg-rose-950/55 text-rose-200 ring-1 ring-rose-400/30",
     inactiveClass: "border-rose-400/40 bg-rose-900/25 text-rose-400/80 ring-1 ring-rose-400/20",
   },
@@ -1047,7 +1064,7 @@ function actionSummary(a: CustomAction): string {
     case "add_card":          return `Add card → ${a.pile ?? "hand"}`;
     case "channel_orb":       return `Channel ${a.orbCount ?? 1}× ${a.orbType ?? "lightning"}`;
     case "evoke_orbs":        return `Evoke ${a.defaultValue ?? 1} orb(s)`;
-    case "set_stance":        return `Set stance: ${a.stance ?? "neutral"}`;
+    case "set_stance":        return a.hasInput ? `Set stance: player picks` : `Set stance: ${a.stance ?? "neutral"}`;
     case "give_enemy_buff":   return `Enemy buff: ${a.buffName || "?"} (${a.allEnemies ? "all" : `#${a.enemyIndex ?? 0}`})`;
     case "give_enemy_debuff": return `Enemy debuff: ${a.buffName || "?"} (${a.allEnemies ? "all" : `#${a.enemyIndex ?? 0}`})`;
     case "modify_enemy_hp":   return `Enemy HP (${a.allEnemies ? "all" : `#${a.enemyIndex ?? 0}`})`;
@@ -1348,7 +1365,7 @@ function ActionRow({
               onClick={() => setTypeModalOpen(true)}
               className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition ${activeType.activeClass}`}
             >
-              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-current opacity-80" />
+              <activeType.icon className="h-4 w-4 shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="text-[12px] font-bold leading-none">{activeType.label}</p>
                 <p className="mt-0.5 text-[10px] opacity-60 leading-snug">{activeType.description}</p>
@@ -1374,7 +1391,7 @@ function ActionRow({
                 <X className="h-4 w-4" strokeWidth={2} />
               </button>
             </div>
-            <div className="flex-1 space-y-1.5 overflow-y-auto p-3">
+            <div className="grid grid-cols-2 space-y-1.5 gap-2 overflow-y-auto p-3">
               {ACTION_TYPES.map(at => {
                 const active = action.actionType === at.value;
                 return (
@@ -1390,7 +1407,7 @@ function ActionRow({
                         patch.buffType = t === "give_debuff" ? "debuff" : "buff";
                       }
                       if (t === "channel_orb") { patch.orbType = action.orbType ?? "lightning"; patch.orbCount = action.orbCount ?? 1; }
-                      if (t === "set_stance") patch.stance = action.stance ?? "neutral";
+                      if (t === "set_stance") { patch.stance = action.stance ?? "neutral"; patch.hasInput = action.hasInput ?? false; }
                       if (t === "evoke_orbs" || t === "set_orb_slots" || t === "adjust_orb_slots") {
                         patch.hasInput = action.hasInput ?? true;
                         patch.defaultValue = action.defaultValue ?? (t === "set_orb_slots" ? 3 : 1);
@@ -1409,9 +1426,9 @@ function ActionRow({
                       set(patch);
                       setTypeModalOpen(false);
                     }}
-                    className={`flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${active ? at.activeClass + " ring-2" : at.inactiveClass}`}
+                    className={`flex w-full items-center gap-3 rounded-xl hover:ring-2 hover:ring-cyan-500 border px-3 py-3 text-left transition ${active ? at.activeClass + " ring-2" : at.inactiveClass}`}
                   >
-                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-current opacity-80" />
+                    <at.icon className="h-4 w-4 shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-[12px] font-bold">{at.label}</p>
                       <p className="mt-0.5 text-[10px] opacity-70">{at.description}</p>
@@ -1680,18 +1697,39 @@ function ActionRow({
         </div>
       )}
 
-      {/* set_stance: stance pills */}
+      {/* set_stance: player-picks toggle + stance pills */}
       {action.actionType === "set_stance" && (
-        <div>
-          <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">Stance</label>
-          <div className="flex flex-wrap gap-1.5">
-            {([ { value: "neutral", label: "Neutral" }, { value: "wrath", label: "Wrath" }, { value: "calm", label: "Calm" }, { value: "divinity", label: "Divinity" } ] as const).map((s) => (
-              <button key={s.value} type="button" onClick={() => set({ stance: s.value })}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${action.stance === s.value ? "border-purple-500/70 bg-purple-950/60 text-purple-200 ring-1 ring-purple-500/30" : "border-slate-700/50 bg-slate-900/50 text-slate-400 hover:border-slate-600 hover:bg-slate-800/50 hover:text-slate-300"}`}>
-                {s.label}
-              </button>
-            ))}
+        <div className="space-y-2.5">
+          {/* hasInput toggle */}
+          <div className="flex items-center gap-2">
+            <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Player picks stance</label>
+            <button
+              type="button"
+              onClick={() => set({ hasInput: !action.hasInput })}
+              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 transition-colors ${
+                action.hasInput ? "border-purple-500/60 bg-purple-500/30" : "border-slate-600 bg-slate-800"
+              }`}
+            >
+              <span className={`inline-block h-3.5 w-3.5 -translate-y-px rounded-full bg-white shadow transition-transform ${action.hasInput ? "translate-x-3.5" : "translate-x-0"}`} />
+            </button>
+            <span className="text-[10px] text-slate-600">
+              {action.hasInput ? "Shows a modal to choose stance at runtime" : "Uses the preset stance below"}
+            </span>
           </div>
+          {/* Preset stance pills — only when not using player input */}
+          {!action.hasInput && (
+            <div>
+              <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">Stance</label>
+              <div className="flex flex-wrap gap-1.5">
+                {([ { value: "neutral", label: "Neutral" }, { value: "wrath", label: "Wrath" }, { value: "calm", label: "Calm" }, { value: "divinity", label: "Divinity" } ] as const).map((s) => (
+                  <button key={s.value} type="button" onClick={() => set({ stance: s.value })}
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${action.stance === s.value ? "border-purple-500/70 bg-purple-950/60 text-purple-200 ring-1 ring-purple-500/30" : "border-slate-700/50 bg-slate-900/50 text-slate-400 hover:border-slate-600 hover:bg-slate-800/50 hover:text-slate-300"}`}>
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -2102,7 +2140,7 @@ export default function CardActionsEditorClient() {
     add_card:           ["cardNames","cardCount","pile","hasInput","cardPickerFilter"],
     channel_orb:        ["orbType","orbCount"],
     evoke_orbs:         ["hasInput","defaultValue","valueRef"],
-    set_stance:         ["stance"],
+    set_stance:         ["stance","hasInput"],
     give_enemy_buff:    ["buffName","allEnemies","enemyIndex","hasInput","defaultValue","valueRef"],
     give_enemy_debuff:  ["buffName","allEnemies","enemyIndex","hasInput","defaultValue","valueRef"],
     modify_enemy_hp:    ["allEnemies","enemyIndex","hasInput","defaultValue","valueRef"],

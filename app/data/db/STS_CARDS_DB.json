@@ -4707,7 +4707,8 @@
       "selfExhaustOnPlay": {
         "base": true,
         "upgraded": true
-      }
+      },
+      "canExhaustCards": true
     },
     "Quick Slash": {
       "id": "Quick Slash",
