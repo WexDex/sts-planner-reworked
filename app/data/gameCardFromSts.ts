@@ -78,6 +78,7 @@ export function buildGameCardFromStsRaw(
   }
   card.description = desc;
   card.isUpgraded = isUpgraded;
+  card.rarity = typeof raw.rarity === "string" ? raw.rarity : undefined;
 
   if (typeof raw.character === "string") {
     card.character = raw.character;

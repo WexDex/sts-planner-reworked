@@ -34,6 +34,7 @@ export interface Card {
   /** When `type` is `Potion`, category tags from `POTION_CATEGORIES` / `POTIONS_DB.json`. */
   potionTags?: string[];
   type?: string;
+  rarity?: string;
   isUpgraded?: boolean;
   isChanged?: boolean;
   isAltered?: boolean;

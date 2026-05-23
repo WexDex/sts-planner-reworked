@@ -114,7 +114,7 @@ export function getCardVariantChrome(args: {
       "pointer-events-none absolute inset-[3px] rounded-[inherit] border border-slate-500/50 opacity-40",
     bottomLine:
       "pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-slate-600/25 to-transparent",
-    nameBandExtra: "!bg-slate-800/95 !border-slate-500/80",
+    nameBandExtra: "!bg-slate-800/95",
     descBoxExtra: "!bg-slate-800/95 !border-slate-500/80 !text-stone-200/95",
     typeLabelExtra: "!text-slate-400 opacity-100",
     costOrbExtra: "",

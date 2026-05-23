@@ -63,6 +63,8 @@ export default function GalleryPageClient() {
 
   // ── Display ──────────────────────────────────────────────────────────────
   const [globalSize,      setGlobalSize]      = useState<STSCardSize>("medium");
+  const [allUpgraded,     setAllUpgraded]     = useState(false);
+  const [bothVersions,    setBothVersions]    = useState(false);
   const [rightPanelOpen,  setRightPanelOpen]  = useState(true);
   const [builderOpen,     setBuilderOpen]     = useState(false);
   const [editingFilter,   setEditingFilter]   = useState<SavedFilter | undefined>();
@@ -107,9 +109,9 @@ export default function GalleryPageClient() {
        showPotions, selPotionTags, advFilters, rangeFilters, savedFilters]);
 
   // ── Filtered + sorted card IDs ────────────────────────────────────────────
-  const filteredIds = useMemo(
-    () => applyGalleryFilters(ALL_IDS, DB_RECORDS, filterState, pinnedIds, ignoredIds, sortBy, sortDir),
-    [filterState, pinnedIds, ignoredIds, sortBy, sortDir],
+  const { ids: filteredIds, upgradedMatchIds } = useMemo(
+    () => applyGalleryFilters(ALL_IDS, DB_RECORDS, filterState, pinnedIds, ignoredIds, sortBy, sortDir, bothVersions),
+    [filterState, pinnedIds, ignoredIds, sortBy, sortDir, bothVersions],
   );
 
   // ── Filter callbacks ──────────────────────────────────────────────────────
@@ -192,6 +194,8 @@ export default function GalleryPageClient() {
         onDeleteSavedFilter={onDeleteSavedFilter}
         onOpenBuilder={onOpenBuilder}
         onClearAll={onClearAll}
+        allUpgraded={allUpgraded} onToggleAllUpgraded={() => setAllUpgraded(v => !v)}
+        bothVersions={bothVersions} onToggleBothVersions={() => setBothVersions(v => !v)}
         globalSize={globalSize} onSizeChange={setGlobalSize}
         sortBy={sortBy} onSortByChange={onSortByChange}
         sortDir={sortDir} onSortDirToggle={onSortDirToggle}
@@ -217,18 +221,24 @@ export default function GalleryPageClient() {
             </div>
           ) : (
             <div className="flex flex-wrap gap-5 justify-center">
-              {filteredIds.map(id => (
+              {filteredIds.map(id => {
+                // When ±Ver is ON, auto-show the version that caused this card to match.
+                // upgradedMatchIds = matched only via upgraded → force upgraded display.
+                // Otherwise respect individual toggle and allUpgraded.
+                const isUpgraded = allUpgraded || upgradedIds.has(id) || upgradedMatchIds.has(id);
+                return (
                 <GalleryCardBox
-                  key={`${id}-${upgradedIds.has(id) ? "u" : "b"}`}
+                  key={`${id}-${isUpgraded ? "u" : "b"}`}
                   cardId={id}
                   globalSize={globalSize}
-                  isUpgraded={upgradedIds.has(id)}
+                  isUpgraded={isUpgraded}
                   isPinned={pinnedIds.has(id)}
                   onTogglePin={onTogglePin}
                   onToggleUpgrade={onToggleUpgrade}
                   onIgnore={onIgnore}
                 />
-              ))}
+                );
+              })}
             </div>
           )}
 

@@ -113,7 +113,7 @@ export const FILTER_FIELD_DEFS: FilterFieldDef[] = [
   { key: "name",               label: "Name",             type: "string",  group: "Basic" },
   { key: "description",        label: "Description",      type: "string",  group: "Basic" },
   { key: "type",               label: "Type",             type: "enum",    group: "Basic",    values: ["Attack","Skill","Power","Curse","Status","Potion"] },
-  { key: "rarity",             label: "Rarity",           type: "enum",    group: "Basic",    values: ["Common","Uncommon","Rare","Special"] },
+  { key: "rarity",             label: "Rarity",           type: "enum",    group: "Basic",    values: ["Common","Uncommon","Rare","Special","Starter"] },
   { key: "characters",         label: "Character",        type: "enum",    group: "Basic",    values: ["ironclad","silent","defect","watcher","colorless"] },
   { key: "cost",               label: "Cost",             type: "number",  group: "Stats" },
   { key: "damage",             label: "Damage",           type: "number",  group: "Stats" },
@@ -193,6 +193,30 @@ export function resolveBaseBool(rec: Record<string, unknown>, field: string): bo
   return Boolean(val);
 }
 
+/** Reads the "upgraded" value of a tiered bool field; falls back to base if no upgraded key. */
+export function resolveUpgradedBool(rec: Record<string, unknown>, field: string): boolean {
+  const val = rec[field];
+  if (typeof val === "boolean") return val;
+  if (val != null && typeof val === "object" && !Array.isArray(val)) {
+    const o = val as Record<string, unknown>;
+    if (typeof o.upgraded === "boolean") return o.upgraded;
+    if (typeof o.base === "boolean") return o.base;
+  }
+  return Boolean(val);
+}
+
+/** Reads the "upgraded" value of a tiered number field; falls back to base. */
+export function resolveUpgradedNumber(rec: Record<string, unknown>, field: string): number | undefined {
+  const val = rec[field];
+  if (typeof val === "number") return val;
+  if (val != null && typeof val === "object" && !Array.isArray(val)) {
+    const o = val as Record<string, unknown>;
+    if (typeof o.upgraded === "number") return o.upgraded;
+    if (typeof o.base === "number") return o.base;
+  }
+  return undefined;
+}
+
 export function resolveBaseCostBucket(rec: Record<string, unknown>): string {
   if (rec.xCost === true) return "X";
   const n = resolveBaseNumber(rec, "cost");
@@ -268,12 +292,23 @@ export type GalleryFilterState = {
 // ─── Sort helpers ─────────────────────────────────────────────────────────────
 const CHARACTER_ORDER = ["ironclad", "silent", "defect", "watcher", "colorless"];
 const TYPE_ORDER      = ["Attack", "Skill", "Power", "Curse", "Status", "Potion"];
-const RARITY_ORDER    = ["Common", "Uncommon", "Rare", "Special"];
+const RARITY_ORDER    = ["Starter","Common", "Uncommon", "Rare", "Special"];
 
 function sortIndex(order: string[], val: unknown): number {
   const i = order.indexOf(String(val ?? ""));
   return i === -1 ? 999 : i;
 }
+
+// ─── GalleryFilterResult ─────────────────────────────────────────────────────
+export type GalleryFilterResult = {
+  /** Sorted, filtered card IDs. */
+  ids: string[];
+  /**
+   * Subset of ids that matched *only* via their upgraded field values (not base).
+   * Only populated when bothVersions=true. Used to auto-display those cards upgraded.
+   */
+  upgradedMatchIds: Set<string>;
+};
 
 // ─── applyGalleryFilters ──────────────────────────────────────────────────────
 export function applyGalleryFilters(
@@ -284,7 +319,8 @@ export function applyGalleryFilters(
   ignoredIds: Set<string>,
   sortBy: SortField = "name",
   sortDir: SortDir  = "asc",
-): string[] {
+  bothVersions = false,
+): GalleryFilterResult {
   const {
     search, selChars, selTypes, selRarities, selCosts, selGlyphs,
     showPotions, selPotionTags, advFilters, rangeFilters, savedFilters,
@@ -292,37 +328,13 @@ export function applyGalleryFilters(
   const q = search.trim().toLowerCase();
   const activeSaved = savedFilters.filter(f => f.active);
 
-  const passing = ids.filter(id => {
-    if (ignoredIds.has(id)) return false;
-    const rec = records[id];
-    if (!rec) return false;
-
-    const isPotion = rec.type === "Potion";
-    if (isPotion && !showPotions) return false;
-    if (isPotion && showPotions && selPotionTags.length > 0) {
-      const tags = rec.potionTags as string[] | undefined;
-      if (!tags || !selPotionTags.some(t => tags.includes(t))) return false;
-    }
-
-    if (selChars.length > 0) {
-      const ch = typeof rec.characters === "string" ? rec.characters.toLowerCase() : "";
-      if (!selChars.includes(ch)) return false;
-    }
-
-    if (selTypes.length > 0) {
-      if (!selTypes.includes(rec.type as string)) return false;
-    }
-
-    if (selRarities.length > 0) {
-      if (!selRarities.includes(rec.rarity as string)) return false;
-    }
-
-    if (selCosts.length > 0) {
-      if (!selCosts.includes(resolveBaseCostBucket(rec))) return false;
-    }
+  // ── Version-sensitive check (glyphs + adv bools + ranges for one version) ──
+  function checkVersionSensitive(rec: Record<string, unknown>, useUpgraded: boolean): boolean {
+    const resolveBool = useUpgraded ? resolveUpgradedBool : resolveBaseBool;
+    const resolveNum  = useUpgraded ? resolveUpgradedNumber : resolveBaseNumber;
 
     for (const field of selGlyphs) {
-      if (!resolveBaseBool(rec, field)) return false;
+      if (!resolveBool(rec, field)) return false;
     }
 
     for (const [key, active] of Object.entries(advFilters)) {
@@ -330,9 +342,9 @@ export function applyGalleryFilters(
       const def = ADV_FILTER_MAP.get(key);
       if (!def) continue;
       if (def.filterType === "boolean") {
-        if (!resolveBaseBool(rec, key)) return false;
+        if (!resolveBool(rec, key)) return false;
       } else if (def.filterType === "exists") {
-        if (rec[key] == null) return false;
+        // Existence doesn't change between versions — checked once outside
       } else if (def.filterType === "custom") {
         if (key === "conditioned") {
           const dmg = rec.damage as Record<string, unknown> | undefined;
@@ -342,12 +354,10 @@ export function applyGalleryFilters(
           const dmg = rec.damage as Record<string, unknown> | undefined;
           if (dmg?.target !== "all enemies") return false;
         } else if (key === "random") {
-          // True if any direct field value is an object containing random: true
           const hasRandom = Object.values(rec).some(v => {
             if (!v || typeof v !== "object" || Array.isArray(v)) return false;
             const obj = v as Record<string, unknown>;
             if (obj.random === true) return true;
-            // one level deeper (e.g. appliesDebuffs.poison.random)
             return Object.values(obj).some(sub =>
               sub != null && typeof sub === "object" && !Array.isArray(sub) &&
               (sub as Record<string, unknown>).random === true,
@@ -358,31 +368,76 @@ export function applyGalleryFilters(
       }
     }
 
-    if (q) {
-      const nameMatch = id.toLowerCase().includes(q);
-      const descMatch = typeof rec.description === "string" && rec.description.toLowerCase().includes(q);
-      if (!nameMatch && !descMatch) return false;
-    }
-
     for (const [field, range] of Object.entries(rangeFilters)) {
       if (!range) continue;
       const { min, max } = range;
       if (min == null && max == null) continue;
-      const v = resolveBaseNumber(rec, field);
+      const v = resolveNum(rec, field);
       if (v == null) return false;
       if (min != null && v < min) return false;
       if (max != null && v > max) return false;
     }
 
-    for (const sf of activeSaved) {
-      if (!evaluateFilterExpr(rec, id, sf.expr)) return false;
+    return true;
+  }
+
+  const passing: string[] = [];
+  const upgradedMatchIds = new Set<string>();
+
+  for (const id of ids) {
+    if (ignoredIds.has(id)) continue;
+    const rec = records[id];
+    if (!rec) continue;
+
+    // ── Invariant checks (don't vary between base/upgraded) ──────────────────
+    const isPotion = rec.type === "Potion";
+    if (isPotion && !showPotions) continue;
+    if (isPotion && showPotions && selPotionTags.length > 0) {
+      const tags = rec.potionTags as string[] | undefined;
+      if (!tags || !selPotionTags.some(t => tags.includes(t))) continue;
     }
 
-    return true;
-  });
+    if (selChars.length > 0) {
+      const ch = typeof rec.characters === "string" ? rec.characters.toLowerCase() : "";
+      if (!selChars.includes(ch)) continue;
+    }
+    if (selTypes.length > 0 && !selTypes.includes(rec.type as string)) continue;
+    if (selRarities.length > 0 && !selRarities.includes(rec.rarity as string)) continue;
+    if (selCosts.length > 0 && !selCosts.includes(resolveBaseCostBucket(rec))) continue;
+
+    // exists-type advanced filters (field presence doesn't differ by version)
+    let invariantFail = false;
+    for (const [key, active] of Object.entries(advFilters)) {
+      if (!active) continue;
+      const def = ADV_FILTER_MAP.get(key);
+      if (def?.filterType === "exists" && rec[key] == null) { invariantFail = true; break; }
+    }
+    if (invariantFail) continue;
+
+    if (q) {
+      const nameMatch = id.toLowerCase().includes(q);
+      const descMatch = typeof rec.description === "string" && rec.description.toLowerCase().includes(q);
+      if (!nameMatch && !descMatch) continue;
+    }
+
+    for (const sf of activeSaved) {
+      if (!evaluateFilterExpr(rec, id, sf.expr)) { invariantFail = true; break; }
+    }
+    if (invariantFail) continue;
+
+    // ── Version-sensitive checks ──────────────────────────────────────────────
+    if (checkVersionSensitive(rec, false)) {
+      // Passes on base version
+      passing.push(id);
+    } else if (bothVersions && checkVersionSensitive(rec, true)) {
+      // Only passes on upgraded version
+      passing.push(id);
+      upgradedMatchIds.add(id);
+    }
+  }
 
   const dir = sortDir === "asc" ? 1 : -1;
-  return passing.sort((a, b) => {
+  const sorted = passing.sort((a, b) => {
     // Pinned always first regardless of sort
     const ap = pinnedIds.has(a);
     const bp = pinnedIds.has(b);
@@ -420,6 +475,8 @@ export function applyGalleryFilters(
         return nameCmp * dir;
     }
   });
+
+  return { ids: sorted, upgradedMatchIds };
 }
 
 // ─── Expression evaluator ─────────────────────────────────────────────────────

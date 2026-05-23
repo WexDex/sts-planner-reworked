@@ -38,6 +38,18 @@ import {
 } from "@/app/card-design-gallery/galleryStsGlyphs";
 import { resolveGameCardChromeStyle } from "@/app/card-design-gallery/galleryCharacterCardStyles";
 
+// ─── Rarity border for the name band ─────────────────────────────────────────
+function rarityNameBorder(rarity: string | undefined): string {
+  switch (rarity) {
+    case "Starter":  return "border-teal-400/80 bg-teal-900/50";
+    case "Common":   return "border-slate-300/80 bg-slate-700/50";
+    case "Uncommon": return "border-blue-400/80 bg-blue-900/50";
+    case "Rare":     return "border-yellow-300/80 bg-yellow-900/50";
+    case "Special":  return "border-rose-400/80 bg-amber-900/50";
+    default:         return "border-slate-500/60 bg-slate-700/50"; // unknown
+  }
+}
+
 /** Shown inline inside damage cluster shell instead of prefix row (non-multihit stat strip). */
 const INLINE_DAMAGE_MODIFIER_PREFIX_IDS = new Set([
   "damage-random-simple",
@@ -554,7 +566,7 @@ function STSCard({
 
       <div className={`relative flex h-full min-h-0 flex-col overflow-hidden ${sz.bodyPad}`}>
         <div
-          className={`${styles.nameBg} ${sz.nameBand} border ${styles.accentBorder} ${chrome.nameBandExtra}`}
+          className={`${styles.nameBg} ${sz.nameBand} border-2 ${rarityNameBorder(card.rarity)} ${chrome.nameBandExtra}`}
         >
           <div
             className={`${sz.name} flex flex-col items-center justify-center text-center text-white`}

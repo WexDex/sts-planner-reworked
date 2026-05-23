@@ -528,7 +528,7 @@
     "Bash": {
       "id": "Bash",
       "type": "Attack",
-      "rarity": "Basic",
+      "rarity": "Starter",
       "description": "Deal [DMG] damage. Apply [VULN] Vulnerable.",
       "characters": "ironclad",
       "cost": {
@@ -1901,7 +1901,7 @@
     "Defend_B": {
       "id": "Defend_B",
       "type": "Skill",
-      "rarity": "Basic",
+      "rarity": "Starter",
       "description": "Gain [BLOCK] Block.",
       "character": "defect",
       "cost": {
@@ -1916,7 +1916,7 @@
     "Defend_G": {
       "id": "Defend_G",
       "type": "Skill",
-      "rarity": "Basic",
+      "rarity": "Starter",
       "description": "Gain [BLOCK] Block.",
       "character": "silent",
       "cost": {
@@ -1931,7 +1931,7 @@
     "Defend_P": {
       "id": "Defend_P",
       "type": "Skill",
-      "rarity": "Basic",
+      "rarity": "Starter",
       "description": "Gain [BLOCK] Block.",
       "character": "watcher",
       "cost": {
@@ -1946,7 +1946,7 @@
     "Defend_R": {
       "id": "Defend_R",
       "type": "Skill",
-      "rarity": "Basic",
+      "rarity": "Starter",
       "description": "Gain [BLOCK] Block.",
       "character": "ironclad",
       "cost": {
@@ -2481,7 +2481,7 @@
     "Eruption": {
       "id": "Eruption",
       "type": "Attack",
-      "rarity": "Basic",
+      "rarity": "Starter",
       "description": "Deal [DMG] damage. Enter [CHANGE_STANCE].",
       "characters": "watcher",
       "cost": {
@@ -4172,7 +4172,7 @@
     "Neutralize": {
       "id": "Neutralize",
       "type": "Attack",
-      "rarity": "Basic",
+      "rarity": "Starter",
       "description": "Deal [DMG] damage. Apply 1 (2) Weak.",
       "characters": "silent",
       "cost": {
@@ -5752,7 +5752,7 @@
     "Strike_B": {
       "id": "Strike_B",
       "type": "Attack",
-      "rarity": "Basic",
+      "rarity": "Starter",
       "description": "Deal [DMG] damage.",
       "character": "defect",
       "cost": {
@@ -5767,7 +5767,7 @@
     "Strike_G": {
       "id": "Strike_G",
       "type": "Attack",
-      "rarity": "Basic",
+      "rarity": "Starter",
       "description": "Deal [DMG] damage.",
       "character": "silent",
       "cost": {
@@ -5782,7 +5782,7 @@
     "Strike_P": {
       "id": "Strike_P",
       "type": "Attack",
-      "rarity": "Basic",
+      "rarity": "Starter",
       "description": "Deal [DMG] damage.",
       "character": "watcher",
       "cost": {
@@ -5797,7 +5797,7 @@
     "Strike_R": {
       "id": "Strike_R",
       "type": "Attack",
-      "rarity": "Basic",
+      "rarity": "Starter",
       "description": "Deal [DMG] damage.",
       "character": "ironclad",
       "cost": {
@@ -5868,7 +5868,7 @@
     "Survivor": {
       "id": "Survivor",
       "type": "Skill",
-      "rarity": "Basic",
+      "rarity": "Starter",
       "description": "Gain [BLOCK] Block. Discard 1 card.",
       "characters": "silent",
       "cost": {
@@ -6378,7 +6378,7 @@
     "Vigilance": {
       "id": "Vigilance",
       "type": "Skill",
-      "rarity": "Basic",
+      "rarity": "Starter",
       "description": "Gain [BLOCK] Block. Enter Calm.",
       "characters": "watcher",
       "cost": {
@@ -6701,7 +6701,7 @@
     "Zap": {
       "id": "Zap",
       "type": "Skill",
-      "rarity": "Basic",
+      "rarity": "Starter",
       "description": "[ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE].",
       "characters": "defect",
       "cost": {

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   Search, Star, Bookmark, Flame, ChevronDown, ChevronUp, X, Plus, Pencil,
-  FlaskConical, Ghost, ArrowUpAZ, ArrowDownAZ,
+  FlaskConical, Ghost, ArrowUpAZ, ArrowDownAZ, ArrowUpCircle, Layers,
 } from "lucide-react";
 import { POTION_CATEGORIES } from "@/app/types/types";
 import {
@@ -39,6 +39,10 @@ interface GalleryTopBarProps {
   onDeleteSavedFilter: (id: string) => void;
   onOpenBuilder: () => void;
   onClearAll: () => void;
+  allUpgraded: boolean;
+  onToggleAllUpgraded: () => void;
+  bothVersions: boolean;
+  onToggleBothVersions: () => void;
   globalSize: STSCardSize;
   onSizeChange: (s: STSCardSize) => void;
   sortBy: SortField;
@@ -82,18 +86,19 @@ const charColors: Record<string, { active: string; inactive: string }> = {
 };
 
 const typeColors: Record<string, { active: string; inactive: string }> = {
-  Attack:  { active: "border-red-500/60 bg-red-950/50 text-red-200",           inactive: "border-slate-700/40 text-slate-400 hover:text-red-300" },
-  Skill:   { active: "border-sky-500/60 bg-sky-950/50 text-sky-200",            inactive: "border-slate-700/40 text-slate-400 hover:text-sky-300" },
-  Power:   { active: "border-amber-500/60 bg-amber-950/50 text-amber-200",      inactive: "border-slate-700/40 text-slate-400 hover:text-amber-300" },
-  Curse:   { active: "border-neutral-500/60 bg-neutral-900/50 text-neutral-300",inactive: "border-slate-700/40 text-slate-400 hover:text-neutral-300" },
-  Status:  { active: "border-slate-500/60 bg-slate-700/50 text-slate-200",      inactive: "border-slate-700/40 text-slate-400 hover:text-slate-300" },
+  Attack:  { active: "border-red-500/60 bg-red-950/50 text-red-200",            inactive: "border-red-900/40 text-red-600/70 hover:text-red-300 hover:border-red-700/50" },
+  Skill:   { active: "border-sky-500/60 bg-sky-950/50 text-sky-200",            inactive: "border-sky-900/40 text-sky-700/70 hover:text-sky-300 hover:border-sky-700/50" },
+  Power:   { active: "border-amber-500/60 bg-amber-950/50 text-amber-200",      inactive: "border-amber-900/40 text-amber-700/70 hover:text-amber-300 hover:border-amber-700/50" },
+  Curse:   { active: "border-neutral-500/60 bg-neutral-900/50 text-neutral-300",inactive: "border-neutral-800/40 text-neutral-600/70 hover:text-neutral-300 hover:border-neutral-600/50" },
+  Status:  { active: "border-slate-500/60 bg-slate-700/50 text-slate-200",      inactive: "border-slate-700/40 text-slate-500/70 hover:text-slate-300" },
 };
 
 const rarityColors: Record<string, { active: string; inactive: string }> = {
-  Common:   { active: "border-slate-400/60 bg-slate-700/50 text-slate-100",   inactive: "border-slate-700/40 text-slate-400 hover:text-slate-200" },
-  Uncommon: { active: "border-sky-500/60 bg-sky-950/50 text-sky-200",          inactive: "border-slate-700/40 text-slate-400 hover:text-sky-300" },
-  Rare:     { active: "border-amber-500/60 bg-amber-950/50 text-amber-200",    inactive: "border-slate-700/40 text-slate-400 hover:text-amber-300" },
-  Special:  { active: "border-rose-500/60 bg-rose-950/50 text-rose-200",       inactive: "border-slate-700/40 text-slate-400 hover:text-rose-300" },
+  Common:   { active: "border-slate-400/60 bg-slate-700/50 text-slate-100",    inactive: "border-slate-700/40 text-slate-500/80 hover:text-slate-200" },
+  Uncommon: { active: "border-sky-500/60 bg-sky-950/50 text-sky-200",           inactive: "border-sky-900/40 text-sky-700/80 hover:text-sky-300 hover:border-sky-700/50" },
+  Rare:     { active: "border-amber-500/60 bg-amber-950/50 text-amber-200",     inactive: "border-amber-900/40 text-amber-700/80 hover:text-amber-300 hover:border-amber-700/50" },
+  Special:  { active: "border-rose-500/60 bg-rose-950/50 text-rose-200",        inactive: "border-rose-900/40 text-rose-700/80 hover:text-rose-300 hover:border-rose-700/50" },
+  Starter:  { active: "border-teal-500/60 bg-teal-950/50 text-teal-200",        inactive: "border-teal-900/40 text-teal-700/80 hover:text-teal-300 hover:border-teal-700/50" },
 };
 
 // Active colour per advanced-filter type
@@ -102,12 +107,16 @@ const ADV_ACTIVE: Record<AdvancedFilterType, string> = {
   exists:  "border-teal-500/60 bg-teal-950/50 text-teal-200",
   custom:  "border-amber-500/60 bg-amber-950/50 text-amber-200",
 };
+const ADV_INACTIVE: Record<AdvancedFilterType, string> = {
+  boolean: "border-indigo-900/40 text-indigo-600/70 hover:text-indigo-300 hover:border-indigo-700/50",
+  exists:  "border-teal-900/40 text-teal-700/70 hover:text-teal-300 hover:border-teal-700/50",
+  custom:  "border-amber-900/40 text-amber-700/70 hover:text-amber-300 hover:border-amber-700/50",
+};
 
 // ─── Shared primitive ─────────────────────────────────────────────────────────
-const PILL_BASE    = "rounded-md border px-2 py-0.5 text-xs font-medium transition";
+const PILL_BASE    = "rounded-md border px-2 py-0.5 text-sm font-medium transition";
 const ALL_ACTIVE   = "border-slate-500 bg-slate-700/60 text-slate-100";
 const ALL_INACTIVE = "border-slate-700/40 text-slate-500 hover:border-slate-600/60 hover:text-slate-300";
-const LABEL_CLS    = "w-20 shrink-0 text-[10px] font-semibold uppercase tracking-wider text-slate-600";
 
 function Pill({
   label, active, onClick, activeClass, inactiveClass, children,
@@ -211,6 +220,8 @@ export default function GalleryTopBar(props: GalleryTopBarProps) {
     advFilters, onToggleAdv,
     savedFilters, onToggleSavedFilter, onEditSavedFilter, onDeleteSavedFilter, onOpenBuilder,
     onClearAll,
+    allUpgraded, onToggleAllUpgraded,
+    bothVersions, onToggleBothVersions,
     globalSize, onSizeChange,
     sortBy, onSortByChange, sortDir, onSortDirToggle,
     totalCount, filteredCount,
@@ -253,7 +264,7 @@ export default function GalleryTopBar(props: GalleryTopBarProps) {
 
           {/* Size picker */}
           <div className="flex items-center gap-0.5 rounded-lg border border-slate-700/50 bg-slate-800/50 p-1">
-            <span className="px-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600">Size</span>
+            <span className="px-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600">Size</span>
             {SIZE_OPTIONS.map(s => (
               <button
                 key={s.id}
@@ -275,7 +286,7 @@ export default function GalleryTopBar(props: GalleryTopBarProps) {
 
           {/* Sort pills */}
           <div className="flex items-center gap-0.5 rounded-lg border border-slate-700/50 bg-slate-800/50 p-1">
-            <span className="px-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600">Sort</span>
+            <span className="px-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600">Sort</span>
             {SORT_OPTIONS.map(opt => (
               <button
                 key={opt.id}
@@ -322,6 +333,38 @@ export default function GalleryTopBar(props: GalleryTopBarProps) {
             <span className="text-slate-600 text-xs">/ {totalCount} cards</span>
           </div>
 
+          {/* All Upgraded toggle */}
+          <button
+            type="button"
+            onClick={onToggleAllUpgraded}
+            title={allUpgraded ? "Show base versions" : "Show all cards upgraded"}
+            className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
+              allUpgraded
+                ? "border-sky-500/60 bg-sky-900/40 text-sky-200 hover:bg-sky-900/60"
+                : "border-slate-700/40 text-slate-500 hover:border-sky-700/50 hover:text-sky-400"
+            }`}
+          >
+            <ArrowUpCircle className="h-3.5 w-3.5" />
+            All+
+          </button>
+
+          {/* Both Versions filter toggle */}
+          <button
+            type="button"
+            onClick={onToggleBothVersions}
+            title={bothVersions
+              ? "Filters check both base and upgraded — click to use base only"
+              : "Filters check base values only — click to also match upgraded versions"}
+            className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
+              bothVersions
+                ? "border-violet-500/60 bg-violet-900/40 text-violet-200 hover:bg-violet-900/60"
+                : "border-slate-700/40 text-slate-500 hover:border-violet-700/50 hover:text-violet-400"
+            }`}
+          >
+            <Layers className="h-3.5 w-3.5" />
+            ±Ver
+          </button>
+
           {anyFilter && (
             <button
               type="button"
@@ -359,101 +402,108 @@ export default function GalleryTopBar(props: GalleryTopBarProps) {
 
       {/* ── Expanded filter rows ───────────────────────────────────────────── */}
       {expanded && (
-        <div className="space-y-2 px-4 pb-3">
+        <div className="px-4 pb-3 space-y-1.5">
 
-          {/* Characters */}
-          <div className="flex flex-wrap items-center gap-1">
-            <span className={LABEL_CLS}>Character</span>
-            <Pill label="All" active={selChars.length === 0} onClick={() => {}} />
-            {Object.keys(charColors).map(c => (
-              <Pill
-                key={c}
-                label={c.charAt(0).toUpperCase() + c.slice(1)}
-                active={selChars.includes(c)}
-                activeClass={charColors[c]?.active}
-                inactiveClass={charColors[c]?.inactive}
-                onClick={() => onToggleChar(c)}
-              />
-            ))}
+          {/* ── Main filter pills — all groups flow inline on one/two lines ── */}
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+
+            {/* Characters cluster */}
+            <div className="flex items-center gap-0.5 rounded-lg border border-slate-700/25 bg-slate-800/60 px-2.5 py-1">
+              <span className="mr-1 shrink-0 text-xs font-semibold uppercase tracking-wider text-slate-500">Char</span>
+              <Pill label="All" active={selChars.length === 0} onClick={() => {}} />
+              {Object.keys(charColors).map(c => (
+                <Pill
+                  key={c}
+                  label={c.charAt(0).toUpperCase() + c.slice(1)}
+                  active={selChars.includes(c)}
+                  activeClass={charColors[c]?.active}
+                  inactiveClass={charColors[c]?.inactive}
+                  onClick={() => onToggleChar(c)}
+                />
+              ))}
+            </div>
+
+            {/* Types cluster */}
+            <div className="flex items-center gap-0.5 rounded-lg border border-slate-700/25 bg-slate-800/60 px-2.5 py-1">
+              <span className="mr-1 shrink-0 text-xs font-semibold uppercase tracking-wider text-slate-500">Type</span>
+              <Pill label="All" active={selTypes.length === 0} onClick={() => {}} />
+              {["Attack","Skill","Power","Curse","Status"].map(t => (
+                <Pill
+                  key={t}
+                  label={t}
+                  active={selTypes.includes(t)}
+                  activeClass={typeColors[t]?.active}
+                  inactiveClass={typeColors[t]?.inactive}
+                  onClick={() => onToggleType(t)}
+                />
+              ))}
+            </div>
+
+            {/* Rarities cluster */}
+            <div className="flex items-center gap-0.5 rounded-lg border border-slate-700/25 bg-slate-800/60 px-2.5 py-1">
+              <span className="mr-1 shrink-0 text-xs font-semibold uppercase tracking-wider text-slate-500">Rarity</span>
+              <Pill label="All" active={selRarities.length === 0} onClick={() => {}} />
+              {["Common","Uncommon","Rare","Special","Starter"].map(r => (
+                <Pill
+                  key={r}
+                  label={r}
+                  active={selRarities.includes(r)}
+                  activeClass={rarityColors[r]?.active}
+                  inactiveClass={rarityColors[r]?.inactive}
+                  onClick={() => onToggleRarity(r)}
+                />
+              ))}
+            </div>
+
+            {/* Costs cluster */}
+            <div className="flex items-center gap-0.5 rounded-lg border border-slate-700/25 bg-slate-800/60 px-2.5 py-1">
+              <span className="mr-1 shrink-0 text-xs font-semibold uppercase tracking-wider text-slate-500">Cost</span>
+              <Pill label="All" active={selCosts.length === 0} onClick={() => {}} />
+              {["X","0","1","2","3+"].map(c => (
+                <Pill
+                  key={c}
+                  label={c}
+                  active={selCosts.includes(c)}
+                  activeClass={c === "X" ? "border-amber-500/60 bg-amber-950/50 text-amber-200" : "border-sky-500/60 bg-sky-950/50 text-sky-200"}
+                  inactiveClass={c === "X" ? "border-amber-900/40 text-amber-700/60 hover:text-amber-300 hover:border-amber-700/50" : "border-sky-900/40 text-sky-700/60 hover:text-sky-300 hover:border-sky-700/50"}
+                  onClick={() => onToggleCost(c)}
+                />
+              ))}
+            </div>
+
+            {/* Keywords + Potions cluster */}
+            <div className="flex items-center gap-0.5 rounded-lg border border-slate-700/25 bg-slate-800/60 px-2.5 py-1">
+              <span className="mr-1 shrink-0 text-xs font-semibold uppercase tracking-wider text-slate-500">Keywords</span>
+              {GLYPH_FILTERS.map(({ field, label, Icon, iconClass }) => {
+                const on = selGlyphs.includes(field);
+                return (
+                  <button
+                    key={field}
+                    type="button"
+                    onClick={() => onToggleGlyph(field)}
+                    className={`flex items-center gap-1.5 ${PILL_BASE} ${on ? "border-slate-500 bg-slate-700/60 text-slate-100" : "border-slate-700/30 text-slate-400 hover:text-slate-200 hover:border-slate-600/50"}`}
+                  >
+                    <Icon className={`h-3.5 w-3.5 ${iconClass} ${on ? "opacity-100" : "opacity-35"}`} />
+                    {label}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={onTogglePotions}
+                className={`flex items-center gap-1.5 ${PILL_BASE} ml-1 ${showPotions ? "border-amber-500/60 bg-amber-950/50 text-amber-200" : "border-amber-900/30 text-amber-700/60 hover:text-amber-300 hover:border-amber-700/50"}`}
+              >
+                <FlaskConical className={`h-3.5 w-3.5 text-amber-400 ${showPotions ? "opacity-100" : "opacity-35"}`} />
+                Potions
+              </button>
+            </div>
+
           </div>
 
-          {/* Types */}
-          <div className="flex flex-wrap items-center gap-1">
-            <span className={LABEL_CLS}>Type</span>
-            <Pill label="All" active={selTypes.length === 0} onClick={() => {}} />
-            {["Attack","Skill","Power","Curse","Status"].map(t => (
-              <Pill
-                key={t}
-                label={t}
-                active={selTypes.includes(t)}
-                activeClass={typeColors[t]?.active}
-                inactiveClass={typeColors[t]?.inactive}
-                onClick={() => onToggleType(t)}
-              />
-            ))}
-          </div>
-
-          {/* Rarities */}
-          <div className="flex flex-wrap items-center gap-1">
-            <span className={LABEL_CLS}>Rarity</span>
-            <Pill label="All" active={selRarities.length === 0} onClick={() => {}} />
-            {["Common","Uncommon","Rare","Special"].map(r => (
-              <Pill
-                key={r}
-                label={r}
-                active={selRarities.includes(r)}
-                activeClass={rarityColors[r]?.active}
-                inactiveClass={rarityColors[r]?.inactive}
-                onClick={() => onToggleRarity(r)}
-              />
-            ))}
-          </div>
-
-          {/* Costs */}
-          <div className="flex flex-wrap items-center gap-1">
-            <span className={LABEL_CLS}>Cost</span>
-            <Pill label="All" active={selCosts.length === 0} onClick={() => {}} />
-            {["X","0","1","2","3+"].map(c => (
-              <Pill
-                key={c}
-                label={c}
-                active={selCosts.includes(c)}
-                activeClass={c === "X" ? "border-amber-500/60 bg-amber-950/50 text-amber-200" : "border-sky-500/60 bg-sky-950/50 text-sky-200"}
-                onClick={() => onToggleCost(c)}
-              />
-            ))}
-          </div>
-
-          {/* Keywords + Potions */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className={LABEL_CLS}>Keywords</span>
-            {GLYPH_FILTERS.map(({ field, label, Icon, iconClass }) => {
-              const on = selGlyphs.includes(field);
-              return (
-                <button
-                  key={field}
-                  type="button"
-                  onClick={() => onToggleGlyph(field)}
-                  className={`flex items-center gap-1.5 ${PILL_BASE} ${on ? "border-slate-500 bg-slate-700/60 text-slate-100" : ALL_INACTIVE}`}
-                >
-                  <Icon className={`h-3.5 w-3.5 ${on ? iconClass : "text-slate-500"}`} />
-                  {label}
-                </button>
-              );
-            })}
-            <button
-              type="button"
-              onClick={onTogglePotions}
-              className={`flex items-center gap-1.5 ${PILL_BASE} ${showPotions ? "border-amber-500/60 bg-amber-950/50 text-amber-200" : ALL_INACTIVE}`}
-            >
-              <FlaskConical className={`h-3.5 w-3.5 ${showPotions ? "text-amber-400" : "text-slate-500"}`} />
-              Potions
-            </button>
-          </div>
-
-          {/* Potion sub-tags */}
+          {/* Potion sub-tags (shown inline below when Potions active) */}
           {showPotions && (
-            <div className="flex flex-wrap items-center gap-1 pl-[5.5rem]">
+            <div className="flex flex-wrap items-center gap-1 pl-2">
+              <span className="mr-1 text-[10px] font-semibold uppercase tracking-wider text-amber-700">Tags</span>
               {POTION_CATEGORIES.map(tag => (
                 <Pill
                   key={tag}
@@ -468,7 +518,7 @@ export default function GalleryTopBar(props: GalleryTopBarProps) {
 
           {/* My Filters row */}
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className={LABEL_CLS}>My Filters</span>
+            <span className="mr-1 shrink-0 text-xs font-semibold uppercase tracking-wider text-slate-600">My Filters</span>
             {savedFilters.map(sf => (
               <span
                 key={sf.id}
@@ -501,7 +551,7 @@ export default function GalleryTopBar(props: GalleryTopBarProps) {
             <button
               type="button"
               onClick={() => setAdvancedOpen(v => !v)}
-              className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 transition hover:text-slate-300"
+              className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-slate-500 transition hover:text-slate-300"
             >
               {advancedOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
               Advanced
@@ -520,8 +570,8 @@ export default function GalleryTopBar(props: GalleryTopBarProps) {
                   return (
                     <div key={group} className="flex flex-wrap items-start gap-x-1 gap-y-1">
                       <div className="flex w-24 shrink-0 flex-col pt-0.5">
-                        <span className="text-[10px] font-semibold text-slate-400">{label}</span>
-                        <span className="text-[9px] text-slate-600">{hint}</span>
+                        <span className="text-xs font-semibold text-slate-400">{label}</span>
+                        <span className="text-[10px] text-slate-600">{hint}</span>
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {defs.map(def => (
@@ -532,7 +582,7 @@ export default function GalleryTopBar(props: GalleryTopBarProps) {
                             className={`${PILL_BASE} ${
                               advFilters[def.key]
                                 ? ADV_ACTIVE[def.filterType]
-                                : ALL_INACTIVE
+                                : ADV_INACTIVE[def.filterType]
                             }`}
                           >
                             {def.label}
