@@ -716,37 +716,6 @@ function buildKeywordGlyphs(card: Card): GalleryGlyph[] {
     return out;
   }
 
-  const innate = c.innate ?? c.Innate;
-  const ethereal = c.ethereal ?? c.Ethereal;
-  const retainField = c.retain ?? c.Retain;
-  if (galleryTieredBoolActive(card, innate)) {
-    const m = STS_ICON_GLYPH.KEY_INNATE;
-    out.push({
-      id: "kw-innate",
-      label: "Innate",
-      Icon: m.Icon,
-      iconClass: m.iconClass,
-    });
-  }
-  if (galleryTieredBoolActive(card, ethereal)) {
-    const m = STS_ICON_GLYPH.KEY_ETHEREAL;
-    out.push({
-      id: "kw-ethereal",
-      label: "Ethereal",
-      Icon: m.Icon,
-      iconClass: m.iconClass,
-    });
-  }
-  if (galleryTieredBoolActive(card, retainField)) {
-    const m = STS_ICON_GLYPH.KEY_RETAIN;
-    out.push({
-      id: "kw-retain",
-      catalogKey: "KEY_RETAIN",
-      label: "Retain",
-      Icon: m.Icon,
-      iconClass: m.iconClass,
-    });
-  }
   if (galleryTieredBoolActive(card, c.unplayable ?? c.Unplayable)) {
     const m = STS_ICON_GLYPH.KEY_UNPLAYABLE;
     out.push({
@@ -793,13 +762,10 @@ function plusSegment(): GalleryGlyphSegment {
   };
 }
 
-const EXHAUST_GLYPH_IDS = new Set(["exhaust-self", "structured-exhaust"]);
-
 /** Keyword chips shown first on the card (order). Strip duplicates from the inferred list. */
 const KEYWORD_PREFIX_IDS = new Set([
-  "kw-innate",
-  "kw-ethereal",
-  "kw-retain",
+  "custom-INNATE",
+  "custom-RETAIN",
   "kw-unplayable",
 ]);
 
@@ -828,23 +794,18 @@ export function galleryStatStripKeywordLeadingAndRest(glyphs: GalleryGlyph[]): {
 
 /**
  * Row order: lower = further left / earlier.
- * Keywords 1–4, effect glyphs between keywords and exhaust, exhaust last (9999).
+ * Keywords first (potion → innate → retain → unplayable), then effect glyphs.
  */
-const GLYPH_DISPLAY_PRIORITY_EXHAUST = 9999;
-
 function glyphDisplayPriority(glyphId: string): number {
-  if (EXHAUST_GLYPH_IDS.has(glyphId)) return GLYPH_DISPLAY_PRIORITY_EXHAUST;
   switch (glyphId) {
     case "kw-potion":
       return 0;
-    case "kw-innate":
+    case "custom-INNATE":
       return 1;
-    case "kw-ethereal":
+    case "custom-RETAIN":
       return 2;
-    case "kw-retain":
-      return 3;
     case "kw-unplayable":
-      return 4;
+      return 3;
     default:
       if (glyphId.startsWith("potion-tag-")) return 10;
       return 500;
@@ -852,18 +813,13 @@ function glyphDisplayPriority(glyphId: string): number {
 }
 
 /**
- * Innate → Ethereal → Retain → Unplayable (only those present), then other glyphs (stable
- * inference order), then self-exhaust glyphs ({@link EXHAUST_GLYPH_IDS}).
+ * Unplayable keyword (if present) first, then other glyphs (stable inference order).
+ * Custom glyphs (Innate, Ethereal, Retain, Exhaust, …) are appended after by {@link appendCustomGlyphs}.
  */
 function finalizeGlyphDisplayOrder(card: Card, glyphs: GalleryGlyph[]): GalleryGlyph[] {
   const prefix = buildKeywordGlyphs(card);
-  const middle: GalleryGlyph[] = [];
-  const exhaust: GalleryGlyph[] = [];
-  for (const g of glyphs) {
-    if (EXHAUST_GLYPH_IDS.has(g.id)) exhaust.push(g);
-    else if (!isKeywordLeadingGlyphId(g.id)) middle.push(g);
-  }
-  const combined = [...prefix, ...middle, ...exhaust];
+  const middle = glyphs.filter((g) => !isKeywordLeadingGlyphId(g.id));
+  const combined = [...prefix, ...middle];
   combined.sort(
     (a, b) => glyphDisplayPriority(a.id) - glyphDisplayPriority(b.id),
   );
@@ -918,20 +874,9 @@ function tryStructuredGalleryGlyphs(
     (multiCount != null ||
       (mObj?.multiHitEnergyScaling === true && cardUsesXCostOrbLocal(card)));
 
-  // Pummel / Skewer / Reinforced Body: hit count inlined in `Card` after damage or block. Optional exhaust glyph only.
+  // Pummel / Skewer / Reinforced Body: hit count inlined in `Card` after damage or block. No extra glyphs needed (Exhaust handled by custom glyph).
   if (multihitDamageInlined || multihitBlockInlined) {
-    const glyphs: GalleryGlyph[] = [];
-    if (cardSelfExhaustsOnPlay(card)) {
-      const ex = STS_ICON_GLYPH.EXHAUST_SELF;
-      glyphs.push({
-        id: "structured-exhaust",
-        label: "Exhaust",
-        clusterClass: clusterShellField("neutral"),
-        Icon: ex.Icon,
-        iconClass: ex.iconClass,
-      });
-    }
-    return { glyphs, suppressStats: {} };
+    return { glyphs: [], suppressStats: {} };
   }
 
   // Dropkick-style: damage + conditional draw + conditional energy (same gate)
@@ -1301,17 +1246,6 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
     );
   });
 
-  if (cardSelfExhaustsOnPlay(card)) {
-    push(
-      glyphFromStsKey("exhaust-self", "EXHAUST_SELF", "Exhaust") ?? {
-        id: "exhaust-self",
-        label: "Exhaust",
-        Icon: Flame,
-        iconClass: "text-orange-400",
-      },
-    );
-  }
-
   const eg = energyGainNode(card);
   if (eg != null) {
     const egObj =
@@ -1482,6 +1416,11 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
     const sn = galleryTierNumber(card, scryRaw);
     const sc = STS_ICON_GLYPH.SCRY_ICON;
     const scryRand = galleryTierOrEffectHasRandomFlag(scryRaw);
+    const scryCond =
+      typeof scryRaw === "object" &&
+      scryRaw !== null &&
+      !Array.isArray(scryRaw) &&
+      (scryRaw as Record<string, unknown>).conditioned === true;
     if (sn != null) {
       push({
         id: "scry-n",
@@ -1489,6 +1428,7 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
         label: `Scry ${sn}`,
         clusterClass: clusterShellField("neutral"),
         segments: [
+          ...(scryCond ? [segmentConditional()] : []),
           ...(scryRand ? [segmentRandom()] : []),
           { Icon: sc.Icon, iconClass: sc.iconClass },
           {
@@ -1503,15 +1443,21 @@ function inferLegacyCardGalleryGlyphs(card: Card): GalleryGlyph[] {
         catalogKey: "SCRY_ICON",
         label: "Random · Scry",
         clusterClass: clusterShellField("neutral"),
-        segments: [segmentRandom(), { Icon: sc.Icon, iconClass: sc.iconClass }],
+        segments: [
+          ...(scryCond ? [segmentConditional()] : []),
+          segmentRandom(),
+          { Icon: sc.Icon, iconClass: sc.iconClass },
+        ],
       });
     } else {
       push({
         id: "scry",
         catalogKey: "SCRY_ICON",
         label: "Scry",
-        Icon: sc.Icon,
-        iconClass: sc.iconClass,
+        clusterClass: scryCond ? clusterShellField("neutral") : undefined,
+        ...(scryCond
+          ? { segments: [segmentConditional(), { Icon: sc.Icon, iconClass: sc.iconClass }] }
+          : { Icon: sc.Icon, iconClass: sc.iconClass }),
       });
     }
   }
@@ -2105,6 +2051,30 @@ function galleryTierDisplayText(card: Card, raw: unknown): string | undefined {
   return n !== undefined ? String(n) : undefined;
 }
 
+/** Resolve a dot-separated field path from a card record. */
+function resolveCustomFieldPath(cardRec: Record<string, unknown>, path: string): unknown {
+  const segs = path.split(".");
+  let cur: unknown = cardRec;
+  for (const seg of segs) {
+    if (typeof cur !== "object" || cur === null || Array.isArray(cur)) return undefined;
+    const rec = cur as Record<string, unknown>;
+    cur = rec[seg] ?? rec[seg.charAt(0).toUpperCase() + seg.slice(1)];
+  }
+  return cur;
+}
+
+/** Extract a tiered string value (e.g. `{ base: "Wrath" }`) respecting `isUpgraded`. */
+function resolveTieredString(card: Card, raw: unknown): string | undefined {
+  if (raw === null || raw === undefined) return undefined;
+  if (typeof raw === "string") return raw;
+  if (typeof raw === "object" && !Array.isArray(raw)) {
+    const o = raw as Record<string, unknown>;
+    if (card.isUpgraded && typeof o.upgraded === "string") return o.upgraded;
+    if (typeof o.base === "string") return o.base;
+  }
+  return undefined;
+}
+
 /** Append custom glyphs that match the given card's fields. */
 function appendCustomGlyphs(card: Card, glyphs: GalleryGlyph[]): GalleryGlyph[] {
   const customGlyphs = loadCustomGlyphs();
@@ -2115,11 +2085,12 @@ function appendCustomGlyphs(card: Card, glyphs: GalleryGlyph[]): GalleryGlyph[] 
     const link = cg.fieldLink;
     if (link.mode === "none") continue;
     const fn = link.fieldName;
-    const fieldVal = cardRec[fn] ?? cardRec[fn.charAt(0).toUpperCase() + fn.slice(1)];
+    const fieldVal = resolveCustomFieldPath(cardRec, fn);
     let show = false;
-    if (link.mode === "boolean")  show = galleryTieredBoolActive(card, fieldVal);
-    if (link.mode === "presence") show = fieldVal != null;
-    if (link.mode === "numeric")  show = galleryTierNumber(card, fieldVal) !== undefined;
+    if (link.mode === "boolean")       show = galleryTieredBoolActive(card, fieldVal);
+    if (link.mode === "presence")      show = fieldVal != null;
+    if (link.mode === "numeric")       show = galleryTierNumber(card, fieldVal) !== undefined;
+    if (link.mode === "string-equals") show = resolveTieredString(card, fieldVal) === link.matchValue;
     if (!show) continue;
     const num =
       link.mode === "numeric" && link.showNumber
@@ -2215,7 +2186,10 @@ export function inferGalleryCardEffects(card: Card): {
   suppressStats: GallerySuppressedStats;
 } {
   function finalize(raw: GalleryGlyph[]): GalleryGlyph[] {
-    return applyFieldLevelHideNumbers(card, applyBuiltinOverrides(appendCustomGlyphs(card, finalizeGlyphDisplayOrder(card, raw))));
+    // Sort again after custom glyphs are appended so priority-0 custom glyphs (Innate, Retain) lead.
+    const withCustom = appendCustomGlyphs(card, finalizeGlyphDisplayOrder(card, raw));
+    withCustom.sort((a, b) => glyphDisplayPriority(a.id) - glyphDisplayPriority(b.id));
+    return applyFieldLevelHideNumbers(card, applyBuiltinOverrides(withCustom));
   }
 
   /** Suppress stat strip values when the card field carries `hideNumber: true` or `xNumber: true`. */

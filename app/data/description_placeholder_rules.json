@@ -348,5 +348,17 @@
     "label": "Scry count",
     "resolverType": "field",
     "fieldKey": "scry"
+  },
+  {
+    "token": "[ORBINTERACTIONS.ORBSLOT_LOSS]",
+    "label": "Orb Interactions.orbslot_loss",
+    "resolverType": "field",
+    "fieldKey": "orbInteractions.orbslot_loss"
+  },
+  {
+    "token": "[DEXTERITY_LOSS]",
+    "label": "Dexterity_loss",
+    "resolverType": "field",
+    "fieldKey": "dexterity_loss"
   }
 ]

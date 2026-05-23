@@ -44,13 +44,19 @@ import {
   X,
 } from "lucide-react";
 import type { PlaceholderRuleConfig } from "@/app/utils/descriptionPlaceholders";
-import { buildResolver } from "@/app/utils/descriptionPlaceholders";
+import { buildResolver, resolveConditionalField } from "@/app/utils/descriptionPlaceholders";
 import rulesData from "@/app/data/description_placeholder_rules.json";
 import rulesBackup from "@/app/data/description_placeholder_rules.backup.json";
 import customGlyphsData from "@/app/data/custom_glyphs.json";
 import type { Card } from "@/app/types/gameTypes";
 import FieldSuggestInput from "@/app/components/UI/FieldSuggestInput";
 import { ALL_CARDS, CARD_BY_ID, charPillCls } from "@/app/utils/cardChipHelpers";
+import { ST } from "next/dist/shared/lib/utils";
+import STSCard from "@/app/components/UI/Card";
+import { LOCATION } from "@/app/types/types";
+import type { GalleryCardSize } from "@/app/card-design-gallery/galleryTypes";
+import { inferGalleryCardEffects } from "@/app/card-design-gallery/galleryStsGlyphs";
+import { getGalleryCharacterChromeStyle } from "@/app/card-design-gallery/galleryCharacterCardStyles";
 
 // ─── Session-token tracking ─────────────────────────────────────────────────
 const ORIGINAL_TOKEN_SET = new Set(
@@ -128,27 +134,59 @@ function renderColored(
   const segments: React.ReactNode[] = [];
   let rest = description;
   let key = 0;
-  while (rest.length > 0) {
-    let bestIdx = rest.length;
-    let bestRule: BuiltRule | null = null;
-    for (const r of rules) {
-      const idx = rest.indexOf(r.token);
-      if (idx !== -1 && idx < bestIdx) {
-        bestIdx = idx;
-        bestRule = r;
+
+  // Highlight [[field][display]] conditional tokens in teal before numeric tokens
+  const conditionalRe = /\[\[([^\]]+)\]\[([^\]]*)\]\]/g;
+  const parts: { text: string; isConditional: boolean; raw: string }[] = [];
+  let lastIdx = 0;
+  let m: RegExpExecArray | null;
+  while ((m = conditionalRe.exec(description)) !== null) {
+    if (m.index > lastIdx) parts.push({ text: description.slice(lastIdx, m.index), isConditional: false, raw: "" });
+    parts.push({ text: m[0], isConditional: true, raw: m[0] });
+    lastIdx = m.index + m[0].length;
+  }
+  if (lastIdx < description.length) parts.push({ text: description.slice(lastIdx), isConditional: false, raw: "" });
+
+  for (const part of parts) {
+    if (part.isConditional) {
+      // Resolve the field and show only the display text, or nothing when falsy
+      const match = part.text.match(/\[\[([^\]]+)\]\[([^\]]*)\]\]/);
+      if (match) {
+        const [, fieldName, display] = match;
+        if (resolveConditionalField(card, fieldName) && display) {
+          segments.push(
+            <span key={key++} className="not-italic font-bold text-teal-300">
+              {display}
+            </span>,
+          );
+        }
+        // If falsy: render nothing
       }
+      continue;
     }
-    if (!bestRule) {
-      segments.push(rest);
-      break;
+    rest = part.text;
+    while (rest.length > 0) {
+      let bestIdx = rest.length;
+      let bestRule: BuiltRule | null = null;
+      for (const r of rules) {
+        const idx = rest.indexOf(r.token);
+        if (idx !== -1 && idx < bestIdx) {
+          bestIdx = idx;
+          bestRule = r;
+        }
+      }
+      if (!bestRule) {
+        segments.push(rest);
+        break;
+      }
+      if (bestIdx > 0) segments.push(rest.slice(0, bestIdx));
+      segments.push(
+        <span key={key++} className="not-italic font-bold text-amber-300">
+          {String(bestRule.resolve(card))}
+        </span>,
+      );
+      rest = rest.slice(bestIdx + bestRule.token.length);
     }
-    if (bestIdx > 0) segments.push(rest.slice(0, bestIdx));
-    segments.push(
-      <span key={key++} className="not-italic font-bold text-amber-300">
-        {String(bestRule.resolve(card))}
-      </span>,
-    );
-    rest = rest.slice(bestIdx + bestRule.token.length);
   }
   return <>{segments}</>;
 }
@@ -1685,6 +1723,8 @@ export default function CardFieldEditorClient({
   });
   const [newFieldKey, setNewFieldKey] = useState("");
   const [newFieldType, setNewFieldType] = useState<PropType>("string");
+  const [previewSize, setPreviewSize] = useState<GalleryCardSize>("medium");
+  const [previewUpgraded, setPreviewUpgraded] = useState(false);
 
   // Field sorting + search
   const [fieldSort, setFieldSort] = useState<"az" | "mostUsed" | "activeFirst">(
@@ -2886,7 +2926,7 @@ export default function CardFieldEditorClient({
                           >
                             {/* Row 1: token + copy + resolver badge + actions */}
                             <div className="flex flex-wrap items-center gap-1.5">
-                              <span className="font-mono text-[12px] font-bold text-slate-200">
+                              <span className="font-mono text-[10px] font-bold text-slate-200">
                                 {r.token}
                               </span>
                               <button
@@ -3107,6 +3147,89 @@ export default function CardFieldEditorClient({
                       placeholder="Leave blank if unchanged when upgraded"
                     />
                   </div>
+
+                  {/* Card Preview */}
+                  {card && (() => {
+                    // Normalize raw editor card → proper Card for preview
+                    const c = {
+                      ...card,
+                      name: (card.id as string) ?? selectedId ?? "",
+                      character: (card.characters as string) ?? (card.character as string) ?? undefined,
+                      isUpgraded: previewUpgraded,
+                    } as unknown as Card;
+                    const c2 = {
+                      ...card,
+                      name: (card.id as string) ?? selectedId ?? "",
+                      character: (card.characters as string) ?? (card.character as string) ?? undefined,
+                      isUpgraded: !previewUpgraded,
+                    } as unknown as Card;
+                    const { glyphs, suppressStats } = inferGalleryCardEffects(c);
+                    const { glyphs: glyphs2, suppressStats: suppressStats2 } = inferGalleryCardEffects(c2);
+                    const sizes: GalleryCardSize[] = ["small", "medium", "large","preview"];
+                    return (
+                      <div className="mt-2 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[9px] font-bold uppercase tracking-widest text-slate-600">
+                            Card Preview
+                          </span>
+                          <div className="flex items-center gap-2">
+                            {/* Upgrade toggle */}
+                            <button
+                              type="button"
+                              onClick={() => setPreviewUpgraded((v) => !v)}
+                              className={`rounded px-2 py-0.5 text-[9px] text-white font-semibold uppercase tracking-wide transition-colors ${
+                                previewUpgraded
+                                  ? "bg-amber-600/80 hover:bg-amber-600"
+                                  : "bg-blue-600/80 hover:bg-blue-600"
+                              }`}
+                            >
+                              {previewUpgraded ? "Upgraded" : "Base"}
+                            </button>
+                            <span className="h-3 w-px bg-slate-700" />
+                            {/* Size toggle */}
+                            {sizes.map((s) => (
+                              <button
+                                key={s}
+                                type="button"
+                                onClick={() => setPreviewSize(s)}
+                                className={`rounded px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide transition-colors ${
+                                  previewSize === s
+                                    ? "bg-slate-600 text-white"
+                                    : "text-slate-500 hover:text-slate-300"
+                                }`}
+                              >
+                                {s[0]}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex justify-center py-2 gap-2">
+                          <STSCard
+                            card={c}
+                            index={0}
+                            location={LOCATION.HAND}
+                            size={previewSize}
+                            interactive={false}
+                            legendHover={false}
+                            galleryChromeStyle={getGalleryCharacterChromeStyle(c)}
+                            galleryEffectGlyphs={glyphs.length > 0 ? glyphs : undefined}
+                            gallerySuppressStats={Object.keys(suppressStats).length > 0 ? suppressStats : undefined}
+                          />
+                          <STSCard
+                            card={c2}
+                            index={0}
+                            location={LOCATION.HAND}
+                            size={previewSize}
+                            interactive={false}
+                            legendHover={false}
+                            galleryChromeStyle={getGalleryCharacterChromeStyle(c2)}
+                            galleryEffectGlyphs={glyphs2.length > 0 ? glyphs2 : undefined}
+                            gallerySuppressStats={Object.keys(suppressStats2).length > 0 ? suppressStats2 : undefined}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>

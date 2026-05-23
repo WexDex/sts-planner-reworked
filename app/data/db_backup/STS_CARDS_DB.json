@@ -4521,7 +4521,7 @@
       "id": "Prostrate",
       "type": "Skill",
       "rarity": "Common",
-      "description": "Gain 2 (3) Mantra. Gain [BLOCK] Block.",
+      "description": "Gain [MANTRA] Mantra. Gain [BLOCK] Block.",
       "characters": "watcher",
       "cost": {
         "base": 0

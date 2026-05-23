@@ -129,10 +129,34 @@ export function applyDescriptionPlaceholders(description: string, card: Card): s
   return result;
 }
 
+export function resolveConditionalField(card: Card, fieldName: string): boolean {
+  const val = (card as Record<string, unknown>)[fieldName];
+  if (val == null) return false;
+  if (typeof val === "boolean") return val;
+  if (typeof val === "object" && !Array.isArray(val)) {
+    const o = val as { base?: boolean; upgraded?: boolean };
+    if (card.isUpgraded === true && o.upgraded !== undefined) return Boolean(o.upgraded);
+    return Boolean(o.base);
+  }
+  return Boolean(val);
+}
+
+/** Resolves `[[fieldName][display]]` conditional tokens, then strips stray punctuation artifacts. */
+export function applyConditionalTokens(description: string, card: Card): string {
+  let result = description.replace(
+    /\[\[([^\]]+)\]\[([^\]]*)\]\]/g,
+    (_, fieldName: string, display: string) =>
+      resolveConditionalField(card, fieldName) ? display : "",
+  );
+  result = result.replace(/^\. /, "").replace(/ \.$/, ".");
+  return result;
+}
+
 /**
  * Fills bracket tokens in a card description (e.g. `[DMG]`, `[BLOCK]`).
+ * Also handles `[[field][display]]` conditional tokens.
  */
 export function getFormattedDescription(description: string | undefined, card: Card): string {
   if (!description) return "";
-  return applyDescriptionPlaceholders(description, card);
+  return applyDescriptionPlaceholders(applyConditionalTokens(description, card), card);
 }

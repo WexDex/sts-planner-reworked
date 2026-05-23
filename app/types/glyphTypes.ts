@@ -7,7 +7,8 @@ export type CustomGlyphFieldLink =
   | { mode: "none" }
   | { mode: "boolean"; fieldName: string }
   | { mode: "numeric"; fieldName: string; showNumber: boolean }
-  | { mode: "presence"; fieldName: string };
+  | { mode: "presence"; fieldName: string }
+  | { mode: "string-equals"; fieldName: string; matchValue: string };
 
 export type CustomGlyph = {
   key: string;

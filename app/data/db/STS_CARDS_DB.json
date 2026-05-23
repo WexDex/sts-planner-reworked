@@ -159,9 +159,8 @@
       "id": "After Image",
       "type": "Power",
       "rarity": "Rare",
-      "description": "Whenever you play a card, Gain [BLOCK] Block.",
+      "description": "[[innate][Innate. ]]Whenever you play a card, Gain [BLOCK] Block.",
       "characters": "silent",
-      "descriptionUpgraded": "Innate. Whenever you play a card, Gain [BLOCK] Block.",
       "cost": {
         "base": 1
       },
@@ -259,9 +258,8 @@
       "id": "Alpha",
       "type": "Skill",
       "rarity": "Rare",
-      "description": "Shuffle a Beta into your draw pile. Exhaust.",
+      "description": "[[innate][Innate. ]]Shuffle a Beta into your draw pile. Exhaust.",
       "characters": "watcher",
-      "descriptionUpgraded": "Innate. Shuffle a Beta into your draw pile. Exhaust.",
       "cost": {
         "base": 1
       },
@@ -329,9 +327,8 @@
       "id": "Apparition",
       "type": "Skill",
       "rarity": "Special",
-      "description": "Ethereal. Gain [INTANGIBLE] Intangible. Exhaust.",
+      "description": "[[ethereal][Ethereal. ]]Gain [INTANGIBLE] Intangible. Exhaust.",
       "characters": "colorless",
-      "descriptionUpgraded": "Gain [INTANGIBLE] Intangible. Exhaust.",
       "cost": {
         "base": 1
       },
@@ -557,9 +554,8 @@
       "id": "Battle Hymn",
       "type": "Power",
       "rarity": "Uncommon",
-      "description": "At the start of each turn, add a Smite into your hand.",
+      "description": "[[innate][Innate. ]]At the start of each turn, add a Smite into your hand.",
       "characters": "watcher",
-      "descriptionUpgraded": "Innate. At the start of each turn, add a Smite into your hand.",
       "cost": {
         "base": 1
       },
@@ -720,9 +716,8 @@
       "id": "Blasphemy",
       "type": "Skill",
       "rarity": "Rare",
-      "description": "Enter [CHANGE_STANCE]. Die next turn. Exhaust.",
+      "description": "[[retain][Retain. ]]Enter [CHANGE_STANCE]. Die next turn. Exhaust.",
       "characters": "watcher",
-      "descriptionUpgraded": "Retain. Enter [CHANGE_STANCE]. Die next turn. Exhaust.",
       "cost": {
         "base": 1
       },
@@ -930,9 +925,8 @@
       "id": "Brutality",
       "type": "Power",
       "rarity": "Rare",
-      "description": "At the start of your turn, lose [TAKEDMG] HP and draw [DRAW] card.",
+      "description": "[[innate][Innate. ]]At the start of your turn, lose [TAKEDMG] HP and draw [DRAW] card.",
       "characters": "ironclad",
-      "descriptionUpgraded": "Innate. At the start of your turn, lose [TAKEDMG] HP and draw [DRAW] card.",
       "cost": {
         "base": 0
       },
@@ -1037,9 +1031,8 @@
       "id": "Calculated Gamble",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Discard your hand, then draw that many cards. Exhaust.",
+      "description": "Discard your hand, then draw that many cards.[[selfExhaustOnPlay][ Exhaust.]]",
       "characters": "silent",
-      "descriptionUpgraded": "Discard your hand, then draw that many cards.",
       "cost": {
         "base": 0
       },
@@ -1187,9 +1180,8 @@
       "id": "Chill",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "[ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE] for each enemy in combat. Exhaust.",
+      "description": "[[innate][Innate. ]][ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE] for each enemy in combat. Exhaust.",
       "characters": "defect",
-      "descriptionUpgraded": "Innate. [ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE] for each enemy in combat. Exhaust.",
       "cost": {
         "base": 0
       },
@@ -2033,9 +2025,8 @@
       "id": "Deva Form",
       "type": "Power",
       "rarity": "Rare",
-      "description": "Ethereal. At the start of your turn, gain [R] and increase this gain by 1.",
+      "description": "[[ethereal][Ethereal. ]]At the start of your turn, gain [R] and increase this gain by 1.",
       "characters": "watcher",
-      "descriptionUpgraded": "At the start of your turn, gain [R] and increase this gain by 1.",
       "cost": {
         "base": 3
       },
@@ -2211,6 +2202,7 @@
       "gainEnergy": {
         "base": 0,
         "upgraded": 0,
+        "hideNumber":true,
         "conditioned": true,
         "trigger": "Doubles your Energy"
       }
@@ -2319,9 +2311,8 @@
       "id": "Echo Form",
       "type": "Power",
       "rarity": "Rare",
-      "description": "Ethereal. The first card you play each turn is played twice.",
+      "description": "[[ethereal][Ethereal. ]]The first card you play each turn is played twice.",
       "characters": "defect",
-      "descriptionUpgraded": "The first card you play each turn is played twice.",
       "cost": {
         "base": 3
       },
@@ -2529,9 +2520,8 @@
       "id": "Establishment",
       "type": "Power",
       "rarity": "Rare",
-      "description": "Whenever a card is Retained, reduce its cost by 1 this combat.",
+      "description": "[[innate][Innate. ]]Whenever a card is Retained, reduce its cost by 1 this combat.",
       "characters": "watcher",
-      "descriptionUpgraded": "Innate. Whenever a card is Retained, reduce its cost by 1 this combat.",
       "cost": {
         "base": 1
       },
@@ -2930,6 +2920,10 @@
       "strength_gain": {
         "base": 2,
         "upgraded": 4
+      },
+      "strength_loss": {
+        "base": 2,
+        "upgraded": 4
       }
     },
     "Flurry of Blows": {
@@ -3061,10 +3055,16 @@
       "id": "Foresight",
       "type": "Power",
       "rarity": "Uncommon",
-      "description": "At the start of your turn, Scry 3 (4).",
+      "description": "At the start of your turn, Scry [SCRY].",
       "characters": "watcher",
       "cost": {
         "base": 1
+      },
+      "scry": {
+        "base": 3,
+        "upgraded": 4,
+        "conditioned": true,
+        "trigger": "at the start of your turn"
       }
     },
     "Forethought": {
@@ -3076,7 +3076,8 @@
       "descriptionUpgraded": "Put any number of cards from your hand to the bottom of your draw pile. They cost 0 until played.",
       "cost": {
         "base": 0
-      }
+      },
+      "costManipulation": true
     },
     "FTL": {
       "id": "FTL",
@@ -3388,9 +3389,8 @@
       "id": "Hello World",
       "type": "Power",
       "rarity": "Uncommon",
-      "description": "At the start of your turn, add a random Common card into your hand.",
+      "description": "[[innate][Innate. ]]At the start of your turn, add a random Common card into your hand.",
       "characters": "defect",
-      "descriptionUpgraded": "Innate. At the start of your turn, add a random Common card into your hand.",
       "cost": {
         "base": 1
       },
@@ -3422,9 +3422,8 @@
       "id": "Hologram",
       "type": "Skill",
       "rarity": "Common",
-      "description": "Gain [BLOCK] Block. Put a card from your discard pile into your hand. Exhaust.",
+      "description": "Gain [BLOCK] Block. Put a card from your discard pile into your hand.[[selfExhaustOnPlay][ Exhaust.]]",
       "characters": "defect",
-      "descriptionUpgraded": "Gain [BLOCK] Block. Put a card from your discard pile into your hand.",
       "cost": {
         "base": 1
       },
@@ -3558,9 +3557,8 @@
       "id": "Infinite Blades",
       "type": "Power",
       "rarity": "Uncommon",
-      "description": "At the start of your turn, add a Shiv into your hand.",
+      "description": "[[innate][Innate. ]]At the start of your turn, add a Shiv into your hand.",
       "characters": "silent",
-      "descriptionUpgraded": "Innate. At the start of your turn, add a Shiv into your hand.",
       "cost": {
         "base": 1
       },
@@ -3568,6 +3566,11 @@
       "innate": {
         "base": false,
         "upgraded": true
+      },
+      "shiv_add" : {
+        "base": 1,
+        "conditioned": true,
+        "trigger": "at the start of your turn"
       },
       "cards_meant": [
         "Shiv"
@@ -3620,7 +3623,7 @@
       "id": "Insight",
       "type": "Skill",
       "rarity": "Special",
-      "description": "Retain. Draw 2 (3) cards. Exhaust.",
+      "description": "Retain. Draw [DRAW] cards. Exhaust.",
       "characters": "colorless",
       "cost": {
         "base": 0
@@ -3745,7 +3748,7 @@
       "id": "Just Lucky",
       "type": "Attack",
       "rarity": "Common",
-      "description": "Scry 1 (2). Gain [BLOCK] Block. Deal [DMG] damage.",
+      "description": "Scry [SCRY]. Gain [BLOCK] Block. Deal [DMG] damage.",
       "characters": "watcher",
       "cost": {
         "base": 0
@@ -3757,6 +3760,10 @@
       "block": {
         "base": 2,
         "upgraded": 3
+      },
+      "scry": {
+        "base": 1,
+        "upgraded": 2
       },
       "scalesWithStrength": true
     },
@@ -3836,9 +3843,8 @@
       "id": "Limit Break",
       "type": "Skill",
       "rarity": "Rare",
-      "description": "Double your Strength. Exhaust.",
+      "description": "Double your Strength.[[selfExhaustOnPlay][ Exhaust.]]",
       "characters": "ironclad",
-      "descriptionUpgraded": "Double your Strength.",
       "cost": {
         "base": 1
       },
@@ -3874,9 +3880,8 @@
       "id": "Machine Learning",
       "type": "Power",
       "rarity": "Rare",
-      "description": "At the start of your turn, draw 1 additional card.",
+      "description": "[[innate][Innate. ]]At the start of your turn, draw 1 additional card.",
       "characters": "defect",
-      "descriptionUpgraded": "Innate. At the start of your turn, draw 1 additional card.",
       "cost": {
         "base": 1
       },
@@ -3884,7 +3889,7 @@
         "base": false,
         "upgraded": true
       },
-      "draw" : {
+      "draw": {
         "base": 1,
         "conditioned": true,
         "trigger": "at the start of your turn"
@@ -4059,7 +4064,7 @@
       "id": "Metamorphosis",
       "type": "Skill",
       "rarity": "Rare",
-      "description": "Shuffle 3 (5) random Attacks into your draw pile. They cost 0 this combat. Exhaust.",
+      "description": "Shuffle [NUMBER_OF_CARDS_TO_ADD] random Attacks into your draw pile. They cost 0 this combat. Exhaust.",
       "characters": "colorless",
       "cost": {
         "base": 2
@@ -4068,7 +4073,11 @@
         "base": true,
         "upgraded": true
       },
-      "canAddCards": true
+      "canAddCards": true,
+      "number_of_cards_to_add": {
+        "base": 3,
+        "upgraded": 5
+      }
     },
     "Meteor Strike": {
       "id": "Meteor Strike",
@@ -4341,7 +4350,7 @@
       "id": "Panacea",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Gain 1 (2) Artifact. Exhaust.",
+      "description": "Gain [ART] Artifact. Exhaust.",
       "characters": "colorless",
       "cost": {
         "base": 0
@@ -4627,7 +4636,7 @@
       "id": "Prostrate",
       "type": "Skill",
       "rarity": "Common",
-      "description": "Gain 2 (3) Mantra. Gain [BLOCK] Block.",
+      "description": "Gain [MANTRA] Mantra. Gain [BLOCK] Block.",
       "characters": "watcher",
       "cost": {
         "base": 0
@@ -4760,9 +4769,8 @@
       "id": "Rainbow",
       "type": "Skill",
       "rarity": "Rare",
-      "description": "Channel 1 Lightning. Channel 1 Frost. Channel 1 Dark. Exhaust.",
+      "description": "Channel 1 Lightning. Channel 1 Frost. Channel 1 Dark.[[selfExhaustOnPlay][ Exhaust.]]",
       "characters": "defect",
-      "descriptionUpgraded": "Channel 1 Lightning. Channel 1 Frost. Channel 1 Dark.",
       "cost": {
         "base": 2
       },
@@ -5263,15 +5271,15 @@
         "base": 5,
         "upgraded": 7
       },
-      "scalesWithDexterity": true
+      "scalesWithDexterity": true,
+      "canExhaustCards": true
     },
     "Secret Technique": {
       "id": "Secret Technique",
       "type": "Skill",
       "rarity": "Rare",
-      "description": "Put a Skill from your draw pile into your hand. Exhaust.",
+      "description": "Put a Skill from your draw pile into your hand.[[selfExhaustOnPlay][ Exhaust.]]",
       "characters": "colorless",
-      "descriptionUpgraded": "Put a Skill from your draw pile into your hand.",
       "cost": {
         "base": 0
       },
@@ -5285,9 +5293,8 @@
       "id": "Secret Weapon",
       "type": "Skill",
       "rarity": "Rare",
-      "description": "Put an Attack from your draw pile into your hand. Exhaust.",
+      "description": "Put an Attack from your draw pile into your hand.[[selfExhaustOnPlay][ Exhaust.]]",
       "characters": "colorless",
-      "descriptionUpgraded": "Put an Attack from your draw pile into your hand.",
       "cost": {
         "base": 0
       },
@@ -5301,7 +5308,7 @@
       "id": "Seeing Red",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Gain [R] [R]. Exhaust.",
+      "description": "Gain [G] Energy. Exhaust.",
       "characters": "ironclad",
       "cost": {
         "base": 1,
@@ -5376,7 +5383,8 @@
       "cost": {
         "base": 1,
         "upgraded": 0
-      }
+      },
+      "costManipulation": true
     },
     "Sever Soul": {
       "id": "Sever Soul",
@@ -5690,9 +5698,8 @@
       "id": "Storm",
       "type": "Power",
       "rarity": "Uncommon",
-      "description": "Whenever you play a Power card, [ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE].",
+      "description": "[[innate][Innate. ]]Whenever you play a Power card, [ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE].",
       "characters": "defect",
-      "descriptionUpgraded": "Innate. Whenever you play a Power card, [ORBINTERACTIONS.VERB] [ORBINTERACTIONS.AMOUNT] [ORBINTERACTIONS.ORBTYPE].",
       "cost": {
         "base": 1
       },
@@ -5978,7 +5985,8 @@
         "base": true,
         "upgraded": true
       },
-      "scalesWithStrength": true
+      "scalesWithStrength": true,
+      "scalesWithDexterity": false
     },
     "Tantrum": {
       "id": "Tantrum",
@@ -6070,9 +6078,8 @@
       "id": "Thinking Ahead",
       "type": "Skill",
       "rarity": "Rare",
-      "description": "Draw 2 cards. Put a card from your hand on top of your draw pile. Exhaust.",
+      "description": "Draw 2 cards. Put a card from your hand on top of your draw pile.[[selfExhaustOnPlay][ Exhaust.]]",
       "characters": "colorless",
-      "descriptionUpgraded": "Draw 2 cards. Put a card from your hand on top of your draw pile.",
       "cost": {
         "base": 0
       },
@@ -6623,9 +6630,8 @@
       "id": "Worship",
       "type": "Skill",
       "rarity": "Uncommon",
-      "description": "Gain [MANTRA] Mantra.",
+      "description": "[[retain][Retain. ]]Gain [MANTRA] Mantra.",
       "characters": "watcher",
-      "descriptionUpgraded": "Retain. Gain [MANTRA] Mantra.",
       "cost": {
         "base": 2
       },
@@ -6649,7 +6655,7 @@
       "id": "Wraith Form",
       "type": "Power",
       "rarity": "Rare",
-      "description": "Gain [INTANGIBLE] Intangible. At the end of your turn, lose 1 Dexterity.",
+      "description": "Gain [INTANGIBLE] Intangible. At the end of your turn, lose [DEXTERITY_LOSS] Dexterity.",
       "characters": "silent",
       "cost": {
         "base": 3
@@ -6657,6 +6663,10 @@
       "Intangible": {
         "base": 2,
         "upgraded": 3
+      },
+      "dexterity_loss": {
+        "base": 1,
+        "upgraded": 1
       }
     },
     "Wreath of Flame": {

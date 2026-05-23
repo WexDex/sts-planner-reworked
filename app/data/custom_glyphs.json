@@ -27,6 +27,214 @@
       "fieldName": "is_claw"
     },
     "tooltip": "Claw is Law"
+  },
+  {
+    "key": "INNATE",
+    "shortLabel": "Innate",
+    "iconClass": "text-yellow-400",
+    "source": { "type": "lucide", "iconName": "Star" },
+    "fieldLink": { "mode": "boolean", "fieldName": "innate" }
+  },
+  {
+    "key": "ETHEREAL",
+    "shortLabel": "Ethereal",
+    "iconClass": "text-slate-300",
+    "source": { "type": "lucide", "iconName": "Ghost" },
+    "fieldLink": { "mode": "boolean", "fieldName": "ethereal" }
+  },
+  {
+    "key": "SELF_EXHAUST",
+    "shortLabel": "Exhaust",
+    "iconClass": "text-orange-400",
+    "source": { "type": "lucide", "iconName": "Flame" },
+    "fieldLink": { "mode": "boolean", "fieldName": "selfExhaustOnPlay" }
+  },
+  {
+    "key": "RETAIN",
+    "shortLabel": "Retain",
+    "iconClass": "text-emerald-400",
+    "source": { "type": "lucide", "iconName": "Bookmark" },
+    "fieldLink": { "mode": "boolean", "fieldName": "retain" }
+  },
+  {
+    "key": "STANCE_WRATH",
+    "shortLabel": "Wrath",
+    "iconClass": "text-red-400",
+    "source": {
+      "type": "svg",
+      "svgData": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\"><path d=\"M8 2L9.5 6H14L10.5 8.5L12 13L8 10.5L4 13L5.5 8.5L2 6H6.5Z\" fill=\"#ef4444\" fill-opacity=\"0.6\" stroke=\"#ef4444\" stroke-width=\"1\" stroke-linejoin=\"round\"/></svg>"
+    },
+    "fieldLink": { "mode": "string-equals", "fieldName": "change_stance", "matchValue": "Wrath" },
+    "tooltip": "Enter Wrath"
+  },
+  {
+    "key": "STANCE_CALM",
+    "shortLabel": "Calm",
+    "iconClass": "text-green-400",
+    "source": {
+      "type": "svg",
+      "svgData": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\"><path d=\"M8 13C8 13 2 9.5 2 6C2 3.8 4 2.5 6 3.5C7 4 8 5 8 5C8 5 9 4 10 3.5C12 2.5 14 3.8 14 6C14 9.5 8 13 8 13Z\" fill=\"#4ade80\" fill-opacity=\"0.5\" stroke=\"#4ade80\" stroke-width=\"1\" stroke-linejoin=\"round\"/></svg>"
+    },
+    "fieldLink": { "mode": "string-equals", "fieldName": "change_stance", "matchValue": "Calm" },
+    "tooltip": "Enter Calm"
+  },
+  {
+    "key": "STANCE_DIVINITY",
+    "shortLabel": "Divinity",
+    "iconClass": "text-yellow-300",
+    "source": {
+      "type": "svg",
+      "svgData": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\"><circle cx=\"8\" cy=\"8\" r=\"3\" fill=\"#fbbf24\" fill-opacity=\"0.5\" stroke=\"#fbbf24\" stroke-width=\"1.5\"/><circle cx=\"13.5\" cy=\"8\" r=\"1\" fill=\"#fbbf24\" fill-opacity=\"0.7\"/><circle cx=\"11.89\" cy=\"11.89\" r=\"1\" fill=\"#fbbf24\" fill-opacity=\"0.7\"/><circle cx=\"8\" cy=\"13.5\" r=\"1\" fill=\"#fbbf24\" fill-opacity=\"0.7\"/><circle cx=\"4.11\" cy=\"11.89\" r=\"1\" fill=\"#fbbf24\" fill-opacity=\"0.7\"/><circle cx=\"2.5\" cy=\"8\" r=\"1\" fill=\"#fbbf24\" fill-opacity=\"0.7\"/><circle cx=\"4.11\" cy=\"4.11\" r=\"1\" fill=\"#fbbf24\" fill-opacity=\"0.7\"/><circle cx=\"8\" cy=\"2.5\" r=\"1\" fill=\"#fbbf24\" fill-opacity=\"0.7\"/><circle cx=\"11.89\" cy=\"4.11\" r=\"1\" fill=\"#fbbf24\" fill-opacity=\"0.7\"/></svg>"
+    },
+    "fieldLink": { "mode": "string-equals", "fieldName": "change_stance", "matchValue": "Divinity" },
+    "tooltip": "Enter Divinity"
+  },
+  {
+    "key": "STANCE_NEUTRAL",
+    "shortLabel": "Neutral",
+    "iconClass": "text-slate-400",
+    "source": {
+      "type": "svg",
+      "svgData": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\"><path d=\"M2 8C2 8 4.5 3.5 8 3.5C11.5 3.5 14 8 14 8C14 8 11.5 12.5 8 12.5C4.5 12.5 2 8 2 8Z\" stroke=\"#94a3b8\" stroke-width=\"1.5\" fill=\"none\"/><circle cx=\"8\" cy=\"8\" r=\"2\" fill=\"#94a3b8\"/></svg>"
+    },
+    "fieldLink": { "mode": "string-equals", "fieldName": "change_stance", "matchValue": "Neutral" },
+    "tooltip": "Enter Neutral"
+  },
+  {
+    "key": "STRENGTH_GAIN",
+    "shortLabel": "Strength",
+    "iconClass": "text-red-400",
+    "source": { "type": "lucide", "iconName": "TrendingUp" },
+    "fieldLink": { "mode": "numeric", "fieldName": "strength_gain", "showNumber": true }
+  },
+  {
+    "key": "STRENGTH_LOSS",
+    "shortLabel": "Str loss",
+    "iconClass": "text-red-600",
+    "source": { "type": "lucide", "iconName": "TrendingDown" },
+    "fieldLink": { "mode": "numeric", "fieldName": "strength_loss", "showNumber": true }
+  },
+  {
+    "key": "DEXTERITY_GAIN",
+    "shortLabel": "Dexterity",
+    "iconClass": "text-teal-300",
+    "source": { "type": "lucide", "iconName": "Footprints" },
+    "fieldLink": { "mode": "numeric", "fieldName": "dexterity_gain", "showNumber": true }
+  },
+  {
+    "key": "DEXTERITY_LOSS",
+    "shortLabel": "Dex loss",
+    "iconClass": "text-teal-600",
+    "source": { "type": "lucide", "iconName": "TrendingDown" },
+    "fieldLink": { "mode": "numeric", "fieldName": "dexterity_loss", "showNumber": true }
+  },
+  {
+    "key": "ORB_REMOVE",
+    "shortLabel": "Remove orb",
+    "iconClass": "text-purple-400",
+    "source": { "type": "lucide", "iconName": "CircleMinus" },
+    "fieldLink": { "mode": "string-equals", "fieldName": "orbInteractions.verb", "matchValue": "Remove" },
+    "tooltip": "Remove orb"
+  },
+  {
+    "key": "CAN_EXHAUST_CARDS",
+    "shortLabel": "Exhaust cards",
+    "iconClass": "text-orange-300",
+    "source": {
+      "type": "svg",
+      "svgData": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"22\" height=\"16\" viewBox=\"0 0 22 16\" fill=\"currentColor\"><path d=\"M3.5 14C3.5 14 2 11.5 2 9C2 6.5 3.2 5.5 3.8 6C3.7 4.2 4.4 2.8 5.2 1.5C5.5 3.5 6 4.5 6.2 6C6.8 4.5 6.5 3 6.5 3C7.8 4.5 8.2 6.5 8.2 9C8.2 11.5 6.5 14 6.5 14H3.5Z\" fill-opacity=\"0.75\"/><path d=\"M9.5 14C9.5 14 8 11.5 8 9C8 6.5 9.2 5.5 9.8 6C9.7 4.2 10.4 2.8 11.2 1.5C11.5 3.5 12 4.5 12.2 6C12.8 4.5 12.5 3 12.5 3C13.8 4.5 14.2 6.5 14.2 9C14.2 11.5 12.5 14 12.5 14H9.5Z\" fill-opacity=\"0.75\"/><path d=\"M15.5 14C15.5 14 14 11.5 14 9C14 6.5 15.2 5.5 15.8 6C15.7 4.2 16.4 2.8 17.2 1.5C17.5 3.5 18 4.5 18.2 6C18.8 4.5 18.5 3 18.5 3C19.8 4.5 20.2 6.5 20.2 9C20.2 11.5 18.5 14 18.5 14H15.5Z\" fill-opacity=\"0.75\"/></svg>"
+    },
+    "fieldLink": { "mode": "boolean", "fieldName": "canExhaustCards" },
+    "tooltip": "Can exhaust cards"
+  },
+  {
+    "key": "PLATED_ARMOR",
+    "shortLabel": "Plated Armor",
+    "iconClass": "text-slate-300",
+    "source": { "type": "lucide", "iconName": "ShieldCheck" },
+    "fieldLink": { "mode": "numeric", "fieldName": "plated_armor", "showNumber": true }
+  },
+  {
+    "key": "GAIN_GOLD",
+    "shortLabel": "Gold",
+    "iconClass": "text-yellow-400",
+    "source": { "type": "lucide", "iconName": "Coins" },
+    "fieldLink": { "mode": "numeric", "fieldName": "gain_gold", "showNumber": true }
+  },
+  {
+    "key": "JUDGMENT_THRESHOLD",
+    "shortLabel": "Judgment",
+    "iconClass": "text-amber-200",
+    "source": { "type": "lucide", "iconName": "Gavel" },
+    "fieldLink": { "mode": "numeric", "fieldName": "judgment_threshold", "showNumber": true }
+  },
+  {
+    "key": "FOCUS_LOSS",
+    "shortLabel": "Focus loss",
+    "iconClass": "text-purple-400",
+    "source": { "type": "lucide", "iconName": "ZapOff" },
+    "fieldLink": { "mode": "numeric", "fieldName": "focus_loss", "showNumber": true }
+  },
+  {
+    "key": "ORB_SLOT_GAIN",
+    "shortLabel": "Orb slots +",
+    "iconClass": "text-purple-300",
+    "source": { "type": "lucide", "iconName": "PlusSquare" },
+    "fieldLink": { "mode": "numeric", "fieldName": "orbInteractions.orbslot_gain", "showNumber": true },
+    "tooltip": "Gain orb slots"
+  },
+  {
+    "key": "ORB_SLOT_LOSS",
+    "shortLabel": "Orb slots -",
+    "iconClass": "text-purple-600",
+    "source": { "type": "lucide", "iconName": "MinusSquare" },
+    "fieldLink": { "mode": "numeric", "fieldName": "orbInteractions.orbslot_loss", "showNumber": true },
+    "tooltip": "Lose orb slots"
+  },
+  {
+    "key": "LOCKON",
+    "shortLabel": "Lock On",
+    "iconClass": "text-red-300",
+    "source": { "type": "lucide", "iconName": "Target" },
+    "fieldLink": { "mode": "numeric", "fieldName": "lockon", "showNumber": true }
+  },
+  {
+    "key": "RAMPAGE_BONUS",
+    "shortLabel": "Rampage",
+    "iconClass": "text-red-500",
+    "source": { "type": "lucide", "iconName": "TrendingUp" },
+    "fieldLink": { "mode": "numeric", "fieldName": "rampage_bonus_dmg", "showNumber": true },
+    "tooltip": "Rampage bonus damage"
+  },
+  {
+    "key": "MARK",
+    "shortLabel": "Mark",
+    "iconClass": "text-sky-300",
+    "source": { "type": "lucide", "iconName": "Tag" },
+    "fieldLink": { "mode": "numeric", "fieldName": "mark", "showNumber": true }
+  },
+  {
+    "key": "SHIV_ADD",
+    "shortLabel": "Shiv",
+    "iconClass": "text-cyan-300",
+    "source": { "type": "lucide", "iconName": "Scissors" },
+    "fieldLink": { "mode": "numeric", "fieldName": "shiv_add", "showNumber": true },
+    "tooltip": "Add Shivs to hand"
+  },
+  {
+    "key": "SELF_WEAK",
+    "shortLabel": "Self Weak",
+    "iconClass": "text-yellow-400",
+    "source": { "type": "lucide", "iconName": "ArrowDownLeft" },
+    "fieldLink": { "mode": "numeric", "fieldName": "self_weak", "showNumber": true },
+    "tooltip": "Apply Weak to self"
+  },
+  {
+    "key": "SELF_VULNERABLE",
+    "shortLabel": "Self Vuln",
+    "iconClass": "text-red-400",
+    "source": { "type": "lucide", "iconName": "ArrowDownRight" },
+    "fieldLink": { "mode": "numeric", "fieldName": "self_vulnerable", "showNumber": true },
+    "tooltip": "Apply Vulnerable to self"
   }
 ]
-

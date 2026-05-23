@@ -775,11 +775,13 @@ function STSCard({
                       })}
                       {getFullBlock()?.block}
                     </span>
-                    <span
-                      className={`${stat.statSide} ${getEffectDisplay("frail").color}`}
-                    >
-                      {getFullBlock()?.frail}
-                    </span>
+                    {card.scalesWithDexterity !== false && (
+                      <span
+                        className={`${stat.statSide} ${getEffectDisplay("frail").color}`}
+                      >
+                        {getFullBlock()?.frail}
+                      </span>
+                    )}
                     <span className={MULTIHIT_INLINE_TIMES_CLASS}>×</span>
                     <span className={MULTIHIT_INLINE_COUNT_CLASS}>
                       {blockMultihitHitLabel}
@@ -795,7 +797,7 @@ function STSCard({
                     {getFullBlock()?.block}
                   </span>
                 )}
-                {blockMultihitHitLabel == null ? (
+                {blockMultihitHitLabel == null && card.scalesWithDexterity !== false ? (
                   <span
                     className={`${stat.statSide} ${getEffectDisplay("frail").color}`}
                   >
@@ -817,11 +819,13 @@ function STSCard({
                   })}
                   {getValue("blockOnExhaust")}
                 </span>
-                <span
-                  className={`${stat.statSide} ${getEffectDisplay("frail").color}`}
-                >
-                  {getFullBlock()?.frail}
-                </span>
+                {card.scalesWithDexterity !== false && (
+                  <span
+                    className={`${stat.statSide} ${getEffectDisplay("frail").color}`}
+                  >
+                    {getFullBlock()?.frail}
+                  </span>
+                )}
               </div>
             )}
             {card.draw !== undefined && !mergedSuppressStats?.draw && (
