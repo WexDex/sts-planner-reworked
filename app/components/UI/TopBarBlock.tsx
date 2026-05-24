@@ -193,6 +193,7 @@ export default function TopBarBlock() {
   const [topBarMinimized, setTopBarMinimized] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const projectFileInputRef = useRef<HTMLInputElement>(null);
+  const playerImportFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     try {
@@ -310,6 +311,73 @@ export default function TopBarBlock() {
     }
   };
 
+  /** Import player stats + deck from a Deck Builder export (.deck.json). Preserves existing enemies. */
+  const handlePlayerImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setFileError(null);
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text) as {
+        player?: Record<string, unknown>;
+        cards?: Array<{ card_ID: string; count: number; isUpgraded?: boolean }>;
+        drawOrder?: Array<{ card_ID: string; isUpgraded?: boolean }> | null;
+      };
+
+      if (!data.player || !data.cards) {
+        setFileError("Not a valid deck export file");
+        return;
+      }
+
+      const player = data.player as Record<string, unknown>;
+      const orderedEntries = data.drawOrder
+        ? data.drawOrder.map(o => ({ card_ID: o.card_ID, isUpgraded: o.isUpgraded ?? false }))
+        : data.cards.flatMap(e =>
+            Array.from({ length: e.count }, () => ({ card_ID: e.card_ID, isUpgraded: e.isUpgraded ?? false })),
+          );
+
+      const existingEnemies = gameState?.enemies ?? [];
+      const energyBase = typeof (player.energy as Record<string, unknown>)?.base === "number"
+        ? (player.energy as Record<string, unknown>).base as number
+        : 3;
+
+      const payload: import("@/app/types/gameTypes").CombatData = {
+        player: {
+          hp:           (player.hp as number) ?? 80,
+          maxHp:        (player.maxHp as number) ?? 80,
+          characters:   (player.characters as string) ?? "ironclad",
+          floor:        (player.floor as number) ?? 1,
+          drawPerTurn:  (player.drawPerTurn as number) ?? 5,
+          combatName:   (player.combatName as string) ?? "Combat",
+          combatType:   (player.combatType as string) ?? "normal",
+          energy:       { base: energyBase, turn1Bonus: 0 },
+          currentBlock: 0,
+          currentEnergy: energyBase,
+          modifiers:    (player.modifiers as { vulnerableMultiplier: number; weakMultiplier: number }) ?? { vulnerableMultiplier: 1.5, weakMultiplier: 0.75 },
+          bonusEnergy:  (player.bonusEnergy as number) ?? 0,
+          bonusBlock:   (player.bonusBlock as number) ?? 0,
+          relics:       (player.relics as { name: string; description: string }[]) ?? [],
+          relicEffects: [],
+          activeRelics: [],
+          buffsDebuffs: (player.buffsDebuffs as { name: string; stacks: number; type: "buff" | "debuff"; description: string }[]) ?? [],
+        },
+        deck:         orderedEntries,
+        draw:         [],
+        discard:      [],
+        exhaust:      [],
+        hand:         [],
+        playedCards:  [],
+        activityLog:  [],
+        enemies:      existingEnemies,
+      };
+
+      await loadGameDataFromJson(payload);
+    } catch (err) {
+      setFileError(err instanceof Error ? err.message : "Could not read player import file");
+    }
+  };
+
   return (
     <div className="border-b border-slate-800/90 bg-gradient-to-b from-slate-900/98 via-slate-950 to-slate-950/95 text-slate-200 shadow-md shadow-slate-950/40 max-md:border-b-2 max-md:border-cyan-500/35 max-md:bg-gradient-to-b max-md:from-cyan-950/45 max-md:via-slate-900 max-md:to-slate-950 max-md:shadow-md max-md:shadow-cyan-900/20 md:px-3 md:py-3">
       <input
@@ -329,6 +397,15 @@ export default function TopBarBlock() {
         onChange={handleProjectFile}
         tabIndex={-1}
         aria-label="Load project JSON file"
+      />
+      <input
+        ref={playerImportFileRef}
+        type="file"
+        accept="application/json,.json"
+        className="fixed left-0 top-0 m-0 h-px w-px overflow-hidden border-0 p-0 opacity-0"
+        onChange={handlePlayerImportFile}
+        tabIndex={-1}
+        aria-label="Import player + deck from deck builder export"
       />
       <div className="hidden md:block">
         <div className="mx-auto max-w-[1600px]">
@@ -845,6 +922,15 @@ export default function TopBarBlock() {
                 title="Load combat from a JSON file (replaces current combat)"
               >
                 {isLoading ? "Loading…" : "Load data"}
+              </button>
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => playerImportFileRef.current?.click()}
+                className="rounded-xl border border-amber-500/45 bg-amber-900/50 px-3.5 py-2 text-xs font-semibold text-amber-100 shadow-sm shadow-amber-950/30 transition hover:bg-amber-800/60 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                title="Import player stats + deck from a Deck Builder export. Keeps existing enemies."
+              >
+                Import player
               </button>
               <button
                 type="button"

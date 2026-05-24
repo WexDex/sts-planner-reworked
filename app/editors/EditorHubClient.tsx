@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Clipboard, Palette, Zap } from "lucide-react";
+import { ArrowRight, Clipboard, Palette, Zap, Swords } from "lucide-react";
 
 const EDITORS = [
   {
@@ -39,6 +39,18 @@ const EDITORS = [
     badgeCls: "border-violet-500/30 bg-violet-950/50 text-violet-300/80",
     border: "border-violet-500/25 hover:border-violet-400/45",
     bg: "bg-violet-950/10 hover:bg-violet-950/20",
+  },
+  {
+    href: "/editors/deck-builder",
+    icon: <Swords className="h-5 w-5" strokeWidth={2} />,
+    iconCls: "border-amber-500/50 bg-amber-950/60 text-amber-300",
+    title: "Deck Builder",
+    description:
+      "Build decks, set player stats, and define draw pile order. Pick cards from the full gallery, configure HP, energy, relics, and start buffs — then launch directly into the combat planner.",
+    badge: "Player setup",
+    badgeCls: "border-amber-500/30 bg-amber-950/50 text-amber-300/80",
+    border: "border-amber-500/25 hover:border-amber-400/45",
+    bg: "bg-amber-950/10 hover:bg-amber-950/20",
   },
 ];
 

@@ -3,8 +3,7 @@
     "hp": 30,
     "maxHp": 68,
     "energy": {
-      "base": 3,
-      "turn1Bonus": 1
+      "base": 3
     },
     "characters": "ironclad",
     "combatType": "Elite",

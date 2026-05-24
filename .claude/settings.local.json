@@ -38,7 +38,11 @@
       "Bash(xargs grep -l \"action\")",
       "PowerShell(\\(Get-Content \"e:\\\\Projects\\\\sts-planner-reworked\\\\app\\\\card-workbench\\\\field-schema-editors.tsx\" | Measure-Object -Line\\).Lines)",
       "Bash(grep -v \"^\\\\s*//\")",
-      "Bash(xargs grep -l \"showCards\\\\|displayCards\\\\|cardDisplay\")"
+      "Bash(xargs grep -l \"showCards\\\\|displayCards\\\\|cardDisplay\")",
+      "Write",
+      "Edit",
+      "Bash",
+      "Read"
     ]
   }
 }
