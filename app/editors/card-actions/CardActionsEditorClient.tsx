@@ -8,10 +8,12 @@ import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft,
   ArrowRightLeft,
+  Bookmark,
   BookOpen,
   Check,
   ChevronDown,
   CircleOff,
+  Clock,
   Copy,
   Download,
   Eye,
@@ -30,6 +32,7 @@ import {
   Sparkles,
   Swords,
   Trash2,
+  TrendingUp,
   X,
   Zap,
 } from "lucide-react";
@@ -78,7 +81,8 @@ type FilterOperator =
   | "eq" | "neq"
   | "contains" | "notContains"
   | "gt" | "lt" | "gte" | "lte"
-  | "isTrue" | "isFalse";
+  | "isTrue" | "isFalse"
+  | "exists" | "notExists";
 
 type FilterValue =
   | { kind: "literal"; value: string }
@@ -126,7 +130,7 @@ type FieldDef = {
 
 const CARD_FILTER_FIELDS: FieldDef[] = [
   { field: "type",                  label: "Card Type",          description: "The card's category. Values: Attack · Skill · Power · Status · Curse. Ex: type = Attack matches Strike, Bash, Headbutt but not Defend.",                                             operators: ["eq","neq"],                        enumValues: ["Attack","Skill","Power","Curse","Status"] },
-  { field: "rarity",                label: "Rarity",             description: "The card's rarity tier. Values: Basic · Common · Uncommon · Rare · Special · Curse. Ex: rarity = Rare matches Reaper, Demon Form, Impervious.",                                       operators: ["eq","neq"],                        enumValues: ["Basic","Common","Uncommon","Rare","Special","Curse"] },
+  { field: "rarity",                label: "Rarity",             description: "The card's rarity tier. Values: Basic · Common · Uncommon · Rare · Special · Curse. Ex: rarity = Rare matches Reaper, Demon Form, Impervious.",                                       operators: ["eq","neq"],                        enumValues: ["Starter","Common","Uncommon","Rare","Special","Curse"] },
   { field: "characters",            label: "Character",          description: "Which character class the card belongs to. Values: Ironclad · Silent · Defect · Watcher · Colorless · Curse. Ex: characters = Silent matches Shiv, Predator, Poison-related cards.",   operators: ["eq","neq"],                        enumValues: ["Ironclad","Silent","Defect","Watcher","Colorless","Curse"] },
   { field: "name",                  label: "Card Name",          description: "Match on the card's internal DB name. Ex: name contains Strike matches Strike, Strike+, Perfected Strike, Twin Strike. Use eq for exact match.",                                        operators: ["eq","neq","contains","notContains"] },
   { field: "damage.base",           label: "Base Damage",        description: "The card's raw damage value before upgrades, Strength, or Pen Nib effects. Ex: damage.base >= 10 matches high-damage single-hit attacks like Sword Boomerang, Carnage.",              operators: ["eq","neq","gt","lt","gte","lte"] },
@@ -196,6 +200,7 @@ const ACTION_VALUE_FIELDS: { field: string; label: string }[] = [
 const OP_LABELS: Record<FilterOperator, string> = {
   eq: "=", neq: "≠", contains: "contains", notContains: "not contains",
   gt: ">", lt: "<", gte: "≥", lte: "≤", isTrue: "is true", isFalse: "is false",
+  exists: "exists", notExists: "not exists",
 };
 
 const RUNTIME_FIELD_SET = new Set(RUNTIME_FILTER_FIELDS.map(f => f.field));
@@ -248,6 +253,8 @@ function evaluateFilterLeaf(leaf: FilterLeaf, cardData: Record<string, unknown>)
     case "lte": return Number(raw) <= Number(rhs);
     case "isTrue": return isTruthy(raw);
     case "isFalse": return !isTruthy(raw);
+    case "exists":    return raw != null;   // field is defined (even if false/0/empty)
+    case "notExists": return raw == null;   // field is absent from card data
     default: return true;
   }
 }
@@ -305,7 +312,8 @@ function FilterLeafEditor({
   const fDef = availableFields.find(f => f.field === leaf.field) ?? ALL_FILTER_FIELDS.find(f => f.field === leaf.field);
   const runtime = fDef?.runtime ?? isRuntimeField(leaf.field);
   const hasEnum = (fDef?.enumValues ?? []).length > 0;
-  const isBool = leaf.operator === "isTrue" || leaf.operator === "isFalse";
+  const isBool = leaf.operator === "isTrue" || leaf.operator === "isFalse"
+    || leaf.operator === "exists" || leaf.operator === "notExists";
   const isPileContains = (fDef?.isPile ?? false) && (leaf.operator === "contains" || leaf.operator === "notContains");
 
   const subFilter = isPileContains && leaf.value.kind === "cardFilter"
@@ -357,7 +365,11 @@ function FilterLeafEditor({
         }}
         className="rounded border border-slate-600/50 bg-slate-800/80 px-1.5 py-0.5 text-[10px] text-slate-200 outline-none"
       >
-        {(fDef?.operators ?? (["eq","neq"] as FilterOperator[])).map(op => (
+        {[
+          ...(fDef?.operators ?? (["eq","neq"] as FilterOperator[])),
+          "exists" as FilterOperator,
+          "notExists" as FilterOperator,
+        ].map(op => (
           <option key={op} value={op}>{OP_LABELS[op]}</option>
         ))}
       </select>
@@ -769,6 +781,36 @@ type CustomAction = {
 };
 
 type CustomActionsMap = Record<string, CustomAction[]>;
+
+// ─── Recent / Saved action types + dedup signature ───────────────────────────
+
+type RecentActionEntry = {
+  id: string;
+  action: CustomAction;
+  sourceCard: string;
+  addedAt: number;
+};
+
+type SavedActionEntry = {
+  id: string;
+  name: string;
+  action: CustomAction;
+  savedAt: number;
+};
+
+const LS_SAVED_ACTIONS_KEY = "sts-card-actions-saved-templates";
+
+/** Stable signature for deduplication / popularity counting */
+function actionSig(a: CustomAction): string {
+  return [
+    a.actionType,
+    a.buffName ?? "",
+    String(a.defaultValue ?? ""),
+    a.pile ?? "",
+    a.orbType ?? "",
+    a.stance ?? "",
+  ].join("|");
+}
 
 const ACTION_TYPES: { value: ActionType; label: string; description: string; color: string; activeClass: string; inactiveClass: string; icon: LucideIcon }[] = [
   {
@@ -1269,6 +1311,7 @@ function ActionRow({
   index,
   onChange,
   onDelete,
+  onSave,
   buffNameSuggestions,
   cardsMeant,
 }: {
@@ -1276,6 +1319,7 @@ function ActionRow({
   index: number;
   onChange: (idx: number, updated: CustomAction) => void;
   onDelete: (idx: number) => void;
+  onSave?: (a: CustomAction) => void;
   buffNameSuggestions: string[];
   cardsMeant?: string[];
 }) {
@@ -1309,6 +1353,16 @@ function ActionRow({
           </span>
         ) : (
           <span className="flex-1" />
+        )}
+        {onSave && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onSave(action); }}
+            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-amber-700/40 bg-amber-950/30 text-amber-500 transition hover:bg-amber-900/50 hover:text-amber-200"
+            title="Save action"
+          >
+            <Bookmark className="h-3.5 w-3.5" strokeWidth={2} />
+          </button>
         )}
         <button
           type="button"
@@ -1878,6 +1932,615 @@ function ActionRow({
   );
 }
 
+// ─── Bulk-apply template variable resolution ─────────────────────────────────
+
+const BULK_VARS: Array<{ token: string; description: string }> = [
+  { token: "$name",         description: "Card name / ID  →  Accuracy, Bash, Strike_R" },
+  { token: "$type",         description: "Card type  →  Attack, Skill, Power, Curse, Status" },
+  { token: "$char",         description: "Character class  →  Ironclad, Silent, Defect, Watcher, Colorless" },
+  { token: "$rarity",       description: "Rarity tier  →  Basic, Common, Uncommon, Rare, Special, Curse" },
+  { token: "$cost",         description: "Base energy cost (shorthand for $cost.base)  →  0, 1, 2" },
+  { token: "$damage.base",  description: "Base damage value  →  6, 12, 0" },
+  { token: "$block.base",   description: "Base block value  →  5, 8, 0" },
+  { token: "$draw.base",    description: "Cards drawn on play  →  1, 2" },
+  { token: "$<field.path>", description: "Any dot-path DB field  →  $focus.base · $scry.base · $heal.base …" },
+];
+
+// Single compiled regex — reused; reset lastIndex before each call
+const TEMPLATE_VAR_RE = /\$([a-zA-Z_][a-zA-Z0-9_.]*)/g;
+
+/** Convert an arbitrary card-data value to a printable string, or "" on error. */
+function safeFieldString(val: unknown): string {
+  if (val == null) return "";
+  if (typeof val === "number") return isNaN(val) ? "" : String(val);
+  if (typeof val === "boolean") return String(val);
+  if (Array.isArray(val)) return "";
+  if (typeof val === "object") {
+    // {base, upgraded} objects — return base as string
+    const base = (val as Record<string, unknown>).base;
+    if (base == null) return "";
+    if (typeof base === "number") return isNaN(base) ? "" : String(base);
+    if (typeof base === "boolean") return String(base);
+    return String(base);
+  }
+  return String(val);
+}
+
+function resolveTemplateVars(
+  template: CustomAction,
+  card: { id: string; data: CardData },
+): CustomAction {
+  // Named short aliases (case-insensitive)
+  const NAMED: Record<string, string> = {
+    name:   card.id,
+    type:   (card.data.type as string | undefined) ?? "",
+    char:   (card.data.characters as string | undefined) ?? "",
+    rarity: (card.data.rarity as string | undefined) ?? "",
+    cost:   safeFieldString(
+      typeof card.data.cost === "number"
+        ? card.data.cost
+        : typeof card.data.cost === "object" && card.data.cost != null && !Array.isArray(card.data.cost)
+          ? (card.data.cost as Record<string, unknown>).base
+          : card.data.cost,
+    ),
+  };
+
+  function resolveToken(token: string): string {
+    const alias = NAMED[token.toLowerCase()];
+    if (alias !== undefined) return alias;
+    // Generic dot-path lookup against card DB data
+    try {
+      return safeFieldString(getNestedField(card.data as Record<string, unknown>, token));
+    } catch {
+      return "";
+    }
+  }
+
+  function sub(s: string): string;
+  function sub(s: string | undefined): string | undefined;
+  function sub(s: string | undefined): string | undefined {
+    if (!s || !s.includes("$")) return s;
+    TEMPLATE_VAR_RE.lastIndex = 0;
+    return s.replace(TEMPLATE_VAR_RE, (_, token: string) => resolveToken(token));
+  }
+
+  return {
+    ...template,
+    label:    sub(template.label),
+    buffName: sub(template.buffName),
+  };
+}
+
+function templateHasVars(template: CustomAction): boolean {
+  TEMPLATE_VAR_RE.lastIndex = 0;
+  if (TEMPLATE_VAR_RE.test(template.label ?? "")) return true;
+  TEMPLATE_VAR_RE.lastIndex = 0;
+  return TEMPLATE_VAR_RE.test(template.buffName ?? "");
+}
+
+// ─── BulkApplyPanel ───────────────────────────────────────────────────────────
+
+function BulkApplyPanel({
+  data,
+  onApply,
+  buffNameSuggestions,
+}: {
+  data: CustomActionsMap;
+  onApply: (newData: CustomActionsMap) => void;
+  buffNameSuggestions: string[];
+}) {
+  const [phase, setPhase] = useState<"configure" | "preview" | "resolve">("configure");
+  const [bulkFilter, setBulkFilter] = useState<FilterGroup>(newGroup("AND"));
+  const [templateAction, setTemplateAction] = useState<CustomAction>(blankAction());
+  const [globalResolution, setGlobalResolution] = useState<"replace" | "keep" | "merge">("merge");
+  const [perCardResolution, setPerCardResolution] = useState<Record<string, "replace" | "keep" | "merge">>({});
+
+  const matchedCards = useMemo(
+    () => allCards.filter(c => evaluateFilterNode(bulkFilter, c.data as Record<string, unknown>)),
+    [bulkFilter],
+  );
+
+  const previewEntries = useMemo(() =>
+    matchedCards.map(c => {
+      const resolved = resolveTemplateVars(templateAction, c);
+      const existing = data[c.id] ?? [];
+      const conflict = existing.find(a => a.actionType === templateAction.actionType) ?? null;
+      return { cardId: c.id, card: c.data, conflict, resolved };
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [matchedCards, data, templateAction],
+  );
+
+  const conflictEntries = previewEntries.filter(e => e.conflict !== null);
+  const cleanEntries    = previewEntries.filter(e => e.conflict === null);
+
+  function handleApply() {
+    const newData = { ...data };
+    for (const { cardId, conflict, resolved } of previewEntries) {
+      const existing = newData[cardId] ?? [];
+      const resolution = perCardResolution[cardId] ?? globalResolution;
+      // `resolved` has per-card variables already substituted
+      const finalAction = { ...resolved, label: resolved.label || actionSummary(resolved) };
+      if (!conflict) {
+        newData[cardId] = [...existing, finalAction];
+      } else if (resolution === "replace") {
+        newData[cardId] = existing
+          .filter(a => a.actionType !== templateAction.actionType)
+          .concat(finalAction);
+      } else if (resolution === "keep") {
+        // skip — don't modify this card
+      } else {
+        // merge — append alongside existing
+        newData[cardId] = [...existing, finalAction];
+      }
+    }
+    onApply(newData);
+    setPhase("configure");
+    setPerCardResolution({});
+  }
+
+  const RESOLUTIONS: Array<"replace" | "keep" | "merge"> = ["replace", "keep", "merge"];
+
+  return (
+    <div className="flex flex-col overflow-hidden rounded-xl border border-slate-700/40 bg-slate-900/50" style={{ minHeight: 0 }}>
+      {/* Header */}
+      <div className="shrink-0 flex items-center gap-2 border-b border-slate-700/40 px-3 py-2.5">
+        <Zap className="h-3.5 w-3.5 text-amber-400" strokeWidth={2} />
+        <span className="text-xs font-bold text-slate-200">Bulk Apply</span>
+        <span className="ml-auto text-[10px] text-slate-600">
+          Step {phase === "configure" ? "1" : phase === "preview" ? "2" : "3"} / 3
+        </span>
+      </div>
+
+      {/* Scrollable body */}
+      <div className="flex-1 overflow-y-auto [scrollbar-width:thin]">
+
+        {/* ── Phase 1: Configure ── */}
+        {phase === "configure" && (
+          <div className="space-y-3 p-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Configure</p>
+
+            <div>
+              <p className="mb-1 text-[10px] font-semibold text-slate-400">Card filter (DB only)</p>
+              <p className="mb-1.5 text-[9px] italic text-slate-600">Static card stats — no runtime ⚡ fields.</p>
+              <FilterGroupEditor
+                group={bulkFilter}
+                onChange={setBulkFilter}
+                isRoot
+                cardFieldsOnly
+              />
+            </div>
+
+            <div>
+              <div className="mb-1 flex items-center gap-1.5">
+                <p className="text-[10px] font-semibold text-slate-400">Matched cards</p>
+                <span className="rounded bg-slate-800/80 px-1.5 py-0.5 text-[9px] font-bold text-slate-300">
+                  {matchedCards.length}
+                </span>
+              </div>
+              <div className="max-h-36 overflow-y-auto rounded-lg border border-slate-700/40 bg-slate-950/40 [scrollbar-width:thin]">
+                {matchedCards.length === 0 ? (
+                  <p className="px-2 py-3 text-center text-[10px] italic text-slate-600">No cards match</p>
+                ) : (
+                  <ul className="divide-y divide-slate-800/40">
+                    {matchedCards.slice(0, 60).map(c => (
+                      <li key={c.id} className="flex items-center gap-1.5 px-2 py-1">
+                        <span className="flex-1 truncate text-[11px] text-slate-300">{c.id}</span>
+                        <span className={`rounded border px-1 py-px text-[8px] font-semibold ${typeChipCls(c.data.type)}`}>
+                          {(c.data.type as string | undefined)?.slice(0, 3) ?? "?"}
+                        </span>
+                      </li>
+                    ))}
+                    {matchedCards.length > 60 && (
+                      <li className="px-2 py-1 text-[9px] italic text-slate-600">…and {matchedCards.length - 60} more</li>
+                    )}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-1.5 text-[10px] font-semibold text-slate-400">Action template</p>
+              <ActionRow
+                action={templateAction}
+                index={0}
+                onChange={(_, updated) => setTemplateAction(updated)}
+                onDelete={() => {}}
+                buffNameSuggestions={buffNameSuggestions}
+              />
+            </div>
+
+            {/* Template variables reference */}
+            <div className="rounded-lg border border-violet-700/30 bg-violet-950/20 px-3 py-2.5 space-y-1.5">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-bold text-violet-400">Template Variables</span>
+                {templateHasVars(templateAction) && (
+                  <span className="rounded-full bg-violet-500/20 border border-violet-500/40 px-1.5 py-px text-[9px] font-semibold text-violet-300">
+                    active
+                  </span>
+                )}
+              </div>
+              <p className="text-[9px] leading-relaxed text-slate-500">
+                Use in <span className="text-slate-400">buff name</span> or <span className="text-slate-400">button label</span>.
+                Each card gets its own value when applied.
+              </p>
+              <div className="space-y-1">
+                {BULK_VARS.map(v => (
+                  <div key={v.token} className="flex items-start gap-2">
+                    <code className="shrink-0 rounded border border-violet-700/40 bg-violet-950/40 px-1 py-px font-mono text-[9px] font-bold text-violet-300">
+                      {v.token}
+                    </code>
+                    <span className="text-[9px] text-slate-500 leading-tight">{v.description}</span>
+                  </div>
+                ))}
+              </div>
+              {templateHasVars(templateAction) && matchedCards.length > 0 && (() => {
+                const first = matchedCards[0]!;
+                const preview = resolveTemplateVars(templateAction, first);
+                return (
+                  <div className="mt-1 rounded border border-violet-700/30 bg-violet-950/30 px-2 py-1">
+                    <p className="text-[9px] text-slate-500">
+                      Preview for <span className="font-semibold text-slate-400">{first.id}</span>:
+                    </p>
+                    <p className="mt-0.5 text-[10px] font-medium text-violet-200">{actionSummary(preview)}</p>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
+
+        {/* ── Phase 2: Preview ── */}
+        {phase === "preview" && (
+          <div className="space-y-3 p-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Preview</p>
+
+            <div className="rounded-lg border border-slate-700/40 bg-slate-950/30 px-3 py-2 space-y-0.5">
+              <p className="text-[10px] text-slate-400">
+                Action: <span className="font-medium text-slate-200">{actionSummary(templateAction)}</span>
+              </p>
+              <p className="text-[10px] text-slate-400">
+                Affected: <span className="font-medium text-slate-200">{previewEntries.length} cards</span>
+              </p>
+              <p className="text-[10px]">
+                <span className="text-emerald-400">● {cleanEntries.length} clean</span>
+                {conflictEntries.length > 0 && (
+                  <><span className="mx-1 text-slate-600">·</span><span className="text-amber-400">● {conflictEntries.length} conflicts</span></>
+                )}
+              </p>
+            </div>
+
+            <div className="max-h-72 overflow-y-auto rounded-lg border border-slate-700/40 bg-slate-950/40 [scrollbar-width:thin]">
+              <ul className="divide-y divide-slate-800/40">
+                {previewEntries.map(({ cardId, card, conflict, resolved }) => {
+                  const hasVars = templateHasVars(templateAction);
+                  return (
+                    <li key={cardId} className="px-2 py-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[10px] ${conflict ? "text-amber-400" : "text-emerald-400"}`}>
+                          {conflict ? "🟡" : "🟢"}
+                        </span>
+                        <span className="flex-1 truncate text-[11px] text-slate-200">{cardId}</span>
+                        <span className={`rounded border px-1 py-px text-[8px] ${typeChipCls((card as CardData).type)}`}>
+                          {((card as CardData).type ?? "").slice(0, 3)}
+                        </span>
+                      </div>
+                      {(conflict || hasVars) && (
+                        <div className="mt-0.5 space-y-px pl-4">
+                          {conflict && (
+                            <p className="text-[9px] text-slate-500">existing: {actionSummary(conflict)}</p>
+                          )}
+                          {hasVars && (
+                            <p className="text-[9px] text-violet-300/80">
+                              → {actionSummary(resolved)}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* ── Phase 3: Resolve ── */}
+        {phase === "resolve" && (
+          <div className="space-y-3 p-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              Resolve conflicts ({conflictEntries.length})
+            </p>
+
+            <div>
+              <p className="mb-1 text-[10px] text-slate-400">Global resolution:</p>
+              <div className="flex gap-1.5">
+                {RESOLUTIONS.map(r => (
+                  <button key={r} type="button" onClick={() => setGlobalResolution(r)}
+                    className={`flex-1 rounded-lg border px-2 py-1 text-[10px] font-semibold capitalize transition ${
+                      globalResolution === r
+                        ? "border-cyan-500/65 bg-cyan-950/50 text-cyan-200"
+                        : "border-slate-700/50 bg-slate-900/40 text-slate-400 hover:text-slate-300"
+                    }`}
+                  >{r}</button>
+                ))}
+              </div>
+              <div className="mt-1.5 space-y-0.5 text-[9px] text-slate-600">
+                <p><span className="text-slate-500">Replace</span> — remove existing same-type action, add new</p>
+                <p><span className="text-slate-500">Keep</span> — skip this card, don't add new action</p>
+                <p><span className="text-slate-500">Merge</span> — add new action alongside existing (both present)</p>
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-1 text-[10px] text-slate-400">Per-card overrides:</p>
+              <div className="max-h-64 space-y-1.5 overflow-y-auto rounded-lg border border-slate-700/40 bg-slate-950/40 p-2 [scrollbar-width:thin]">
+                {conflictEntries.map(({ cardId, conflict, resolved }) => {
+                  const res = perCardResolution[cardId] ?? globalResolution;
+                  return (
+                    <div key={cardId} className="space-y-1 rounded-lg border border-slate-700/40 bg-slate-800/30 px-2 py-1.5">
+                      <div className="flex items-center gap-1">
+                        <p className="flex-1 text-[11px] font-semibold text-amber-300 truncate">{cardId}</p>
+                        {perCardResolution[cardId] && (
+                          <button type="button"
+                            onClick={() => setPerCardResolution(p => { const n = { ...p }; delete n[cardId]; return n; })}
+                            className="text-[9px] text-slate-600 hover:text-slate-400"
+                          >reset</button>
+                        )}
+                      </div>
+                      <p className="text-[9px] text-slate-500">Existing: {actionSummary(conflict!)}</p>
+                      <p className="text-[9px] text-slate-500">
+                        New:{" "}
+                        {templateHasVars(templateAction) ? (
+                          <span>
+                            <span className="text-violet-300/80">{actionSummary(resolved)}</span>
+                            <span className="ml-1 text-slate-600">(vars resolved)</span>
+                          </span>
+                        ) : (
+                          actionSummary(resolved)
+                        )}
+                      </p>
+                      <div className="flex gap-1">
+                        {RESOLUTIONS.map(r => (
+                          <button key={r} type="button"
+                            onClick={() => setPerCardResolution(p => ({ ...p, [cardId]: r }))}
+                            className={`flex-1 rounded border px-1 py-0.5 text-[9px] font-semibold capitalize transition ${
+                              res === r
+                                ? "border-cyan-500/65 bg-cyan-950/50 text-cyan-200"
+                                : "border-slate-700/50 bg-slate-900/40 text-slate-400 hover:text-slate-300"
+                            }`}
+                          >{r}</button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer navigation */}
+      <div className="shrink-0 border-t border-slate-700/40 p-3">
+        {phase === "configure" && (
+          <button type="button" onClick={() => setPhase("preview")}
+            disabled={matchedCards.length === 0}
+            className="w-full rounded-lg border border-cyan-500/50 bg-cyan-950/40 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-900/60 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Preview → ({matchedCards.length} cards)
+          </button>
+        )}
+        {phase === "preview" && (
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setPhase("configure")}
+              className="flex-1 rounded-lg border border-slate-700/50 px-3 py-1.5 text-xs font-semibold text-slate-400 transition hover:text-slate-200"
+            >← Back</button>
+            {conflictEntries.length > 0 ? (
+              <button type="button" onClick={() => setPhase("resolve")}
+                className="flex-1 rounded-lg border border-amber-500/50 bg-amber-950/30 px-3 py-1.5 text-xs font-semibold text-amber-300 transition hover:bg-amber-950/50"
+              >Resolve {conflictEntries.length} →</button>
+            ) : (
+              <button type="button" onClick={handleApply}
+                className="flex-1 rounded-lg border border-emerald-500/50 bg-emerald-950/40 px-3 py-1.5 text-xs font-bold text-emerald-200 transition hover:bg-emerald-900/60"
+              >⚡ Apply ({previewEntries.length})</button>
+            )}
+          </div>
+        )}
+        {phase === "resolve" && (
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setPhase("preview")}
+              className="flex-1 rounded-lg border border-slate-700/50 px-3 py-1.5 text-xs font-semibold text-slate-400 transition hover:text-slate-200"
+            >← Back</button>
+            <button type="button" onClick={handleApply}
+              className="flex-1 rounded-lg border border-emerald-500/50 bg-emerald-950/40 px-3 py-1.5 text-xs font-bold text-emerald-200 transition hover:bg-emerald-900/60"
+            >⚡ Apply</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── RightActionsPanel ────────────────────────────────────────────────────────
+
+function RightActionsPanel({
+  data,
+  selectedCard,
+  recentActions,
+  savedTemplates,
+  onAddToCard,
+  onSaveAction,
+  onDeleteSaved,
+  onClearRecent,
+}: {
+  data: CustomActionsMap;
+  selectedCard: string | null;
+  recentActions: RecentActionEntry[];
+  savedTemplates: SavedActionEntry[];
+  onAddToCard: (a: CustomAction) => void;
+  onSaveAction: (a: CustomAction) => void;
+  onDeleteSaved: (id: string) => void;
+  onClearRecent: () => void;
+}) {
+  const popularActions = useMemo(() => {
+    const sigMap = new Map<string, { action: CustomAction; count: number }>();
+    for (const actions of Object.values(data)) {
+      for (const a of actions) {
+        const sig = actionSig(a);
+        if (!sigMap.has(sig)) sigMap.set(sig, { action: { ...a }, count: 0 });
+        sigMap.get(sig)!.count++;
+      }
+    }
+    return [...sigMap.values()]
+      .filter(e => e.count >= 2)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 12);
+  }, [data]);
+
+  const now = Date.now();
+
+  function timeAgo(ts: number): string {
+    const m = Math.floor((now - ts) / 60000);
+    if (m === 0) return "just now";
+    if (m < 60) return `${m}m ago`;
+    return `${Math.floor(m / 60)}h ago`;
+  }
+
+  function ActionEntry({
+    action,
+    badge,
+    sourceCard,
+    addedAt,
+  }: {
+    action: CustomAction;
+    badge?: number;
+    sourceCard?: string;
+    addedAt?: number;
+  }) {
+    const typeDef = ACTION_TYPES.find(t => t.value === action.actionType);
+    const Icon = typeDef?.icon ?? Sparkles;
+    return (
+      <div className="group flex items-start gap-2 rounded-lg border border-slate-700/40 bg-slate-800/30 px-2 py-1.5">
+        <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[11px] font-medium text-slate-200">{actionSummary(action)}</p>
+          <p className="truncate text-[9px] text-slate-600">
+            {sourceCard && <span className="text-slate-500">← {sourceCard}</span>}
+            {sourceCard && addedAt && <span className="mx-1">·</span>}
+            {addedAt && <span>{timeAgo(addedAt)}</span>}
+          </p>
+        </div>
+        {badge !== undefined && (
+          <span className="shrink-0 rounded-full border border-amber-700/40 bg-amber-950/70 px-1.5 py-0.5 text-[9px] font-bold text-amber-400">
+            {badge}
+          </span>
+        )}
+        <div className="flex shrink-0 items-center gap-1 opacity-0 transition group-hover:opacity-100">
+          <button type="button" onClick={() => onSaveAction(action)} title="Save action"
+            className="inline-flex h-6 w-6 items-center justify-center rounded border border-amber-700/40 bg-amber-950/30 text-amber-500 transition hover:text-amber-200"
+          >
+            <Bookmark className="h-3 w-3" />
+          </button>
+          <button type="button" onClick={() => onAddToCard(action)}
+            disabled={!selectedCard}
+            title={selectedCard ? "Add to current card" : "Select a card first"}
+            className="rounded border border-slate-600/50 bg-slate-700/50 px-1.5 py-0.5 text-[9px] font-semibold text-slate-300 transition hover:bg-slate-600/60 disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            + Add
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3" style={{ minHeight: 0 }}>
+
+      {/* Recent Actions */}
+      <div className="flex flex-col overflow-hidden rounded-xl border border-slate-700/40 bg-slate-900/50" style={{ flex: "1 1 33%", minHeight: "8rem" }}>
+        <div className="shrink-0 flex items-center gap-1.5 border-b border-slate-700/40 px-3 py-2">
+          <Clock className="h-3.5 w-3.5 text-slate-500" />
+          <span className="text-xs font-bold text-slate-300">Recent</span>
+          {recentActions.length > 0 && (
+            <button type="button" onClick={onClearRecent}
+              className="ml-auto text-[9px] text-slate-600 transition hover:text-slate-400"
+            >Clear</button>
+          )}
+        </div>
+        <div className="flex-1 overflow-y-auto p-2 space-y-1.5 [scrollbar-width:thin]">
+          {recentActions.length === 0 ? (
+            <p className="py-4 text-center text-[10px] italic text-slate-600">
+              Add actions to cards to see them here.
+            </p>
+          ) : (
+            recentActions.map(e => (
+              <ActionEntry key={e.id} action={e.action} sourceCard={e.sourceCard} addedAt={e.addedAt} />
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Popular Actions */}
+      <div className="flex flex-col overflow-hidden rounded-xl border border-slate-700/40 bg-slate-900/50" style={{ flex: "1 1 33%", minHeight: "8rem" }}>
+        <div className="shrink-0 flex items-center gap-1.5 border-b border-slate-700/40 px-3 py-2">
+          <TrendingUp className="h-3.5 w-3.5 text-slate-500" />
+          <span className="text-xs font-bold text-slate-300">Popular</span>
+          <span className="text-[9px] italic text-slate-600">(2+ cards)</span>
+        </div>
+        <div className="flex-1 overflow-y-auto p-2 space-y-1.5 [scrollbar-width:thin]">
+          {popularActions.length === 0 ? (
+            <p className="py-4 text-center text-[10px] italic text-slate-600">
+              Configure 2+ cards with the same action to see it here.
+            </p>
+          ) : (
+            popularActions.map((e, i) => (
+              <ActionEntry key={i} action={e.action} badge={e.count} />
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Saved Actions */}
+      <div className="flex flex-col overflow-hidden rounded-xl border border-slate-700/40 bg-slate-900/50" style={{ flex: "1 1 33%", minHeight: "8rem" }}>
+        <div className="shrink-0 flex items-center gap-1.5 border-b border-slate-700/40 px-3 py-2">
+          <Bookmark className="h-3.5 w-3.5 text-amber-500/70" />
+          <span className="text-xs font-bold text-slate-300">Saved</span>
+        </div>
+        <div className="flex-1 overflow-y-auto p-2 space-y-1.5 [scrollbar-width:thin]">
+          {savedTemplates.length === 0 ? (
+            <p className="py-4 text-center text-[10px] italic text-slate-600">
+              Click 🔖 on any action to save it here.
+            </p>
+          ) : (
+            savedTemplates.map(e => {
+              const typeDef = ACTION_TYPES.find(t => t.value === e.action.actionType);
+              const Icon = typeDef?.icon ?? Sparkles;
+              return (
+                <div key={e.id} className="group flex items-center gap-2 rounded-lg border border-slate-700/40 bg-slate-800/30 px-2 py-1.5">
+                  <Icon className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+                  <p className="min-w-0 flex-1 truncate text-[11px] font-medium text-slate-200">{e.name}</p>
+                  <div className="flex shrink-0 items-center gap-1 opacity-0 transition group-hover:opacity-100">
+                    <button type="button" onClick={() => onAddToCard(e.action)}
+                      disabled={!selectedCard}
+                      className="rounded border border-slate-600/50 bg-slate-700/50 px-1.5 py-0.5 text-[9px] font-semibold text-slate-300 transition hover:bg-slate-600/60 disabled:cursor-not-allowed disabled:opacity-30"
+                    >+ Add</button>
+                    <button type="button" onClick={() => onDeleteSaved(e.id)}
+                      className="inline-flex h-6 w-6 items-center justify-center text-slate-600 transition hover:text-rose-400"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Export Modal ─────────────────────────────────────────────────────────────
 
 function ExportModal({
@@ -2051,6 +2714,79 @@ export default function CardActionsEditorClient() {
   const [showExportModal, setShowExportModal] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
+  // ─── Recent / Saved / Visited state ────────────────────────────────────────
+  const [recentActions, setRecentActions] = useState<RecentActionEntry[]>([]);
+  const [savedTemplates, setSavedTemplates] = useState<SavedActionEntry[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = localStorage.getItem(LS_SAVED_ACTIONS_KEY);
+      return raw ? (JSON.parse(raw) as SavedActionEntry[]) : [];
+    } catch { return []; }
+  });
+  const [visitedCards, setVisitedCards] = useState<string[]>([]);
+
+  function selectCard(id: string) {
+    setSelectedCard(id);
+    if (id !== "__global__") {
+      setVisitedCards(prev => {
+        const filtered = prev.filter(c => c !== id);
+        return [id, ...filtered].slice(0, 8);
+      });
+    }
+  }
+
+  function trackRecentAction(action: CustomAction, sourceCard: string) {
+    const sig = actionSig(action);
+    setRecentActions(prev => {
+      const deduped = prev.filter(e => actionSig(e.action) !== sig);
+      const entry: RecentActionEntry = {
+        id: Math.random().toString(36).slice(2),
+        action: { ...action },
+        sourceCard,
+        addedAt: Date.now(),
+      };
+      return [entry, ...deduped].slice(0, 20);
+    });
+  }
+
+  function saveAction(action: CustomAction) {
+    const entry: SavedActionEntry = {
+      id: Math.random().toString(36).slice(2),
+      name: actionSummary(action) || action.actionType,
+      action: { ...action },
+      savedAt: Date.now(),
+    };
+    setSavedTemplates(prev => {
+      const next = [entry, ...prev];
+      try { localStorage.setItem(LS_SAVED_ACTIONS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }
+
+  function deleteSaved(id: string) {
+    setSavedTemplates(prev => {
+      const next = prev.filter(e => e.id !== id);
+      try { localStorage.setItem(LS_SAVED_ACTIONS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }
+
+  function addActionToCard(a: CustomAction) {
+    if (!selectedCard) return;
+    setCardActions([...currentActions, { ...a }]);
+    if (selectedCard !== "__global__") trackRecentAction(a, selectedCard);
+  }
+
+  const topActionTypes = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const actions of Object.values(data)) {
+      for (const a of actions) {
+        m[a.actionType] = (m[a.actionType] ?? 0) + 1;
+      }
+    }
+    return Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  }, [data]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return allCards.filter(({ id, data }) => {
@@ -2215,7 +2951,7 @@ export default function CardActionsEditorClient() {
     <div className="min-h-screen bg-slate-950 text-slate-100">
       {/* Top bar */}
       <header className="sticky top-0 z-20 border-b border-slate-800/80 bg-slate-950/90 px-4 py-3 backdrop-blur-md">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Link
               href="/editors"
@@ -2287,9 +3023,17 @@ export default function CardActionsEditorClient() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-4 py-6">
-        <div className="grid gap-6 md:grid-cols-[22rem_1fr]">
-            {/* Left: card list */}
+      <main className="px-4 py-6">
+        <div className="grid gap-4 grid-cols-[18rem_20rem_1fr_20rem]">
+
+            {/* Col 1: Bulk Apply Script */}
+            <BulkApplyPanel
+              data={data}
+              onApply={setData}
+              buffNameSuggestions={buffNameSuggestions}
+            />
+
+            {/* Col 2: card list + stats + recent cards */}
             <aside className="flex flex-col gap-2">
               {/* Character filter chips */}
               <div className="flex flex-wrap gap-1">
@@ -2329,7 +3073,7 @@ export default function CardActionsEditorClient() {
                     <button
                       key={gid}
                       type="button"
-                      onClick={() => setSelectedCard(gid)}
+                      onClick={() => selectCard(gid)}
                       className={`flex w-full flex-col gap-1 border-b-2 border-amber-500/30 px-3 py-2.5 text-left transition ${
                         isSelected
                           ? "bg-amber-950/40 ring-inset ring-1 ring-amber-500/50"
@@ -2361,7 +3105,7 @@ export default function CardActionsEditorClient() {
                     <button
                       key={id}
                       type="button"
-                      onClick={() => setSelectedCard(id)}
+                      onClick={() => selectCard(id)}
                       className={`flex w-full flex-col gap-1 border-b border-slate-800/40 px-3 py-2.5 text-left last:border-0 transition ${
                         isSelected ? charStyle.selectedRowBg : `${charStyle.rowBg} hover:brightness-125`
                       }`}
@@ -2405,9 +3149,37 @@ export default function CardActionsEditorClient() {
                   );
                 })}
               </div>
+
+              {/* Mini Stats */}
+              <div className="rounded-xl border border-slate-700/40 bg-slate-900/40 px-3 py-2">
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">Stats</p>
+                <p className="text-[11px] text-slate-400">
+                  <span className="font-semibold text-slate-200">{configuredCardCount}</span>
+                  <span className="text-slate-600"> / {allCards.length}</span> cards configured
+                </p>
+                {topActionTypes.length > 0 && (
+                  <p className="mt-0.5 truncate text-[9px] text-slate-600">
+                    Top: {topActionTypes.map(([t, n]) => `${t.replace(/_/g, " ")} (${n})`).join(" · ")}
+                  </p>
+                )}
+              </div>
+
+              {/* Recently visited cards */}
+              {visitedCards.length > 0 && (
+                <div>
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Recent cards</p>
+                  <div className="flex flex-wrap gap-1">
+                    {visitedCards.map(id => (
+                      <button key={id} type="button" onClick={() => selectCard(id)}
+                        className="rounded-lg border border-slate-700/50 bg-slate-800/50 px-2 py-0.5 text-[10px] text-slate-300 transition hover:bg-slate-700/60 hover:text-slate-100"
+                      >{id}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </aside>
 
-            {/* Right: action editor */}
+            {/* Col 3: action editor */}
             <div>
               {!selectedCard ? (
                 <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-800/60 bg-slate-900/30 py-20 text-center">
@@ -2487,6 +3259,7 @@ export default function CardActionsEditorClient() {
                           index={i}
                           onChange={updateAction}
                           onDelete={deleteAction}
+                          onSave={saveAction}
                           buffNameSuggestions={buffNameSuggestions}
                           cardsMeant={selectedCardsMeant}
                         />
@@ -2507,6 +3280,18 @@ export default function CardActionsEditorClient() {
                 </div>
               )}
             </div>
+
+            {/* Col 4: Recent / Popular / Saved actions */}
+            <RightActionsPanel
+              data={data}
+              selectedCard={selectedCard}
+              recentActions={recentActions}
+              savedTemplates={savedTemplates}
+              onAddToCard={addActionToCard}
+              onSaveAction={saveAction}
+              onDeleteSaved={deleteSaved}
+              onClearRecent={() => setRecentActions([])}
+            />
           </div>
       </main>
 
