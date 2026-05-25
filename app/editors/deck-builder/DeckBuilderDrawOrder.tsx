@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { Shuffle, RotateCcw, GripVertical, ArrowUpCircle } from "lucide-react";
-import type { DeckCardEntry, DrawOrderEntry } from "./deckBuilderTypes";
+import type { DeckCardInstance, DrawOrderEntry } from "./deckBuilderTypes";
 import { expandToDrawOrder } from "./deckBuilderStorage";
 import { getStsCardsRecord } from "@/app/card-design-gallery/stsRecord";
 
@@ -35,11 +35,11 @@ function shuffle<T>(arr: T[]): T[] {
 // ─── Character colours ────────────────────────────────────────────────────────
 type CharPalette = { row: string; nameBadge: string };
 const CHAR_PALETTE: Record<string, CharPalette> = {
-  ironclad: { row: "hover:bg-red-950/20",     nameBadge: "border-red-700/40 bg-red-950/50 text-red-300" },
-  silent:   { row: "hover:bg-emerald-950/20", nameBadge: "border-emerald-700/40 bg-emerald-950/50 text-emerald-300" },
-  defect:   { row: "hover:bg-sky-950/20",     nameBadge: "border-sky-700/40 bg-sky-950/50 text-sky-300" },
-  watcher:  { row: "hover:bg-violet-950/20",  nameBadge: "border-violet-700/40 bg-violet-950/50 text-violet-300" },
-  colorless:{ row: "hover:bg-zinc-800/20",    nameBadge: "border-zinc-600/40 bg-zinc-800/50 text-zinc-300" },
+  ironclad:  { row: "hover:bg-red-950/20",     nameBadge: "border-red-700/40 bg-red-950/50 text-red-300" },
+  silent:    { row: "hover:bg-emerald-950/20", nameBadge: "border-emerald-700/40 bg-emerald-950/50 text-emerald-300" },
+  defect:    { row: "hover:bg-sky-950/20",     nameBadge: "border-sky-700/40 bg-sky-950/50 text-sky-300" },
+  watcher:   { row: "hover:bg-violet-950/20",  nameBadge: "border-violet-700/40 bg-violet-950/50 text-violet-300" },
+  colorless: { row: "hover:bg-zinc-800/20",    nameBadge: "border-zinc-600/40 bg-zinc-800/50 text-zinc-300" },
 };
 const DEFAULT_PALETTE: CharPalette = {
   row: "hover:bg-slate-800/30",
@@ -56,7 +56,7 @@ const TYPE_CHIP: Record<string, string> = {
 };
 
 interface DeckBuilderDrawOrderProps {
-  cards: DeckCardEntry[];
+  cards: DeckCardInstance[];
   drawOrder: DrawOrderEntry[] | null;
   onChange: (order: DrawOrderEntry[] | null) => void;
 }
@@ -65,6 +65,7 @@ export default function DeckBuilderDrawOrder({ cards, drawOrder, onChange }: Dec
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const dragOver = useRef<number | null>(null);
 
+  // drawOrder is null → use default order (same as cards array)
   const entries: DrawOrderEntry[] = drawOrder ?? expandToDrawOrder(cards);
   const isCustom = drawOrder !== null;
 

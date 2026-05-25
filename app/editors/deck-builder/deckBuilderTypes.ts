@@ -1,24 +1,23 @@
-// ─── Deck Builder Types ───────────────────────────────────────────────────────
-
-export type DeckCardEntry = {
+// ─── Core instance type ───────────────────────────────────────────────────────
+/** One physical card copy in the deck, uniquely identified by uid. */
+export type DeckCardInstance = {
+  uid: string;
   card_ID: string;
-  count: number;
   isUpgraded: boolean;
 };
 
-/** Composite key used to distinguish base vs upgraded of the same card. */
-export function deckEntryKey(card_ID: string, isUpgraded: boolean): string {
+/** Composite key for grouping instances (clustered view / picker badges). */
+export function deckGroupKey(card_ID: string, isUpgraded: boolean): string {
   return `${card_ID}:${isUpgraded ? "u" : "b"}`;
 }
 
-export type DrawOrderEntry = {
-  uid: string;          // "${card_ID}-${isUpgraded}-${instanceIndex}"
-  card_ID: string;
-  isUpgraded: boolean;
-};
+// ─── Draw order ───────────────────────────────────────────────────────────────
+/** Draw order is just an ordered copy of DeckCardInstance (same shape). */
+export type DrawOrderEntry = DeckCardInstance;
 
+// ─── Player setup ─────────────────────────────────────────────────────────────
 export type PlayerSetup = {
-  characters: "ironclad" | "silent" | "defect" | "watcher" | "colorless";
+  characters: "ironclad" | "silent" | "defect" | "watcher";
   hp: number;
   maxHp: number;
   energy: { base: number };
@@ -38,25 +37,27 @@ export type PlayerSetup = {
   potionBeltSize: number;
 };
 
+// ─── Saved deck ───────────────────────────────────────────────────────────────
 export type SavedDeck = {
   id: string;
   name: string;
   player: PlayerSetup;
-  cards: DeckCardEntry[];
+  cards: DeckCardInstance[];
   drawOrder: DrawOrderEntry[] | null;
   createdAt: number;
   updatedAt: number;
 };
 
-/** Format written to JSON when exporting — no id/timestamps needed. */
+/** JSON export format (no id / timestamps needed). */
 export type DeckExport = {
   name: string;
   player: PlayerSetup;
-  cards: DeckCardEntry[];
+  cards: DeckCardInstance[];
   drawOrder: DrawOrderEntry[] | null;
   exportedAt: number;
 };
 
+// ─── Defaults ─────────────────────────────────────────────────────────────────
 export const DEFAULT_PLAYER: PlayerSetup = {
   characters: "ironclad",
   hp: 80,
@@ -76,7 +77,10 @@ export const DEFAULT_PLAYER: PlayerSetup = {
 };
 
 // ─── Starter deck definitions ─────────────────────────────────────────────────
-export const STARTER_DECKS: Record<string, DeckCardEntry[]> = {
+/** Template entries (with count) — expanded to DeckCardInstance[] on use. */
+type StarterEntry = { card_ID: string; count: number; isUpgraded: boolean };
+
+export const STARTER_DECKS: Record<string, StarterEntry[]> = {
   ironclad: [
     { card_ID: "Strike_R", count: 5, isUpgraded: false },
     { card_ID: "Defend_R", count: 4, isUpgraded: false },

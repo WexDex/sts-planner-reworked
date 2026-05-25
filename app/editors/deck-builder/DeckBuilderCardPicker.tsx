@@ -17,8 +17,8 @@ import {
 import GalleryTopBar from "@/app/card-design-gallery/GalleryTopBar";
 import GalleryCardBox from "@/app/card-design-gallery/GalleryCardBox";
 import type { STSCardSize } from "@/app/components/UI/Card";
-import { deckEntryKey } from "./deckBuilderTypes";
-import type { DeckCardEntry } from "./deckBuilderTypes";
+import { deckGroupKey } from "./deckBuilderTypes";
+import type { DeckCardInstance } from "./deckBuilderTypes";
 
 const DB_RECORDS = getStsCardsRecord();
 const ALL_IDS    = listStsCardIdsSorted();
@@ -28,7 +28,7 @@ function toggle<T>(arr: T[], val: T): T[] {
 }
 
 interface DeckBuilderCardPickerProps {
-  deckCards: DeckCardEntry[];
+  deckCards: DeckCardInstance[];
   onAddCard: (cardId: string, isUpgraded: boolean) => void;
 }
 
@@ -85,15 +85,12 @@ export default function DeckBuilderCardPicker({
     [showPotions],
   );
 
-  // Build a map for quick lookup: entryKey → count
+  // Count map: deckGroupKey → number of instances in deck
   const countMap = useMemo(() => {
     const m: Record<string, number> = {};
-    for (const e of deckCards) {
-      m[deckEntryKey(e.card_ID, false)]  = (m[deckEntryKey(e.card_ID, false)]  ?? 0);
-      m[deckEntryKey(e.card_ID, true)]   = (m[deckEntryKey(e.card_ID, true)]   ?? 0);
-    }
-    for (const e of deckCards) {
-      m[deckEntryKey(e.card_ID, e.isUpgraded)] = e.count;
+    for (const inst of deckCards) {
+      const k = deckGroupKey(inst.card_ID, inst.isUpgraded);
+      m[k] = (m[k] ?? 0) + 1;
     }
     return m;
   }, [deckCards]);
@@ -148,8 +145,8 @@ export default function DeckBuilderCardPicker({
         ) : (
           <div className="flex flex-wrap gap-3 justify-center">
             {filteredIds.map(id => {
-              const baseCount  = countMap[deckEntryKey(id, false)] ?? 0;
-              const upgCount   = countMap[deckEntryKey(id, true)]  ?? 0;
+              const baseCount = countMap[deckGroupKey(id, false)] ?? 0;
+              const upgCount  = countMap[deckGroupKey(id, true)]  ?? 0;
               // Auto-show upgraded when allUpgraded is on, or when ±Ver matched this card via upgraded only
               const isUpgraded = allUpgraded || upgradedMatchIds.has(id);
 

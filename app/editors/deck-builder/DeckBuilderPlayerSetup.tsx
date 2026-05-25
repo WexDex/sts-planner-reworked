@@ -7,8 +7,7 @@ const CHARACTERS: Array<{ id: PlayerSetup["characters"]; label: string; cls: str
   { id: "ironclad", label: "Ironclad", cls: "border-red-500/60 bg-red-950/50 text-red-200" },
   { id: "silent",   label: "Silent",   cls: "border-emerald-500/60 bg-emerald-950/50 text-emerald-200" },
   { id: "defect",   label: "Defect",   cls: "border-sky-500/60 bg-sky-950/50 text-sky-200" },
-  { id: "watcher",  label: "Watcher",  cls: "border-violet-500/60 bg-violet-950/50 text-violet-200" },
-  { id: "colorless",label: "Colorless",cls: "border-zinc-400/50 bg-zinc-700/40 text-zinc-100" },
+  { id: "watcher",  label: "Watcher",  cls: "border-violet-500/60 bg-violet-950/50 text-violet-200" }
 ];
 
 const DEFAULT_HP: Record<PlayerSetup["characters"], number> = {
@@ -16,7 +15,6 @@ const DEFAULT_HP: Record<PlayerSetup["characters"], number> = {
   silent:   70,
   defect:   75,
   watcher:  72,
-  colorless: 75,
 };
 
 const LABEL_CLS  = "text-[11px] text-slate-500 uppercase tracking-wider font-semibold";

@@ -2,15 +2,9 @@
 
 import { useState } from "react";
 import { X, Zap } from "lucide-react";
+import { genId } from "@/app/card-design-gallery/galleryFilterUtils";
 import { STARTER_DECKS } from "./deckBuilderTypes";
-import type { DeckCardEntry } from "./deckBuilderTypes";
-
-// Ascender's Bane — the curse added on Ascension 10+
-const ASCENDERS_BANE: DeckCardEntry = {
-  card_ID: "Ascender's Bane",
-  count: 1,
-  isUpgraded: false,
-};
+import type { DeckCardInstance } from "./deckBuilderTypes";
 
 const CHAR_OPTIONS: Array<{
   id: keyof typeof STARTER_DECKS;
@@ -26,7 +20,7 @@ const CHAR_OPTIONS: Array<{
 
 interface DeckBuilderStarterModalProps {
   defaultCharacter?: string;
-  onAdd: (entries: DeckCardEntry[]) => void;
+  onAdd: (instances: DeckCardInstance[]) => void;
   onClose: () => void;
 }
 
@@ -45,9 +39,17 @@ export default function DeckBuilderStarterModal({
   const preview = STARTER_DECKS[selected] ?? [];
 
   function handleAdd() {
-    const entries: DeckCardEntry[] = [...preview];
-    if (addBane) entries.push(ASCENDERS_BANE);
-    onAdd(entries);
+    const instances: DeckCardInstance[] = preview.flatMap(e =>
+      Array.from({ length: e.count }, () => ({
+        uid: genId(),
+        card_ID: e.card_ID,
+        isUpgraded: e.isUpgraded,
+      })),
+    );
+    if (addBane) {
+      instances.push({ uid: genId(), card_ID: "Ascender's Bane", isUpgraded: false });
+    }
+    onAdd(instances);
     onClose();
   }
 
@@ -107,7 +109,7 @@ export default function DeckBuilderStarterModal({
               ))}
               {addBane && (
                 <li className="flex items-center justify-between text-xs text-rose-400/80 border-t border-slate-700/30 mt-1 pt-1">
-                  <span>Ascender's Bane</span>
+                  <span>Ascender&apos;s Bane</span>
                   <span className="tabular-nums">1×</span>
                 </li>
               )}
@@ -132,7 +134,7 @@ export default function DeckBuilderStarterModal({
               onChange={e => setAddBane(e.target.checked)}
             />
             <div>
-              <p className="text-xs font-medium text-slate-300">Include Ascender's Bane</p>
+              <p className="text-xs font-medium text-slate-300">Include Ascender&apos;s Bane</p>
               <p className="text-[11px] text-slate-600">Curse added on Ascension 10+</p>
             </div>
           </label>

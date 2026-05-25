@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Plus, Trash2, Swords, ChevronDown, Download, Upload, Zap } from "lucide-react";
 import DeckBuilderStarterModal from "./DeckBuilderStarterModal";
@@ -8,18 +8,17 @@ import Link from "next/link";
 import { useGameManager } from "@/app/context/GameContext";
 import type { CombatData } from "@/app/types/gameTypes";
 import {
-  type DeckCardEntry,
+  type DeckCardInstance,
   type DrawOrderEntry,
   type PlayerSetup,
   type SavedDeck,
   type DeckExport,
   DEFAULT_PLAYER,
-  deckEntryKey,
+  deckGroupKey,
 } from "./deckBuilderTypes";
 import {
   loadSavedDecks,
   saveSavedDecks,
-  createBlankDeck,
 } from "./deckBuilderStorage";
 import { genId } from "@/app/card-design-gallery/galleryFilterUtils";
 import DeckBuilderCardPicker from "./DeckBuilderCardPicker";
@@ -28,6 +27,20 @@ import DeckBuilderPlayerSetup from "./DeckBuilderPlayerSetup";
 import DeckBuilderDrawOrder from "./DeckBuilderDrawOrder";
 
 type LeftTab = "player" | "draw";
+
+// Migrate imported cards from old DeckCardEntry format if needed
+function migrateImportedCards(raw: unknown[]): DeckCardInstance[] {
+  return raw.flatMap(entry => {
+    const e = entry as Record<string, unknown>;
+    if (typeof e.uid === "string") return [e as unknown as DeckCardInstance];
+    const count = typeof e.count === "number" ? e.count : 1;
+    return Array.from({ length: count }, () => ({
+      uid: genId(),
+      card_ID: e.card_ID as string,
+      isUpgraded: Boolean(e.isUpgraded),
+    }));
+  });
+}
 
 export default function DeckBuilderClient() {
   const router = useRouter();
@@ -42,14 +55,14 @@ export default function DeckBuilderClient() {
   // ── Active deck state ────────────────────────────────────────────────────────
   const [deckName,  setDeckName]  = useState("New Deck");
   const [player,    setPlayer]    = useState<PlayerSetup>({ ...DEFAULT_PLAYER });
-  const [cards,     setCards]     = useState<DeckCardEntry[]>([]);
+  const [cards,     setCards]     = useState<DeckCardInstance[]>([]);
   const [drawOrder, setDrawOrder] = useState<DrawOrderEntry[] | null>(null);
   const [isDirty,   setIsDirty]   = useState(false);
 
   // ── UI ────────────────────────────────────────────────────────────────────────
-  const [leftTab,      setLeftTab]      = useState<LeftTab>("player");
-  const [showDeckDD,   setShowDeckDD]   = useState(false);
-  const [starterOpen,  setStarterOpen]  = useState(false);
+  const [leftTab,     setLeftTab]     = useState<LeftTab>("player");
+  const [showDeckDD,  setShowDeckDD]  = useState(false);
+  const [starterOpen, setStarterOpen] = useState(false);
 
   // ── Load localStorage on mount ───────────────────────────────────────────────
   useEffect(() => { setSavedDecks(loadSavedDecks()); }, []);
@@ -135,8 +148,8 @@ export default function DeckBuilderClient() {
         setActiveDeckId(null);
         setDeckName(data.name ?? "Imported Deck");
         setPlayer(data.player ?? { ...DEFAULT_PLAYER });
-        setCards(data.cards ?? []);
-        setDrawOrder(data.drawOrder ?? null);
+        setCards(migrateImportedCards((data.cards ?? []) as unknown[]));
+        setDrawOrder(data.drawOrder ? migrateImportedCards(data.drawOrder as unknown[]) : null);
         setIsDirty(true);
       } catch {
         alert("Failed to parse deck JSON.");
@@ -145,81 +158,77 @@ export default function DeckBuilderClient() {
   }, []);
 
   // ── Starter deck modal ────────────────────────────────────────────────────────
-  const handleStarterAdd = useCallback((entries: DeckCardEntry[]) => {
+  const handleStarterAdd = useCallback((instances: DeckCardInstance[]) => {
+    setCards(prev => [...prev, ...instances]);
+    setDrawOrder(null);
+    markDirty();
+  }, []);
+
+  // ── Card picker: add one instance ─────────────────────────────────────────────
+  const handleAddCard = useCallback((cardId: string, isUpgraded: boolean) => {
+    setCards(prev => [...prev, { uid: genId(), card_ID: cardId, isUpgraded }]);
+    setDrawOrder(null);
+    markDirty();
+  }, []);
+
+  // ── Clustered view: add another copy to a group ───────────────────────────────
+  const handleAddToGroup = useCallback((cardId: string, isUpgraded: boolean) => {
+    setCards(prev => [...prev, { uid: genId(), card_ID: cardId, isUpgraded }]);
+    setDrawOrder(null);
+    markDirty();
+  }, []);
+
+  // ── Clustered view: remove last copy from a group ─────────────────────────────
+  const handleRemoveFromGroup = useCallback((cardId: string, isUpgraded: boolean) => {
     setCards(prev => {
-      const next = [...prev];
-      for (const entry of entries) {
-        const key = deckEntryKey(entry.card_ID, entry.isUpgraded);
-        const existing = next.find(e => deckEntryKey(e.card_ID, e.isUpgraded) === key);
-        if (existing) {
-          // merge: bump count
-          const idx = next.indexOf(existing);
-          next[idx] = { ...existing, count: existing.count + entry.count };
-        } else {
-          next.push({ ...entry });
+      const key = deckGroupKey(cardId, isUpgraded);
+      // Find the last instance in this group
+      let lastIdx = -1;
+      for (let i = prev.length - 1; i >= 0; i--) {
+        if (deckGroupKey(prev[i]!.card_ID, prev[i]!.isUpgraded) === key) {
+          lastIdx = i;
+          break;
         }
       }
-      return next;
+      if (lastIdx === -1) return prev;
+      return prev.filter((_, i) => i !== lastIdx);
     });
     setDrawOrder(null);
     markDirty();
   }, []);
 
-  // ── Card picker callbacks ─────────────────────────────────────────────────────
-  const handleAddCard = useCallback((cardId: string, isUpgraded: boolean) => {
-    setCards(prev => {
-      const key = deckEntryKey(cardId, isUpgraded);
-      const existing = prev.find(e => deckEntryKey(e.card_ID, e.isUpgraded) === key);
-      if (!existing) return [...prev, { card_ID: cardId, count: 1, isUpgraded }];
-      return prev.map(e => deckEntryKey(e.card_ID, e.isUpgraded) === key ? { ...e, count: e.count + 1 } : e);
-    });
+  // ── Clustered view: remove ALL copies in a group ──────────────────────────────
+  const handleRemoveGroup = useCallback((cardId: string, isUpgraded: boolean) => {
+    const key = deckGroupKey(cardId, isUpgraded);
+    setCards(prev => prev.filter(inst => deckGroupKey(inst.card_ID, inst.isUpgraded) !== key));
     setDrawOrder(null);
     markDirty();
   }, []);
 
-  // ── Deck list callbacks ───────────────────────────────────────────────────────
-  const handleChangeCount = useCallback((cardId: string, isUpgraded: boolean, delta: number) => {
-    setCards(prev => {
-      const key = deckEntryKey(cardId, isUpgraded);
-      return prev.reduce<DeckCardEntry[]>((acc, e) => {
-        if (deckEntryKey(e.card_ID, e.isUpgraded) !== key) { acc.push(e); return acc; }
-        const next = e.count + delta;
-        if (next <= 0) return acc;
-        acc.push({ ...e, count: next });
-        return acc;
-      }, []);
-    });
+  // ── Clustered view: flip isUpgraded for ALL instances in a group ──────────────
+  const handleToggleUpgradeGroup = useCallback((cardId: string, isUpgraded: boolean) => {
+    const key = deckGroupKey(cardId, isUpgraded);
+    setCards(prev => prev.map(inst =>
+      deckGroupKey(inst.card_ID, inst.isUpgraded) === key
+        ? { ...inst, isUpgraded: !isUpgraded }
+        : inst,
+    ));
     setDrawOrder(null);
     markDirty();
   }, []);
 
-  const handleRemoveCard = useCallback((cardId: string, isUpgraded: boolean) => {
-    const key = deckEntryKey(cardId, isUpgraded);
-    setCards(prev => prev.filter(e => deckEntryKey(e.card_ID, e.isUpgraded) !== key));
+  // ── Separate view: flip isUpgraded for ONE instance ───────────────────────────
+  const handleToggleUpgradeInstance = useCallback((uid: string) => {
+    setCards(prev => prev.map(inst =>
+      inst.uid === uid ? { ...inst, isUpgraded: !inst.isUpgraded } : inst,
+    ));
     setDrawOrder(null);
     markDirty();
   }, []);
 
-  const handleToggleUpgrade = useCallback((cardId: string, isUpgraded: boolean) => {
-    const oldKey = deckEntryKey(cardId, isUpgraded);
-    const newKey = deckEntryKey(cardId, !isUpgraded);
-    setCards(prev => {
-      // If target key already exists, merge counts; otherwise flip
-      const existing = prev.find(e => deckEntryKey(e.card_ID, e.isUpgraded) === newKey);
-      if (existing) {
-        const source = prev.find(e => deckEntryKey(e.card_ID, e.isUpgraded) === oldKey);
-        return prev
-          .filter(e => deckEntryKey(e.card_ID, e.isUpgraded) !== oldKey)
-          .map(e => deckEntryKey(e.card_ID, e.isUpgraded) === newKey
-            ? { ...e, count: e.count + (source?.count ?? 0) }
-            : e);
-      }
-      return prev.map(e =>
-        deckEntryKey(e.card_ID, e.isUpgraded) === oldKey
-          ? { ...e, isUpgraded: !isUpgraded }
-          : e,
-      );
-    });
+  // ── Separate view: remove ONE instance ───────────────────────────────────────
+  const handleRemoveInstance = useCallback((uid: string) => {
+    setCards(prev => prev.filter(inst => inst.uid !== uid));
     setDrawOrder(null);
     markDirty();
   }, []);
@@ -234,11 +243,8 @@ export default function DeckBuilderClient() {
   const handleLaunch = useCallback(async () => {
     const orderedEntries = drawOrder
       ? drawOrder.map(o => ({ card_ID: o.card_ID, isUpgraded: o.isUpgraded }))
-      : cards.flatMap(e =>
-          Array.from({ length: e.count }, () => ({ card_ID: e.card_ID, isUpgraded: e.isUpgraded })),
-        );
+      : cards.map(i => ({ card_ID: i.card_ID, isUpgraded: i.isUpgraded }));
 
-    // Keep existing enemies from current game state
     const existingEnemies = gameState?.enemies ?? [];
 
     const payload: CombatData = {
@@ -254,15 +260,15 @@ export default function DeckBuilderClient() {
         activeRelics:  [],
         buffsDebuffs:  player.buffsDebuffs,
       },
-      deck:         orderedEntries,
-      draw:         [],
-      discard:      [],
-      exhaust:      [],
-      hand:         [],
-      playedCards:  [],
-      activityLog:  [],
-      enemies:      existingEnemies,
-      potionBelt:   player.potions.map(p =>
+      deck:           orderedEntries,
+      draw:           [],
+      discard:        [],
+      exhaust:        [],
+      hand:           [],
+      playedCards:    [],
+      activityLog:    [],
+      enemies:        existingEnemies,
+      potionBelt:     player.potions.map(p =>
         p.name ? { name: p.name, type: "Potion" as const, description: p.description } : null,
       ),
       potionBeltSize: player.potionBeltSize,
@@ -273,7 +279,7 @@ export default function DeckBuilderClient() {
   }, [drawOrder, cards, player, loadGameDataFromJson, router, gameState]);
 
   // ── Derived ───────────────────────────────────────────────────────────────────
-  const totalCards      = useMemo(() => cards.reduce((s, e) => s + e.count, 0), [cards]);
+  const totalCards      = cards.length;
   const drawOrderActive = drawOrder !== null;
 
   return (
@@ -320,7 +326,7 @@ export default function DeckBuilderClient() {
                     d.id === activeDeckId ? "text-indigo-300" : "text-slate-300",
                   ].join(" ")}>
                   <span className="flex-1 truncate">{d.name}</span>
-                  <span className="text-slate-600">{d.cards.reduce((s, e) => s + e.count, 0)} cards</span>
+                  <span className="text-slate-600">{d.cards.length} cards</span>
                 </button>
               ))}
             </div>
@@ -417,9 +423,12 @@ export default function DeckBuilderClient() {
           </div>
           <DeckBuilderDeckList
             cards={cards}
-            onChangeCount={handleChangeCount}
-            onRemove={handleRemoveCard}
-            onToggleUpgrade={handleToggleUpgrade}
+            onAddToGroup={handleAddToGroup}
+            onRemoveFromGroup={handleRemoveFromGroup}
+            onRemoveGroup={handleRemoveGroup}
+            onToggleUpgradeGroup={handleToggleUpgradeGroup}
+            onToggleUpgradeInstance={handleToggleUpgradeInstance}
+            onRemoveInstance={handleRemoveInstance}
           />
         </aside>
       </div>
