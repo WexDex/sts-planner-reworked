@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Clipboard, Palette, Zap, Swords } from "lucide-react";
+import { ArrowRight, Clipboard, Palette, Zap, Swords, Network } from "lucide-react";
 
 const EDITORS = [
   {
@@ -51,6 +51,18 @@ const EDITORS = [
     badgeCls: "border-amber-500/30 bg-amber-950/50 text-amber-300/80",
     border: "border-amber-500/25 hover:border-amber-400/45",
     bg: "bg-amber-950/10 hover:bg-amber-950/20",
+  },
+  {
+    href: "/editors/cluster-view",
+    icon: <Network className="h-5 w-5" strokeWidth={2} />,
+    iconCls: "border-teal-500/50 bg-teal-950/60 text-teal-300",
+    title: "Cluster View",
+    description:
+      "Visually cluster all 370 cards by any combination of fields — type, damage, cost, keywords, and more. Use manual grouping or k-means to find statistical correlations, then explore the results interactively.",
+    badge: "Analysis",
+    badgeCls: "border-teal-500/30 bg-teal-950/50 text-teal-300/80",
+    border: "border-teal-500/25 hover:border-teal-400/45",
+    bg: "bg-teal-950/10 hover:bg-teal-950/20",
   },
 ];
 
